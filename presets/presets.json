@@ -1,0 +1,209 @@
+{
+  "version": 1,
+  "app": "lineart-converter",
+  "presets": {
+    "Аниме точки (базовый)": {
+      "bright": "0", "contrast": "15", "invert": false,
+      "blur": "1.2", "thr": "0.12", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·", "shadeDensity": "25", "shadeThreshold": "50",
+      "charset": ".", "charsetPreset": ".", "autoOrient": false, "onlyDots": false, "layout": "h"
+    },
+    "Аниме линии (скетч)": {
+      "bright": "0", "contrast": "20", "invert": false,
+      "blur": "1.2", "thr": "0.14", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "4", "maxCats": "1000",
+      "shading": false, "shadeCharset": ".·:", "shadeDensity": "30", "shadeThreshold": "45",
+      "charset": "-\\|/", "charsetPreset": "-\\|/", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Аниме микс (точки+линии)": {
+      "bright": "0", "contrast": "15", "invert": false,
+      "blur": "1.2", "thr": "0.12", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·", "shadeDensity": "30", "shadeThreshold": "55",
+      "charset": ".·:", "charsetPreset": ".·:", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Аниме плотнее (детали)": {
+      "bright": "0", "contrast": "15", "invert": false,
+      "blur": "1.0", "thr": "0.10", "thinning": true,
+      "fill": "90", "density": "120", "gridStep": "2", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·:", "shadeDensity": "35", "shadeThreshold": "55",
+      "charset": ".", "charsetPreset": ".", "autoOrient": false, "onlyDots": false, "layout": "h"
+    },
+    "Аниме чище (без шума)": {
+      "bright": "0", "contrast": "15", "invert": false,
+      "blur": "1.5", "thr": "0.18", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·", "shadeDensity": "20", "shadeThreshold": "45",
+      "charset": ".", "charsetPreset": ".", "autoOrient": false, "onlyDots": false, "layout": "h"
+    },
+    "Чистый line-art": {
+      "bright": "0", "contrast": "10", "invert": false,
+      "blur": "0.8", "thr": "0.10", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "4", "maxCats": "1000",
+      "shading": false, "shadeCharset": ".·:", "shadeDensity": "30", "shadeThreshold": "45",
+      "charset": "-\\|/", "charsetPreset": "-\\|/", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Плотный line-art (гравюра)": {
+      "bright": "0", "contrast": "20", "invert": false,
+      "blur": "1.0", "thr": "0.12", "thinning": true,
+      "fill": "88", "density": "130", "gridStep": "2", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·:", "shadeDensity": "40", "shadeThreshold": "50",
+      "charset": "-\\|/", "charsetPreset": "-\\|/", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Карандашный рисунок": {
+      "bright": "5", "contrast": "25", "invert": false,
+      "blur": "1.4", "thr": "0.14", "thinning": true,
+      "fill": "88", "density": "110", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·", "shadeDensity": "35", "shadeThreshold": "50",
+      "charset": ".·:", "charsetPreset": ".·:", "autoOrient": false, "onlyDots": false, "layout": "h"
+    },
+    "Реалистичное фото": {
+      "bright": "10", "contrast": "30", "invert": false,
+      "blur": "1.6", "thr": "0.16", "thinning": true,
+      "fill": "85", "density": "120", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·:", "shadeDensity": "45", "shadeThreshold": "55",
+      "charset": ".·:", "charsetPreset": ".·:", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Портрет фото": {
+      "bright": "5", "contrast": "25", "invert": false,
+      "blur": "1.4", "thr": "0.14", "thinning": true,
+      "fill": "88", "density": "100", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·:", "shadeDensity": "40", "shadeThreshold": "50",
+      "charset": ".·:", "charsetPreset": ".·:", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Тёмное фото (инверсия)": {
+      "bright": "15", "contrast": "30", "invert": true,
+      "blur": "1.4", "thr": "0.16", "thinning": true,
+      "fill": "85", "density": "120", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·:", "shadeDensity": "40", "shadeThreshold": "50",
+      "charset": ".·:", "charsetPreset": ".·:", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Пиксель-арт (жёсткий)": {
+      "bright": "0", "contrast": "40", "invert": false,
+      "blur": "0.5", "thr": "0.20", "thinning": false,
+      "fill": "90", "density": "100", "gridStep": "4", "maxCats": "1000",
+      "shading": false, "shadeCharset": ".·:", "shadeDensity": "30", "shadeThreshold": "45",
+      "charset": ".", "charsetPreset": ".", "autoOrient": false, "onlyDots": true, "layout": "h"
+    },
+    "Мем (толстые линии)": {
+      "bright": "0", "contrast": "30", "invert": false,
+      "blur": "0.8", "thr": "0.18", "thinning": true,
+      "fill": "85", "density": "80", "gridStep": "5", "maxCats": "1000",
+      "shading": false, "shadeCharset": ".·:", "shadeDensity": "30", "shadeThreshold": "45",
+      "charset": "-\\|/", "charsetPreset": "-\\|/", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Мем (точки+линии)": {
+      "bright": "0", "contrast": "25", "invert": false,
+      "blur": "1.0", "thr": "0.15", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "4", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·", "shadeDensity": "25", "shadeThreshold": "50",
+      "charset": ".·:", "charsetPreset": ".·:", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Логотип / иконка": {
+      "bright": "0", "contrast": "35", "invert": false,
+      "blur": "0.6", "thr": "0.20", "thinning": true,
+      "fill": "90", "density": "100", "gridStep": "4", "maxCats": "1000",
+      "shading": false, "shadeCharset": ".·:", "shadeDensity": "30", "shadeThreshold": "45",
+      "charset": "-\\|/─╲│╱", "charsetPreset": "-\\|/─╲│╱", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Силуэт": {
+      "bright": "0", "contrast": "45", "invert": false,
+      "blur": "1.0", "thr": "0.15", "thinning": true,
+      "fill": "90", "density": "100", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·:", "shadeDensity": "50", "shadeThreshold": "60",
+      "charset": ".", "charsetPreset": ".", "autoOrient": false, "onlyDots": false, "layout": "h"
+    },
+    "Пейзаж": {
+      "bright": "5", "contrast": "20", "invert": false,
+      "blur": "1.6", "thr": "0.16", "thinning": true,
+      "fill": "88", "density": "100", "gridStep": "4", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·:", "shadeDensity": "35", "shadeThreshold": "50",
+      "charset": ".·:", "charsetPreset": ".·:", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Мультяшный персонаж": {
+      "bright": "0", "contrast": "20", "invert": false,
+      "blur": "1.0", "thr": "0.12", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·", "shadeDensity": "30", "shadeThreshold": "50",
+      "charset": "-\\|/", "charsetPreset": "-\\|/", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Тату-эскиз": {
+      "bright": "0", "contrast": "30", "invert": false,
+      "blur": "0.8", "thr": "0.14", "thinning": true,
+      "fill": "88", "density": "110", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·:", "shadeDensity": "35", "shadeThreshold": "50",
+      "charset": "-\\|/", "charsetPreset": "-\\|/", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Винтаж / старое фото": {
+      "bright": "10", "contrast": "35", "invert": false,
+      "blur": "1.5", "thr": "0.18", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "4", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·:", "shadeDensity": "40", "shadeThreshold": "55",
+      "charset": ".·:", "charsetPreset": ".·:", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Только точки (как у него)": {
+      "bright": "0", "contrast": "15", "invert": false,
+      "blur": "1.2", "thr": "0.12", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "3", "maxCats": "1000",
+      "shading": false, "shadeCharset": ".·:", "shadeDensity": "30", "shadeThreshold": "45",
+      "charset": ".", "charsetPreset": ".", "autoOrient": false, "onlyDots": false, "layout": "h"
+    },
+    "Пунктир редкий": {
+      "bright": "0", "contrast": "20", "invert": false,
+      "blur": "1.2", "thr": "0.14", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "6", "maxCats": "1000",
+      "shading": false, "shadeCharset": ".·:", "shadeDensity": "30", "shadeThreshold": "45",
+      "charset": ".", "charsetPreset": ".", "autoOrient": false, "onlyDots": false, "layout": "h"
+    },
+    "Японский стиль (иероглифы)": {
+      "bright": "0", "contrast": "15", "invert": false,
+      "blur": "1.2", "thr": "0.12", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·", "shadeDensity": "25", "shadeThreshold": "50",
+      "charset": "あいうえおかきくけこ", "charsetPreset": "custom", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Тонкие точки (без заливки)": {
+      "bright": "0", "contrast": "15", "invert": false,
+      "blur": "1.2", "thr": "0.12", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "2", "maxCats": "1000",
+      "shading": false, "shadeCharset": ".·:", "shadeDensity": "30", "shadeThreshold": "45",
+      "charset": ".", "charsetPreset": ".", "autoOrient": false, "onlyDots": false, "layout": "h"
+    },
+    "Мягкие градиенты (всё в точках)": {
+      "bright": "5", "contrast": "20", "invert": false,
+      "blur": "1.6", "thr": "0.14", "thinning": true,
+      "fill": "88", "density": "100", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·:", "shadeDensity": "60", "shadeThreshold": "70",
+      "charset": ".", "charsetPreset": ".", "autoOrient": false, "onlyDots": false, "layout": "h"
+    },
+    "High contrast (жирно)": {
+      "bright": "0", "contrast": "50", "invert": false,
+      "blur": "0.8", "thr": "0.20", "thinning": true,
+      "fill": "88", "density": "100", "gridStep": "5", "maxCats": "1000",
+      "shading": false, "shadeCharset": ".·:", "shadeDensity": "30", "shadeThreshold": "45",
+      "charset": "-\\|/", "charsetPreset": "-\\|/", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Минимализм (мало символов)": {
+      "bright": "0", "contrast": "25", "invert": false,
+      "blur": "1.8", "thr": "0.22", "thinning": true,
+      "fill": "80", "density": "100", "gridStep": "6", "maxCats": "1000",
+      "shading": false, "shadeCharset": ".·:", "shadeDensity": "30", "shadeThreshold": "45",
+      "charset": ".", "charsetPreset": ".", "autoOrient": false, "onlyDots": false, "layout": "h"
+    },
+    "Гравюра (штриховка)": {
+      "bright": "0", "contrast": "25", "invert": false,
+      "blur": "0.8", "thr": "0.10", "thinning": true,
+      "fill": "90", "density": "100", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": "-/\\|", "shadeDensity": "45", "shadeThreshold": "55",
+      "charset": "-\\|/", "charsetPreset": "-\\|/", "autoOrient": true, "onlyDots": false, "layout": "h"
+    },
+    "Иврит-градиент": {
+      "bright": "0", "contrast": "15", "invert": false,
+      "blur": "1.4", "thr": "0.14", "thinning": true,
+      "fill": "85", "density": "100", "gridStep": "3", "maxCats": "1000",
+      "shading": true, "shadeCharset": ".·", "shadeDensity": "30", "shadeThreshold": "50",
+      "charset": "אבגדהוזחטיכלמנ", "charsetPreset": "custom", "autoOrient": true, "onlyDots": false, "layout": "h"
+    }
+  }
+}

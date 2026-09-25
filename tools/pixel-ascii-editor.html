@@ -1,0 +1,1828 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Pixel ASCII Editor v7.4</title>
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:#080a0c;color:#d8dce0;font:13px Arial,sans-serif;overflow:hidden}
+button,input,select,textarea{font:inherit;background:#20272c;color:#ddd;border:1px solid #45515a;border-radius:3px;padding:6px 9px;cursor:pointer}
+button:hover{background:#2b353c}
+button.primary{background:#40596b;border-color:#6f8ca0}
+button.gold{background:#4a3923;border-color:#84693f}
+button.green{background:#1f4a2a;border-color:#3d7a4a}
+button.danger{background:#3a2222;border-color:#744444}
+button.mini{padding:3px 6px;font-size:11px}
+button:disabled{opacity:.45;cursor:default}
+input,select,textarea{background:#080b0d;color:#ddd;border:1px solid #3b464e;border-radius:3px;padding:6px;cursor:text}
+input[type=range]{padding:0;cursor:pointer}
+.app{height:100%;display:grid;grid-template-columns:340px 1fr 340px;grid-template-rows:52px 1fr}
+header{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:0 14px;background:linear-gradient(#151d24,#0c1115);border-bottom:1px solid #38424a;overflow-x:auto;white-space:nowrap}
+.logo{font-size:14px;font-weight:bold;letter-spacing:1px}
+.badge{font-size:10px;color:#9eb2c0;border:1px solid #3d4c57;padding:3px 6px;border-radius:3px}
+.headerBtn{background:#2a3a46;border:1px solid #4a6478;color:#d8e4ec;padding:6px 8px;font-size:11px;font-weight:bold;border-radius:3px}
+.headerBtn:hover{background:#354957}
+.headerBtn.active{background:#c99c5b;border-color:#e0b878;color:#1a1208}
+.headerBtn.area.active{background:#3d7ea6;border-color:#67aed4;color:#eaf6ff}
+.headerBtn.dota.active{background:#4a2a6a;border-color:#8c5ec0;color:#f0e0ff}
+.headerRight{margin-left:auto;color:#8e9ba4;font-size:11px}
+.headerSep{width:1px;height:26px;background:#2b353c;margin:0 2px}
+.left,.right{overflow:auto;background:#12171b;border-right:1px solid #30383f;padding:10px}
+.right{border-right:0;border-left:1px solid #30383f}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:8px 0;color:#aebbc4}
+.group{border:1px solid #273139;background:#0d1114;padding:9px;margin-bottom:9px;border-radius:3px}
+.row{display:grid;grid-template-columns:1fr 120px;gap:6px;align-items:center;margin:6px 0;font-size:11px;color:#aab4bb}
+.row input[type=number],.row select,.row input[type=text]{width:120px}
+.row.full{display:block}
+.row.full input,.row.full select,.row.full textarea{width:100%}
+.hint{font-size:10px;line-height:1.4;color:#77838a}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+.slider-row{display:grid;grid-template-columns:1fr 80px 55px;gap:6px;align-items:center;margin:6px 0;font-size:11px;color:#aab4bb}
+.slider-row label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slider-row input[type=range]{width:100%;padding:0}
+.slider-row input[type=number]{width:55px;padding:4px 6px;text-align:center;font-family:monospace;font-size:12px;background:#0b0f12;border-color:#3b464e;color:#c99c5b;font-weight:bold}
+.drop{border:2px dashed #52636d;padding:12px;text-align:center;color:#8b989f;cursor:pointer;border-radius:4px}
+.drop:hover,.drop.over{background:#172027;border-color:#c99c5b;color:#e0cfa8}
+.penGrid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-top:6px;max-height:170px;overflow:auto}
+.penBtn{aspect-ratio:1;background:#0b0f12;border:1px solid #2c363d;color:#d5dce0;font:14px/1 Arial,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:3px;padding:0;min-height:26px}
+.penBtn:hover{background:#1a2430;border-color:#4a6478}
+.penBtn.active{background:#c99c5b;border-color:#e0b878;color:#1a1208;font-weight:bold}
+.penBtn.multisel{background:#5b4023;border-color:#c99c5b;color:#ffd99b}
+.toolGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px}
+.toolBtn{background:#0b0f12;border:1px solid #2c363d;color:#d5dce0;font:16px/1 Arial,sans-serif;cursor:pointer;padding:8px 0;border-radius:3px;text-align:center;position:relative}
+.toolBtn .lbl{position:absolute;bottom:-14px;left:0;right:0;font-size:8px;color:#77838a;font-weight:normal;pointer-events:none}
+.toolBtn:hover{background:#1a2430;border-color:#4a6478}
+.toolBtn.active{background:#c99c5b;border-color:#e0b878;color:#1a1208;font-weight:bold}
+.stageWrap{position:relative;padding:14px;display:flex;justify-content:center;align-items:flex-start}
+#stage{position:relative;width:1193px;height:593px;transform-origin:top left;background:#0e0a07;border:1px solid #4a5a68;box-shadow:0 0 30px #000;overflow:hidden;cursor:crosshair}
+body.edit-mode #stage{cursor:default}
+body.area-mode #stage{cursor:crosshair !important}
+#bgCanvas,#gridCanvas,#previewCanvas{position:absolute;inset:0;pointer-events:none}
+#bgCanvas{z-index:1}
+#gridCanvas{z-index:2;display:none}
+#previewCanvas{z-index:3;display:none}
+#symbolsLayer{position:absolute;inset:0;z-index:4}
+#hint{position:absolute;left:10px;top:8px;color:#77838a;font:10px monospace;pointer-events:none;z-index:5}
+
+/* === Символы: Arial/sans-serif ближе всего к Radiance в Dota === */
+.sym{
+  position:absolute;user-select:none;color:#d5dce0;
+  font-family: Arial, "Segoe UI", "Helvetica Neue", sans-serif;
+  font-weight: 400;
+  line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  padding:0;border:1px solid transparent;border-radius:2px;
+  white-space:pre;transform:translate(-50%,-50%);pointer-events:none;
+}
+.sym.selected{border-color:#d5a765;background:rgba(213,167,101,.15)}
+.sym.hover{border-color:rgba(120,155,177,.7);background:rgba(120,155,177,.10)}
+.selectionBox{position:absolute;border:1px dashed #67aed4;background:rgba(103,174,212,.12);pointer-events:none;z-index:9999;display:none;box-shadow:0 0 0 1px rgba(0,0,0,.4) inset}
+.groupBBox{position:absolute;border:1px dashed #d5a765;background:rgba(213,167,101,.04);pointer-events:none;z-index:9997;display:none;box-shadow:0 0 8px rgba(213,167,101,.2)}
+
+/* Красная рамка safe area */
+.safeArea{position:absolute;inset:0;pointer-events:none;z-index:6;display:none;
+  box-shadow: inset 0 0 0 2px #d54b3c, inset 0 0 25px rgba(213,75,60,.15);}
+.safeArea::after{content:'SAFE AREA 1193 × 593 · как в Dota';position:absolute;left:6px;top:4px;
+  font:10px monospace;color:#d54b3c;background:rgba(0,0,0,.6);padding:2px 6px;border-radius:2px}
+body.safe-on .safeArea{display:block}
+
+/* === РЕЖИМ DOTA PREVIEW: чистое полотно без элементов редактора === */
+body.dota-preview #hint,
+body.dota-preview .groupBBox,
+body.dota-preview .selectionBox{display:none !important}
+body.dota-preview .sym{border-color:transparent !important;background:transparent !important}
+body.dota-preview #stage{border-color:#000;background:#0a0805}
+body.dota-preview .left,
+body.dota-preview .right{opacity:.35;pointer-events:none}
+
+.ok{padding:6px;border:1px solid #355442;background:#0e1912;color:#9bbca3;font-size:10px;border-radius:3px}
+.warn{padding:6px;border:1px solid #684d31;background:#20170f;color:#cdb18b;font-size:10px;border-radius:3px}
+.err{padding:6px;border:1px solid #6b3030;background:#200f0f;color:#e5a3a3;font-size:10px;border-radius:3px}
+pre#jsonPrev{font:9px/1.3 monospace;white-space:pre-wrap;max-height:160px;overflow:auto;color:#b9c8d0;margin:0}
+.zoomBox{display:flex;align-items:center;gap:6px;font-size:11px;color:#8e9ba4}
+.zoomBox input[type=range]{width:100px}
+label.chk{display:flex;align-items:center;gap:6px;font-size:11px;margin-top:6px;color:#aab4bb;cursor:pointer}
+.fixedNote{font-size:10px;color:#c99c5b;background:#1a1408;border:1px solid #84693f;padding:6px;border-radius:3px;font-family:monospace;line-height:1.5}
+.bgItem{display:flex;align-items:center;gap:6px;padding:4px;border:1px solid #2c363d;border-radius:3px;margin-bottom:4px;font-size:10px;cursor:pointer}
+.bgItem.sel{border-color:#c99c5b;background:#1a1408}
+.bgItem img{width:44px;height:32px;object-fit:cover;border-radius:2px}
+.frameBuilder{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:6px}
+.frameSlot{background:#0b0f12;border:1px dashed #45515a;color:#d5dce0;font:18px/1 Arial,sans-serif;padding:6px;border-radius:3px;cursor:pointer;text-align:center;min-height:34px;display:flex;align-items:center;justify-content:center;position:relative}
+.frameSlot:hover{border-color:#4a6478;background:#1a2430}
+.frameSlot.active{border-style:solid;border-color:#c99c5b;background:#1a1408;box-shadow:0 0 0 1px #c99c5b inset}
+.frameSlot .cap{position:absolute;top:1px;left:3px;font-size:8px;color:#77838a;font-weight:normal}
+.frameSlot .clr{position:absolute;top:1px;right:3px;font-size:9px;color:#a55;cursor:pointer}
+.frameSlot .clr:hover{color:#f66}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+    <div class="logo">PIXEL ASCII v7.4</div>
+    <span class="badge">1193×593</span>
+    <button id="editToggle" class="headerBtn">✎ Ред: ВЫКЛ</button>
+    <button id="areaSelectBtn" class="headerBtn area" title="Режим выделения области (S)">⌗ Область</button>
+    <button id="dotaPreviewBtn" class="headerBtn dota" title="Показать так, как это выглядит в Dota 1:1">👁 Dota Preview</button>
+    <button id="undoBtn" class="headerBtn">↶ Отмена</button>
+    <button id="clearBtn" class="headerBtn">🗑 Очистить</button>
+    <div class="headerSep"></div>
+    <button id="gridToggle" class="headerBtn">▦ Сетка</button>
+    <button id="bgToggle" class="headerBtn">🖼 Фон</button>
+    <button id="safeToggle" class="headerBtn" title="Показать safe area Dota">🟥 Safe</button>
+    <button id="mirrorH" class="headerBtn" title="Симметрия H (M)">⇔ H</button>
+    <button id="mirrorV" class="headerBtn" title="Симметрия V (N)">⇕ V</button>
+    <button id="eraserBtn" class="headerBtn">🧽 Ластик</button>
+    <div class="headerSep"></div>
+    <button id="rotLBtn" class="headerBtn" title="Повернуть на 90° против часовой (Q)">↺ 90°</button>
+    <button id="rotRBtn" class="headerBtn" title="Повернуть на 90° по часовой (E)">↻ 90°</button>
+    <button id="flipHBtn" class="headerBtn" title="Отразить по горизонтали (H)">⇋</button>
+    <button id="flipVBtn" class="headerBtn" title="Отразить по вертикали (V)">⇅</button>
+    <div class="zoomBox">
+        <span>Zoom:</span>
+        <input type="range" id="zoom" min="0.3" max="2.0" step="0.05" value="1.00">
+        <span id="zoomVal">100%</span>
+    </div>
+    <div class="headerRight" id="status">Готово</div>
+</header>
+
+<aside class="left">
+<h2>0. Загрузка JSON</h2>
+<div class="group">
+    <div id="jsonDrop" class="drop">📁 JSON — клик или перетащи
+        <div style="margin-top:6px"><button type="button" id="chooseJson" class="gold">ВЫБРАТЬ</button></div>
+    </div>
+    <input id="jsonFile" type="file" accept=".json,application/json" multiple style="display:none">
+    <label class="chk"><input id="jsonClearFirst" type="checkbox"> Очистить холст</label>
+    <label class="chk"><input id="jsonAutoSelect" type="checkbox"> Автовыделение загруженного</label>
+    <div class="two" style="margin-top:6px">
+        <button id="stripBadChars" class="mini danger" title="Удалить все символы ║ и ═ с холста">🧹 Убрать ║═</button>
+        <button id="collapseDup" class="mini" title="Схлопнуть соседние одинаковые символы">🧷 Схлопнуть</button>
+    </div>
+</div>
+
+<h2>1. Фоны (несколько)</h2>
+<div class="group">
+    <div id="drop" class="drop">📁 PNG / JPG — клик или перетащи
+        <div style="margin-top:6px"><button type="button" id="chooseBg" class="gold">ДОБАВИТЬ</button></div>
+    </div>
+    <input id="bgFile" type="file" accept="image/*" multiple style="display:none">
+    <div id="bgList" style="margin-top:6px"></div>
+    <div id="bgControls" style="display:none;margin-top:6px">
+        <div class="slider-row"><label>X</label><input id="bgX" type="range" min="-1200" max="2400" step="1" value="0"><input id="bgXNum" type="number" value="0"></div>
+        <div class="slider-row"><label>Y</label><input id="bgY" type="range" min="-1200" max="1200" step="1" value="0"><input id="bgYNum" type="number" value="0"></div>
+        <div class="slider-row"><label>Масштаб</label><input id="bgScale" type="range" min="0.05" max="5" step="0.01" value="1"><input id="bgScaleNum" type="number" step="0.05" value="1"></div>
+        <div class="slider-row"><label>Прозр.</label><input id="bgAlpha" type="range" min="0" max="1" step="0.02" value="0.35"><input id="bgAlphaNum" type="number" step="0.05" value="0.35"></div>
+        <div class="two" style="margin-top:6px">
+            <button id="bgVisToggle" class="mini">👁 Скрыть/Показать</button>
+            <button id="bgDelete" class="mini danger">✖ Удалить</button>
+        </div>
+    </div>
+    <button id="bgClear" class="danger" style="width:100%;margin-top:6px">✖ Убрать все фоны</button>
+</div>
+
+<h2>2. Слои</h2>
+<div class="group">
+    <div class="three" id="layerBtns">
+        <button data-layer="bg" class="mini">Фон</button>
+        <button data-layer="main" class="mini active">Основной</button>
+        <button data-layer="decor" class="mini">Декор</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="showBg" checked> Показать «фон»</label>
+    <label class="chk"><input type="checkbox" id="showMain" checked> Показать «основной»</label>
+    <label class="chk"><input type="checkbox" id="showDecor" checked> Показать «декор»</label>
+</div>
+
+<h2>3. Инструмент</h2>
+<div class="group">
+    <div class="toolGrid" id="toolGrid"></div>
+    <div class="hint" style="margin-top:14px">Активный: <b id="toolLabel">✎ Карандаш</b> · Shift — квадрат/круг · ПКМ — удалить</div>
+</div>
+
+<h2>4. Конструктор рамок</h2>
+<div class="group">
+    <label class="chk"><input id="useCustomFrame" type="checkbox"> Использовать свой конструктор</label>
+    <div class="hint" style="margin-top:4px">Кликни на ячейку → выбери символ в разделе «Перо»</div>
+    <div class="frameBuilder" id="frameBuilder">
+        <div class="frameSlot" data-slot="tl"><span class="cap">ЛВ</span><span class="sym"></span><span class="clr">✕</span></div>
+        <div class="frameSlot" data-slot="h"><span class="cap">Гор</span><span class="sym"></span><span class="clr">✕</span></div>
+        <div class="frameSlot" data-slot="tr"><span class="cap">ПВ</span><span class="sym"></span><span class="clr">✕</span></div>
+        <div class="frameSlot" data-slot="v"><span class="cap">Верт</span><span class="sym"></span><span class="clr">✕</span></div>
+        <div class="frameSlot" data-slot="center"><span class="cap">Центр</span><span class="sym"></span><span class="clr">✕</span></div>
+        <div class="frameSlot" data-slot="v2"><span class="cap">Верт</span><span class="sym"></span><span class="clr">✕</span></div>
+        <div class="frameSlot" data-slot="bl"><span class="cap">ЛН</span><span class="sym"></span><span class="clr">✕</span></div>
+        <div class="frameSlot" data-slot="h2"><span class="cap">Низ</span><span class="sym"></span><span class="clr">✕</span></div>
+        <div class="frameSlot" data-slot="br"><span class="cap">ПН</span><span class="sym"></span><span class="clr">✕</span></div>
+    </div>
+    <div class="row full" style="margin-top:6px"><label>Пресеты рамок</label>
+        <select id="frameStyle" style="width:100%">
+            <option value="simple">Простая ┌─┐</option>
+            <option value="double">Двойные углы ╔─╗</option>
+            <option value="round">Скруглённая ╭─╮</option>
+            <option value="dotted">Пунктирная ┌┄┐</option>
+            <option value="heavy">Толстая ┏━┓</option>
+            <option value="deco">Цветочная ❀─❀</option>
+            <option value="star">Звёздная ★─★</option>
+            <option value="heart">Сердечная ♥─♥</option>
+            <option value="music">Музыкальная ♪─♪</option>
+            <option value="snow">Снежная ❄─❄</option>
+            <option value="cross">Крестовая ✚─✚</option>
+            <option value="spade">Пики ♠─♠</option>
+            <option value="dotdec">Точечная •─•</option>
+            <option value="wavy">Волнистая ~─~</option>
+            <option value="geometric">Геометрическая ◇─◇</option>
+        </select>
+    </div>
+    <div class="two" style="margin-top:6px">
+        <button id="loadFramePreset" class="mini">📥 Из пресета</button>
+        <button id="clearFrame" class="mini danger">✖ Сброс</button>
+    </div>
+</div>
+
+<h2>5. Перо / символы</h2>
+<div class="group">
+    <select id="penCategory" style="width:100%"></select>
+    <label class="chk"><input id="multiMode" type="checkbox"> Мульти-режим (случайный)</label>
+    <div class="penGrid" id="penGrid"></div>
+    <div class="row full" style="margin-top:8px"><label>Свой символ (через пробел)</label>
+        <input id="customPen" value="." style="width:100%;font-family:monospace;text-align:center">
+    </div>
+    <div class="row full" style="margin-top:6px"><label>Цвет</label>
+        <input id="penColor" type="color" value="#d5dce0" style="width:100%;height:32px;padding:2px;cursor:pointer">
+    </div>
+    <div class="row"><label>Плотность</label>
+        <input id="density" type="range" min="5" max="100" step="5" value="100">
+    </div>
+    <div class="hint">Текущее перо: <b id="penLabel">.</b></div>
+</div>
+
+<h2>6. Размер символа</h2>
+<div class="group">
+    <div class="slider-row">
+        <label>Размер (px)</label>
+        <input id="fontSize" type="range" min="6" max="32" step="1" value="18">
+        <input id="fontSizeNum" type="number" min="6" max="32" step="1" value="18">
+    </div>
+    <div class="hint">Для Dota — <b>18 px</b>.</div>
+</div>
+
+<h2>7. Масштаб итоговой картинки</h2>
+<div class="group">
+    <div class="row"><label>Заполнение</label>
+        <input id="fill" type="range" min="20" max="100" step="1" value="90">
+    </div>
+    <button id="applyFill" class="primary" style="width:100%;margin-top:6px">⇲ Применить</button>
+</div>
+
+<h2>8. Экспорт</h2>
+<div class="group">
+    <button id="jsonBtn" class="green" style="width:100%;font-weight:bold;padding:10px">💾 СКАЧАТЬ JSON</button>
+    <button id="pngBtn" class="primary" style="width:100%;margin-top:8px">🖼 Превью PNG</button>
+    <div class="fixedNote" style="margin-top:6px">"width": 30.0 · "height": 30.0</div>
+</div>
+</aside>
+
+<main style="overflow:auto;background:#07090a">
+<div class="stageWrap">
+    <div id="stage">
+        <canvas id="bgCanvas" width="1193" height="593"></canvas>
+        <canvas id="gridCanvas" width="1193" height="593"></canvas>
+        <canvas id="previewCanvas" width="1193" height="593"></canvas>
+        <div id="symbolsLayer"></div>
+        <div class="safeArea"></div>
+        <div class="groupBBox" id="groupBBox"></div>
+        <div class="selectionBox" id="selectionBox"></div>
+        <div id="hint">клик = поставить · S = область · E = редактирование · тащи внутри рамки</div>
+    </div>
+</div>
+</main>
+
+<aside class="right">
+<h2>Выделение</h2>
+<div class="group">
+    <div class="ok" id="selInfo">Ничего не выбрано</div>
+    <div class="three" style="margin-top:6px">
+        <button class="mini" id="rot90">↻90°</button>
+        <button class="mini" id="rot180">↻180°</button>
+        <button class="mini" id="rot270">↻270°</button>
+    </div>
+    <div class="two" style="margin-top:4px">
+        <button class="mini" id="flipH">⇔ Отразить H</button>
+        <button class="mini" id="flipV">⇕ Отразить V</button>
+    </div>
+    <div class="two" style="margin-top:4px">
+        <button class="mini" id="copySel">📋 Копировать</button>
+        <button class="mini" id="pasteSel">📥 Вставить</button>
+    </div>
+    <div class="two" style="margin-top:4px">
+        <button class="mini primary" id="dupSel">⧉ Дублировать</button>
+        <button class="mini danger" id="delSel">🗑 Удалить</button>
+    </div>
+    <div class="three" style="margin-top:4px">
+        <button class="mini" id="selAll">Всё</button>
+        <button class="mini" id="selNone">Снять</button>
+        <button class="mini" id="selLayer">Слой</button>
+    </div>
+</div>
+
+<h2>Масштаб выделенного</h2>
+<div class="group">
+    <div class="two">
+        <button class="mini gold" id="scaleUpBtn">＋ ×1.25</button>
+        <button class="mini" id="scaleDownBtn">－ ×0.8</button>
+    </div>
+    <div class="two" style="margin-top:4px">
+        <button class="mini green" id="scaleFitBtn">⛶ Заполнить холст</button>
+        <button class="mini" id="scaleResetBtn">↺ Сброс</button>
+    </div>
+    <div class="row" style="margin-top:6px">
+        <label>Точный (×)</label>
+        <input id="scaleFactor" type="number" min="0.05" max="20" step="0.05" value="1">
+    </div>
+    <button id="scaleApplyBtn" class="primary mini" style="width:100%;margin-top:6px">Применить масштаб</button>
+</div>
+
+<h2>Замена символа</h2>
+<div class="group">
+    <div class="hint">Меняет символ во всех выделенных</div>
+    <div class="row full" style="margin-top:6px">
+        <input id="replaceCharInput" type="text" value="." placeholder="Новый символ">
+    </div>
+    <button id="replaceCharBtn" class="gold mini" style="width:100%;margin-top:6px">🔁 Заменить</button>
+</div>
+
+<h2>Статистика</h2>
+<div class="group" id="stats"></div>
+
+<h2>JSON предпросмотр</h2>
+<div class="group"><pre id="jsonPrev"></pre></div>
+</aside>
+</div>
+
+<script>
+'use strict';
+const STAGE_W = 1193, STAGE_H = 593;
+const $ = id => document.getElementById(id);
+
+/* ============ БИБЛИОТЕКА СИМВОЛОВ (без ║ ═) ============ */
+const SYMBOL_LIB = {
+  'База':        ['.','-','|','/','\\','+','*','#','%','@',':',';','=','~','^','`','·','•','∙','°'],
+  'Рамки':       ['─','│','┌','┐','└','┘','├','┤','┬','┴','┼','╭','╮','╯','╰','┏','┓','┗','┛','━','┃','┄','┆','╌','╎','▏','▕','▔','▁','▂','▃','▄','▅','▆','▇','█','▓','▒','░','╱','╲','╳'],
+  'Геом':        ['■','□','▲','△','▼','▽','◆','◇','○','●','◉','◎','★','☆','✪','✦','✧','✩','✫','✬','✭','✮','✯','⬟','⬢','⬣','▣','▤','▥','▦','▧','▨','▩','▪','▫','▬','▭','▮','▯'],
+  'Круги':       ['◯','◌','◍','◐','◑','◒','◓','◔','◕','◖','◗','◴','◵','◶','◷','⊙','⊚','⊛','⊝','⊜'],
+  'Символы':     ['♠','♡','♣','♤','♥','♦','♧','♨','♩','♪','♫','♬','♭','♯','☉','☩','☯','☮','☘','☕','⚘'],
+  'Стрелки':     ['←','↑','→','↓','↔','↕','↖','↗','↘','↙','⇒','⇔','⇐','⇑','⇓','⇖','⇗','⇘','⇙','⇚','⇛','⇜','⇝','↺','↻'],
+  'Мат':         ['±','×','÷','≈','≠','≤','≥','∞','√','∑','∏','∫','‰','§','¶','†','‡','‽','№','µ','Ω','π','∆','∇','∅','∈','∉','∩','∪','⊂','⊃','⊆','⊇'],
+  'Декор':       ['❀','✿','❁','✾','❋','❊','✻','✼','✽','✳','✲','❉','❈','❇','❆','❃','✱'],
+  'Снег':        ['❄','❅','❆','❇','✻','✼','✽','✾','❀','❁','❋'],
+  'Латиница':    ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'],
+  'Кириллица':   ['А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я'],
+  'Цифры':       ['0','1','2','3','4','5','6','7','8','9'],
+  'Японский':    ['あ','い','う','え','お','か','き','く','け','こ','さ','し','す','せ','そ','た','ち','つ','て','と','な','に','ぬ','ね','の','は','ひ','ふ','へ','ほ','ま','み','む','め','も'],
+  'Катакана':    ['ア','イ','ウ','エ','オ','カ','キ','ク','ケ','コ','サ','シ','ス','セ','ソ','タ','チ','ツ','テ','ト','ナ','ニ','ヌ','ネ','ノ','ハ','ヒ','フ','ヘ','ホ'],
+  'Корейский':   ['ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄸ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅃ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'],
+  'Спец':        ['☺','☻','☼','♁','♂','♀','†','‡','•','‰','‱','′','″','‴','※','‼','№','℗','©','®','™','↵','⇥','⇤','⌫','⌦','⌧'],
+  'Соединения':  ['┌','┍','┎','┏','┐','┑','┒','┓','└','┕','┖','┗','┘','┙','┚','┛','├','┝','┞','┟','┠','┡','┢','┣','┤','┥','┦','┧','┨','┩','┪','┫','┬','┭','┮','┯','┰','┱','┲','┳','┴','┵','┶','┷','┸','┹','┺','┻','┼','┽','┾','┿'],
+  'Скругления':  ['╭','╮','╯','╰','◜','◝','◞','◟','◠','◡','⌒','⌣'],
+  'Цветы':       ['❀','✿','❁','✾','❃','❋','❊','❉','❈','❇','❆','✻','✼','✽','✺','✹','✸','✷','✶','✵','✴','✳','✲','✱'],
+};
+
+const TOOLS = [
+  {id:'pencil',   label:'✎', name:'Карандаш'},
+  {id:'line',     label:'╱', name:'Линия'},
+  {id:'hline',    label:'━', name:'Горизонт.'},
+  {id:'vline',    label:'┃', name:'Вертикаль'},
+  {id:'rect',     label:'▭', name:'Прямоуг.'},
+  {id:'rectfill', label:'▬', name:'Залив. прямоуг.'},
+  {id:'ellipse',  label:'◯', name:'Эллипс'},
+  {id:'diamond',  label:'◇', name:'Ромб'},
+  {id:'triangle', label:'△', name:'Треугольник'},
+  {id:'star',     label:'★', name:'Звезда'},
+  {id:'spiral',   label:'◎', name:'Спираль'},
+  {id:'wave',     label:'∿', name:'Волна'},
+  {id:'frame',    label:'▣', name:'Рамка'},
+  {id:'fill',     label:'▩', name:'Заливка'},
+];
+
+/* Пресеты рамок — БЕЗ ║ ═ */
+const FRAME_STYLES = {
+  simple:   {tl:'┌',tr:'┐',bl:'└',br:'┘',h:'─',v:'│'},
+  double:   {tl:'╔',tr:'╗',bl:'╚',br:'╝',h:'─',v:'│'},
+  round:    {tl:'╭',tr:'╮',bl:'╰',br:'╯',h:'─',v:'│'},
+  dotted:   {tl:'┌',tr:'┐',bl:'└',br:'┘',h:'┄',v:'┆'},
+  heavy:    {tl:'┏',tr:'┓',bl:'┗',br:'┛',h:'━',v:'┃'},
+  deco:     {tl:'❀',tr:'❀',bl:'❀',br:'❀',h:'─',v:'│'},
+  star:     {tl:'★',tr:'★',bl:'★',br:'★',h:'─',v:'│'},
+  heart:    {tl:'♥',tr:'♥',bl:'♥',br:'♥',h:'─',v:'│'},
+  music:    {tl:'♪',tr:'♪',bl:'♪',br:'♪',h:'─',v:'│'},
+  snow:     {tl:'❄',tr:'❄',bl:'❄',br:'❄',h:'─',v:'│'},
+  cross:    {tl:'✚',tr:'✚',bl:'✚',br:'✚',h:'─',v:'│'},
+  spade:    {tl:'♠',tr:'♠',bl:'♠',br:'♠',h:'─',v:'│'},
+  dotdec:   {tl:'•',tr:'•',bl:'•',br:'•',h:'·',v:':'},
+  wavy:     {tl:'~',tr:'~',bl:'~',br:'~',h:'~',v:'~'},
+  geometric:{tl:'◇',tr:'◇',bl:'◇',br:'◇',h:'─',v:'│'},
+};
+
+/* ============ СОСТОЯНИЕ ============ */
+const state = {
+  symbols: [],
+  nextId: 1,
+  pen: '.',
+  penColor: '#d5dce0',
+  fontSize: 18,
+  selected: new Set(),
+  bgImages: [],
+  selectedBgIdx: -1,
+  bgVisible: true,
+  eraseMode: false,
+  editMode: false,
+  areaSelectMode: false,
+  dotaPreview: false,
+  safeArea: false,
+  tool: 'pencil',
+  density: 100,
+  layer: 'main',
+  mirrorH: false,
+  mirrorV: false,
+  multiMode: false,
+  frameStyle: 'simple',
+  useCustomFrame: false,
+  customFrame: { tl:'', tr:'', bl:'', br:'', h:'', v:'', center:'', h2:'', v2:'' },
+  activeFrameSlot: null,
+};
+const VISIBLE_LAYERS = { bg:true, main:true, decor:true };
+const LAYER_ORDER = { bg:0, main:1, decor:2 };
+
+/* ============ ИСТОРИЯ ============ */
+const history = [];
+let historyMute = false;
+function snapshot(){ return JSON.stringify({symbols: state.symbols.map(s=>({...s})), nextId: state.nextId}); }
+function pushHistory(){ if(historyMute) return; history.push(snapshot()); if(history.length>80) history.shift(); updateUndoUI(); }
+function undo(){
+  if(!history.length) return;
+  historyMute = true;
+  const s = JSON.parse(history.pop());
+  state.symbols = s.symbols;
+  state.nextId = s.nextId;
+  state.selected.clear();
+  historyMute = false;
+  render(); updateUndoUI();
+}
+function updateUndoUI(){ const b=$('undoBtn'); if(b) b.disabled = !history.length; }
+
+/* ============ ПЕРО ============ */
+function pickPenChar(){
+  const parts = state.pen.split(/\s+/).filter(Boolean);
+  if(!parts.length) return '';
+  return parts[Math.floor(Math.random()*parts.length)];
+}
+function updatePenLabel(){ const el=$('penLabel'); if(el) el.textContent = state.pen || '—'; }
+
+function buildPenCategory(){
+  const sel = $('penCategory');
+  sel.innerHTML = '';
+  Object.keys(SYMBOL_LIB).forEach(k=>{
+    const o = document.createElement('option');
+    o.value = k; o.textContent = k;
+    sel.appendChild(o);
+  });
+  sel.value = 'База';
+}
+function buildPenGrid(){
+  const cat = $('penCategory').value;
+  const list = SYMBOL_LIB[cat] || [];
+  const grid = $('penGrid');
+  grid.innerHTML = '';
+  const curSet = new Set(state.pen.split(/\s+/).filter(Boolean));
+  list.forEach(ch=>{
+    const b = document.createElement('button');
+    b.className = 'penBtn';
+    if(state.multiMode){
+      if(curSet.has(ch)) b.classList.add('multisel');
+    } else {
+      if(state.pen === ch) b.classList.add('active');
+    }
+    b.textContent = ch;
+    b.title = ch;
+    b.onclick = () => {
+      if(state.activeFrameSlot){
+        state.customFrame[state.activeFrameSlot] = ch;
+        state.useCustomFrame = true;
+        $('useCustomFrame').checked = true;
+        state.activeFrameSlot = null;
+        updateFrameBuilderUI();
+        $('status').textContent = '✓ Символ «'+ch+'» в слот рамки';
+        state.tool = 'frame';
+        buildToolGrid();
+        return;
+      }
+      if(state.multiMode){
+        const s = new Set(state.pen.split(/\s+/).filter(Boolean));
+        if(s.has(ch)) s.delete(ch); else s.add(ch);
+        state.pen = [...s].join(' ') || '.';
+      } else {
+        state.pen = ch;
+        state.eraseMode = false;
+        $('eraserBtn').classList.remove('active');
+      }
+      updatePenLabel();
+      buildPenGrid();
+    };
+    grid.appendChild(b);
+  });
+}
+function setPenFromInput(v){
+  state.pen = v || '.';
+  updatePenLabel();
+  buildPenGrid();
+}
+
+/* ============ ИНСТРУМЕНТЫ ============ */
+function buildToolGrid(){
+  const grid = $('toolGrid');
+  grid.innerHTML = '';
+  TOOLS.forEach(t=>{
+    const b = document.createElement('button');
+    b.className = 'toolBtn' + (state.tool===t.id?' active':'');
+    b.innerHTML = t.label + '<span class="lbl">' + t.name.split(' ')[0] + '</span>';
+    b.title = t.name;
+    b.onclick = () => {
+      state.tool = t.id;
+      if(state.areaSelectMode && t.id!=='pencil'){ setAreaSelect(false); }
+      buildToolGrid(); updateToolLabel();
+    };
+    grid.appendChild(b);
+  });
+  updateToolLabel();
+}
+function updateToolLabel(){
+  const t = TOOLS.find(x=>x.id===state.tool);
+  const el = $('toolLabel');
+  if(el && t) el.textContent = t.label + ' ' + t.name;
+}
+
+/* ============ КОНСТРУКТОР РАМОК ============ */
+function updateFrameBuilderUI(){
+  document.querySelectorAll('.frameSlot').forEach(el=>{
+    const slot = el.dataset.slot;
+    const symEl = el.querySelector('.sym');
+    const v = state.customFrame[slot] || '';
+    symEl.textContent = v || '?';
+    el.classList.toggle('active', state.activeFrameSlot === slot);
+  });
+}
+function setupFrameBuilder(){
+  document.querySelectorAll('.frameSlot').forEach(el=>{
+    el.addEventListener('click', ev=>{
+      if(ev.target.classList.contains('clr')) return;
+      const slot = el.dataset.slot;
+      if(state.activeFrameSlot === slot){
+        const cur = state.customFrame[slot] || '';
+        const v = prompt('Символ для слота «'+slot+'»:', cur);
+        if(v !== null){
+          state.customFrame[slot] = v;
+          state.useCustomFrame = true;
+          $('useCustomFrame').checked = true;
+        }
+        state.activeFrameSlot = null;
+      } else {
+        state.activeFrameSlot = slot;
+        $('status').textContent = '↓ Выбери символ в «Перо»';
+      }
+      updateFrameBuilderUI();
+    });
+    el.querySelector('.clr').addEventListener('click', ev=>{
+      ev.stopPropagation();
+      state.customFrame[el.dataset.slot] = '';
+      updateFrameBuilderUI();
+    });
+  });
+}
+function loadPresetIntoBuilder(){
+  const S = FRAME_STYLES[$('frameStyle').value] || FRAME_STYLES.simple;
+  state.customFrame = {
+    tl: S.tl, tr: S.tr, bl: S.bl, br: S.br,
+    h: S.h, h2: S.h, v: S.v, v2: S.v, center: ''
+  };
+  state.useCustomFrame = true;
+  $('useCustomFrame').checked = true;
+  updateFrameBuilderUI();
+  $('status').textContent = '✓ Пресет загружен';
+}
+function clearFrameBuilder(){
+  state.customFrame = { tl:'',tr:'',bl:'',br:'',h:'',v:'',h2:'',v2:'',center:'' };
+  state.activeFrameSlot = null;
+  updateFrameBuilderUI();
+}
+
+/* ============ ФОНЫ ============ */
+function drawBg(){
+  const c = $('bgCanvas'), ctx = c.getContext('2d');
+  c.width = STAGE_W; c.height = STAGE_H;
+  ctx.clearRect(0,0,c.width,c.height);
+  if(!state.bgVisible || !state.bgImages.length){ c.style.display='none'; return; }
+  c.style.display = 'block';
+  for(const bg of state.bgImages){
+    if(!bg.visible || !bg.img) continue;
+    const w = bg.img.naturalWidth * bg.scale;
+    const h = bg.img.naturalHeight * bg.scale;
+    ctx.globalAlpha = bg.alpha;
+    ctx.drawImage(bg.img, bg.x, bg.y, w, h);
+  }
+  ctx.globalAlpha = 1;
+}
+function addBgFile(f){
+  const r = new FileReader();
+  r.onload = () => {
+    const im = new Image();
+    im.onload = () => {
+      const scale = Math.min(STAGE_W/im.naturalWidth, STAGE_H/im.naturalHeight);
+      const w = im.naturalWidth*scale, h = im.naturalHeight*scale;
+      state.bgImages.push({
+        id: Math.random().toString(36).slice(2),
+        img: im, x: (STAGE_W-w)/2, y: (STAGE_H-h)/2,
+        scale, alpha: 0.35, visible: true, name: f.name,
+      });
+      state.selectedBgIdx = state.bgImages.length - 1;
+      drawBg(); renderBgList(); updateBgControls();
+      $('status').textContent = 'Фон: ' + im.naturalWidth + '×' + im.naturalHeight;
+    };
+    im.src = r.result;
+  };
+  r.readAsDataURL(f);
+}
+function renderBgList(){
+  const list = $('bgList');
+  list.innerHTML = '';
+  if(!state.bgImages.length){
+    list.innerHTML = '<div class="hint">Нет фонов</div>';
+    return;
+  }
+  state.bgImages.forEach((bg, i)=>{
+    const d = document.createElement('div');
+    d.className = 'bgItem' + (i===state.selectedBgIdx?' sel':'');
+    d.innerHTML = `<img src="${bg.img.src}"><div style="flex:1">${bg.name.slice(0,18)}<br>
+      <span style="color:#77838a">${bg.visible?'✓ видно':'✗ скрыт'} · ${Math.round(bg.alpha*100)}%</span></div>`;
+    d.onclick = () => { state.selectedBgIdx = i; renderBgList(); updateBgControls(); };
+    list.appendChild(d);
+  });
+}
+function updateBgControls(){
+  if(state.selectedBgIdx<0 || !state.bgImages[state.selectedBgIdx]){
+    $('bgControls').style.display = 'none';
+    return;
+  }
+  $('bgControls').style.display = 'block';
+  const bg = state.bgImages[state.selectedBgIdx];
+  $('bgX').value = bg.x; $('bgXNum').value = Math.round(bg.x);
+  $('bgY').value = bg.y; $('bgYNum').value = Math.round(bg.y);
+  $('bgScale').value = bg.scale; $('bgScaleNum').value = bg.scale.toFixed(2);
+  $('bgAlpha').value = bg.alpha; $('bgAlphaNum').value = bg.alpha.toFixed(2);
+}
+
+/* ============ СЕТКА ============ */
+function drawGrid(){
+  const c = $('gridCanvas'), ctx = c.getContext('2d');
+  c.width = STAGE_W; c.height = STAGE_H;
+  ctx.clearRect(0,0,c.width,c.height);
+  if(c.style.display === 'none') return;
+  ctx.strokeStyle = 'rgba(120,155,177,.15)';
+  for(let x=0;x<=STAGE_W;x+=10){ ctx.beginPath(); ctx.moveTo(x+.5,0); ctx.lineTo(x+.5,STAGE_H); ctx.stroke(); }
+  for(let y=0;y<=STAGE_H;y+=14){ ctx.beginPath(); ctx.moveTo(0,y+.5); ctx.lineTo(STAGE_W,y+.5); ctx.stroke(); }
+}
+
+/* ============ РЕНДЕР ============ */
+function render(){
+  const layerEl = $('symbolsLayer');
+  layerEl.innerHTML = '';
+  const sorted = [...state.symbols].sort((a,b)=>(LAYER_ORDER[a.layer||'main']||1)-(LAYER_ORDER[b.layer||'main']||1));
+  sorted.forEach(s=>{
+    const l = s.layer || 'main';
+    if(!VISIBLE_LAYERS[l]) return;
+    const d = document.createElement('div');
+    d.className = 'sym' + (state.selected.has(s.id)?' selected':'');
+    d.style.left = s.x + 'px';
+    d.style.top = s.y + 'px';
+    d.style.fontSize = s.fs + 'px';
+    d.style.color = s.color || '#d5dce0';
+    d.textContent = s.ch;
+    d.dataset.id = s.id;
+    layerEl.appendChild(d);
+  });
+  updateStats();
+  updateJSONPreview();
+  updateSelInfo();
+  updateGroupBBox();
+}
+function updateGroupBBox(){
+  const b = selectionBounds();
+  const el = $('groupBBox');
+  if(!b || !state.selected.size || state.areaSelectMode || state.dotaPreview){
+    el.style.display = 'none';
+    return;
+  }
+  const pad = 14;
+  el.style.display = 'block';
+  el.style.left = (b.minX - pad) + 'px';
+  el.style.top = (b.minY - pad) + 'px';
+  el.style.width = Math.max(4, b.w + pad*2) + 'px';
+  el.style.height = Math.max(4, b.h + pad*2) + 'px';
+}
+function updateStats(){
+  const byLayer = {bg:0,main:0,decor:0};
+  for(const s of state.symbols) byLayer[s.layer||'main']++;
+  $('stats').innerHTML =
+    `<div class="ok">Всего: <b>${state.symbols.length}</b></div>`+
+    `<div class="hint" style="margin-top:6px">Основной: ${byLayer.main} · Декор: ${byLayer.decor} · Фон: ${byLayer.bg}</div>`+
+    `<div class="hint">Инструмент: ${state.tool}</div>`+
+    `<div class="hint">Режим: ${state.dotaPreview?'Dota Preview':(state.areaSelectMode?'выделение области':(state.editMode?'редактирование':'рисование'))}</div>`+
+    `<div class="hint">Плотность: ${state.density}%</div>`+
+    `<div class="hint">Размер: ${state.fontSize}px</div>`+
+    `<div class="hint">Зеркало: ${state.mirrorH?'H ':''}${state.mirrorV?'V ':''}${!state.mirrorH&&!state.mirrorV?'выкл':''}</div>`;
+}
+function updateSelInfo(){
+  const el = $('selInfo');
+  if(!state.selected.size){ el.textContent = 'Ничего не выбрано'; return; }
+  el.innerHTML = `Выбрано: <b>${state.selected.size}</b><br><span style="color:#c99c5b;font-size:10px">Тащи внутри рамки, чтобы двигать</span>`;
+}
+function updateJSONPreview(){
+  const slice = state.symbols.slice(0,5).map(s=>({
+    category_name: s.ch,
+    x_position: +(s.x-9).toFixed(2),
+    y_position: +(s.y-15).toFixed(2),
+    width: 30.000000, height: 30.000000, hero_ids: []
+  }));
+  $('jsonPrev').textContent = JSON.stringify({
+    version:3,
+    configs:[{config_name:'PixelArt', total: state.symbols.length, categories: slice}]
+  }, null, 2) + (state.symbols.length>5? `\n... (всего ${state.symbols.length})`:'');
+}
+
+/* ============ КООРДИНАТЫ ============ */
+const stage = $('stage');
+function getZoom(){ return parseFloat($('zoom').value)||1; }
+function stagePoint(e){
+  const r = stage.getBoundingClientRect();
+  const z = getZoom();
+  return { x:(e.clientX-r.left)/z, y:(e.clientY-r.top)/z };
+}
+function stepPx(){
+  const d = Math.max(5, Math.min(100, state.density));
+  return Math.max(3, Math.round(3*(100/d)));
+}
+
+/* ============ РАЗМЕЩЕНИЕ ============ */
+function placeSymbolRaw(x,y,ch,fs,color,layer){
+  const id = state.nextId++;
+  state.symbols.push({ id, ch, x, y, fs, color, layer: layer || state.layer || 'main' });
+  return id;
+}
+function placeSymbol(x, y, chOverride, fsOverride, colorOverride){
+  const ch = (chOverride !== undefined) ? chOverride : pickPenChar();
+  if(!ch || !ch.trim()) return false;
+  const fs = (fsOverride !== undefined) ? fsOverride : state.fontSize;
+  const color = (colorOverride !== undefined) ? colorOverride : state.penColor;
+  const L = state.layer;
+  placeSymbolRaw(x, y, ch, fs, color, L);
+  if(state.mirrorH) placeSymbolRaw(STAGE_W - x, y, ch, fs, color, L);
+  if(state.mirrorV) placeSymbolRaw(x, STAGE_H - y, ch, fs, color, L);
+  if(state.mirrorH && state.mirrorV) placeSymbolRaw(STAGE_W - x, STAGE_H - y, ch, fs, color, L);
+  return true;
+}
+
+/* ============ ФИГУРЫ ============ */
+function drawLine(a,b,useDensity){
+  const dx = b.x-a.x, dy = b.y-a.y;
+  const dist = Math.hypot(dx,dy);
+  const step = useDensity ? stepPx() : 4;
+  const steps = Math.max(1, Math.floor(dist/step));
+  for(let i=0;i<=steps;i++){
+    const t = i/steps;
+    placeSymbol(a.x+dx*t, a.y+dy*t);
+  }
+}
+function drawRect(a,b,fill){
+  const x1=Math.min(a.x,b.x), y1=Math.min(a.y,b.y);
+  const x2=Math.max(a.x,b.x), y2=Math.max(a.y,b.y);
+  const st = stepPx();
+  if(fill){
+    for(let y=y1;y<=y2;y+=st)
+      for(let x=x1;x<=x2;x+=st) placeSymbol(x,y);
+  } else {
+    for(let x=x1;x<=x2;x+=st){ placeSymbol(x,y1); placeSymbol(x,y2); }
+    for(let y=y1;y<=y2;y+=st){ placeSymbol(x1,y); placeSymbol(x2,y); }
+  }
+}
+function drawEllipse(a,b,square){
+  const cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
+  let rx = Math.abs(b.x-a.x)/2, ry = Math.abs(b.y-a.y)/2;
+  if(square) rx = ry = Math.max(rx, ry);
+  const st = stepPx();
+  const per = Math.max(12, Math.ceil((Math.PI*(rx+ry))/st)*2);
+  for(let i=0;i<per;i++){
+    const t = i/per*Math.PI*2;
+    placeSymbol(cx+Math.cos(t)*rx, cy+Math.sin(t)*ry);
+  }
+}
+function drawDiamond(a,b,square){
+  const cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
+  let rx = Math.abs(b.x-a.x)/2, ry = Math.abs(b.y-a.y)/2;
+  if(square) rx = ry = Math.max(rx, ry);
+  drawLine({x:cx, y:cy-ry},{x:cx+rx, y:cy}, true);
+  drawLine({x:cx+rx, y:cy},{x:cx, y:cy+ry}, true);
+  drawLine({x:cx, y:cy+ry},{x:cx-rx, y:cy}, true);
+  drawLine({x:cx-rx, y:cy},{x:cx, y:cy-ry}, true);
+}
+function drawTriangle(a,b,square){
+  let x1=Math.min(a.x,b.x), y1=Math.min(a.y,b.y);
+  let x2=Math.max(a.x,b.x), y2=Math.max(a.y,b.y);
+  if(square){
+    const side = Math.max(x2-x1, y2-y1);
+    x2 = x1+side; y2 = y1+side;
+  }
+  const top = {x:(x1+x2)/2, y:y1};
+  const bl = {x:x1, y:y2};
+  const br = {x:x2, y:y2};
+  drawLine(top,bl,true); drawLine(bl,br,true); drawLine(br,top,true);
+}
+function drawStar(a,b,points,inner){
+  const cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
+  const rx=Math.abs(b.x-a.x)/2, ry=Math.abs(b.y-a.y)/2;
+  const rOut = Math.min(rx, ry);
+  const rIn = rOut * (inner||0.42);
+  const n = points||5;
+  const verts = [];
+  for(let i=0;i<n*2;i++){
+    const r = (i%2===0) ? rOut : rIn;
+    const ang = -Math.PI/2 + i*Math.PI/n;
+    verts.push({x: cx+Math.cos(ang)*r, y: cy+Math.sin(ang)*r});
+  }
+  for(let i=0;i<verts.length;i++){
+    drawLine(verts[i], verts[(i+1)%verts.length], true);
+  }
+}
+function drawSpiral(a,b){
+  const cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
+  const rmax = Math.min(Math.abs(b.x-a.x), Math.abs(b.y-a.y))/2;
+  if(rmax < 5) return;
+  const turns = 5;
+  const st = stepPx();
+  const totalAngle = turns*Math.PI*2;
+  const steps = Math.max(20, Math.ceil((rmax*totalAngle)/st));
+  for(let i=0;i<=steps;i++){
+    const t = i/steps;
+    const ang = t*totalAngle;
+    const r = t*rmax;
+    placeSymbol(cx+Math.cos(ang)*r, cy+Math.sin(ang)*r);
+  }
+}
+function drawWave(a,b){
+  const dx=b.x-a.x, dy=b.y-a.y;
+  const len = Math.hypot(dx,dy);
+  if(len < 5) return;
+  const ux=dx/len, uy=dy/len;
+  const px=-uy, py=ux;
+  const amp = Math.min(60, len/6);
+  const cycles = Math.max(1, Math.round(len/90));
+  const st = stepPx();
+  const steps = Math.max(4, Math.ceil(len/st));
+  for(let i=0;i<=steps;i++){
+    const t = i/steps;
+    const off = Math.sin(t*Math.PI*2*cycles)*amp;
+    placeSymbol(a.x+dx*t + px*off, a.y+dy*t + py*off);
+  }
+}
+function drawFrame(a,b){
+  const x1=Math.min(a.x,b.x), y1=Math.min(a.y,b.y);
+  const x2=Math.max(a.x,b.x), y2=Math.max(a.y,b.y);
+  const st = Math.max(8, stepPx());
+
+  let S;
+  if(state.useCustomFrame){
+    const cf = state.customFrame;
+    S = {
+      tl: cf.tl || '┌', tr: cf.tr || '┐',
+      bl: cf.bl || '└', br: cf.br || '┘',
+      h:  cf.h  || '─', v:  cf.v  || '│',
+      h2: cf.h2 || cf.h || '─',
+      v2: cf.v2 || cf.v || '│',
+      center: cf.center || '',
+    };
+  } else {
+    const p = FRAME_STYLES[state.frameStyle] || FRAME_STYLES.simple;
+    S = {tl:p.tl,tr:p.tr,bl:p.bl,br:p.br,h:p.h,v:p.v,h2:p.h,v2:p.v,center:''};
+  }
+
+  placeSymbol(x1,y1,S.tl); placeSymbol(x2,y1,S.tr);
+  placeSymbol(x1,y2,S.bl); placeSymbol(x2,y2,S.br);
+  for(let x=x1+st;x<x2;x+=st){ placeSymbol(x,y1,S.h); }
+  for(let x=x1+st;x<x2;x+=st){ placeSymbol(x,y2,S.h2); }
+  for(let y=y1+st;y<y2;y+=st){ placeSymbol(x1,y,S.v); }
+  for(let y=y1+st;y<y2;y+=st){ placeSymbol(x2,y,S.v2); }
+  if(S.center && S.center.trim()) placeSymbol((x1+x2)/2, (y1+y2)/2, S.center);
+}
+
+/* ============ FLOOD FILL ============ */
+function floodFillAt(x,y){
+  const cs = 10;
+  const cols = Math.ceil(STAGE_W/cs), rows = Math.ceil(STAGE_H/cs);
+  const grid = new Uint8Array(cols*rows);
+  for(const s of state.symbols){
+    const cx = Math.floor(s.x/cs), cy = Math.floor(s.y/cs);
+    if(cx>=0&&cx<cols&&cy>=0&&cy<rows) grid[cy*cols+cx] = 1;
+  }
+  const sx = Math.floor(x/cs), sy = Math.floor(y/cs);
+  if(sx<0||sx>=cols||sy<0||sy>=rows) return 0;
+  if(grid[sy*cols+sx]) return 0;
+  const visited = new Uint8Array(cols*rows);
+  const stack = [[sx,sy]];
+  const cells = [];
+  const MAX = 3000;
+  while(stack.length && cells.length < MAX){
+    const [cx,cy] = stack.pop();
+    if(cx<0||cx>=cols||cy<0||cy>=rows) continue;
+    const idx = cy*cols+cx;
+    if(visited[idx] || grid[idx]) continue;
+    visited[idx] = 1;
+    cells.push([cx,cy]);
+    stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
+  }
+  for(const [cx,cy] of cells){
+    placeSymbol(cx*cs + cs/2, cy*cs + cs/2);
+  }
+  return cells.length;
+}
+
+/* ============ ВЫДЕЛЕНИЕ: ОПЕРАЦИИ ============ */
+function selectionBounds(){
+  if(!state.selected.size) return null;
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  for(const s of state.symbols){
+    if(!state.selected.has(s.id)) continue;
+    minX=Math.min(minX,s.x); minY=Math.min(minY,s.y);
+    maxX=Math.max(maxX,s.x); maxY=Math.max(maxY,s.y);
+  }
+  return {minX,minY,maxX,maxY, cx:(minX+maxX)/2, cy:(minY+maxY)/2,
+          w:maxX-minX, h:maxY-minY};
+}
+function rotateSelection(deg){
+  if(!state.selected.size) return;
+  pushHistory();
+  const b = selectionBounds();
+  const rad = deg*Math.PI/180;
+  const cos = Math.cos(rad), sin = Math.sin(rad);
+  for(const s of state.symbols){
+    if(!state.selected.has(s.id)) continue;
+    const dx = s.x-b.cx, dy = s.y-b.cy;
+    s.x = b.cx + dx*cos - dy*sin;
+    s.y = b.cy + dx*sin + dy*cos;
+  }
+  render();
+}
+function flipSelection(axis){
+  if(!state.selected.size) return;
+  pushHistory();
+  const b = selectionBounds();
+  for(const s of state.symbols){
+    if(!state.selected.has(s.id)) continue;
+    if(axis==='h') s.x = b.cx - (s.x-b.cx);
+    else s.y = b.cy - (s.y-b.cy);
+  }
+  render();
+}
+function scaleSelection(factor){
+  if(!state.selected.size || !isFinite(factor) || factor<=0) return;
+  pushHistory();
+  const b = selectionBounds();
+  for(const s of state.symbols){
+    if(!state.selected.has(s.id)) continue;
+    s.x = b.cx + (s.x-b.cx)*factor;
+    s.y = b.cy + (s.y-b.cy)*factor;
+  }
+  render();
+  $('status').textContent = '✓ Масштаб выделенного ×'+factor;
+}
+function fitSelectionToStage(){
+  if(!state.selected.size) return;
+  pushHistory();
+  const b = selectionBounds();
+  const w = b.w || 1, h = b.h || 1;
+  const k = Math.min((STAGE_W*0.95)/w, (STAGE_H*0.95)/h);
+  for(const s of state.symbols){
+    if(!state.selected.has(s.id)) continue;
+    s.x = (STAGE_W - w*k)/2 + (s.x-b.minX)*k;
+    s.y = (STAGE_H - h*k)/2 + (s.y-b.minY)*k;
+  }
+  render();
+  $('status').textContent = '✓ Вписано (×'+k.toFixed(2)+')';
+}
+function resetSelectionScale(){
+  if(!state.selected.size) return;
+  pushHistory();
+  for(const s of state.symbols){
+    if(!state.selected.has(s.id)) continue;
+    s.fs = state.fontSize;
+  }
+  render();
+  $('status').textContent = '✓ Размер сброшен';
+}
+let clipboard = [];
+function copySelection(){
+  if(!state.selected.size){ $('status').textContent='⚠ Нет выделения'; return; }
+  clipboard = state.symbols.filter(s=>state.selected.has(s.id)).map(s=>({...s}));
+  $('status').textContent = '✓ Скопировано: '+clipboard.length;
+}
+function pasteClipboard(){
+  if(!clipboard.length){ $('status').textContent='⚠ Буфер пуст'; return; }
+  pushHistory();
+  state.selected.clear();
+  for(const s of clipboard){
+    const id = state.nextId++;
+    state.symbols.push({...s, id, x: s.x+20, y: s.y+20});
+    state.selected.add(id);
+  }
+  clipboard = clipboard.map(s=>({...s, x:s.x+20, y:s.y+20}));
+  render();
+  $('status').textContent = '✓ Вставлено: '+clipboard.length;
+}
+function duplicateSelection(){
+  if(!state.selected.size) return;
+  pushHistory();
+  const sel = state.symbols.filter(s=>state.selected.has(s.id));
+  state.selected.clear();
+  for(const s of sel){
+    const id = state.nextId++;
+    state.symbols.push({...s, id, x:s.x+15, y:s.y+15});
+    state.selected.add(id);
+  }
+  render();
+}
+function deleteSelection(){
+  if(!state.selected.size) return;
+  pushHistory();
+  state.symbols = state.symbols.filter(s=>!state.selected.has(s.id));
+  state.selected.clear();
+  render();
+}
+function selectAllVisible(){
+  state.selected.clear();
+  for(const s of state.symbols){
+    const l = s.layer||'main';
+    if(VISIBLE_LAYERS[l]) state.selected.add(s.id);
+  }
+  render();
+}
+function selectCurrentLayer(){
+  state.selected.clear();
+  for(const s of state.symbols){
+    if((s.layer||'main') === state.layer) state.selected.add(s.id);
+  }
+  render();
+}
+function replaceCharInSelection(){
+  if(!state.selected.size){ $('status').textContent='⚠ Нет выделения'; return; }
+  const ch = $('replaceCharInput').value || '.';
+  pushHistory();
+  for(const s of state.symbols){
+    if(!state.selected.has(s.id)) continue;
+    s.ch = ch.slice(0,2);
+  }
+  render();
+  $('status').textContent = '✓ Символ заменён в '+state.selected.size;
+}
+
+function stripBadChars(){
+  const bad = new Set(['║','═']);
+  const before = state.symbols.length;
+  pushHistory();
+  state.symbols = state.symbols.filter(s => !bad.has(s.ch));
+  state.selected.clear();
+  render();
+  const removed = before - state.symbols.length;
+  $('status').textContent = `✓ Удалено ${removed} символов ║ и ═`;
+}
+function collapseDuplicates(){
+  const cs = 3.0;
+  const seen = new Map();
+  const out = [];
+  pushHistory();
+  for(const s of state.symbols){
+    const kx = Math.round(s.x/cs), ky = Math.round(s.y/cs);
+    const key = kx + '|' + ky + '|' + s.ch;
+    if(seen.has(key)) continue;
+    seen.set(key, true);
+    out.push(s);
+  }
+  const before = state.symbols.length;
+  state.symbols = out;
+  state.selected.clear();
+  render();
+  $('status').textContent = `✓ Схлопнуто ${before - out.length} дубликатов`;
+}
+
+/* ============ ВЗАИМОДЕЙСТВИЕ ============ */
+let drawing=false, lastDraw=null;
+let dragging=null;
+let shapeStart=null, shapeEnd=null, hoveredId=null;
+let areaStart=null, areaEnd=null;
+
+const previewCanvas = $('previewCanvas');
+const selectionBox = $('selectionBox');
+const groupBBox = $('groupBBox');
+
+function clearPreview(){
+  const ctx = previewCanvas.getContext('2d');
+  ctx.clearRect(0,0,previewCanvas.width,previewCanvas.height);
+  previewCanvas.style.display = 'none';
+}
+function showShapePreview(start,end){
+  previewCanvas.style.display = 'block';
+  const ctx = previewCanvas.getContext('2d');
+  ctx.clearRect(0,0,previewCanvas.width,previewCanvas.height);
+  ctx.strokeStyle = 'rgba(213,167,101,.85)';
+  ctx.setLineDash([4,4]); ctx.lineWidth = 1;
+  const x1=Math.min(start.x,end.x), y1=Math.min(start.y,end.y);
+  const w=Math.abs(end.x-start.x), h=Math.abs(end.y-start.y);
+  const t = state.tool;
+  if(t==='line'){ ctx.beginPath(); ctx.moveTo(start.x,start.y); ctx.lineTo(end.x,end.y); ctx.stroke(); }
+  else if(t==='hline'){ ctx.beginPath(); ctx.moveTo(start.x,start.y); ctx.lineTo(end.x,start.y); ctx.stroke(); }
+  else if(t==='vline'){ ctx.beginPath(); ctx.moveTo(start.x,start.y); ctx.lineTo(start.x,end.y); ctx.stroke(); }
+  else if(t==='rect'||t==='rectfill'||t==='frame'){ ctx.strokeRect(x1,y1,w,h); }
+  else if(t==='ellipse'){ ctx.beginPath(); ctx.ellipse((start.x+end.x)/2,(start.y+end.y)/2,w/2,h/2,0,0,Math.PI*2); ctx.stroke(); }
+  else if(t==='diamond'){ ctx.beginPath(); ctx.moveTo((start.x+end.x)/2,y1); ctx.lineTo(end.x,(start.y+end.y)/2); ctx.lineTo((start.x+end.x)/2,y1+h); ctx.lineTo(start.x,(start.y+end.y)/2); ctx.closePath(); ctx.stroke(); }
+  else if(t==='triangle'){ ctx.beginPath(); ctx.moveTo((start.x+end.x)/2,y1); ctx.lineTo(start.x,y1+h); ctx.lineTo(end.x,y1+h); ctx.closePath(); ctx.stroke(); }
+  else if(t==='wave'){ ctx.beginPath(); ctx.moveTo(start.x,start.y); ctx.lineTo(end.x,end.y); ctx.stroke(); }
+}
+function showSelectionBox(start,end){
+  const x1=Math.min(start.x,end.x), y1=Math.min(start.y,end.y);
+  const w=Math.abs(end.x-start.x), h=Math.abs(end.y-start.y);
+  selectionBox.style.display = 'block';
+  selectionBox.style.left = x1+'px';
+  selectionBox.style.top = y1+'px';
+  selectionBox.style.width = w+'px';
+  selectionBox.style.height = h+'px';
+}
+function hideSelectionBox(){ selectionBox.style.display = 'none'; }
+
+function isInsideSelectionBBox(x, y){
+  if(!state.selected.size) return false;
+  const b = selectionBounds();
+  const m = 14;
+  return x >= b.minX - m && x <= b.maxX + m && y >= b.minY - m && y <= b.maxY + m;
+}
+
+function findSymbolAt(x, y){
+  const order = {bg:0, main:1, decor:2};
+  const sorted = [...state.symbols].sort((a,b)=>
+    (order[a.layer||'main']||1) - (order[b.layer||'main']||1)
+  ).reverse();
+  let best = null, bestD = Infinity;
+  for(const s of sorted){
+    const l = s.layer||'main';
+    if(!VISIBLE_LAYERS[l]) continue;
+    const d = Math.hypot(s.x - x, s.y - y);
+    const r = Math.max(15, s.fs * 0.85);
+    if(d < r && d < bestD){ bestD = d; best = s; }
+  }
+  return best;
+}
+function updateHover(x, y){
+  if(state.dotaPreview){
+    stage.style.cursor = 'default';
+    document.querySelectorAll('.sym.hover').forEach(el=>el.classList.remove('hover'));
+    hoveredId = null;
+    return;
+  }
+  let cursor = '';
+  if(state.editMode && state.selected.size && isInsideSelectionBBox(x, y)){
+    cursor = 'move';
+  }
+  stage.style.cursor = cursor;
+
+  if(state.areaSelectMode || !state.editMode){
+    if(hoveredId !== null){
+      document.querySelectorAll('.sym.hover').forEach(el=>el.classList.remove('hover'));
+      hoveredId = null;
+    }
+    return;
+  }
+  const hit = findSymbolAt(x, y);
+  const newId = hit ? hit.id : null;
+  if(newId === hoveredId) return;
+  hoveredId = newId;
+  document.querySelectorAll('.sym.hover').forEach(el=>el.classList.remove('hover'));
+  if(hit){
+    const el = document.querySelector(`.sym[data-id="${hit.id}"]`);
+    if(el) el.classList.add('hover');
+  }
+}
+
+function startGroupDrag(p, ids){
+  pushHistory();
+  dragging = {
+    ids: [...ids],
+    startX: p.x,
+    startY: p.y,
+    orig: new Map(ids.map(id => {
+      const s = state.symbols.find(x => x.id === id);
+      return [id, { x: s.x, y: s.y }];
+    }))
+  };
+  didMove = false;
+}
+let didMove = false;
+
+function setAreaSelect(on){
+  state.areaSelectMode = on;
+  document.body.classList.toggle('area-mode', on);
+  $('areaSelectBtn').classList.toggle('active', on);
+  $('areaSelectBtn').textContent = on ? '⌗ Область: ВКЛ' : '⌗ Область';
+  if(on){
+    state.editMode = false;
+    document.body.classList.remove('edit-mode');
+    $('editToggle').textContent = '✎ Ред: ВЫКЛ';
+    $('editToggle').classList.remove('active');
+  }
+  render();
+}
+function setEditMode(on){
+  state.editMode = on;
+  if(on && state.areaSelectMode) setAreaSelect(false);
+  document.body.classList.toggle('edit-mode', on);
+  $('editToggle').textContent = on ? '✎ Ред: ВКЛ' : '✎ Ред: ВЫКЛ';
+  $('editToggle').classList.toggle('active', on);
+  if(!on){
+    document.querySelectorAll('.sym.hover').forEach(el=>el.classList.remove('hover'));
+    hoveredId = null;
+    stage.style.cursor = '';
+  }
+  render();
+}
+function setDotaPreview(on){
+  state.dotaPreview = on;
+  document.body.classList.toggle('dota-preview', on);
+  $('dotaPreviewBtn').classList.toggle('active', on);
+  $('dotaPreviewBtn').textContent = on ? '👁 Dota: ВКЛ' : '👁 Dota Preview';
+  if(on){
+    // отключаем редактирование и выделение
+    if(state.editMode) setEditMode(false);
+    if(state.areaSelectMode) setAreaSelect(false);
+    state.selected.clear();
+    $('zoom').value = 1.00;
+    applyZoom();
+    $('status').textContent = '👁 Dota Preview — чистое полотно 1:1 (1193×593)';
+  } else {
+    $('status').textContent = 'Готово';
+  }
+  render();
+}
+
+stage.addEventListener('contextmenu', e=>e.preventDefault());
+
+stage.addEventListener('mousedown', e=>{
+  if(state.dotaPreview) return;
+  if(e.button!==0 && e.button!==2) return;
+  const p = stagePoint(e);
+
+  if(e.button===2){
+    const hitSym = findSymbolAt(p.x, p.y);
+    if(hitSym){
+      e.preventDefault();
+      pushHistory();
+      state.symbols = state.symbols.filter(s=>s.id!==hitSym.id);
+      state.selected.delete(hitSym.id);
+      render();
+    }
+    return;
+  }
+
+  if(state.areaSelectMode){
+    areaStart = {x:p.x, y:p.y};
+    areaEnd = {x:p.x, y:p.y};
+    if(!e.shiftKey){ state.selected.clear(); render(); }
+    showSelectionBox(areaStart, areaEnd);
+    e.preventDefault();
+    return;
+  }
+
+  if(state.editMode){
+    const hitSym = findSymbolAt(p.x, p.y);
+
+    if(hitSym){
+      if(state.eraseMode){
+        pushHistory();
+        state.symbols = state.symbols.filter(s=>s.id!==hitSym.id);
+        state.selected.delete(hitSym.id);
+        render();
+        return;
+      }
+      if(e.shiftKey){
+        state.selected.has(hitSym.id) ? state.selected.delete(hitSym.id) : state.selected.add(hitSym.id);
+        render();
+        return;
+      }
+      if(!state.selected.has(hitSym.id)){
+        state.selected.clear();
+        state.selected.add(hitSym.id);
+        render();
+      }
+      startGroupDrag(p, [...state.selected]);
+      e.preventDefault();
+      return;
+    }
+
+    if(state.selected.size && isInsideSelectionBBox(p.x, p.y) && !e.shiftKey){
+      startGroupDrag(p, [...state.selected]);
+      e.preventDefault();
+      return;
+    }
+
+    if(!e.shiftKey && state.selected.size){
+      state.selected.clear();
+      render();
+    }
+    return;
+  }
+
+  if(state.eraseMode){
+    pushHistory();
+    drawing = true;
+    eraseAt(p.x, p.y);
+    return;
+  }
+  const t = state.tool;
+  if(t==='fill'){ pushHistory(); floodFillAt(p.x, p.y); render(); return; }
+  if(t==='pencil'){
+    pushHistory();
+    drawing = true;
+    lastDraw = {x:p.x, y:p.y};
+    placeSymbol(p.x, p.y);
+    render();
+    return;
+  }
+  shapeStart = {x:p.x, y:p.y};
+  shapeEnd   = {x:p.x, y:p.y};
+  previewCanvas.style.display = 'block';
+  showShapePreview(shapeStart, shapeEnd);
+});
+
+stage.addEventListener('mousemove', e=>{
+  if(state.dotaPreview) return;
+  const p = stagePoint(e);
+  updateHover(p.x, p.y);
+
+  if(areaStart){
+    areaEnd = {x:p.x, y:p.y};
+    showSelectionBox(areaStart, areaEnd);
+    return;
+  }
+  if(drawing){
+    if(state.eraseMode){ eraseAt(p.x, p.y); render(); return; }
+    const dx = p.x-lastDraw.x, dy = p.y-lastDraw.y;
+    const dist = Math.hypot(dx,dy);
+    const st = stepPx();
+    const steps = Math.max(1, Math.floor(dist/st));
+    for(let i=1;i<=steps;i++){
+      const t = i/steps;
+      placeSymbol(lastDraw.x+dx*t, lastDraw.y+dy*t);
+    }
+    lastDraw = {x:p.x, y:p.y};
+    render();
+    return;
+  }
+  if(shapeStart){
+    let ex=p.x, ey=p.y;
+    if(e.shiftKey && state.tool!=='frame'){
+      const w = ex-shapeStart.x, h = ey-shapeStart.y;
+      const m = Math.max(Math.abs(w), Math.abs(h));
+      ex = shapeStart.x + Math.sign(w||1)*m;
+      ey = shapeStart.y + Math.sign(h||1)*m;
+    }
+    shapeEnd = {x:ex, y:ey};
+    showShapePreview(shapeStart, shapeEnd);
+    return;
+  }
+  if(dragging){
+    const dx = p.x - dragging.startX;
+    const dy = p.y - dragging.startY;
+    if(!didMove){
+      if(Math.hypot(dx, dy) < 3) return;
+      didMove = true;
+    }
+    dragging.ids.forEach(id => {
+      const s = state.symbols.find(x=>x.id===id);
+      const o = dragging.orig.get(id);
+      if(s && o){ s.x = o.x + dx; s.y = o.y + dy; }
+    });
+    render();
+  }
+});
+
+addEventListener('mouseup', e=>{
+  if(state.dotaPreview) return;
+  if(areaStart){
+    const x1=Math.min(areaStart.x, areaEnd.x), y1=Math.min(areaStart.y, areaEnd.y);
+    const x2=Math.max(areaStart.x, areaEnd.x), y2=Math.max(areaStart.y, areaEnd.y);
+    const w = x2-x1, h = y2-y1;
+    if(w < 3 && h < 3){
+      if(!e.shiftKey){ state.selected.clear(); render(); }
+    } else {
+      if(!e.shiftKey) state.selected.clear();
+      for(const s of state.symbols){
+        const l = s.layer||'main';
+        if(!VISIBLE_LAYERS[l]) continue;
+        if(s.x>=x1 && s.x<=x2 && s.y>=y1 && s.y<=y2) state.selected.add(s.id);
+      }
+      render();
+      $('status').textContent = '✓ Область: выделено '+state.selected.size;
+    }
+    areaStart = null; areaEnd = null;
+    hideSelectionBox();
+
+    if(state.selected.size){
+      setAreaSelect(false);
+      setEditMode(true);
+      $('status').textContent = '✓ Выделено: '+state.selected.size+' — тащи внутри рамки';
+    }
+  }
+  if(shapeStart){
+    pushHistory();
+    const a = shapeStart, b = shapeEnd;
+    const t = state.tool;
+    if(t==='line')        drawLine(a,b,true);
+    else if(t==='hline')  drawLine({x:a.x,y:a.y},{x:b.x,y:a.y},true);
+    else if(t==='vline')  drawLine({x:a.x,y:a.y},{x:a.x,y:b.y},true);
+    else if(t==='rect')   drawRect(a,b,false);
+    else if(t==='rectfill') drawRect(a,b,true);
+    else if(t==='ellipse') drawEllipse(a,b,e.shiftKey);
+    else if(t==='diamond') drawDiamond(a,b,e.shiftKey);
+    else if(t==='triangle') drawTriangle(a,b,e.shiftKey);
+    else if(t==='star')   drawStar(a,b, 5, 0.42);
+    else if(t==='spiral') drawSpiral(a,b);
+    else if(t==='wave')   drawWave(a,b);
+    else if(t==='frame')  drawFrame(a,b);
+    shapeStart = null; shapeEnd = null;
+    clearPreview();
+    render();
+  }
+  drawing=false; lastDraw=null; dragging=null; didMove=false;
+});
+
+function eraseAt(x,y){
+  const before = state.symbols.length;
+  state.symbols = state.symbols.filter(s=>{
+    const l = s.layer||'main';
+    if(!VISIBLE_LAYERS[l]) return true;
+    return Math.hypot(s.x-x, s.y-y) > 12;
+  });
+  if(state.symbols.length !== before) render();
+}
+
+/* ============ КНОПКИ ============ */
+$('editToggle').onclick = () => setEditMode(!state.editMode);
+$('areaSelectBtn').onclick = () => setAreaSelect(!state.areaSelectMode);
+$('dotaPreviewBtn').onclick = () => setDotaPreview(!state.dotaPreview);
+$('undoBtn').onclick = undo;
+$('clearBtn').onclick = () => {
+  if(!state.symbols.length) return;
+  if(!confirm('Удалить все символы?')) return;
+  pushHistory();
+  state.symbols=[]; state.selected.clear(); render();
+};
+$('gridToggle').onclick = () => {
+  const on = $('gridCanvas').style.display === 'none';
+  $('gridCanvas').style.display = on?'block':'none';
+  $('gridToggle').classList.toggle('active', on);
+  drawGrid();
+};
+$('bgToggle').onclick = () => {
+  state.bgVisible = !state.bgVisible;
+  $('bgToggle').classList.toggle('active', state.bgVisible);
+  drawBg();
+};
+$('safeToggle').onclick = () => {
+  state.safeArea = !state.safeArea;
+  document.body.classList.toggle('safe-on', state.safeArea);
+  $('safeToggle').classList.toggle('active', state.safeArea);
+};
+$('mirrorH').onclick = () => {
+  state.mirrorH = !state.mirrorH;
+  $('mirrorH').classList.toggle('active', state.mirrorH);
+  render();
+};
+$('mirrorV').onclick = () => {
+  state.mirrorV = !state.mirrorV;
+  $('mirrorV').classList.toggle('active', state.mirrorV);
+  render();
+};
+$('eraserBtn').onclick = () => {
+  state.eraseMode = !state.eraseMode;
+  $('eraserBtn').classList.toggle('active', state.eraseMode);
+  render();
+};
+$('fontSize').oninput = () => {
+  state.fontSize = Math.max(6, Math.min(32, +$('fontSize').value||18));
+  $('fontSizeNum').value = state.fontSize;
+  render();
+};
+$('fontSizeNum').oninput = () => {
+  let v = +$('fontSizeNum').value;
+  if(!isFinite(v)) return;
+  v = Math.max(6, Math.min(32, v));
+  state.fontSize = v; $('fontSize').value = v; render();
+};
+$('penColor').oninput = () => { state.penColor = $('penColor').value; };
+$('customPen').oninput = () => setPenFromInput($('customPen').value);
+$('penCategory').onchange = buildPenGrid;
+$('multiMode').onchange = () => {
+  state.multiMode = $('multiMode').checked;
+  buildPenGrid();
+};
+$('density').oninput = () => { state.density = +$('density').value||100; render(); };
+
+$('useCustomFrame').onchange = () => {
+  state.useCustomFrame = $('useCustomFrame').checked;
+};
+$('loadFramePreset').onclick = loadPresetIntoBuilder;
+$('clearFrame').onclick = clearFrameBuilder;
+
+$('stripBadChars').onclick = stripBadChars;
+$('collapseDup').onclick = collapseDuplicates;
+
+$('applyFill').onclick = () => {
+  if(!state.symbols.length){ alert('Символов нет'); return; }
+  const fill = Math.max(20, Math.min(100, +$('fill').value||90))/100;
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  for(const s of state.symbols){
+    minX=Math.min(minX,s.x); minY=Math.min(minY,s.y);
+    maxX=Math.max(maxX,s.x); maxY=Math.max(maxY,s.y);
+  }
+  const w = maxX-minX||1, h = maxY-minY||1;
+  const availW = STAGE_W*fill, availH = STAGE_H*fill;
+  const k = Math.min(availW/w, availH/h);
+  const newW = w*k, newH = h*k;
+  const offX = (STAGE_W-newW)/2, offY = (STAGE_H-newH)/2;
+  pushHistory();
+  for(const s of state.symbols){
+    s.x = offX + (s.x-minX)*k;
+    s.y = offY + (s.y-minY)*k;
+  }
+  render();
+  $('status').textContent = '✓ Масштаб: ' + Math.round(k*100) + '%';
+};
+
+/* ============ СЛОИ ============ */
+document.querySelectorAll('#layerBtns button').forEach(b=>{
+  b.onclick = () => {
+    state.layer = b.dataset.layer;
+    document.querySelectorAll('#layerBtns button').forEach(x=>x.classList.toggle('active', x===b));
+  };
+});
+$('showBg').onchange = () => { VISIBLE_LAYERS.bg = $('showBg').checked; render(); };
+$('showMain').onchange = () => { VISIBLE_LAYERS.main = $('showMain').checked; render(); };
+$('showDecor').onchange = () => { VISIBLE_LAYERS.decor = $('showDecor').checked; render(); };
+
+/* ============ ОПЕРАЦИИ С ВЫДЕЛЕНИЕМ ============ */
+$('rot90').onclick = () => rotateSelection(90);
+$('rot180').onclick = () => rotateSelection(180);
+$('rot270').onclick = () => rotateSelection(270);
+$('flipH').onclick = () => flipSelection('h');
+$('flipV').onclick = () => flipSelection('v');
+$('copySel').onclick = copySelection;
+$('pasteSel').onclick = pasteClipboard;
+$('dupSel').onclick = duplicateSelection;
+$('delSel').onclick = deleteSelection;
+$('selAll').onclick = selectAllVisible;
+$('selNone').onclick = () => { state.selected.clear(); render(); };
+$('selLayer').onclick = selectCurrentLayer;
+$('scaleUpBtn').onclick    = () => scaleSelection(1.25);
+$('scaleDownBtn').onclick  = () => scaleSelection(0.8);
+$('scaleFitBtn').onclick   = fitSelectionToStage;
+$('scaleResetBtn').onclick = resetSelectionScale;
+$('scaleApplyBtn').onclick = () => {
+  const f = parseFloat($('scaleFactor').value);
+  if(isFinite(f) && f>0) scaleSelection(f);
+};
+$('replaceCharBtn').onclick = replaceCharInSelection;
+$('rotLBtn').onclick = () => rotateSelection(-90);
+$('rotRBtn').onclick = () => rotateSelection(90);
+$('flipHBtn').onclick = () => flipSelection('h');
+$('flipVBtn').onclick = () => flipSelection('v');
+
+/* ============ ЗУМ ============ */
+function applyZoom(){
+  const z = getZoom();
+  stage.style.transform = 'scale('+z+')';
+  const wrap = stage.parentElement;
+  wrap.style.width = (STAGE_W*z+40)+'px';
+  wrap.style.height = (STAGE_H*z+40)+'px';
+  $('zoomVal').textContent = Math.round(z*100)+'%';
+}
+$('zoom').addEventListener('input', applyZoom);
+
+/* ============ JSON ЗАГРУЗКА ============ */
+const jsonDrop = $('jsonDrop'), jsonFile = $('jsonFile');
+$('chooseJson').onclick = e => { e.preventDefault(); e.stopPropagation(); jsonFile.value=''; jsonFile.click(); };
+jsonDrop.onclick = e => { if(e.target.id==='chooseJson') return; jsonFile.value=''; jsonFile.click(); };
+jsonDrop.addEventListener('dragover', e=>{ e.preventDefault(); jsonDrop.classList.add('over'); });
+jsonDrop.addEventListener('dragleave', ()=>jsonDrop.classList.remove('over'));
+jsonDrop.addEventListener('drop', e=>{
+  e.preventDefault(); jsonDrop.classList.remove('over');
+  if(e.dataTransfer.files && e.dataTransfer.files.length) loadJsonFiles(e.dataTransfer.files);
+});
+jsonFile.addEventListener('change', ()=>{
+  if(jsonFile.files && jsonFile.files.length) loadJsonFiles(jsonFile.files);
+  jsonFile.value = '';
+});
+
+async function loadJsonFiles(files){
+  const list = [...files].filter(f=>/\.json$/i.test(f.name) || f.type==='application/json');
+  if(!list.length){ $('status').textContent = '⚠ Нет JSON'; return; }
+  pushHistory();
+  if($('jsonClearFirst').checked){ state.symbols=[]; state.selected.clear(); }
+
+  const newIds = [];
+  let totalAdded=0, totalFiles=0;
+  const fs = state.fontSize || 18;
+
+  for(const f of list){
+    try{
+      const j = JSON.parse(await f.text());
+      let added = 0;
+      const pushCat = cat => {
+        const ch = String(cat.category_name ?? '').slice(0,2);
+        if(!ch || !ch.trim()) return;
+        const x = (+cat.x_position||0) + 9;
+        const y = (+cat.y_position||0) + 15;
+        const id = state.nextId++;
+        state.symbols.push({ id, ch, x, y, fs, color: state.penColor, layer: state.layer });
+        newIds.push(id);
+        added++;
+      };
+      if(Array.isArray(j.configs)){
+        j.configs.forEach(cfg=>{
+          if(Array.isArray(cfg.categories)) cfg.categories.forEach(pushCat);
+        });
+      } else if(Array.isArray(j.categories)){
+        j.categories.forEach(pushCat);
+      }
+      if(added){ totalAdded += added; totalFiles++; }
+    }catch(err){ console.error(err); }
+  }
+
+  if($('jsonAutoSelect').checked && newIds.length){
+    state.selected = new Set(newIds);
+    setEditMode(true);
+  }
+  render();
+  $('status').textContent = totalAdded
+    ? `✓ Загружено ${totalAdded} из ${totalFiles} · размер ${fs}px`
+    : '⚠ Не удалось распознать JSON';
+}
+
+/* ============ ФОНЫ (события) ============ */
+const drop = $('drop'), bgFile = $('bgFile');
+$('chooseBg').onclick = e => { e.preventDefault(); e.stopPropagation(); bgFile.value=''; bgFile.click(); };
+drop.onclick = e => { if(e.target.id==='chooseBg') return; bgFile.value=''; bgFile.click(); };
+drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', ()=>drop.classList.remove('over'));
+drop.addEventListener('drop', e=>{
+  e.preventDefault(); drop.classList.remove('over');
+  if(e.dataTransfer.files && e.dataTransfer.files.length){
+    for(const f of e.dataTransfer.files) if(/^image\//.test(f.type)) addBgFile(f);
+  }
+});
+bgFile.addEventListener('change', ()=>{
+  if(bgFile.files && bgFile.files.length) for(const f of bgFile.files) addBgFile(f);
+  bgFile.value = '';
+});
+$('bgClear').onclick = () => {
+  state.bgImages = []; state.selectedBgIdx = -1;
+  drawBg(); renderBgList(); updateBgControls();
+};
+$('bgDelete').onclick = () => {
+  if(state.selectedBgIdx<0) return;
+  state.bgImages.splice(state.selectedBgIdx,1);
+  state.selectedBgIdx = Math.min(state.selectedBgIdx, state.bgImages.length-1);
+  drawBg(); renderBgList(); updateBgControls();
+};
+$('bgVisToggle').onclick = () => {
+  if(state.selectedBgIdx<0) return;
+  const bg = state.bgImages[state.selectedBgIdx];
+  bg.visible = !bg.visible;
+  drawBg(); renderBgList();
+};
+function bindBgSlider(rangeId, numId, key, integer){
+  const r = $(rangeId), n = $(numId);
+  const apply = v => {
+    if(state.selectedBgIdx<0) return;
+    const bg = state.bgImages[state.selectedBgIdx];
+    bg[key] = integer ? Math.round(v) : +v;
+    r.value = bg[key]; n.value = integer ? Math.round(bg[key]) : bg[key].toFixed(2);
+    drawBg();
+  };
+  r.addEventListener('input', ()=>apply(+r.value));
+  n.addEventListener('input', ()=>apply(+n.value));
+}
+bindBgSlider('bgX','bgXNum','x',true);
+bindBgSlider('bgY','bgYNum','y',true);
+bindBgSlider('bgScale','bgScaleNum','scale',false);
+bindBgSlider('bgAlpha','bgAlphaNum','alpha',false);
+
+/* ============ ГОРЯЧИЕ КЛАВИШИ ============ */
+document.addEventListener('keydown', e=>{
+  if(e.target.matches('input,textarea,select')) return;
+  const k = e.key.toLowerCase();
+
+  if(k==='p'){ e.preventDefault(); setDotaPreview(!state.dotaPreview); return; }
+  if(k==='s'){ e.preventDefault(); setAreaSelect(!state.areaSelectMode); return; }
+  if(e.key==='Escape'){
+    if(state.dotaPreview) setDotaPreview(false);
+    if(state.areaSelectMode) setAreaSelect(false);
+    state.selected.clear();
+    render();
+    return;
+  }
+  if(state.dotaPreview) return;
+  if((e.ctrlKey||e.metaKey) && k==='z'){ e.preventDefault(); undo(); return; }
+  if((e.ctrlKey||e.metaKey) && k==='c'){ e.preventDefault(); copySelection(); return; }
+  if((e.ctrlKey||e.metaKey) && k==='v'){ e.preventDefault(); pasteClipboard(); return; }
+  if((e.ctrlKey||e.metaKey) && k==='d'){ e.preventDefault(); duplicateSelection(); return; }
+  if((e.ctrlKey||e.metaKey) && k==='a'){ e.preventDefault(); selectAllVisible(); return; }
+  if(e.key==='Delete'||e.key==='Backspace'){
+    if(state.selected.size){ e.preventDefault(); deleteSelection(); }
+    return;
+  }
+  if(state.selected.size){
+    if(k==='q'){ e.preventDefault(); rotateSelection(-90); return; }
+    if(k==='e' && !e.ctrlKey && !e.metaKey){ e.preventDefault(); rotateSelection(90); return; }
+    if(k==='h'){ e.preventDefault(); flipSelection('h'); return; }
+    if(k==='n'){ e.preventDefault(); flipSelection('v'); return; }
+    if(e.key==='+' || e.key==='='){ e.preventDefault(); scaleSelection(1.25); return; }
+    if(e.key==='-' || e.key==='_'){ e.preventDefault(); scaleSelection(0.8); return; }
+    if(e.key==='0' || e.key===')'){ e.preventDefault(); fitSelectionToStage(); return; }
+  }
+  if(k==='g'){ $('gridToggle').click(); return; }
+  if(k==='m'){ $('mirrorH').click(); return; }
+  if(k==='f'){ state.tool='frame'; buildToolGrid(); return; }
+  const n = parseInt(e.key,10);
+  if(n>=1 && n<=9){
+    const list = SYMBOL_LIB[$('penCategory').value] || [];
+    const ch = list[n-1];
+    if(ch){ setPenFromInput(ch); }
+  }
+});
+
+/* ============ ЭКСПОРТ ============ */
+$('jsonBtn').onclick = () => {
+  if(!state.symbols.length){ alert('Символов нет'); return; }
+  const categories = state.symbols.map(s=>({
+    category_name: s.ch,
+    x_position: +(s.x-9).toFixed(2),
+    y_position: +(s.y-15).toFixed(2),
+    width: 30.000000, height: 30.000000, hero_ids: []
+  }));
+  const json = {version:3, configs:[{config_name:'PixelArt', categories}]};
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(json,null,2)],{type:'application/json'}));
+  a.download = 'pixel_art_hero_grid.json'; a.click();
+  $('status').textContent = '✓ JSON · ' + categories.length + ' категорий';
+};
+$('pngBtn').onclick = () => {
+  const c = document.createElement('canvas');
+  c.width = STAGE_W; c.height = STAGE_H;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#0e0a07'; ctx.fillRect(0,0,c.width,c.height);
+  const sorted = [...state.symbols].sort((a,b)=>(LAYER_ORDER[a.layer||'main']||1)-(LAYER_ORDER[b.layer||'main']||1));
+  for(const s of sorted){
+    if(!VISIBLE_LAYERS[s.layer||'main']) continue;
+    ctx.fillStyle = s.color || '#d5dce0';
+    ctx.font = s.fs + 'px Arial, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.fillText(s.ch, s.x, s.y);
+  }
+  c.toBlob(b=>{
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = 'pixel_art_preview.png'; a.click();
+  });
+};
+
+/* ============ СТАРТ ============ */
+buildPenCategory();
+buildPenGrid();
+buildToolGrid();
+setupFrameBuilder();
+updateFrameBuilderUI();
+updatePenLabel();
+render();
+applyZoom();
+updateUndoUI();
+drawBg();
+drawGrid();
+renderBgList();
+updateBgControls();
+</script>
+</body>
+</html>

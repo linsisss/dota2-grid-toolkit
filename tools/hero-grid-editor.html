@@ -1,0 +1,1302 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Dota 2 Hero Grid Editor — 1193×593</title>
+<style>
+@font-face{font-family:Radiance;src:local("Radiance"),local("Radiance Regular"),local("Radiance-Regular"),local("Radiance Light"),local("Radiance-Light")}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:#080a0c;color:#d8dce0;font:13px Arial,sans-serif;overflow:hidden}
+button,input,select,textarea{font:inherit;background:#20272c;color:#ddd;border:1px solid #45515a;border-radius:3px;padding:6px 9px;cursor:pointer}
+button:hover{background:#2b353c}
+button.primary{background:#40596b;border-color:#6f8ca0}
+button.gold{background:#4a3923;border-color:#84693f}
+button.danger{background:#3a2222;border-color:#744444}
+button.green{background:#1f4a2a;border-color:#3d7a4a}
+input,select,textarea{background:#080b0d;color:#ddd;border:1px solid #3b464e;border-radius:3px;padding:6px;cursor:text}
+
+.app{height:100%;display:grid;grid-template-columns:330px 1fr 340px;grid-template-rows:52px 1fr}
+header{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:0 14px;background:linear-gradient(#151d24,#0c1115);border-bottom:1px solid #38424a;flex-wrap:nowrap;overflow-x:auto}
+.logo{font-size:16px;font-weight:bold;letter-spacing:1px;white-space:nowrap}
+.badge{font-size:10px;color:#9eb2c0;border:1px solid #3d4c57;padding:3px 6px;border-radius:3px;white-space:nowrap}
+.headerBtn{background:#2a3a46;border:1px solid #4a6478;color:#d8e4ec;padding:8px 14px;font-size:12px;font-weight:bold;cursor:pointer;border-radius:4px;margin-left:0;white-space:nowrap}
+.headerBtn:hover{background:#354957}
+.headerBtn.active{background:#c99c5b;border-color:#e0b878;color:#1a1208}
+.headerBtn.danger{background:#3a2222;border-color:#744444;color:#ffb3b3}
+.headerRight{margin-left:auto;color:#8e9ba4;font-size:11px;white-space:nowrap}
+.zoomBox{display:flex;align-items:center;gap:6px;font-size:11px;color:#8e9ba4;white-space:nowrap}
+.zoomBox input[type="range"]{width:110px}
+.headerSep{width:1px;height:26px;background:#2b353c;margin:0 2px}
+
+.left,.right{overflow:auto;background:#12171b;border-right:1px solid #30383f;padding:10px}
+.right{border-right:0;border-left:1px solid #30383f}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:8px 0;color:#aebbc4}
+.group{border:1px solid #273139;background:#0d1114;padding:9px;margin-bottom:9px;border-radius:3px}
+.row{display:grid;grid-template-columns:1fr 100px;gap:6px;align-items:center;margin:6px 0;font-size:11px;color:#aab4bb}
+.row input,.row select{width:100px}
+.row.full{display:block}.row.full input,.row.full select,.row.full textarea{width:100%}
+.hint{font-size:10px;line-height:1.4;color:#77838a}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.step{background:#1a2430;color:#c99c5b;padding:3px 8px;border-radius:3px;font-size:11px;font-weight:bold;display:inline-block;margin-bottom:6px}
+.drop{border:2px dashed #52636d;padding:14px;text-align:center;color:#8b989f;cursor:pointer;border-radius:4px}
+.drop:hover,.drop.over{background:#172027;border-color:#c99c5b;color:#e0cfa8}
+.imgList{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:240px;overflow:auto}
+.imgItem{display:flex;gap:8px;background:#0a0e11;border:1px solid #263139;border-radius:4px;padding:6px;align-items:center;cursor:pointer}
+.imgItem.active{border-color:#c99c5b;background:#1a1408}
+.imgThumb{width:48px;height:48px;object-fit:contain;background:#000;border:1px solid #333;border-radius:3px;flex:none}
+.imgInfo{flex:1;font-size:10px;line-height:1.3;overflow:hidden}
+.imgName{color:#cfd6db;font-weight:bold;word-break:break-all}
+.imgMeta{color:#77838a}
+.imgRemove{background:#3a2222;border:1px solid #744444;color:#ffb3b3;padding:2px 6px;border-radius:3px;font-size:11px;cursor:pointer}
+
+/* === СЦЕНА === */
+.center{overflow:auto;background:#07090a;position:relative;display:flex;justify-content:center;align-items:flex-start;padding:0}
+#stageWrap{position:relative;padding:0}
+#stage{
+    width:1193px;height:593px;position:relative;
+    transform-origin:top left;
+    background:
+        radial-gradient(ellipse at 50% 30%, rgba(79,57,28,.28), transparent 55%),
+        linear-gradient(#17130f, #0e0a07 65%, #090807);
+    border:1px solid #4a5a68;
+    box-shadow:0 0 40px #000;
+    overflow:hidden;
+}
+#stage.safe-on::after{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    box-shadow: inset 0 0 0 2px #d54b3c, inset 0 0 30px rgba(213,75,60,.15);z-index:9998;
+}
+#stage.safe-on::before{
+    content:'SAFE AREA 1193 × 593';position:absolute;left:8px;top:6px;
+    font:11px monospace;color:#d54b3c;background:rgba(0,0,0,.6);padding:2px 6px;border-radius:2px;
+    pointer-events:none;z-index:9999;
+}
+#stage.grid-on{
+    background-image:
+        linear-gradient(rgba(70,60,40,.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(70,60,40,.10) 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 30%, rgba(79,57,28,.28), transparent 55%),
+        linear-gradient(#17130f, #0e0a07 65%, #090807);
+    background-size: 100px 100px, 100px 100px, 100% 100%, 100% 100%;
+}
+
+.category{position:absolute;border:1px solid transparent;background:transparent;cursor:move}
+.category:hover{border-color:rgba(120,155,177,.4)}
+.category.selected{border:1px solid #d5a765;background:rgba(213,167,101,.06);box-shadow:0 0 12px rgba(213,167,101,.15)}
+.category .handle{display:none}
+.category.selected .handle{display:block;position:absolute;width:12px;height:12px;background:#c99c5b;border:1px solid #111;right:-6px;bottom:-6px;cursor:nwse-resize;border-radius:1px}
+.category .catTitle{display:none}
+.category.selected .catTitle{display:block;position:absolute;left:4px;top:-20px;font:13px Radiance,Arial;color:#e0cfa8;white-space:nowrap;text-shadow:0 1px 2px #000}
+.category.outside{border-color:rgba(213,75,60,.7) !important}
+
+.heroGrid{display:grid;gap:4px;width:100%;height:100%;padding:4px}
+.hero{background:linear-gradient(135deg,#38444e,#161b20);border:1px solid #45525b;position:relative;
+    display:flex;align-items:center;justify-content:center;font:bold 14px Radiance,Arial;color:#e4e8ea;text-shadow:1px 1px 2px #000;overflow:hidden}
+.hero::before{content:attr(data-id);position:absolute;right:3px;bottom:2px;font:11px Radiance,Arial;color:#c8d0d6;text-shadow:1px 1px 1px #000}
+
+.textCat{font-family:Radiance,Arial;white-space:pre;overflow:visible;line-height:1;color:#c7d0d5}
+.textCat.asciiCat{font-family:monospace;white-space:pre;line-height:1}
+.asciiCharRow{display:grid;grid-template-columns:30px 1fr 1fr;gap:5px;align-items:center;margin:3px 0}
+.asciiCharGlyph{height:27px;display:flex;align-items:center;justify-content:center;border:1px solid #2c363d;background:#0b0f12;font:16px/1 monospace;color:#d5dce0;overflow:hidden}
+.asciiCharMeta{font:9px/1.2 monospace;color:#8ea0aa;overflow:hidden;white-space:nowrap}
+.asciiCharInput{width:100%;box-sizing:border-box}
+.asciiSpace{font-size:11px;color:#8199a8}
+
+
+#stage.preview-mode .category{border-color:transparent !important;background:transparent !important;box-shadow:none !important}
+#stage.preview-mode .category.selected{border-color:transparent !important;background:transparent !important}
+#stage.preview-mode .handle,#stage.preview-mode .catTitle{display:none !important}
+#stage.preview-mode .selectionBox{display:none !important}
+#stage.preview-mode.safe-on::after,#stage.preview-mode.safe-on::before{display:none}
+
+.selectionBox{position:absolute;border:1px dashed #d5a765;background:rgba(213,167,101,.10);pointer-events:none;z-index:9999;display:none}
+
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.stat div{border:1px solid #2c363d;padding:5px;background:#0b0f12;border-radius:2px}
+.stat b{display:block;color:#d5dce0;font-size:11px}
+.stat span{color:#73818a;font-size:9px}
+pre#json{font:9px/1.3 monospace;white-space:pre-wrap;max-height:160px;overflow:auto;color:#b9c8d0;margin:0}
+.treeItem{display:flex;align-items:center;gap:5px;padding:4px;border:1px solid transparent;font-size:11px;cursor:pointer}
+.treeItem:hover{background:#1b2227}
+.treeItem.active{background:#26333b;border-color:#536b79}
+.treeDot{width:6px;height:6px;background:#8199a8;border-radius:50%}
+.treeText{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.warn{padding:6px;border:1px solid #684d31;background:#20170f;color:#cdb18b;font-size:10px;border-radius:3px}
+.ok{padding:6px;border:1px solid #355442;background:#0e1912;color:#9bbca3;font-size:10px;border-radius:3px}
+.err{padding:6px;border:1px solid #6b3030;background:#200f0f;color:#e5a3a3;font-size:10px;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+    <div class="logo">DOTA 2 — HERO GRID EDITOR</div>
+    <span class="badge">1193 × 593</span>
+    <button id="previewToggle" class="headerBtn">👁 Просмотр</button>
+    <button id="safeToggle" class="headerBtn">🟥 Safe</button>
+    <button id="gridToggle" class="headerBtn">▦ Сетка</button>
+    <div class="headerSep"></div>
+    <button id="undoBtn" class="headerBtn" title="Отменить последнее действие (Ctrl+Z)">↶ Отмена</button>
+    <button id="deleteTopBtn" class="headerBtn danger" title="Удалить выбранные категории">🗑 Удалить</button>
+    <button id="areaSelectBtn" class="headerBtn" title="Выделить категории прямоугольной областью">⌗ Область</button>
+    <div class="headerSep"></div>
+    <button id="rotLBtn" class="headerBtn" title="Повернуть выделенные на 90° против часовой (Q)">↺ 90°</button>
+    <button id="rotRBtn" class="headerBtn" title="Повернуть выделенные на 90° по часовой (E)">↻ 90°</button>
+    <button id="flipHBtn" class="headerBtn" title="Отразить выделенные по горизонтали (H)">⇋</button>
+    <button id="flipVBtn" class="headerBtn" title="Отразить выделенные по вертикали (V)">⇅</button>
+    <div class="zoomBox">
+        <span>Zoom:</span>
+        <input type="range" id="zoom" min="0.3" max="1.0" step="0.05" value="0.65">
+        <span id="zoomVal">65%</span>
+    </div>
+    <div class="headerRight" id="fontInfo">Шрифт: Arial</div>
+</header>
+
+<aside class="left">
+<h2>Файл</h2>
+<div class="group">
+    <input id="jsonFile" class="file" type="file" accept=".json" multiple style="width:100%">
+    <div style="height:6px"></div>
+    <div class="two">
+        <button id="newBtn" class="primary">Новая</button>
+        <button id="exportBtn">Экспорт JSON</button>
+    </div>
+    <button id="clipBtn" class="green" style="width:100%;margin-top:6px">✂ Обрезать всё за границы</button>
+</div>
+
+<h2>Шрифт Radiance</h2>
+<div class="group">
+    <input id="fontFile" class="file" type="file" accept=".ttf,.otf,.woff,.woff2" style="width:100%">
+    <div class="hint" style="margin-top:6px">
+        Ищи <b>radiance_regular.ttf</b>:<br>
+        <span style="font-family:monospace;font-size:9px;color:#9ab">...\dota 2 beta\game\dota\resource\</span>
+    </div>
+    <div id="fontState" class="hint" style="margin-top:6px">Arial (fallback)</div>
+</div>
+
+<h2>Картинки → символы</h2>
+<div class="group">
+    <div id="drop" class="drop">📁 Клик или перетащи
+        <div style="margin-top:6px"><button type="button" id="chooseImage" class="gold">ВЫБРАТЬ ФАЙЛЫ</button></div>
+    </div>
+    <input id="imgFile" type="file" accept="image/*" multiple style="display:none">
+    <div id="imgList" class="imgList"></div>
+</div>
+
+<div class="group">
+    <div class="hint" style="line-height:1.45">
+        Размер символов фиксирован.<br>
+        Плотность меняет только количество символов.<br>
+        Набор символов можно задать отдельно для каждой картинки.
+    </div>
+    <button id="convertAll" class="gold" style="width:100%;margin-top:8px">ПРЕОБРАЗОВАТЬ ВСЕ</button>
+    <button id="convertCurrent" class="primary" style="width:100%;margin-top:6px">ПРЕОБРАЗОВАТЬ ВЫБРАННУЮ</button>
+    <button id="clearImg" class="danger" style="width:100%;margin-top:6px">ОЧИСТИТЬ СПИСОК</button>
+</div>
+
+<h2>Редактор <span id="selCount" class="hint"></span></h2>
+<div class="group">
+<h2>Вертикальные линии</h2>
+<div class="group">
+    <div class="row full">
+        <label>Символы (по одному, сверху вниз)</label>
+        <textarea id="vlineChars" rows="3" placeholder=".&#10;-&#10;|" style="width:100%;font-family:monospace"></textarea>
+    </div>
+    <div class="row"><label>Сколько (шт)</label><input id="vlineCount" type="number" min="1" max="200" value="10"></div>
+    <div class="two">
+        <div><div class="hint">X</div><input id="vlineX" type="number" value="100" style="width:100%"></div>
+        <div><div class="hint">Y (старт)</div><input id="vlineY" type="number" value="100" style="width:100%"></div>
+    </div>
+    <button id="vlineAdd" class="gold" style="width:100%;margin-top:8px">➕ Создать вертикальную линию</button>
+    <div class="hint" style="margin-top:6px">
+        Каждая строка в поле «Символы» = отдельный символ сверху вниз.<br>
+        Символы идут по циклу: если задано <b>.</b> и <b>|</b> — пойдёт <b>.</b>, <b>|</b>, <b>.</b>, <b>|</b>…<br>
+        Если символов больше, чем «сколько» — лишние отбросятся.
+    </div>
+</div>
+    <div class="two"><button id="addHeroes">+ Герои</button><button id="addText">+ Текст</button></div>
+<div class="two" style="margin-top:5px"><button id="addAscii" class="gold">+ ASCII</button></div>
+    <div class="row" style="margin-top:6px"><label>ASCII: разбивка</label>
+        <select id="asciiChunk">
+            <option value="line">по строкам</option>
+            <option value="1">по 1 символу</option>
+            <option value="2" selected>по 2 символа</option>
+            <option value="3">по 3 символа</option>
+            <option value="4">по 4 символа</option>
+            <option value="5">по 5 символов</option>
+        </select>
+    </div>
+    <div class="row"><label>ASCII: плотность <span id="asciiDensityVal">100%</span></label>
+        <input id="asciiDensity" type="range" min="25" max="100" step="5" value="100">
+    </div>
+    <div class="two" style="margin-top:5px"><button id="deleteBtn" class="danger">🗑 Удалить категорию</button><button id="clearSelBtn">Снять</button></div>
+    <div class="two" style="margin-top:5px"><button id="selectAllBtn" class="primary">Выделить всё</button></div>
+</div>
+
+<h2>ASCII — символы</h2>
+<div class="group">
+    <div class="hint" style="line-height:1.45">
+        Показывает уникальные символы из ASCII-категорий.
+        В поле справа можно задать замену: например <b>⣟ → ...</b>.
+    </div>
+    <div id="asciiChars" style="margin-top:7px;max-height:260px;overflow:auto"></div>
+    <button id="asciiRefresh" style="width:100%;margin-top:6px">↻ Обновить список</button>
+    <button id="asciiApplyMap" class="gold" style="width:100%;margin-top:6px">ЗАМЕНИТЬ СИМВОЛЫ</button>
+    <button id="asciiDots" style="width:100%;margin-top:6px">• ЗАМЕНИТЬ ВСЁ НА ТОЧКИ</button>
+</div>
+
+<h2>Масштаб выделенного</h2>
+<div class="group">
+    <div class="hint" style="line-height:1.45">
+        Масштабирует рамки выделенных категорий относительно общего центра.
+        Символы внутри не растягиваются — меняется только расположение и размер плиток.
+    </div>
+    <div class="two" style="margin-top:6px">
+        <button id="scaleUpBtn" class="gold">＋ ×1.25</button>
+        <button id="scaleDownBtn">－ ×0.8</button>
+    </div>
+    <div class="two" style="margin-top:5px">
+        <button id="scaleFitBtn" class="green">⛶ Заполнить холст</button>
+        <button id="scaleResetBtn">↺ Сброс размера</button>
+    </div>
+    <div class="row" style="margin-top:6px">
+        <label>Точный масштаб (×)</label>
+        <input id="scaleFactor" type="number" min="0.05" max="20" step="0.05" value="1">
+    </div>
+    <button id="scaleApplyBtn" class="primary" style="width:100%;margin-top:6px">Применить масштаб</button>
+</div>
+
+<h2>Замена символов выделенного</h2>
+<div class="group">
+    <div class="hint" style="line-height:1.45">
+        Меняет текст/символ во всех выделенных текстовых категориях.
+        Введи новый символ (или строку) и нажми «Заменить».
+    </div>
+    <div class="row full" style="margin-top:6px">
+        <label>Новый символ / строка</label>
+        <input id="replaceCharInput" type="text" value="." placeholder="Например .  или  #">
+    </div>
+    <button id="replaceCharBtn" class="gold" style="width:100%;margin-top:6px">🔁 Заменить символ</button>
+    <div class="hint" style="margin-top:6px">
+        Размер рамки подстроится под новую строку автоматически.
+        Ширина пересчитывается по формуле <b>len × fontSize × 0.6</b>.
+    </div>
+</div>
+
+<h2>Категории</h2>
+<div class="group" id="tree"></div>
+</aside>
+
+<main class="center">
+<div id="stageWrap">
+    <div id="stage">
+        <div id="categories"></div>
+        <div class="selectionBox" id="selectionBox"></div>
+    </div>
+</div>
+</main>
+
+<aside class="right">
+<h2>Категория</h2>
+<div class="group">
+    <div class="row full"><label>Название</label><input id="catName"></div>
+    <div class="two"><div><div class="hint">X</div><input id="catX" type="number" style="width:100%"></div><div><div class="hint">Y</div><input id="catY" type="number" style="width:100%"></div></div>
+    <div class="two" style="margin-top:6px"><div><div class="hint">Width</div><input id="catW" type="number" style="width:100%"></div><div><div class="hint">Height</div><input id="catH" type="number" style="width:100%"></div></div>
+    <div class="row"><label>Тип</label><select id="catType"><option value="heroes">Герои</option><option value="text">Текст</option></select></div>
+    <div class="row full"><label>Текст</label><textarea id="catText" rows="3"></textarea></div>
+    <button id="apply" class="primary" style="width:100%;margin-top:8px">Применить</button>
+    <button id="deleteInspectorBtn" class="danger" style="width:100%;margin-top:6px">🗑 Удалить выбранную категорию</button>
+</div>
+
+<h2>Геометрия</h2>
+<div class="group stat">
+    <div><b id="sx">—</b><span>X</span></div><div><b id="sy">—</b><span>Y</span></div>
+    <div><b id="sw">—</b><span>WIDTH</span></div><div><b id="sh">—</b><span>HEIGHT</span></div>
+</div>
+
+<h2>Проверка</h2>
+<div class="group" id="validation"></div>
+
+<h2>JSON (первые 3KB)</h2>
+<div class="group"><pre id="json"></pre></div>
+</aside>
+</div>
+
+<canvas id="canvas" style="display:none"></canvas>
+
+<script>
+const state={cats:[], selected:new Set(), nextId:1};
+const images=[]; let currentImgId=null;
+
+// История действий редактора.
+const history=[];
+let historyMute=false;
+let areaSelectMode=false;
+function historySnapshot(){
+    return {
+        cats: JSON.parse(JSON.stringify(state.cats)),
+        selected: [...state.selected],
+        nextId: state.nextId
+    };
+}
+function pushHistory(){
+    if(historyMute) return;
+    history.push(historySnapshot());
+    if(history.length>60) history.shift();
+    updateUndoUI();
+}
+function undo(){
+    if(!history.length) return;
+    const snap=history.pop();
+    historyMute=true;
+    state.cats=snap.cats;
+    state.selected=new Set(snap.selected);
+    state.nextId=snap.nextId;
+    historyMute=false;
+    render();
+    updateUndoUI();
+}
+function updateUndoUI(){
+    const b=$('undoBtn');
+    if(b){
+        b.disabled=!history.length;
+        b.title=history.length?'Отменить последнее действие (Ctrl+Z)':'Нет действий для отмены';
+    }
+}
+const $=id=>document.getElementById(id);
+const stage=$('stage'), categories=$('categories');
+
+const STAGE_W = 1193;
+const STAGE_H = 593;
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function defaultHeroes(n=127){return Array.from({length:n},(_,i)=>i+1)}
+
+function calcHeroGrid(count, w, h){
+    if(count<=1) return {cols:1, rows:1};
+    const area=w*h, cellArea=area/count, cellSize=Math.sqrt(cellArea);
+    let cols=Math.max(1, Math.round(w/cellSize));
+    let rows=Math.max(1, Math.ceil(count/cols));
+    if(cols*rows<count){ cols=Math.ceil(Math.sqrt(count*w/h)); rows=Math.ceil(count/cols); }
+    return {cols, rows};
+}
+function isOutside(c){
+    return c.x < 0 || c.y < 0 || c.x + c.w > STAGE_W || c.y + c.h > STAGE_H;
+}
+function addCat(type, opts={}){
+    pushHistory();
+    const c={id:state.nextId++, name:opts.name||(type==='heroes'?'Heroes':'Symbol'),
+        x:opts.x??100, y:opts.y??100, w:opts.w??200, h:opts.h??200, type,
+        text:opts.text||'', hero_ids:type==='heroes'?defaultHeroes(opts.count||12):[],
+        fontSize:opts.fontSize||18, lineHeight:opts.lineHeight||14,
+        color:'#c7d0d5', group:null, source:opts.source||null};
+    state.cats.push(c); state.selected=new Set([c.id]); render();
+}
+function catById(id){return state.cats.find(c=>c.id===id)}
+
+
+function getAsciiCats(){
+    return state.cats.filter(c=>c.source==='ascii' || c.group==='ASCII');
+}
+function visibleAsciiChar(ch){
+    if(ch===' ') return '␠';
+    if(ch==='\t') return '⇥';
+    if(ch==='\n') return '↵';
+    if(ch==='\u00a0') return '⍽';
+    return ch;
+}
+function collectAsciiChars(){
+    const cats=getAsciiCats();
+    const counts=new Map();
+    cats.forEach(c=>{
+        for(const ch of (c.text||'')){
+            if(ch==='\n' || ch==='\r') continue;
+            counts.set(ch,(counts.get(ch)||0)+1);
+        }
+    });
+    return [...counts.entries()];
+}
+function renderAsciiChars(){
+    const box=$('asciiChars');
+    if(!box) return;
+    const chars=collectAsciiChars();
+    if(!chars.length){
+        box.innerHTML='<div class="hint">ASCII-категорий пока нет.</div>';
+        return;
+    }
+    box.innerHTML='';
+    chars.forEach(([ch,count])=>{
+        const row=document.createElement('div');
+        row.className='asciiCharRow';
+        const glyph=document.createElement('div');
+        glyph.className='asciiCharGlyph'+(ch===' '?' asciiSpace':'');
+        glyph.textContent=visibleAsciiChar(ch);
+        glyph.title='Исходный символ: '+JSON.stringify(ch);
+        const meta=document.createElement('div');
+        meta.className='asciiCharMeta';
+        meta.textContent='× '+count;
+        meta.title='Количество в ASCII: '+count;
+        const input=document.createElement('input');
+        input.className='asciiCharInput';
+        input.type='text';
+        input.dataset.asciiChar=ch;
+        input.value=ch;
+        input.title='Чем заменить все вхождения символа '+JSON.stringify(ch);
+        row.append(glyph,meta,input);
+        box.appendChild(row);
+    });
+}
+function applyAsciiReplacementMap(){
+    const rows=[...document.querySelectorAll('#asciiChars .asciiCharInput')];
+    if(!rows.length) return;
+    const map=new Map();
+    rows.forEach(input=>map.set(input.dataset.asciiChar,input.value));
+    const cats=getAsciiCats();
+    if(!cats.length) return;
+
+    pushHistory();
+    cats.forEach(c=>{
+        let text=c.text||'';
+        for(const [from,to] of map){
+            text=text.split(from).join(to);
+        }
+        c.text=text;
+        const charW=(c.fontSize||18)*0.6;
+        c.w=Math.max(charW,text.length*charW);
+    });
+    render();
+    renderAsciiChars();
+}
+function render(){
+    categories.innerHTML='';
+    state.cats.forEach(c=>{
+        const isSel = state.selected.has(c.id);
+        const d=document.createElement('div');
+        d.className='category'+(isSel?' selected':'')+(isOutside(c)?' outside':'');
+        d.style.left=c.x+'px'; d.style.top=c.y+'px';
+        d.style.width=Math.max(1,c.w)+'px'; d.style.height=Math.max(1,c.h)+'px';
+        d.dataset.id=c.id;
+
+        if(c.type==='heroes' && c.hero_ids.length){
+            d.innerHTML='<div class="catTitle">'+esc(c.name)+' ('+c.hero_ids.length+')</div><div class="handle"></div>';
+        } else {
+            d.innerHTML='<div class="catTitle">'+esc(c.name)+'</div><div class="textCat"></div><div class="handle"></div>';
+            const t=d.querySelector('.textCat');
+            if(c.source==='ascii') t.classList.add('asciiCat');
+            t.textContent=c.text||'';
+            t.style.fontSize=(c.fontSize||18)+'px';
+            t.style.lineHeight=(c.lineHeight||14)+'px';
+            t.style.color=c.color||'#c7d0d5';
+        }
+
+        d.addEventListener('mousedown', e=>{
+            if(e.target.classList.contains('handle')) return;
+            e.stopPropagation();
+            if(e.shiftKey){ state.selected.has(c.id)?state.selected.delete(c.id):state.selected.add(c.id); render(); return; }
+            if(!state.selected.has(c.id)) state.selected=new Set([c.id]);
+            dragStart(e, c.id);
+        });
+        d.querySelector('.handle').addEventListener('mousedown', e=>{ e.stopPropagation(); resizeStart(e, c.id); });
+        categories.appendChild(d);
+    });
+    updateTree(); updateJSON(); updateValidation();
+    renderAsciiChars();
+    if(state.selected.size===1) loadInspector(catById([...state.selected][0]));
+}
+function updateTree(){
+    const sc=$('selCount'); if(sc) sc.textContent=state.selected.size?'('+state.selected.size+' выб.)':'';
+    const t=$('tree'); t.innerHTML='';
+    const hdr = document.createElement('div');
+    hdr.style.cssText='font-size:10px;color:#77838a;padding:3px;border-bottom:1px solid #1e262c;margin-bottom:4px';
+    hdr.textContent = 'Всего: ' + state.cats.length;
+    t.appendChild(hdr);
+    state.cats.forEach((c, idx)=>{
+        const d=document.createElement('div');
+        d.className='treeItem'+(state.selected.has(c.id)?' active':'');
+        d.innerHTML='<span class="treeDot"></span><span class="treeText">'+esc(c.name)+'</span><span>'+(c.type==='heroes'?c.hero_ids.length:'TXT')+'</span>';
+        d.onclick=e=>{
+            if(e.shiftKey && typeof updateTree.lastIndex==='number'){
+                const a=Math.min(updateTree.lastIndex,idx), b=Math.max(updateTree.lastIndex,idx);
+                state.selected=new Set(state.cats.slice(a,b+1).map(q=>q.id));
+            } else if(e.ctrlKey || e.metaKey || e.shiftKey){
+                state.selected.has(c.id)?state.selected.delete(c.id):state.selected.add(c.id);
+            } else {
+                state.selected=new Set([c.id]);
+            }
+            updateTree.lastIndex=idx;
+            render();
+        };
+        t.appendChild(d);
+    });
+}
+function loadInspector(c){
+    if(!c) return;
+    $('catName').value=c.name; $('catX').value=c.x; $('catY').value=c.y;
+    $('catW').value=c.w; $('catH').value=c.h; $('catType').value=c.type;
+    $('catText').value=c.text||'';
+    $('sx').textContent=Math.round(c.x); $('sy').textContent=Math.round(c.y);
+    $('sw').textContent=Math.round(c.w); $('sh').textContent=Math.round(c.h);
+}
+
+$('apply').onclick=()=>{
+    const c=catById([...state.selected][0]); if(!c) return;
+    pushHistory();
+    c.name=$('catName').value; c.x=+$('catX').value; c.y=+$('catY').value;
+    c.w=Math.max(1,+$('catW').value); c.h=Math.max(1,+$('catH').value);
+    c.type=$('catType').value; c.text=$('catText').value;
+    render();
+};
+function deleteSelectedCategories(){
+    if(!state.selected.size){
+        alert('Сначала выдели хотя бы одну категорию');
+        return;
+    }
+    pushHistory();
+    state.cats=state.cats.filter(c=>!state.selected.has(c.id));
+    state.selected.clear();
+    render();
+}
+$('deleteBtn').onclick=deleteSelectedCategories;
+$('deleteTopBtn').onclick=deleteSelectedCategories;
+$('deleteInspectorBtn').onclick=deleteSelectedCategories;
+$('clearSelBtn').onclick=()=>{ state.selected.clear(); render(); };
+$('newBtn').onclick=()=>{
+    if(state.cats.length) pushHistory();
+    state.cats=[];
+    state.selected.clear();
+    state.nextId=1;
+    render();
+};
+$('selectAllBtn').onclick=()=>{ state.selected=new Set(state.cats.map(c=>c.id)); render(); };
+$('asciiRefresh').onclick=()=>renderAsciiChars();
+$('asciiApplyMap').onclick=()=>applyAsciiReplacementMap();
+$('asciiDots').onclick=()=>{
+    const rows=[...document.querySelectorAll('#asciiChars .asciiCharInput')];
+    if(!rows.length) return;
+    rows.forEach(input=>{
+        input.value=input.dataset.asciiChar===' '?' ':'.';
+    });
+    applyAsciiReplacementMap();
+};
+
+$('addHeroes').onclick=()=>addCat('heroes',{name:'Heroes',x:200,y:200,w:300,h:300,count:12});
+$('addText').onclick=()=>addCat('text',{name:'Text',x:200,y:200,w:300,h:40,text:'HELLO'});
+
+$('asciiDensity').addEventListener('input', ()=>{
+    $('asciiDensityVal').textContent=$('asciiDensity').value+'%';
+});
+
+$('addAscii').onclick=async()=>{
+    let text='';
+    try{
+        text=await navigator.clipboard.readText();
+    }catch(e){}
+
+    if(!text){
+        addCat('text',{name:'ASCII',x:50,y:50,w:120,h:20,text:'',source:'ascii'});
+        setTimeout(()=>{$('catText').focus();},0);
+        return;
+    }
+
+    const normalized=text.replace(/\r\n?/g,'\n');
+    pushHistory();
+    const sourceRows=normalized.split('\n');
+    const density=(+$('asciiDensity').value||100)/100;
+    const mode=$('asciiChunk').value;
+    const chunkSize=mode==='line'?Infinity:Math.max(1,Math.min(5,+mode||2));
+
+    const fs=18, lh=14, charW=fs*0.6;
+    const startX=50, startY=50;
+    const newIds=[];
+    let maxRight=startX, lastY=startY;
+
+    sourceRows.forEach((rawLine, rowIndex)=>{
+        if(!rawLine && rowIndex===sourceRows.length-1) return;
+
+        let line=rawLine;
+        if(density<1 && line.length){
+            const target=Math.max(1, Math.round(line.length*density));
+            if(target<line.length){
+                const picked=[];
+                for(let i=0;i<target;i++){
+                    const pos=Math.min(line.length-1, Math.round(i*(line.length-1)/Math.max(1,target-1)));
+                    picked.push(line[pos]);
+                }
+                line=picked.join('');
+            }
+        }
+
+        const parts=[];
+        if(chunkSize===Infinity){
+            parts.push({text:line, sourceX:0});
+        }else{
+            for(let x=0;x<line.length;x+=chunkSize){
+                parts.push({text:line.slice(x,x+chunkSize), sourceX:x});
+            }
+        }
+
+        parts.forEach((part, partIndex)=>{
+            if(!part.text.length || !part.text.trim()) return;
+
+            const x=startX+part.sourceX*charW;
+            const y=startY+rowIndex*lh;
+            const w=Math.max(charW,part.text.length*charW);
+            const h=fs+2;
+
+            const c={
+                id:state.nextId++,
+                name:'ASCII '+(rowIndex+1)+':'+(part.sourceX+1),
+                x,y,w,h,type:'text',
+                text:part.text,hero_ids:[],
+                fontSize:fs,lineHeight:lh,color:'#c7d0d5',
+                group:'ASCII',source:'ascii'
+            };
+            state.cats.push(c);
+            newIds.push(c.id);
+            maxRight=Math.max(maxRight,x+w);
+            lastY=Math.max(lastY,y+h);
+        });
+    });
+
+    state.selected=new Set(newIds);
+    render();
+};
+$('vlineAdd').onclick=()=>{
+    const raw=$('vlineChars').value;
+    const chars=raw.split('\n').map(s=>s.length?s[0]:' ');
+    if(!chars.length || chars.every(c=>c===' ')){
+        alert('Введи хотя бы один символ в поле «Символы»');
+        return;
+    }
+
+    const count=Math.max(1, Math.min(200, +$('vlineCount').value||10));
+    const x0=+$('vlineX').value||100;
+    const y0=+$('vlineY').value||100;
+
+    const fs=18, lh=14, charW=fs*0.6;
+
+    pushHistory();
+    const newIds=[];
+    for(let i=0;i<count;i++){
+        const ch=chars[i % chars.length];
+        if(ch===' ' || ch==='\t') continue;
+
+        const c={
+            id: state.nextId++,
+            name: 'V'+i+':'+ch,
+            x: x0,
+            y: y0 + i*lh,
+            w: charW,
+            h: fs+2,
+            type: 'text',
+            text: ch,
+            hero_ids: [],
+            fontSize: fs,
+            lineHeight: lh,
+            color: '#c7d0d5',
+            group: 'VLINE',
+            source: 'ascii'
+        };
+        state.cats.push(c);
+        newIds.push(c.id);
+    }
+    state.selected=new Set(newIds);
+    render();
+    $('validation').innerHTML='<div class="ok">Создано: '+newIds.length+' категорий вертикальной линии</div>';
+};
+$('clipBtn').onclick=()=>{
+    if(!state.cats.length){ return; }
+    pushHistory();
+    let clipped=0;
+    state.cats.forEach(c=>{
+        let ch=false;
+        if(c.x<0){ c.w+=c.x; c.x=0; ch=true; }
+        if(c.y<0){ c.h+=c.y; c.y=0; ch=true; }
+        if(c.x+c.w>STAGE_W){ c.w=STAGE_W-c.x; ch=true; }
+        if(c.y+c.h>STAGE_H){ c.h=STAGE_H-c.y; ch=true; }
+        if(c.w<5||c.h<5){ c._del=true; ch=true; }
+        if(ch&&!c._del) clipped++;
+    });
+    state.cats=state.cats.filter(c=>!c._del);
+    state.selected.clear();
+    render();
+    $('validation').innerHTML='<div class="ok">Обрезано: '+clipped+' категорий</div>';
+};
+
+function dragStart(e, id){
+    pushHistory();
+    const c=catById(id);
+    const sx=e.clientX, sy=e.clientY;
+    const zoom = parseFloat($('zoom').value) || 1;
+    const ids=state.selected.has(id) ? [...state.selected] : [id];
+    if(!state.selected.has(id)) state.selected=new Set([id]);
+    const orig=new Map(ids.map(i=>{const q=catById(i); return [i,{x:q.x,y:q.y}];}));
+    function move(ev){
+        const dx=(ev.clientX-sx)/zoom, dy=(ev.clientY-sy)/zoom;
+        ids.forEach(i=>{ const q=catById(i), o=orig.get(i); q.x=Math.round(o.x+dx); q.y=Math.round(o.y+dy); });
+        render();
+    }
+    function up(){ removeEventListener('mousemove',move); removeEventListener('mouseup',up); }
+    addEventListener('mousemove',move); addEventListener('mouseup',up);
+}
+function resizeStart(e, id){
+    pushHistory();
+    const c=catById(id);
+    const sx=e.clientX, sy=e.clientY, ow=c.w, oh=c.h;
+    const zoom = parseFloat($('zoom').value) || 1;
+    function move(ev){ c.w=Math.max(20, Math.round(ow+(ev.clientX-sx)/zoom)); c.h=Math.max(20, Math.round(oh+(ev.clientY-sy)/zoom)); render(); }
+    function up(){ removeEventListener('mousemove',move); removeEventListener('mouseup',up); }
+    addEventListener('mousemove',move); addEventListener('mouseup',up);
+}
+
+const selectionBox=$('selectionBox');
+let isSelecting=false, selStartX=0, selStartY=0, selShift=false;
+
+function stagePoint(clientX, clientY){
+    const rect = stage.getBoundingClientRect();
+    const zoom = parseFloat($('zoom').value) || 1;
+    return {
+        x: (clientX - rect.left) / zoom,
+        y: (clientY - rect.top)  / zoom
+    };
+}
+
+stage.addEventListener('mousedown', e=>{
+    if(e.button !== 0) return;
+    if(e.target.classList.contains('handle')) return;
+    const onCategory = !!e.target.closest('.category');
+    if(onCategory && !areaSelectMode) return;
+    if(onCategory && areaSelectMode){
+        e.stopPropagation();
+        e.preventDefault();
+    }
+
+    const p = stagePoint(e.clientX, e.clientY);
+    selStartX = p.x;
+    selStartY = p.y;
+    selShift  = e.shiftKey;
+    if(!selShift){ state.selected.clear(); render(); }
+
+    isSelecting = true;
+    selectionBox.style.display = 'block';
+    selectionBox.style.left   = selStartX + 'px';
+    selectionBox.style.top    = selStartY + 'px';
+    selectionBox.style.width  = '0px';
+    selectionBox.style.height = '0px';
+    selectionBox.style.zIndex = '10000';
+});
+
+addEventListener('mousemove', e=>{
+    if(!isSelecting) return;
+    const p = stagePoint(e.clientX, e.clientY);
+    const x = Math.min(selStartX, p.x);
+    const y = Math.min(selStartY, p.y);
+    const w = Math.abs(p.x - selStartX);
+    const h = Math.abs(p.y - selStartY);
+    Object.assign(selectionBox.style,{
+        left: x+'px', top: y+'px', width: w+'px', height: h+'px'
+    });
+});
+
+addEventListener('mouseup', e=>{
+    if(!isSelecting) return;
+    isSelecting = false;
+    const x = parseFloat(selectionBox.style.left);
+    const y = parseFloat(selectionBox.style.top);
+    const w = parseFloat(selectionBox.style.width);
+    const h = parseFloat(selectionBox.style.height);
+    selectionBox.style.display = 'none';
+
+    if(w < 3 && h < 3) return;
+
+    const newSel = selShift ? new Set(state.selected) : new Set();
+    state.cats.forEach(c=>{
+        if(c.x < x+w && c.x+c.w > x && c.y < y+h && c.y+c.h > y) newSel.add(c.id);
+    });
+    state.selected = newSel;
+    render();
+});
+
+// ZOOM
+function applyZoom(){
+    const z = parseFloat($('zoom').value);
+    $('zoomVal').textContent = Math.round(z*100)+'%';
+    stage.style.transform = `scale(${z})`;
+    const w = STAGE_W * z, h = STAGE_H * z;
+    $('stageWrap').style.width = (w+40)+'px';
+    $('stageWrap').style.height = (h+40)+'px';
+}
+$('zoom').addEventListener('input', applyZoom);
+
+$('previewToggle').onclick=()=>{
+    stage.classList.toggle('preview-mode');
+    const on=stage.classList.contains('preview-mode');
+    $('previewToggle').textContent = on?'✏ Редактор':'👁 Просмотр';
+    $('previewToggle').classList.toggle('active', on);
+};
+$('safeToggle').onclick=()=>{
+    stage.classList.toggle('safe-on');
+    $('safeToggle').classList.toggle('active', stage.classList.contains('safe-on'));
+};
+$('gridToggle').onclick=()=>{
+    stage.classList.toggle('grid-on');
+    $('gridToggle').classList.toggle('active', stage.classList.contains('grid-on'));
+};
+$('areaSelectBtn').onclick=()=>{
+    areaSelectMode=!areaSelectMode;
+    $('areaSelectBtn').classList.toggle('active', areaSelectMode);
+    $('areaSelectBtn').textContent=areaSelectMode?'⌗ Область: ВКЛ':'⌗ Область';
+    stage.style.cursor=areaSelectMode?'crosshair':'';
+};
+
+// === ТРАНСФОРМАЦИЯ ГРУППЫ (поворот / отражение) ===
+// Вращаем и отражаем ТОЛЬКО рамки категорий вокруг общего центра.
+// Текст/символы внутри категорий НЕ переворачиваются — это важно для Dota,
+// где глиф всегда рисуется слева-направо и сверху-вниз.
+function getSelectedCats(){
+    return state.cats.filter(c=>state.selected.has(c.id));
+}
+function getBBox(cats){
+    let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+    cats.forEach(c=>{
+        minX=Math.min(minX,c.x);
+        minY=Math.min(minY,c.y);
+        maxX=Math.max(maxX,c.x+c.w);
+        maxY=Math.max(maxY,c.y+c.h);
+    });
+    return {minX,minY,maxX,maxY,
+        cx:(minX+maxX)/2, cy:(minY+maxY)/2,
+        w:maxX-minX, h:maxY-minY};
+}
+function transformSelected(kind){
+    const cats=getSelectedCats();
+    if(!cats.length){ return; }
+    pushHistory();
+    const bb=getBBox(cats);
+    const {cx,cy}=bb;
+
+    cats.forEach(c=>{
+        const x1=c.x, y1=c.y, x2=c.x+c.w, y2=c.y+c.h;
+        if(kind==='rotR'){            // 90° по часовой
+            const nx1=cx+(y1-cy), ny1=cy-(x1-cx);
+            const nx2=cx+(y2-cy), ny2=cy-(x2-cx);
+            c.x=Math.round(Math.min(nx1,nx2));
+            c.y=Math.round(Math.min(ny1,ny2));
+            c.w=Math.round(Math.abs(nx2-nx1));
+            c.h=Math.round(Math.abs(ny2-ny1));
+        }else if(kind==='rotL'){      // 90° против часовой
+            const nx1=cx-(y1-cy), ny1=cy+(x1-cx);
+            const nx2=cx-(y2-cy), ny2=cy+(x2-cx);
+            c.x=Math.round(Math.min(nx1,nx2));
+            c.y=Math.round(Math.min(ny1,ny2));
+            c.w=Math.round(Math.abs(nx2-nx1));
+            c.h=Math.round(Math.abs(ny2-ny1));
+        }else if(kind==='flipH'){     // отражение по горизонтали
+            const nx1=2*cx-x2, nx2=2*cx-x1;
+            c.x=Math.round(Math.min(nx1,nx2));
+            c.w=Math.round(Math.abs(nx2-nx1));
+        }else if(kind==='flipV'){     // отражение по вертикали
+            const ny1=2*cy-y2, ny2=2*cy-y1;
+            c.y=Math.round(Math.min(ny1,ny2));
+            c.h=Math.round(Math.abs(ny2-ny1));
+        }
+    });
+
+    render();
+}
+$('rotLBtn').onclick=()=>transformSelected('rotL');
+$('rotRBtn').onclick=()=>transformSelected('rotR');
+$('flipHBtn').onclick=()=>transformSelected('flipH');
+$('flipVBtn').onclick=()=>transformSelected('flipV');
+// === /ТРАНСФОРМАЦИЯ ГРУППЫ ===
+
+// === МАСШТАБ ВЫДЕЛЕННОГО ===
+// Масштабируем только рамки категорий вокруг общего центра bbox.
+// Размер символов внутри (fontSize / lineHeight) НЕ меняется.
+function scaleSelected(factor){
+    const cats=getSelectedCats();
+    if(!cats.length || !isFinite(factor) || factor<=0) return;
+    pushHistory();
+    const bb=getBBox(cats);
+    const {cx,cy}=bb;
+    cats.forEach(c=>{
+        c.x = Math.round(cx + (c.x - cx) * factor);
+        c.y = Math.round(cy + (c.y - cy) * factor);
+        c.w = Math.max(1, Math.round(c.w * factor));
+        c.h = Math.max(1, Math.round(c.h * factor));
+    });
+    render();
+}
+
+// Вписать выделенное в весь холст 1193×593 с сохранением пропорций
+function scaleFitStage(){
+    const cats=getSelectedCats();
+    if(!cats.length) return;
+    const bb=getBBox(cats);
+    if(bb.w<=0 || bb.h<=0) return;
+    const fit=Math.min(STAGE_W/bb.w, STAGE_H/bb.h);
+    pushHistory();
+    const {cx,cy}=bb;
+    cats.forEach(c=>{
+        c.x = Math.round(cx + (c.x - cx) * fit);
+        c.y = Math.round(cy + (c.y - cy) * fit);
+        c.w = Math.max(1, Math.round(c.w * fit));
+        c.h = Math.max(1, Math.round(c.h * fit));
+    });
+    // Центрируем результат в холсте
+    const bb2=getBBox(cats);
+    const dx=Math.round((STAGE_W - bb2.w)/2 - bb2.minX);
+    const dy=Math.round((STAGE_H - bb2.h)/2 - bb2.minY);
+    cats.forEach(c=>{ c.x+=dx; c.y+=dy; });
+    render();
+}
+
+// Сброс размера текстовых категорий под их естественный размер по тексту
+function scaleResetNatural(){
+    const cats=getSelectedCats();
+    if(!cats.length) return;
+    pushHistory();
+    cats.forEach(c=>{
+        if(c.type==='text'){
+            const fs=c.fontSize||18;
+            const charW=fs*0.6;
+            const len=(c.text||'').length || 1;
+            c.w=Math.max(charW, len*charW);
+            c.h=fs+2;
+        }
+    });
+    render();
+}
+
+$('scaleUpBtn').onclick   = ()=>scaleSelected(1.25);
+$('scaleDownBtn').onclick = ()=>scaleSelected(0.8);
+$('scaleFitBtn').onclick  = ()=>scaleFitStage();
+$('scaleResetBtn').onclick= ()=>scaleResetNatural();
+$('scaleApplyBtn').onclick= ()=>{
+    const f=parseFloat($('scaleFactor').value);
+    if(isFinite(f) && f>0) scaleSelected(f);
+};
+// === /МАСШТАБ ВЫДЕЛЕННОГО ===
+
+// === ЗАМЕНА СИМВОЛА В ВЫДЕЛЕННЫХ ===
+// Меняет text у всех выделенных текстовых категорий на указанный.
+// Ширина пересчитывается от длины строки, чтобы рамка не "разъезжалась".
+function replaceCharInSelected(){
+    const cats=getSelectedCats().filter(c=>c.type==='text');
+    if(!cats.length){
+        $('validation').innerHTML='<div class="err">Выдели хотя бы одну текстовую категорию</div>';
+        return;
+    }
+    const raw=$('replaceCharInput').value;
+    pushHistory();
+    let changed=0;
+    cats.forEach(c=>{
+        c.text=raw;
+        const fs=c.fontSize||18;
+        const charW=fs*0.6;
+        const len=Math.max(1, raw.length);
+        c.w=Math.max(charW, len*charW);
+        c.h=fs+2;
+        changed++;
+    });
+    render();
+    $('validation').innerHTML='<div class="ok">Символ заменён в '+changed+' категориях</div>';
+}
+$('replaceCharBtn').onclick=replaceCharInSelected;
+// === /ЗАМЕНА СИМВОЛА В ВЫДЕЛЕННЫХ ===
+
+// ШРИФТ
+let currentFontFamily = 'Arial';
+$('fontFile').onchange = async e => {
+    const f = e.target.files[0]; if(!f) return;
+    const url = URL.createObjectURL(f);
+    try{
+        const face = new FontFace('RadianceUploaded', `url(${url})`);
+        await face.load();
+        document.fonts.add(face);
+        currentFontFamily = 'RadianceUploaded';
+        document.body.style.fontFamily = currentFontFamily + ', Arial';
+        document.querySelectorAll('.textCat,.hero,.catTitle').forEach(el=>{
+            el.style.fontFamily = currentFontFamily + ', Arial';
+        });
+        $('fontInfo').textContent = 'Шрифт: Radiance ('+f.name+')';
+        $('fontState').innerHTML = '<span style="color:#8fdb8f">✓ '+esc(f.name)+'</span>';
+        render();
+    } catch(err){
+        $('fontState').innerHTML = '<span style="color:#ff9999">Ошибка: '+err+'</span>';
+    }
+};
+(async ()=>{
+    try{
+        await document.fonts.load('14px Radiance');
+        if(document.fonts.check('14px Radiance')){
+            currentFontFamily = 'Radiance';
+            document.body.style.fontFamily = 'Radiance, Arial';
+            document.querySelectorAll('.textCat,.hero,.catTitle').forEach(el=>{
+                el.style.fontFamily = 'Radiance, Arial';
+            });
+            $('fontInfo').textContent = 'Шрифт: Radiance (локальный)';
+            $('fontState').innerHTML = '<span style="color:#8fdb8f">✓ Локальный Radiance</span>';
+            render();
+        }
+    } catch(e){}
+})();
+
+// JSON
+function jsonData(){
+    return { version:3, configs:[{ config_name:'Custom', categories: state.cats.map(c=>({
+        category_name: c.type==='text' ? (c.text || c.name) : c.name,
+        x_position: c.x, y_position: c.y, width: c.w, height: c.h,
+        hero_ids: c.type==='heroes' ? c.hero_ids : []
+    })) }] };
+}
+function updateJSON(){
+    const txt=JSON.stringify(jsonData(),null,2);
+    $('json').textContent = txt.length>3000 ? txt.substring(0,3000)+'\n...' : txt;
+}
+$('exportBtn').onclick=()=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(jsonData(),null,2)],{type:'application/json'}));
+    a.download='hero_grid_config.json'; a.click();
+};
+
+// === ЗАГРУЗКА JSON ===
+// После загрузки файлов выделяются только что добавленные категории.
+$('jsonFile').onchange = async e=>{
+    const files=[...e.target.files];
+    if(!files.length) return;
+    let totalLoaded=0;
+    const newIds=[];
+    pushHistory();
+    for(const f of files){
+        try{
+            const text=await f.text();
+            const j=JSON.parse(text);
+            const cs=j.configs?.[0]?.categories||[];
+            const newCats=cs.map(c=>({
+                id:state.nextId++, name:c.category_name||'Category',
+                x:(+c.x_position||0), y:(+c.y_position||0),
+                w:+c.width||100, h:+c.height||30,
+                type:(c.hero_ids?.length?'heroes':'text'),
+                text:(c.hero_ids?.length?'':c.category_name||''),
+                hero_ids:c.hero_ids||[],
+                fontSize:18, lineHeight:14, color:'#c7d0d5', group:null
+            }));
+            newCats.forEach(c=>newIds.push(c.id));
+            state.cats.push(...newCats);
+            totalLoaded+=newCats.length;
+        }catch(err){
+            console.error('Ошибка файла', f.name, err);
+        }
+    }
+    state.selected=new Set(newIds);
+    render();
+    if(totalLoaded){
+        $('validation').innerHTML='<div class="ok">Загружено: '+totalLoaded+' категорий из '+files.length+' файлов (выделены)</div>';
+    }else{
+        $('validation').innerHTML='<div class="err">Не удалось загрузить категории. Проверь формат JSON (нужен configs[0].categories).</div>';
+    }
+    e.target.value='';
+};
+// === /ЗАГРУЗКА JSON ===
+
+function updateValidation(){
+    if(!state.cats.length){ $('validation').innerHTML='<div class="ok">Нет категорий</div>'; return; }
+    const outside=[];
+    state.cats.forEach(c=>{ if(isOutside(c)) outside.push(c.name); });
+    if(outside.length){
+        $('validation').innerHTML = '<div class="err">⚠ За границами: '+outside.length+'. Жми «Обрезать всё за границы».</div>';
+    } else {
+        $('validation').innerHTML = '<div class="ok">✓ Всё внутри 1193×593 — координаты экспортируются напрямую.</div>';
+    }
+}
+
+// КАРТИНКИ
+const drop=$('drop'), imgInput=$('imgFile'), chooseImage=$('chooseImage');
+function renderImgList(){
+    const list=$('imgList'); list.innerHTML='';
+    images.forEach(img=>{
+        const item=document.createElement('div');
+        item.className='imgItem'+(currentImgId===img.id?' active':'');
+        item.innerHTML = `
+            <img class="imgThumb" src="${img.thumbUrl}">
+            <div class="imgInfo">
+                <div class="imgName">${esc(img.name)}</div>
+                <div class="imgMeta">${img.img.naturalWidth}×${img.img.naturalHeight} · ${img.sizeKB} KB</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+                    <span style="font-size:10px;white-space:nowrap">Плотность</span>
+                    <input class="imgScale" type="range" min="25" max="100" step="5" value="${img.scale||60}" style="flex:1;min-width:70px">
+                    <span class="imgScaleVal" style="font-size:10px;min-width:32px;text-align:right">${img.scale||60}%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+                    <span style="font-size:10px;white-space:nowrap">Символы</span>
+                    <input class="imgChars" type="text" value="${esc(img.chars||' .:-=+*#%@')}" placeholder=" .:-=+*#%@" title="Символы слева направо: от светлых к тёмным" style="flex:1;min-width:70px;font-family:monospace">
+                </div>
+            </div>
+            <button class="imgRemove">✖</button>
+        `;
+        item.addEventListener('click', ()=>{ currentImgId=img.id; renderImgList(); });
+        const scaleInput=item.querySelector('.imgScale');
+        const scaleVal=item.querySelector('.imgScaleVal');
+        const charsInput=item.querySelector('.imgChars');
+        charsInput.addEventListener('click', e=>e.stopPropagation());
+        charsInput.addEventListener('input', e=>{ img.chars=e.target.value; });
+        scaleInput.addEventListener('click', e=>e.stopPropagation());
+        scaleInput.addEventListener('input', e=>{
+            img.scale=+e.target.value||60;
+            scaleVal.textContent=img.scale+'%';
+        });
+        item.querySelector('.imgRemove').addEventListener('click', (e)=>{
+            e.stopPropagation();
+            const idx=images.findIndex(i=>i.id===img.id);
+            if(idx>=0){ images.splice(idx,1); if(currentImgId===img.id) currentImgId=images[0]?.id||null; renderImgList(); }
+        });
+        list.appendChild(item);
+    });
+}
+function loadImageFile(file){
+    if(!file) return;
+    if(!(file.type.startsWith('image/')||/\.(png|jpe?g|webp|gif|bmp)$/i.test(file.name))) return;
+    const reader=new FileReader();
+    reader.onload=()=>{
+        const im=new Image();
+        im.onload=()=>{
+            images.push({ id: state.nextId++, name: file.name, img: im, thumbUrl: reader.result, sizeKB: Math.round(file.size/1024), scale: 60, chars: ' .:-=+*#%@' });
+            if(!currentImgId) currentImgId=images[0].id;
+            renderImgList();
+        };
+        im.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+}
+function loadFiles(files){ [...files].forEach(loadImageFile); }
+drop.addEventListener('click', e=>{ if(e.target.id==='chooseImage') return; imgInput.value=''; imgInput.click(); });
+chooseImage.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); imgInput.value=''; imgInput.click(); });
+imgInput.addEventListener('change', ()=>{ if(imgInput.files.length) loadFiles(imgInput.files); imgInput.value=''; });
+drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', ()=>drop.classList.remove('over'));
+drop.addEventListener('drop', e=>{ e.preventDefault(); drop.classList.remove('over'); if(e.dataTransfer.files.length) loadFiles(e.dataTransfer.files); });
+$('clearImg').onclick=()=>{ images.length=0; currentImgId=null; renderImgList(); };
+
+// КАРТИНКА → СИМВОЛЫ
+function processImage(imgObj, offsetY, scale=60){
+    const baseCols=160;
+    const cols=Math.max(8, Math.round(baseCols*(scale/100)));
+    const fs=18;
+    const lh=14;
+    const chunk=2;
+    const ox=30;
+    const oy=30 + offsetY;
+    const threshold=45/255;
+    const gamma=.75;
+    const contrast=1.4;
+    const invert=true, bgOnlySpaces=true;
+
+    const chars=(imgObj.chars||' .:-=+*#%@').length ? (imgObj.chars||' .:-=+*#%@') : ' .';
+    const aspect=.5;
+    const im=imgObj.img;
+    const rows=Math.max(1, Math.round(cols*(im.naturalHeight/im.naturalWidth)*aspect));
+
+    const cv=document.createElement('canvas');
+    const ctx=cv.getContext('2d',{willReadFrequently:true});
+    cv.width=cols; cv.height=rows;
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,cols,rows);
+    ctx.drawImage(im,0,0,cols,rows);
+    const pix=ctx.getImageData(0,0,cols,rows).data;
+
+    const lumArr=new Float32Array(cols*rows);
+    for(let i=0,p=0; i<pix.length; i+=4,p++){
+        let l=(.2126*pix[i]+.7152*pix[i+1]+.0722*pix[i+2])/255;
+        if(invert) l=1-l;
+        if(l<threshold){ lumArr[p]=0; continue; }
+        l=(l-threshold)/(1-threshold);
+        l=Math.pow(l,gamma);
+        if(contrast>1) l=Math.pow(l,1/contrast);
+        lumArr[p]=Math.max(0, Math.min(1, l));
+    }
+
+    const newCats=[];
+    const tag = 'IMG'+imgObj.id;
+    for(let y=0;y<rows;y++){
+        let line='';
+        for(let x=0;x<cols;x++){
+            const l=lumArr[y*cols+x];
+            if(l===0 && bgOnlySpaces) line+=' ';
+            else line+=chars[Math.min(chars.length-1, Math.round(l*(chars.length-1)))];
+        }
+        for(let x=0;x<line.length;x+=chunk){
+            const text=line.slice(x,x+chunk);
+            if(!text.trim()) continue;
+            newCats.push({
+                id:state.nextId++, name:tag+' '+y+':'+x,
+                x:ox+x*fs*0.6, y:oy+y*lh, w:text.length*fs*0.6, h:fs+2,
+                type:'text', text, hero_ids:[], fontSize:fs, lineHeight:lh,
+                color:'#c7d0d5', group:null, source:'image'
+            });
+        }
+    }
+    return {cats:newCats, height: rows*lh};
+}
+
+$('convertAll').onclick=()=>{
+    if(!images.length){ alert('Сначала загрузи картинки'); return; }
+    const gap=40;
+    let offsetY=0; const allNew=[];
+    images.forEach(img=>{
+        const {cats:newCats, height} = processImage(img, offsetY, img.scale||60);
+        allNew.push(...newCats);
+        offsetY += height + gap;
+    });
+    state.cats = state.cats.filter(c => c.source !== 'image');
+    state.cats.push(...allNew);
+    state.selected = new Set();
+    render();
+};
+$('convertCurrent').onclick=()=>{
+    if(!currentImgId){ alert('Выбери картинку из списка'); return; }
+    const imgObj = images.find(i=>i.id===currentImgId); if(!imgObj) return;
+    const {cats:newCats} = processImage(imgObj, 0, imgObj.scale||60);
+    state.cats = state.cats.filter(c => c.source !== 'image');
+    state.cats.push(...newCats);
+    state.selected = new Set();
+    render();
+};
+
+document.addEventListener('keydown', e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){
+        if(e.target.matches('input,textarea,select')) return;
+        e.preventDefault(); undo(); return;
+    }
+    if(e.target.matches('input,textarea,select')) return;
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='a'){ e.preventDefault(); state.selected=new Set(state.cats.map(c=>c.id)); render(); }
+    if(e.key==='Escape'){
+        if(areaSelectMode){
+            areaSelectMode=false;
+            $('areaSelectBtn').classList.remove('active');
+            $('areaSelectBtn').textContent='⌗ Область';
+            stage.style.cursor='';
+        }
+        state.selected.clear(); render();
+    }
+    if(e.key==='Delete'&&state.selected.size){
+        deleteSelectedCategories();
+    }
+    // Поворот / отражение / масштаб выделенного
+    if(state.selected.size){
+        if(e.key==='q' || e.key==='й'){ transformSelected('rotL'); return; }
+        if(e.key==='e' || e.key==='у'){ transformSelected('rotR'); return; }
+        if(e.key==='h' || e.key==='р'){ transformSelected('flipH'); return; }
+        if(e.key==='v' || e.key==='м'){ transformSelected('flipV'); return; }
+        if(e.key==='+' || e.key==='='){ scaleSelected(1.25); return; }
+        if(e.key==='-' || e.key==='_'){ scaleSelected(0.8); return; }
+        if(e.key==='0' || e.key===')'){ scaleFitStage(); return; }
+    }
+});
+
+// Старт
+renderImgList();
+applyZoom();
+updateUndoUI();
+</script>
+</body>
+</html>

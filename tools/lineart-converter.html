@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Line-Art Converter v7.1 — реалистичное превью</title>
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:#080a0c;color:#d8dce0;font:13px Arial,sans-serif;overflow:hidden}
+button,input,select,textarea{font:inherit;background:#20272c;color:#ddd;border:1px solid #45515a;border-radius:3px;padding:6px 9px;cursor:pointer}
+button:hover{background:#2b353c}
+button.primary{background:#40596b;border-color:#6f8ca0}
+button.gold{background:#4a3923;border-color:#84693f}
+button.green{background:#1f4a2a;border-color:#3d7a4a}
+button.danger{background:#3a2222;border-color:#744444}
+button.tool{background:#1a2430;border-color:#3d4c57;color:#c8d4de;padding:4px 8px;font-size:11px}
+button.tool.active{background:#c99c5b;border-color:#e0b878;color:#1a1208}
+input,select,textarea{background:#080b0d;color:#ddd;border:1px solid #3b464e;border-radius:3px;padding:6px;cursor:text}
+input[type=range]{cursor:pointer;padding:0}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+.app{height:100%;display:grid;grid-template-columns:340px 1fr 380px;grid-template-rows:52px 1fr}
+header{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:0 14px;background:linear-gradient(#151d24,#0c1115);border-bottom:1px solid #38424a}
+.logo{font-size:16px;font-weight:bold;letter-spacing:1px}
+.badge{font-size:10px;color:#9eb2c0;border:1px solid #3d4c57;padding:3px 6px;border-radius:3px}
+.badge.free{background:#1f4a2a;border-color:#3d7a4a;color:#9bbca3}
+.badge.lib{background:#4a3923;border-color:#84693f;color:#f0d9a8}
+.headerRight{margin-left:auto;color:#8e9ba4;font-size:11px}
+
+.left,.right{overflow:auto;background:#12171b;border-right:1px solid #30383f;padding:10px}
+.right{border-right:0;border-left:1px solid #30383f}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;color:#aebbc4}
+h2:first-child{margin-top:0}
+.group{border:1px solid #273139;background:#0d1114;padding:9px;margin-bottom:9px;border-radius:3px}
+.row{display:grid;grid-template-columns:1fr 120px;gap:6px;align-items:center;margin:6px 0;font-size:11px;color:#aab4bb}
+.row input[type="number"],.row select,.row input[type="text"]{width:120px}
+.row.full{display:block}
+.row.full input,.row.full select,.row.full textarea{width:100%}
+.hint{font-size:10px;line-height:1.4;color:#77838a}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+code{background:#0b0f12;color:#9ab;padding:1px 5px;border-radius:2px;font-family:monospace;font-size:10px}
+
+.slider-row{display:grid;grid-template-columns:1fr 95px 60px;gap:6px;align-items:center;margin:6px 0;font-size:11px;color:#aab4bb}
+.slider-row label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slider-row input[type=range]{width:100%;padding:0;cursor:pointer}
+.slider-row input[type=number]{width:60px;padding:4px 6px;text-align:center;font-family:monospace;font-size:12px;background:#0b0f12;border-color:#3b464e;color:#c99c5b;font-weight:bold}
+.slider-row input[type=number]:focus{outline:1px solid #c99c5b;border-color:#c99c5b}
+
+.drop{border:2px dashed #52636d;padding:14px;text-align:center;color:#8b989f;cursor:pointer;border-radius:4px}
+.drop:hover,.drop.over{background:#172027;border-color:#c99c5b;color:#e0cfa8}
+
+.center{overflow:auto;background:#07090a;padding:12px;position:relative}
+.toolbar{display:flex;gap:6px;align-items:center;margin-bottom:10px;padding:6px 8px;background:#0d1114;border:1px solid #273139;border-radius:4px;position:sticky;top:0;z-index:5}
+.toolbar .grow{flex:1}
+
+.canvasWrap{display:grid;gap:8px}
+.canvasWrap.horizontal{grid-template-columns:1fr 1fr}
+.canvasWrap.vertical{grid-template-columns:1fr}
+.canvasWrap.vertical .canvasBox{max-height:45vh;overflow:auto}
+
+.canvasBox{border:1px solid #2c363d;background:#0b0f12;padding:6px;border-radius:3px;display:flex;flex-direction:column;min-width:0}
+.canvasBox h3{margin:0 0 6px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#9eb2c0;display:flex;align-items:center;gap:6px}
+.canvasBox h3 .fs{margin-left:auto;background:transparent;border:1px solid #2c363d;color:#8ea0aa;padding:2px 8px;font-size:12px;border-radius:3px;cursor:pointer}
+.canvasBox h3 .fs:hover{background:#1a2430;border-color:#4a6478;color:#d8e4ec}
+.canvasBox canvas{display:block;background:#000;max-width:100%;height:auto}
+.canvasBox:fullscreen{background:#000;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.canvasBox:fullscreen canvas{max-width:100%;max-height:calc(100vh - 60px);width:auto;height:auto;object-fit:contain}
+
+.verif{font:10px monospace;color:#7e8d95;margin-top:8px}
+.ok{padding:6px;border:1px solid #355442;background:#0e1912;color:#9bbca3;font-size:10px;border-radius:3px}
+.warn{padding:6px;border:1px solid #684d31;background:#20170f;color:#cdb18b;font-size:10px;border-radius:3px}
+.err{padding:6px;border:1px solid #6b3030;background:#200f0f;color:#e5a3a3;font-size:10px;border-radius:3px}
+pre#json{font:9px/1.3 monospace;white-space:pre-wrap;max-height:180px;overflow:auto;color:#b9c8d0;margin:0}
+label.chk{display:flex;align-items:center;gap:6px;font-size:11px;margin:6px 0;color:#aab4bb;cursor:pointer}
+label.chk input[type=checkbox]{width:auto;cursor:pointer}
+
+.libCategories{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.libCatBtn{background:#0b0f12;border:1px solid #2c363d;color:#c8d4de;padding:4px 8px;font-size:11px;border-radius:3px;cursor:pointer;white-space:nowrap}
+.libCatBtn:hover{background:#1a2430;border-color:#c99c5b}
+.libCatBtn.active{background:#4a3923;border-color:#84693f;color:#f0d9a8}
+.libGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(28px,1fr));gap:3px;max-height:180px;overflow:auto;padding:6px;background:#0b0f12;border:1px solid #273139;border-radius:3px;margin-bottom:8px}
+.libSym{background:transparent;border:1px solid transparent;color:#c8d4de;padding:3px 0;font-size:16px;line-height:1;border-radius:2px;cursor:pointer;text-align:center;font-family:monospace;user-select:none}
+.libSym:hover{background:#1a2430;border-color:#4a6478;color:#fff}
+.libSym.on{background:#40596b;border-color:#6f8ca0;color:#fff;font-weight:bold}
+.libActions{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.libActions button{padding:5px;font-size:10px}
+.charsetView{font:11px/1.3 monospace;color:#c7d0d5;background:#0b0f12;border:1px solid #273139;border-radius:3px;padding:6px;word-break:break-all;min-height:38px;max-height:80px;overflow:auto;margin-top:6px}
+
+.presetList{display:flex;flex-direction:column;gap:4px;max-height:220px;overflow:auto}
+.presetItem{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#0b0f12;border:1px solid #2c363d;border-radius:3px;font-size:11px;cursor:pointer}
+.presetItem:hover{background:#1a2430;border-color:#4a6478}
+.presetItem.active{border-color:#c99c5b;background:#1a1408}
+.presetItem .presetName{flex:1;color:#c8d4de;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.presetItem .presetBtn{background:transparent;border:1px solid transparent;color:#8ea0aa;padding:2px 5px;font-size:11px;border-radius:2px;cursor:pointer}
+.presetItem .presetBtn:hover{background:#2a2222;border-color:#744444;color:#e5a3a3}
+.presetItem .presetLoad{background:transparent;border:1px solid #3d7a4a;color:#9bbca3;padding:2px 6px;font-size:10px;border-radius:2px;cursor:pointer}
+.presetItem .presetLoad:hover{background:#1f4a2a}
+.presetEmpty{padding:10px;text-align:center;color:#77838a;font-size:10px}
+
+.fixedNote{font-size:10px;color:#c99c5b;background:#1a1408;border:1px solid #84693f;padding:6px;border-radius:3px;font-family:monospace;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+    <div class="logo">LINE-ART → JSON (v7.1)</div>
+    <span class="badge">холст 1193 × 593</span>
+    <span class="badge free">реалистичное превью</span>
+    <span class="badge lib" id="charsetBadge">charset: —</span>
+    <div class="headerRight" id="status">Картинка не загружена</div>
+</header>
+
+<aside class="left">
+<h2>Картинка</h2>
+<div class="group">
+    <div id="drop" class="drop">📁 Клик или перетащи PNG / JPG
+        <div style="margin-top:6px"><button type="button" id="choose" class="gold">ВЫБРАТЬ ФАЙЛ</button></div>
+    </div>
+    <input id="file" type="file" accept="image/*" style="display:none">
+</div>
+
+<h2>Пресеты настроек</h2>
+<div class="group">
+    <div class="presetList" id="presetList"></div>
+    <div style="height:6px"></div>
+    <div class="row full" style="margin-top:0">
+        <input id="presetName" type="text" placeholder="Название пресета..." style="width:100%;font-size:11px">
+    </div>
+    <div class="two" style="margin-top:5px">
+        <button id="presetSave" class="green">💾 Сохранить</button>
+        <button id="presetExportAll" class="gold">📤 Экспорт всех</button>
+    </div>
+    <div class="two" style="margin-top:5px">
+        <button id="presetImport" class="primary">📥 Импорт файла</button>
+        <input id="presetImportFile" type="file" accept=".json,application/json" style="display:none">
+        <button id="presetClear" class="danger">🗑 Очистить</button>
+    </div>
+</div>
+
+<h2>Подготовка картинки</h2>
+<div class="group">
+    <div class="slider-row">
+        <label>Яркость</label>
+        <input id="bright" type="range" min="-100" max="100" step="1" value="0">
+        <input id="brightNum" type="number" min="-100" max="100" step="1" value="0">
+    </div>
+    <div class="slider-row">
+        <label>Контраст</label>
+        <input id="contrast" type="range" min="-100" max="100" step="1" value="0">
+        <input id="contrastNum" type="number" min="-100" max="100" step="1" value="0">
+    </div>
+    <div class="row"><label>Инверсия</label><label class="chk"><input id="invert" type="checkbox"> для тёмных картинок</label></div>
+</div>
+
+<h2>Canny — контуры</h2>
+<div class="group">
+    <div class="slider-row">
+        <label>Blur σ</label>
+        <input id="blur" type="range" min="0" max="3" step="0.1" value="1.0">
+        <input id="blurNum" type="number" min="0" max="3" step="0.1" value="1.0">
+    </div>
+    <div class="slider-row">
+        <label>Threshold</label>
+        <input id="thr" type="range" min="0.03" max="0.5" step="0.01" value="0.10">
+        <input id="thrNum" type="number" min="0.03" max="0.5" step="0.01" value="0.10">
+    </div>
+    <label class="chk"><input id="thinning" type="checkbox" checked> Скелетизация (Zhang-Suen)</label>
+</div>
+
+<h2>Геометрия арта</h2>
+<div class="group">
+    <div class="slider-row">
+        <label>Заполнение холста %</label>
+        <input id="fill" type="range" min="20" max="100" step="1" value="90">
+        <input id="fillNum" type="number" min="20" max="100" step="1" value="90">
+    </div>
+
+    <div class="row full">
+        <label style="color:#c99c5b;font-weight:bold">→ Толщина линии (шаг сетки)</label>
+    </div>
+    <div class="slider-row">
+        <label>Шаг сетки (px)</label>
+        <input id="gridStep" type="range" min="2" max="20" step="1" value="4">
+        <input id="gridStepNum" type="number" min="2" max="20" step="1" value="4">
+    </div>
+    <div class="hint">Меньше — тоньше и плотнее. Больше — пунктир.</div>
+
+    <div class="slider-row">
+        <label>Плотность %</label>
+        <input id="density" type="range" min="10" max="200" step="5" value="100">
+        <input id="densityNum" type="number" min="10" max="200" step="5" value="100">
+    </div>
+
+    <div class="slider-row">
+        <label>Размер символов (px, база)</label>
+        <input id="symbolPx" type="range" min="8" max="24" step="1" value="18">
+        <input id="symbolPxNum" type="number" min="8" max="24" step="1" value="18">
+    </div>
+    <div class="hint">База 18. Точки рендерятся ~0.2×18, буквы ~1.0×18.</div>
+
+    <div class="row"><label>Лимит категорий</label><input id="maxCats" type="number" min="100" max="10000" step="100" value="2000"></div>
+
+    <div class="hint" style="margin-top:10px;color:#c99c5b;font-weight:bold">→ В JSON (стандарт Dota)</div>
+    <div class="fixedNote" style="margin-top:4px">
+        "width": 30.000000<br>
+        "height": 30.000000
+    </div>
+</div>
+
+<h2>Заливка теней</h2>
+<div class="group">
+    <label class="chk"><input id="shading" type="checkbox"> Включить заливку тёмных областей</label>
+    <div class="row full"><label>Символы заливки</label>
+        <input id="shadeCharset" value=".·:" style="width:100%;font-family:monospace">
+    </div>
+    <div class="slider-row">
+        <label>Плотность точек %</label>
+        <input id="shadeDensity" type="range" min="5" max="100" step="5" value="30">
+        <input id="shadeDensityNum" type="number" min="5" max="100" step="5" value="30">
+    </div>
+    <div class="slider-row">
+        <label>Порог тени %</label>
+        <input id="shadeThreshold" type="range" min="10" max="90" step="5" value="45">
+        <input id="shadeThresholdNum" type="number" min="10" max="90" step="5" value="45">
+    </div>
+</div>
+
+<h2>Быстрые пресеты</h2>
+<div class="group">
+    <button id="presetDots" class="gold" style="width:100%;margin-bottom:5px;font-weight:bold">● Точки тонкие</button>
+    <button id="presetLines" class="primary" style="width:100%;margin-bottom:5px">─ Сплошные линии</button>
+    <button id="presetMix" style="width:100%">◐ Точки + линии</button>
+</div>
+</aside>
+
+<main class="center">
+<div class="toolbar">
+    <span style="color:#8ea0aa;font-size:11px">Расположение:</span>
+    <button id="layoutH" class="tool active">⇋ Горизонтально</button>
+    <button id="layoutV" class="tool">⇅ Вертикально</button>
+    <div class="grow"></div>
+    <span style="color:#8ea0aa;font-size:11px" id="zoomInfo">Превью 1:1 с Dota</span>
+</div>
+<div class="canvasWrap horizontal" id="canvasWrap">
+    <div class="canvasBox" id="boxSrc">
+        <h3>Оригинал <button class="fs" data-target="boxSrc" title="На весь экран">⛶</button></h3>
+        <canvas id="src" width="600" height="400"></canvas>
+    </div>
+    <div class="canvasBox" id="boxDst">
+        <h3>Превью 1193×593 (как в Dota) <button class="fs" data-target="boxDst" title="На весь экран">⛶</button></h3>
+        <canvas id="dst" width="600" height="298"></canvas>
+    </div>
+</div>
+<div class="verif" id="verif">—</div>
+</main>
+
+<aside class="right">
+<h2>Библиотека символов</h2>
+<div class="group">
+    <div class="libCategories" id="libCategories"></div>
+    <div class="libGrid" id="libGrid"></div>
+    <div class="libActions">
+        <button id="libReplace" class="gold">→ Заменить charset</button>
+        <button id="libClear" class="danger">✖ Очистить</button>
+        <button id="libAddAll">＋ Добавить всё</button>
+        <button id="libRev" class="primary">↺ Реверс</button>
+    </div>
+</div>
+
+<h2>Символы контуров</h2>
+<div class="group">
+    <div class="row full"><label>Пресет</label>
+        <select id="charsetPreset" style="width:100%">
+            <option value=".">Точка — как у него</option>
+            <option value=".·:">Точки разные</option>
+            <option value=".-/\\|">Классика (4 напр.)</option>
+            <option value="-\\|/" selected>Тонкие линии (4 напр.)</option>
+            <option value="-\\|/─╲│╱">Расширенные (8 напр.)</option>
+            <option value=".·:;+*#%@">Плотность</option>
+            <option value="custom">— вручную —</option>
+        </select>
+    </div>
+    <div class="row full"><label>Набор</label>
+        <input id="charset" value="-\\|/" style="width:100%;font-family:monospace">
+    </div>
+    <div class="charsetView" id="charsetView"></div>
+    <label class="chk"><input id="autoOrient" type="checkbox" checked> Автоориентация по углу</label>
+    <label class="chk"><input id="onlyDots" type="checkbox"> Только первый символ</label>
+</div>
+
+<h2>Экспорт</h2>
+<div class="group">
+    <button id="jsonFreeBtn" class="green" style="width:100%;font-weight:bold;padding:10px">💾 СКАЧАТЬ JSON</button>
+    <button id="copyBtn" class="gold" style="width:100%;margin-top:8px">📋 Копировать ASCII</button>
+    <button id="autoBtn" class="danger" style="width:100%;margin-top:6px">⟲ Сброс параметров</button>
+</div>
+
+<h2>Статистика</h2>
+<div class="group" id="stats"></div>
+<h2>Проверка</h2>
+<div class="group" id="diag"></div>
+</aside>
+</div>
+
+<script>
+const LIBRARY = [
+    { id:'grad',     name:'Градиент',         chars:'.·:;+*#%@' },
+    { id:'dots',     name:'Точки',            chars:'.·•‣⁃⁍⁌⁎⁏⁐⁑⁒⁓⁔⁕⁖⁗⁘⁙⁚⁛⁜⁝⁞' },
+    { id:'arrows',   name:'Стрелки',          chars:'←↑→↓↔↕↖↗↘↙⇐⇑⇒⇓⇔⇕' },
+    { id:'geo',      name:'Геометрия',        chars:'■□▲△▼▽◆◇◉○◯●' },
+    { id:'stars',    name:'Звёзды',           chars:'★☆✩✪✫' },
+    { id:'cards',    name:'Карты+музыка',     chars:'♠♡♢♣♤♥♦♧♨♩♪♫♬♭♯' },
+    { id:'misc',     name:'Разное',           chars:'☉☩☺☻☼♁♂' },
+    { id:'typo',     name:'Типографские',     chars:'†‡•‰‱′″‴‵‶‷‸‹›※‼‽‾' },
+    { id:'lines4',   name:'Линии (4)',        chars:'-\\|/' },
+    { id:'lines8',   name:'Линии (8)',        chars:'-\\|/─╲│╱' },
+    { id:'armenian', name:'Армянский',        chars:'ԱԲԳԴԵԶԷԸԹԺԻԼԽԾԿՀՁՂՃՄՅՆՇՈՉՊՋՌՍՎՏՐՑՒՓՔՕՖ' },
+    { id:'hebrew',   name:'Иврит',            chars:'אבגדהוזחטיכלמנסעפצקרשת' },
+    { id:'arabic',   name:'Арабский',         chars:'ابتثجحخدذرزسشصضطظعغفقكلمنهوي' },
+    { id:'thai',     name:'Тайский',          chars:'กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ' },
+    { id:'hira_full',name:'Хирагана',         chars:'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん' },
+    { id:'kata_full',name:'Катакана',         chars:'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン' },
+    { id:'hangul',   name:'Хангыль',          chars:'ㄱㄲㄳㄴㄵㄶㄷㄸㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅃㅄㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ' },
+    { id:'latin',    name:'Латиница',         chars:'ABCDEFGHIJKLMNOPQRSTUVWXYZ' },
+    { id:'cyrillic', name:'Кириллица',        chars:'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ' },
+];
+
+const DOTA_W = 30.000000;
+const DOTA_H = 30.000000;
+const DOTA_SYMBOL_PX = 18;
+
+const SYMBOL_WEIGHTS = {
+   '.': 0.45, '·': 0.48, '•': 0.55, '‣': 0.48, '⁃': 0.50,
+',': 0.50, ':': 0.55, ';': 0.58, "'": 0.40, '`': 0.40,
+    '･': 0.25, '｡': 0.25, '°': 0.30, '˙': 0.20,
+   '-': 0.55, '—': 0.55, '–': 0.55, '_': 0.40, '~': 0.45,
+'|': 0.55, '/': 0.55, '\\': 0.55, '!': 0.50, 'i': 0.35, 'l': 0.30,
+'1': 0.50,
+    '+': 0.65, '*': 0.65, '=': 0.55, 'x': 0.60, '×': 0.65,
+    '○': 0.65, '◯': 0.65, '◆': 0.75, '◇': 0.70,
+    'a': 0.65, 'c': 0.60, 'e': 0.60, 'o': 0.60, 's': 0.60,
+    'v': 0.60, 'y': 0.60, 'z': 0.55,
+    '#': 0.85, '%': 0.90, '@': 0.95, '&': 0.85, '$': 0.80,
+    '★': 0.85, '☆': 0.80, '●': 0.90, '■': 0.95, '▲': 0.85,
+    '▽': 0.85, '△': 0.80, '◉': 0.85, '♠': 0.85, '♥': 0.85,
+    '♦': 0.80, '♣': 0.85,
+    '█': 1.00, '▓': 1.00, '▒': 1.00, '░': 1.00, '▉': 1.00, '▊': 1.00,
+};
+
+function getSymbolWeight(ch){
+    if(!ch) return 1.0;
+    if(SYMBOL_WEIGHTS[ch] !== undefined) return SYMBOL_WEIGHTS[ch];
+    const code = ch.codePointAt(0) || 0;
+    if(code >= 0x0041 && code <= 0x024F) return 1.0;
+    if(code >= 0x0370 && code <= 0x03FF) return 1.0;
+    if(code >= 0x0400 && code <= 0x04FF) return 1.0;
+    if(code >= 0x3040 && code <= 0x30FF) return 1.0;
+    if(code >= 0x4E00 && code <= 0x9FFF) return 1.0;
+    if(code >= 0xAC00 && code <= 0xD7AF) return 1.0;
+    if(code >= 0x0530 && code <= 0x058F) return 1.0;
+    if(code >= 0x0590 && code <= 0x05FF) return 1.0;
+    if(code >= 0x0600 && code <= 0x06FF) return 1.0;
+    if(code >= 0x0E00 && code <= 0x0E7F) return 1.0;
+    return 0.7;
+}
+
+const $=id=>document.getElementById(id);
+const libState = { activeCat: null, selected: new Set() };
+const STAGE_W = 1193, STAGE_H = 593;
+function getMaxCategories(){ const v = +$('maxCats').value || 2000; return Math.max(100, Math.min(10000, v)); }
+const state={ img:null, points:[], shadePoints:[] };
+
+const PRESETS_KEY = 'lineart_presets_v3';
+let presets = {};
+try {
+    const raw = localStorage.getItem(PRESETS_KEY);
+    if(raw) presets = JSON.parse(raw);
+} catch(e){ presets = {}; }
+
+function collectSettings(){
+    return {
+        symbolPx: $('symbolPx').value,
+        bright: $('bright').value,
+        contrast: $('contrast').value,
+        invert: $('invert').checked,
+        blur: $('blur').value,
+        thr: $('thr').value,
+        thinning: $('thinning').checked,
+        fill: $('fill').value,
+        gridStep: $('gridStep').value,
+        density: $('density').value,
+        maxCats: $('maxCats').value,
+        shading: $('shading').checked,
+        shadeCharset: $('shadeCharset').value,
+        shadeDensity: $('shadeDensity').value,
+        shadeThreshold: $('shadeThreshold').value,
+        charset: $('charset').value,
+        charsetPreset: $('charsetPreset').value,
+        autoOrient: $('autoOrient').checked,
+        onlyDots: $('onlyDots').checked,
+        layout: $('canvasWrap').className.includes('horizontal') ? 'h' : 'v',
+    };
+}
+
+function applySettings(s){
+    if(!s) return;
+    const set = (id, v, isCheck) => {
+        const el = $(id);
+        if(!el || v === undefined || v === null) return;
+        if(isCheck) el.checked = !!v;
+        else el.value = v;
+    };
+    set('symbolPx', s.symbolPx); set('symbolPxNum', s.symbolPx);
+    set('bright', s.bright); set('brightNum', s.bright);
+    set('contrast', s.contrast); set('contrastNum', s.contrast);
+    set('invert', s.invert, true);
+    set('blur', s.blur); set('blurNum', s.blur);
+    set('thr', s.thr); set('thrNum', s.thr);
+    set('thinning', s.thinning, true);
+    set('fill', s.fill); set('fillNum', s.fill);
+    set('gridStep', s.gridStep); set('gridStepNum', s.gridStep);
+    set('density', s.density); set('densityNum', s.density);
+    set('maxCats', s.maxCats);
+    set('shading', s.shading, true);
+    set('shadeCharset', s.shadeCharset);
+    set('shadeDensity', s.shadeDensity); set('shadeDensityNum', s.shadeDensity);
+    set('shadeThreshold', s.shadeThreshold); set('shadeThresholdNum', s.shadeThreshold);
+    set('charset', s.charset);
+    set('charsetPreset', s.charsetPreset);
+    set('autoOrient', s.autoOrient, true);
+    set('onlyDots', s.onlyDots, true);
+    if(s.layout === 'v'){
+        $('canvasWrap').className='canvasWrap vertical';
+        $('layoutV').classList.add('active');
+        $('layoutH').classList.remove('active');
+    } else {
+        $('canvasWrap').className='canvasWrap horizontal';
+        $('layoutH').classList.add('active');
+        $('layoutV').classList.remove('active');
+    }
+    updateCharsetView();
+    scheduleConvert();
+}
+
+function savePresets(){
+    try { localStorage.setItem(PRESETS_KEY, JSON.stringify(presets)); } catch(e){}
+}
+
+function renderPresets(){
+    const box = $('presetList');
+    box.innerHTML = '';
+    const keys = Object.keys(presets);
+    if(!keys.length){
+        box.innerHTML = '<div class="presetEmpty">Нет сохранённых пресетов</div>';
+        return;
+    }
+    keys.sort().forEach(name=>{
+        const item = document.createElement('div');
+        item.className = 'presetItem';
+        const nm = document.createElement('div');
+        nm.className = 'presetName';
+        nm.textContent = name;
+        nm.title = name;
+
+        const load = document.createElement('button');
+        load.className = 'presetLoad';
+        load.textContent = '↻';
+        load.title = 'Загрузить пресет';
+        load.onclick = (e)=>{
+            e.stopPropagation();
+            applySettings(presets[name]);
+            toast('Загружен: '+name);
+        };
+
+        const del = document.createElement('button');
+        del.className = 'presetBtn';
+        del.textContent = '✖';
+        del.title = 'Удалить';
+        del.onclick = (e)=>{
+            e.stopPropagation();
+            if(!confirm('Удалить пресет «'+name+'»?')) return;
+            delete presets[name];
+            savePresets();
+            renderPresets();
+        };
+
+        item.onclick = ()=>{ load.click(); };
+        item.append(nm, load, del);
+        box.appendChild(item);
+    });
+}
+
+$('presetSave').onclick = ()=>{
+    const name = ($('presetName').value || '').trim();
+    if(!name){ toast('Введи название пресета'); return; }
+    presets[name] = collectSettings();
+    savePresets();
+    renderPresets();
+    $('presetName').value = '';
+    toast('Сохранён: '+name);
+};
+
+$('presetExportAll').onclick = ()=>{
+    const keys = Object.keys(presets);
+    if(!keys.length){ toast('Нет пресетов для экспорта'); return; }
+    const data = { version:1, app:'lineart-converter', presets };
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+    a.download = 'lineart_presets.json';
+    a.click();
+    toast('Экспортировано: '+keys.length+' пресетов');
+};
+
+$('presetImport').onclick = ()=>{ $('presetImportFile').click(); };
+$('presetImportFile').onchange = async e=>{
+    const f = e.target.files[0]; if(!f) return;
+    try {
+        const text = await f.text();
+        const data = JSON.parse(text);
+        if(!data.presets || typeof data.presets !== 'object') throw new Error('неверный формат');
+        let added = 0;
+        for(const [name, settings] of Object.entries(data.presets)){
+            presets[name] = settings;
+            added++;
+        }
+        savePresets();
+        renderPresets();
+        toast('Импортировано: '+added);
+    } catch(err){
+        toast('Ошибка: '+err.message);
+    }
+    e.target.value = '';
+};
+
+$('presetClear').onclick = ()=>{
+    if(!Object.keys(presets).length) return;
+    if(!confirm('Удалить ВСЕ пресеты?')) return;
+    presets = {};
+    savePresets();
+    renderPresets();
+    toast('Все пресеты удалены');
+};
+
+const drop=$('drop'), fileInput=$('file');
+$('choose').onclick=e=>{ e.preventDefault(); e.stopPropagation(); fileInput.value=''; fileInput.click(); };
+drop.onclick=e=>{ if(e.target.id==='choose') return; fileInput.value=''; fileInput.click(); };
+drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', ()=>drop.classList.remove('over'));
+drop.addEventListener('drop', e=>{ e.preventDefault(); drop.classList.remove('over'); if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', ()=>{ if(fileInput.files[0]) loadFile(fileInput.files[0]); fileInput.value=''; });
+
+function loadFile(f){
+    if(!f) return;
+    if(!(f.type.startsWith('image/')||/\.(png|jpe?g|webp|bmp)$/i.test(f.name))){ $('status').textContent='Не картинка'; return; }
+    const r=new FileReader();
+    r.onload=()=>{
+        const im=new Image();
+        im.onload=()=>{
+            state.img=im;
+            $('status').textContent=im.naturalWidth+'×'+im.naturalHeight+' · '+f.name;
+            drawOriginal();
+            scheduleConvert();
+        };
+        im.onerror=()=>{ $('status').textContent='Ошибка декодирования'; };
+        im.src=r.result;
+    };
+    r.readAsDataURL(f);
+}
+
+function drawOriginal(){
+    const c=$('src'), ctx=c.getContext('2d');
+    const maxW=800, maxH=600;
+    const s=Math.min(maxW/state.img.naturalWidth, maxH/state.img.naturalHeight, 1);
+    c.width  = Math.round(state.img.naturalWidth  * s);
+    c.height = Math.round(state.img.naturalHeight * s);
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.drawImage(state.img, 0,0, c.width, c.height);
+}
+
+function linkSliderNumber(sliderId, numberId){
+    const s = $(sliderId), n = $(numberId);
+    if(!s || !n) return;
+    s.addEventListener('input', ()=>{ n.value = s.value; scheduleConvert(); });
+    n.addEventListener('input', ()=>{
+        const min = +s.min, max = +s.max;
+        let v = +n.value;
+        if(isNaN(v)) return;
+        v = Math.max(min, Math.min(max, v));
+        s.value = v;
+        scheduleConvert();
+    });
+    n.addEventListener('blur', ()=>{
+        const min = +s.min, max = +s.max;
+        let v = +n.value;
+        if(isNaN(v)) v = +s.value;
+        v = Math.max(min, Math.min(max, v));
+        n.value = v;
+        s.value = v;
+        scheduleConvert();
+    });
+}
+
+linkSliderNumber('bright','brightNum');
+linkSliderNumber('contrast','contrastNum');
+linkSliderNumber('blur','blurNum');
+linkSliderNumber('thr','thrNum');
+linkSliderNumber('fill','fillNum');
+linkSliderNumber('gridStep','gridStepNum');
+linkSliderNumber('density','densityNum');
+linkSliderNumber('shadeDensity','shadeDensityNum');
+linkSliderNumber('shadeThreshold','shadeThresholdNum');
+linkSliderNumber('symbolPx','symbolPxNum');
+
+let debTimer=null;
+function scheduleConvert(){
+    if(debTimer) clearTimeout(debTimer);
+    debTimer=setTimeout(convert, 150);
+}
+
+['shadeCharset','maxCats'].forEach(id=>{
+    const el=$(id); if(!el) return;
+    el.addEventListener('input', scheduleConvert);
+    el.addEventListener('change', scheduleConvert);
+});
+['autoOrient','onlyDots','thinning','shading','invert'].forEach(id=>{
+    const el=$(id); if(!el) return;
+    el.addEventListener('change', scheduleConvert);
+});
+
+function updateCharsetView(){
+    const v = $('charset').value;
+    $('charsetView').textContent = v || '(пусто)';
+    $('charsetBadge').textContent = 'charset: ' + (v.length > 30 ? v.slice(0,30)+'…' : v || '—');
+    libState.selected = new Set(Array.from(v));
+    renderLibGrid();
+}
+$('charset').addEventListener('input', ()=>{
+    const presets = [...$('charsetPreset').options].map(o=>o.value);
+    if(!presets.includes($('charset').value)) $('charsetPreset').value = 'custom';
+    updateCharsetView();
+    scheduleConvert();
+});
+$('charsetPreset').addEventListener('change', ()=>{
+    const v = $('charsetPreset').value;
+    if(v !== 'custom'){ $('charset').value = v; updateCharsetView(); scheduleConvert(); }
+});
+
+function renderLibCategories(){
+    const box = $('libCategories');
+    box.innerHTML = '';
+    LIBRARY.forEach(cat=>{
+        const b = document.createElement('button');
+        b.className = 'libCatBtn' + (libState.activeCat===cat.id?' active':'');
+        b.textContent = cat.name;
+        b.onclick = ()=>{ libState.activeCat = cat.id; renderLibCategories(); renderLibGrid(); };
+        box.appendChild(b);
+    });
+    if(!libState.activeCat && LIBRARY.length){
+        libState.activeCat = LIBRARY[0].id;
+        renderLibCategories();
+        renderLibGrid();
+    }
+}
+
+function renderLibGrid(){
+    const box = $('libGrid');
+    box.innerHTML = '';
+    const cat = LIBRARY.find(c=>c.id===libState.activeCat);
+    if(!cat) return;
+    Array.from(cat.chars).forEach(ch=>{
+        if(ch === ' ') return;
+        const b = document.createElement('button');
+        b.className = 'libSym' + (libState.selected.has(ch)?' on':'');
+        b.textContent = ch;
+        b.title = 'U+' + (ch.codePointAt(0)||0).toString(16).toUpperCase().padStart(4,'0');
+        b.onclick = ()=>{
+            if(libState.selected.has(ch)) libState.selected.delete(ch);
+            else libState.selected.add(ch);
+            $('charset').value = [...libState.selected].join('');
+            $('charsetPreset').value = 'custom';
+            renderLibGrid();
+            updateCharsetView();
+            scheduleConvert();
+        };
+        box.appendChild(b);
+    });
+}
+
+$('libReplace').onclick = ()=>{ $('charset').value = [...libState.selected].join(''); $('charsetPreset').value = 'custom'; updateCharsetView(); scheduleConvert(); };
+$('libClear').onclick = ()=>{ libState.selected.clear(); renderLibGrid(); updateCharsetView(); };
+$('libAddAll').onclick = ()=>{
+    const cat = LIBRARY.find(c=>c.id===libState.activeCat);
+    if(!cat) return;
+    Array.from(cat.chars).forEach(ch=>{ if(ch!==' ') libState.selected.add(ch); });
+    renderLibGrid();
+    updateCharsetView();
+};
+$('libRev').onclick = ()=>{
+    const arr = [...libState.selected].reverse();
+    libState.selected = new Set(arr);
+    $('charset').value = arr.join('');
+    $('charsetPreset').value = 'custom';
+    renderLibGrid();
+    updateCharsetView();
+    scheduleConvert();
+};
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+function gaussianBlur(gray, W, H, sigma){
+    if(sigma<=0.01) return gray;
+    const r=Math.max(1, Math.ceil(sigma*2));
+    const size=r*2+1;
+    const k=new Float32Array(size);
+    let sum=0;
+    for(let i=0;i<size;i++){ const x=i-r; const v=Math.exp(-(x*x)/(2*sigma*sigma)); k[i]=v; sum+=v; }
+    for(let i=0;i<size;i++) k[i]/=sum;
+    const tmp=new Float32Array(W*H);
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+        let acc=0;
+        for(let i=-r;i<=r;i++){ const xx=Math.min(W-1, Math.max(0, x+i)); acc += gray[y*W+xx] * k[i+r]; }
+        tmp[y*W+x]=acc;
+    }
+    const out=new Float32Array(W*H);
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+        let acc=0;
+        for(let i=-r;i<=r;i++){ const yy=Math.min(H-1, Math.max(0, y+i)); acc += tmp[yy*W+x] * k[i+r]; }
+        out[y*W+x]=acc;
+    }
+    return out;
+}
+function sobel(gray, W, H){
+    const mag=new Float32Array(W*H);
+    const ang=new Float32Array(W*H);
+    for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){
+        const i=y*W+x;
+        const a=gray[(y-1)*W+(x-1)], b=gray[(y-1)*W+x], c=gray[(y-1)*W+(x+1)];
+        const d=gray[y*W+(x-1)],                         f=gray[y*W+(x+1)];
+        const g=gray[(y+1)*W+(x-1)], h=gray[(y+1)*W+x], k=gray[(y+1)*W+(x+1)];
+        const Gx = -a -2*d -g + c +2*f + k;
+        const Gy = -a -2*b -c + g +2*h + k;
+        mag[i]=Math.sqrt(Gx*Gx+Gy*Gy);
+        ang[i]=Math.atan2(Gy, Gx);
+    }
+    return {mag, ang};
+}
+function nonMaxSuppression(mag, ang, W, H){
+    const out=new Float32Array(W*H);
+    const PI=Math.PI;
+    for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){
+        const i=y*W+x;
+        let a=ang[i]*180/PI; if(a<0) a+=180;
+        let n1=0,n2=0;
+        if((a>=0 && a<22.5) || (a>=157.5 && a<180)){ n1=mag[i-1]; n2=mag[i+1]; }
+        else if(a>=22.5 && a<67.5){ n1=mag[i-W-1]; n2=mag[i+W+1]; }
+        else if(a>=67.5 && a<112.5){ n1=mag[i-W]; n2=mag[i+W]; }
+        else { n1=mag[i-W+1]; n2=mag[i+W-1]; }
+        out[i] = (mag[i]>=n1 && mag[i]>=n2) ? mag[i] : 0;
+    }
+    return out;
+}
+function hysteresis(nms, W, H, high, low){
+    let max=0;
+    for(let i=0;i<nms.length;i++) if(nms[i]>max) max=nms[i];
+    const hi=max*high, lo=max*low;
+    const out=new Uint8Array(W*H);
+    const stack=[];
+    for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){
+        const i=y*W+x;
+        if(nms[i]>=hi){ out[i]=2; stack.push(i); }
+        else if(nms[i]>=lo){ out[i]=1; }
+    }
+    while(stack.length){
+        const i=stack.pop();
+        const x=i%W, y=(i/W)|0;
+        for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+            if(!dx && !dy) continue;
+            const xx=x+dx, yy=y+dy;
+            if(xx<0||yy<0||xx>=W||yy>=H) continue;
+            const j=yy*W+xx;
+            if(out[j]===1){ out[j]=2; stack.push(j); }
+        }
+    }
+    const res=new Uint8Array(W*H);
+    for(let i=0;i<res.length;i++) res[i]=(out[i]===2)?1:0;
+    return res;
+}
+
+function thinning(binary, W, H){
+    const img = new Uint8Array(binary);
+    const get = (x,y) => (x<0||y<0||x>=W||y>=H) ? 0 : img[y*W+x];
+    let changed = true;
+    let safety = 30;
+    while(changed && safety-- > 0){
+        changed = false;
+        const rm1 = [];
+        for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){
+            if(!img[y*W+x]) continue;
+            const P2=get(x,y-1),P3=get(x+1,y-1),P4=get(x+1,y),P5=get(x+1,y+1),
+                  P6=get(x,y+1),P7=get(x-1,y+1),P8=get(x-1,y),P9=get(x-1,y-1);
+            const B = P2+P3+P4+P5+P6+P7+P8+P9;
+            if(B<2 || B>6) continue;
+            let A = 0;
+            const arr = [P2,P3,P4,P5,P6,P7,P8,P9,P2];
+            for(let i=0;i<8;i++) if(arr[i]===0 && arr[i+1]===1) A++;
+            if(A!==1) continue;
+            if(P2*P4*P6!==0) continue;
+            if(P4*P6*P8!==0) continue;
+            rm1.push(y*W+x);
+        }
+        if(rm1.length){ changed=true; rm1.forEach(i=>img[i]=0); }
+        const rm2 = [];
+        for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){
+            if(!img[y*W+x]) continue;
+            const P2=get(x,y-1),P3=get(x+1,y-1),P4=get(x+1,y),P5=get(x+1,y+1),
+                  P6=get(x,y+1),P7=get(x-1,y+1),P8=get(x-1,y),P9=get(x-1,y-1);
+            const B = P2+P3+P4+P5+P6+P7+P8+P9;
+            if(B<2 || B>6) continue;
+            let A = 0;
+            const arr = [P2,P3,P4,P5,P6,P7,P8,P9,P2];
+            for(let i=0;i<8;i++) if(arr[i]===0 && arr[i+1]===1) A++;
+            if(A!==1) continue;
+            if(P2*P4*P8!==0) continue;
+            if(P2*P6*P8!==0) continue;
+            rm2.push(y*W+x);
+        }
+        if(rm2.length){ changed=true; rm2.forEach(i=>img[i]=0); }
+    }
+    return img;
+}
+
+function angleToChar(angRad, charset, autoOrient, onlyDots){
+    const chars = Array.from(charset || '-\\|/');
+    if(!chars.length) return '-';
+    if(onlyDots || !autoOrient || chars.length === 1) return chars[0];
+
+    let gradDeg = angRad * 180 / Math.PI;
+    if(gradDeg < 0) gradDeg += 180;
+    let lineDeg = (gradDeg + 90) % 180;
+
+    if(chars.length >= 8){
+        let zone8;
+        if(lineDeg < 22.5 || lineDeg >= 157.5) zone8 = 0;
+        else if(lineDeg < 45) zone8 = 1;
+        else if(lineDeg < 67.5) zone8 = 2;
+        else if(lineDeg < 90) zone8 = 3;
+        else if(lineDeg < 112.5) zone8 = 4;
+        else if(lineDeg < 135) zone8 = 5;
+        else if(lineDeg < 157.5) zone8 = 6;
+        else zone8 = 7;
+        const t = zone8 / 7;
+        return chars[Math.min(chars.length-1, Math.round(t*(chars.length-1)))] || chars[0];
+    } else {
+        let idx;
+        if(lineDeg < 22.5 || lineDeg >= 157.5) idx = 0;
+        else if(lineDeg < 67.5) idx = 1;
+        else if(lineDeg < 112.5) idx = 2;
+        else idx = 3;
+        const t = idx / 3;
+        return chars[Math.min(chars.length-1, Math.round(t*(chars.length-1)))] || chars[0];
+    }
+}
+
+function spatialSample(allPoints, gridStep, maxCats){
+    const cells = new Map();
+    for(const p of allPoints){
+        const kx = Math.floor(p.x / gridStep);
+        const ky = Math.floor(p.y / gridStep);
+        const key = kx + '_' + ky;
+        if(!cells.has(key)) cells.set(key, p);
+    }
+    let sampled = [...cells.values()];
+    if(sampled.length > maxCats){
+        const step2 = sampled.length / maxCats;
+        const trimmed = [];
+        for(let i = 0; i < maxCats; i++){
+            trimmed.push(sampled[Math.floor(i*step2)]);
+        }
+        sampled = trimmed;
+    }
+    return sampled;
+}
+
+function applyPreset(preset){
+    if(preset === 'dots'){
+        $('charset').value = '.';
+        $('charsetPreset').value = '.';
+        $('onlyDots').checked = false;
+        $('autoOrient').checked = false;
+        $('gridStep').value = 3; $('gridStepNum').value = 3;
+        $('density').value = 100; $('densityNum').value = 100;
+        $('thinning').checked = true;
+        $('thr').value = 0.12; $('thrNum').value = 0.12;
+        $('blur').value = 1.2; $('blurNum').value = 1.2;
+        $('shading').checked = false;
+    } else if(preset === 'lines'){
+        $('charset').value = '-\\|/';
+        $('charsetPreset').value = '-\\|/';
+        $('autoOrient').checked = true;
+        $('gridStep').value = 4; $('gridStepNum').value = 4;
+        $('density').value = 100; $('densityNum').value = 100;
+        $('thinning').checked = true;
+        $('shading').checked = false;
+    } else if(preset === 'mix'){
+        $('charset').value = '.';
+        $('charsetPreset').value = '.';
+        $('autoOrient').checked = false;
+        $('gridStep').value = 3; $('gridStepNum').value = 3;
+        $('density').value = 100; $('densityNum').value = 100;
+        $('thinning').checked = true;
+        $('shading').checked = true;
+        $('shadeCharset').value = '.·';
+        $('shadeDensity').value = 40; $('shadeDensityNum').value = 40;
+        $('shadeThreshold').value = 55; $('shadeThresholdNum').value = 55;
+    }
+    updateCharsetView();
+    scheduleConvert();
+}
+$('presetDots').onclick = ()=>applyPreset('dots');
+$('presetLines').onclick = ()=>applyPreset('lines');
+$('presetMix').onclick = ()=>applyPreset('mix');
+
+function convert(){
+    if(!state.img){ state.points=[]; state.shadePoints=[]; return; }
+
+    const sigma  = Math.max(0, Math.min(4, +$('blur').value||0));
+    const thr    = Math.max(0.01, Math.min(0.8, +$('thr').value||0.10));
+    const bright = (+$('bright').value||0)/100;
+    const contra = (+$('contrast').value||0)/100;
+    const fill   = Math.max(20, Math.min(100, +$('fill').value||90))/100;
+    const density= Math.max(10, Math.min(200, +$('density').value||100))/100;
+    const charset= $('charset').value || '-\\|/';
+    const auto   = $('autoOrient').checked;
+    const dots   = $('onlyDots').checked;
+    const doThin = $('thinning').checked;
+    const doShade= $('shading').checked;
+    const invert = $('invert').checked;
+    const shadeCharset = $('shadeCharset').value || '.·:';
+    const shadeDensity = Math.max(5, Math.min(100, +$('shadeDensity').value||30))/100;
+    const shadeThreshold = Math.max(10, Math.min(90, +$('shadeThreshold').value||45))/100;
+    const gridStep = Math.max(2, Math.min(20, +$('gridStep').value || 4));
+
+    const CANNY_COLS = 500;
+    const im=state.img;
+    const W=CANNY_COLS;
+    const H=Math.max(1, Math.round(W*(im.naturalHeight/im.naturalWidth)));
+
+    const cv=document.createElement('canvas');
+    const ctx=cv.getContext('2d',{willReadFrequently:true});
+    cv.width=W; cv.height=H;
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+    ctx.drawImage(im,0,0,W,H);
+    const px=ctx.getImageData(0,0,W,H).data;
+
+    const gray=new Float32Array(W*H);
+    const grayOrig=new Float32Array(W*H);
+    for(let i=0,p=0;i<px.length;i+=4,p++){
+        let l=(0.2126*px[i]+0.7152*px[i+1]+0.0722*px[i+2])/255;
+        grayOrig[p] = l;
+        if(invert) l = 1 - l;
+        if(bright!==0) l=l+bright;
+        if(contra!==0) l=(l-0.5)*(1+contra*2)+0.5;
+        gray[p]=Math.max(0, Math.min(1, l));
+    }
+
+    const blurred=gaussianBlur(gray, W, H, sigma);
+    const {mag,ang}=sobel(blurred, W, H);
+    const nms=nonMaxSuppression(mag, ang, W, H);
+    let edges=hysteresis(nms, W, H, thr, thr*0.4);
+
+    let finalEdges = edges;
+    if(doThin){ finalEdges = thinning(edges, W, H); }
+
+    const availW = STAGE_W * fill;
+    const availH = STAGE_H * fill;
+    const imgAspect = im.naturalWidth / im.naturalHeight;
+    let artW, artH;
+    if(imgAspect > availW/availH){ artW = availW; artH = availW / imgAspect; }
+    else { artH = availH; artW = availH * imgAspect; }
+    const offX = (STAGE_W - artW)/2;
+    const offY = (STAGE_H - artH)/2;
+    const scaleX = artW / W;
+    const scaleY = artH / H;
+
+    const allPoints=[];
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+        const i=y*W+x;
+        if(finalEdges[i]) allPoints.push({x, y, ang:ang[i]});
+    }
+
+    const effectiveStep = gridStep / Math.max(0.1, density);
+    let sampled = spatialSample(allPoints, effectiveStep, getMaxCategories());
+
+    const finalPoints = sampled.map(p=>({
+        x: offX + p.x * scaleX,
+        y: offY + p.y * scaleY,
+        ch: angleToChar(p.ang, charset, auto, dots)
+    }));
+
+    const shadePoints = [];
+    if(doShade){
+        const shadeChars = Array.from(shadeCharset);
+        const cellPx = Math.max(2, Math.round(gridStep / scaleX));
+        for(let y=0; y<H; y+=cellPx){
+            for(let x=0; x<W; x+=cellPx){
+                let sum=0, cnt=0;
+                for(let yy=y; yy<Math.min(y+cellPx, H); yy++){
+                    for(let xx=x; xx<Math.min(x+cellPx, W); xx++){
+                        sum += grayOrig[yy*W+xx]; cnt++;
+                    }
+                }
+                const avg = cnt ? sum/cnt : 1;
+                const darkness = invert ? (1-avg) : avg;
+                if(darkness < shadeThreshold){
+                    if(finalEdges[y*W+x]) continue;
+                    if(Math.random() > shadeDensity) continue;
+                    const t = 1 - (darkness / shadeThreshold);
+                    const chIdx = Math.min(shadeChars.length-1, Math.floor(t * shadeChars.length));
+                    shadePoints.push({
+                        x: offX + x * scaleX,
+                        y: offY + y * scaleY,
+                        ch: shadeChars[chIdx]
+                    });
+                }
+            }
+        }
+    }
+
+    state.points = finalPoints;
+    state.shadePoints = shadePoints;
+    drawPreview(finalPoints, shadePoints);
+
+    const fits = finalPoints.every(p=>p.x>=0 && p.y>=0 && p.x<=STAGE_W && p.y<=STAGE_H);
+    $('stats').innerHTML =
+        '<div class="ok">Точек контура: <b>'+finalPoints.length+'</b></div>' +
+        (shadePoints.length ? '<div class="ok" style="margin-top:4px">Точек заливки: <b>'+shadePoints.length+'</b></div>' : '') +
+        '<div class="hint" style="margin-top:6px">Из '+allPoints.length+' найденных · шаг '+(effectiveStep.toFixed(1))+' px</div>' +
+        '<div class="hint">Арт: '+artW.toFixed(0)+' × '+artH.toFixed(0)+' px</div>' +
+        '<div class="hint">Холст: '+STAGE_W+' × '+STAGE_H+' px</div>' +
+        '<div class="'+(fits?'ok':'err')+'" style="margin-top:6px">'+
+            (fits ? '✓ Все точки внутри холста' : '⚠ Есть точки за границей')+
+        '</div>';
+
+    $('diag').innerHTML =
+        '<div class="ok">✓ Canny + NMS + SpatialSampling'+(doThin?' + Zhang-Suen':'')+(doShade?' + Shading':'')+'</div>' +
+        '<div class="hint" style="margin-top:6px">charset: <span style="font-family:monospace">'+esc(charset)+'</span></div>' +
+        '<div class="hint">auto: '+(auto?'on':'off')+' · dots: '+(dots?'on':'off')+'</div>' +
+        '<div class="hint">fill: '+$('fill').value+'% · density: '+$('density').value+'%</div>' +
+        '<div class="hint">grid step: '+gridStep+' px · JSON W×H: 30×30</div>' +
+        (doShade ? '<div class="hint">shade: '+$('shadeDensity').value+'% thr '+$('shadeThreshold').value+'%</div>' : '');
+}
+
+function drawPreview(points, shadePoints){
+    const c=$('dst'), ctx=c.getContext('2d');
+    const maxW = 1193;  // 1:1 с Dota
+const s = maxW / STAGE_W;  // = 1.0
+    c.width  = Math.round(STAGE_W * s);
+    c.height = Math.round(STAGE_H * s);
+
+    ctx.fillStyle='#0e0a07';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.strokeStyle='rgba(213,75,60,.8)';
+    ctx.lineWidth=1;
+    ctx.strokeRect(0.5,0.5,c.width-1,c.height-1);
+
+    const baseSize = 18;
+ctx.font = baseSize + 'px monospace';
+ctx.textBaseline='middle';
+ctx.textAlign='center';
+
+ctx.fillStyle='#5a6570';
+for(const p of shadePoints){
+    ctx.fillText(p.ch, p.x, p.y);
+}
+
+ctx.fillStyle='#c7d0d5';
+for(const p of points){
+    ctx.fillText(p.ch, p.x, p.y);
+}
+
+    ctx.fillStyle='#c7d0d5';
+    for(const p of points){
+        const w = getSymbolWeight(p.ch);
+        const sz = Math.max(1.5, baseSize * w);
+        ctx.font = sz+'px monospace';
+        const dy = (baseSize - sz) * 0.4;
+        ctx.fillText(p.ch, p.x*s, p.y*s + dy);
+    }
+
+    $('verif').textContent = 'Холст '+STAGE_W+'×'+STAGE_H+' · контуры: '+points.length+' · заливка: '+shadePoints.length+' · база: '+basePx+'px';
+}
+
+$('jsonFreeBtn').onclick=()=>{
+    if(!state.points.length && !state.shadePoints.length){ alert('Сначала загрузи картинку'); return; }
+    const all = [...state.shadePoints, ...state.points];
+    const categories = all.map(p=>({
+        category_name: p.ch,
+        x_position: +p.x.toFixed(6),
+        y_position: +p.y.toFixed(6),
+        width: DOTA_W,
+        height: DOTA_H,
+        hero_ids: []
+    }));
+    const json = {version:3, configs:[{config_name:'LineArt_free', categories}]};
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(json,null,2)],{type:'application/json'}));
+    a.download='lineart_free.json'; a.click();
+    $('status').textContent = '✓ lineart_free.json · '+categories.length+' категорий';
+};
+
+$('copyBtn').onclick=async()=>{
+    if(!state.points.length && !state.shadePoints.length){ alert('Сначала загрузи картинку'); return; }
+    const charW=DOTA_SYMBOL_PX*0.6, lineH=DOTA_SYMBOL_PX*0.78;
+    const cols=Math.ceil(STAGE_W/charW);
+    const rows=Math.ceil(STAGE_H/lineH);
+    const grid=Array.from({length:rows}, ()=>Array(cols).fill(' '));
+    for(const p of state.shadePoints){
+        const col=Math.round(p.x/charW), row=Math.round(p.y/lineH);
+        if(col>=0 && col<cols && row>=0 && row<rows && grid[row][col]===' ') grid[row][col]=p.ch;
+    }
+    for(const p of state.points){
+        const col=Math.round(p.x/charW), row=Math.round(p.y/lineH);
+        if(col>=0 && col<cols && row>=0 && row<rows) grid[row][col]=p.ch;
+    }
+    const ascii=grid.map(r=>r.join('').replace(/\s+$/,'')).join('\n');
+    try{
+        await navigator.clipboard.writeText(ascii);
+        $('status').textContent='✓ ASCII скопирован';
+    }catch(e){
+        const ta=document.createElement('textarea'); ta.value=ascii; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        $('status').textContent='✓ ASCII скопирован (fallback)';
+    }
+};
+
+$('autoBtn').onclick=()=>{
+    $('symbolPx').value=18; $('symbolPxNum').value=18;
+    $('maxCats').value=2000;
+    $('bright').value=0; $('brightNum').value=0;
+    $('contrast').value=0; $('contrastNum').value=0;
+    $('invert').checked=false;
+    $('blur').value=1.0; $('blurNum').value=1.0;
+    $('thr').value=0.10; $('thrNum').value=0.10;
+    $('thinning').checked=true;
+    $('fill').value=90; $('fillNum').value=90;
+    $('gridStep').value=4; $('gridStepNum').value=4;
+    $('density').value=100; $('densityNum').value=100;
+    $('autoOrient').checked=true;
+    $('onlyDots').checked=false;
+    $('charset').value='-\\|/';
+    $('charsetPreset').value='-\\|/';
+    $('shading').checked=false;
+    $('shadeCharset').value='.·:';
+    $('shadeDensity').value=30; $('shadeDensityNum').value=30;
+    $('shadeThreshold').value=45; $('shadeThresholdNum').value=45;
+    $('status').textContent='⟲ Параметры сброшены';
+    updateCharsetView();
+    scheduleConvert();
+};
+
+$('layoutH').onclick=()=>{
+    $('canvasWrap').className='canvasWrap horizontal';
+    $('layoutH').classList.add('active');
+    $('layoutV').classList.remove('active');
+    $('zoomInfo').textContent='Превью 1:1 с Dota';
+};
+$('layoutV').onclick=()=>{
+    $('canvasWrap').className='canvasWrap vertical';
+    $('layoutV').classList.add('active');
+    $('layoutH').classList.remove('active');
+    $('zoomInfo').textContent='Превью вертикально';
+};
+
+document.querySelectorAll('.fs').forEach(btn=>{
+    btn.onclick=()=>{
+        const target=document.getElementById(btn.dataset.target);
+        if(!target) return;
+        if(document.fullscreenElement){ document.exitFullscreen(); }
+        else { target.requestFullscreen().catch(err=>console.warn(err)); }
+    };
+});
+document.addEventListener('fullscreenchange', ()=>{
+    document.querySelectorAll('.fs').forEach(b=>{ b.textContent = document.fullscreenElement ? '⛶ Выход' : '⛶'; });
+});
+
+let toastTimer;
+function toast(msg){
+    let el = document.getElementById('__toast');
+    if(!el){
+        el = document.createElement('div');
+        el.id = '__toast';
+        el.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f4a2a;color:#dfffe0;padding:10px 20px;border-radius:4px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99999';
+        document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.opacity = '1';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>{ el.style.opacity = '0'; }, 1800);
+}
+
+renderLibCategories();
+renderPresets();
+updateCharsetView();
+scheduleConvert();
+</script>
+</body>
+</html>

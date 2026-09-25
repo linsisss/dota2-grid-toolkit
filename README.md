@@ -55,7 +55,7 @@
 
 1. Скачай репозиторий (Code → Download ZIP) или склонируй:
    ```bash
-   git clone https://github.com/USERNAME/dota2-grid-toolkit.git
+   git clone https://github.com/linsisss/dota2-grid-toolkit.git
    ```
 2. Открой любой из `tools/*.html` двойным кликом в браузере (Chrome / Firefox / Edge).
 3. Работай. Ничего устанавливать не нужно.

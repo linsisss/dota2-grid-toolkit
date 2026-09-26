@@ -13,3 +13,18 @@ desktop.ini
 *.tmp
 *.bak
 *_backup.*
+
+# Local development
+node_modules/
+dist/
+test-results/
+*.log
+/for_github/
+
+# Local-only credentials and exported user projects
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+exports/

@@ -1,0 +1,26 @@
+{
+  "name": "dota2-grid-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A unified React workspace for Dota 2 hero grids, symbol art and image conversion",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 4173 --strictPort",
+    "start": "npm run dev",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
+    "check": "node --check scripts/core.mjs && node --check scripts/converter.mjs && node --check scripts/drawing.mjs && node --check scripts/edit-operations.mjs && node --check scripts/reference-image.mjs && node --check scripts/symbol-tools.mjs && node --check scripts/app.mjs",
+    "test": "node --test tests/*.test.cjs"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.1.1",
+    "vite": "8.3.1"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}

@@ -1,0 +1,9 @@
+tools/
+scripts/data.mjs
+scripts/edges.mjs
+dist/
+package-lock.json
+data/
+assets/heroes/
+presets/
+docs/legacy-tools.md

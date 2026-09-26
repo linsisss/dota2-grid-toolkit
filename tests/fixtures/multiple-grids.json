@@ -1,0 +1,40 @@
+{
+  "version": 3,
+  "custom_metadata": "preserve",
+  "configs": [
+    {
+      "config_name": "Compatibility A",
+      "categories": [
+        {
+          "category_name": "Carry",
+          "x_position": 80.25,
+          "y_position": 90.5,
+          "width": 320,
+          "height": 190,
+          "hero_ids": [1, 8, 44]
+        },
+        {
+          "category_name": "✦",
+          "x_position": 440,
+          "y_position": 120,
+          "width": 30,
+          "height": 30,
+          "hero_ids": []
+        }
+      ]
+    },
+    {
+      "config_name": "Compatibility B",
+      "categories": [
+        {
+          "category_name": "Support",
+          "x_position": 360,
+          "y_position": 230,
+          "width": 350,
+          "height": 180,
+          "hero_ids": [5, 26, 86]
+        }
+      ]
+    }
+  ]
+}

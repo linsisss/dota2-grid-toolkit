@@ -274,14 +274,14 @@ label.chk input[type=checkbox]{width:auto;cursor:pointer}
         <select id="charsetPreset" style="width:100%">
             <option value=".">Точка </option>
             <option value=".·:">Точки разные</option>
-            <option value=".-/\\|">Классика (4 напр.)</option>
-            <option value="-\\|/" selected>Тонкие линии (4 напр.)</option>
+            <option value=".·:+">Точки и штрихи</option>
+            <option value=".·:+" selected>Точки по контуру</option>
             <option value=".·:;+*#%@">Плотность</option>
             <option value="custom">— вручную —</option>
         </select>
     </div>
     <div class="row full"><label>Набор</label>
-        <input id="charset" value="-\\|/" style="width:100%;font-family:monospace">
+        <input id="charset" value=".·:+" style="width:100%;font-family:monospace">
     </div>
     <div class="charsetView" id="charsetView"></div>
     <label class="chk"><input id="autoOrient" type="checkbox" checked> Автоориентация по углу</label>
@@ -304,24 +304,76 @@ label.chk input[type=checkbox]{width:auto;cursor:pointer}
 
 <script>
 const LIBRARY = [
-    { id:'grad',     name:'Градиент',         chars:'.·:;+*#%@' },
-    { id:'dots',     name:'Точки',            chars:'.·•‣⁃⁍⁌⁎⁏⁐⁑⁒⁓⁔⁕⁖⁗⁘⁙⁚⁛⁜⁝⁞' },
-    { id:'arrows',   name:'Стрелки',          chars:'←↑→↓↔↕↖↗↘↙⇐⇑⇒⇓⇔⇕' },
-    { id:'geo',      name:'Геометрия',        chars:'■□▲△▼▽◆◇◉○◯●' },
-    { id:'stars',    name:'Звёзды',           chars:'★☆✩✪✫' },
-    { id:'cards',    name:'Карты+музыка',     chars:'♠♡♢♣♤♥♦♧♨♩♪♫♬♭♯' },
-    { id:'misc',     name:'Разное',           chars:'☉☩☺☻☼♁♂' },
-    { id:'typo',     name:'Типографские',     chars:'†‡•‰‱′″‴‵‶‷‸‹›※‼‽‾' },
-    { id:'lines4',   name:'Линии (4)',        chars:'-\\|/' },
-    { id:'armenian', name:'Армянский',        chars:'ԱԲԳԴԵԶԷԸԹԺԻԼԽԾԿՀՁՂՃՄՅՆՇՈՉՊՋՌՍՎՏՐՑՒՓՔՕՖ' },
-    { id:'hebrew',   name:'Иврит',            chars:'אבגדהוזחטיכלמנסעפצקרשת' },
-    { id:'arabic',   name:'Арабский',         chars:'ابتثجحخدذرزسشصضطظعغفقكلمنهوي' },
-    { id:'thai',     name:'Тайский',          chars:'กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ' },
-    { id:'hira_full',name:'Хирагана',         chars:'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん' },
-    { id:'kata_full',name:'Катакана',         chars:'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン' },
-    { id:'hangul',   name:'Хангыль',          chars:'ㄱㄲㄳㄴㄵㄶㄷㄸㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅃㅄㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ' },
-    { id:'latin',    name:'Латиница',         chars:'ABCDEFGHIJKLMNOPQRSTUVWXYZ' },
-    { id:'cyrillic', name:'Кириллица',        chars:'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ' },
+  {
+    "id": "База",
+    "name": "База",
+    "chars": ".·:;+\\*#%@"
+  },
+  {
+    "id": "Стрелки",
+    "name": "Стрелки",
+    "chars": "←↑→↓⇒⇔"
+  },
+  {
+    "id": "Геом",
+    "name": "Геом",
+    "chars": "■□▲△▼▽◆◇◉○●★☆✪"
+  },
+  {
+    "id": "Символы",
+    "name": "Символы",
+    "chars": "♡♤♧♩♪♫♬♭♯☉☩"
+  },
+  {
+    "id": "Спец",
+    "name": "Спец",
+    "chars": "☻☼♁†‡•‰‱′″‴‵‶‷‸‹›※‽‾‣⁃⁍⁌⁎⁏⁐⁑⁒⁓⁔⁕⁖⁗⁘⁙⁚⁛⁜⁝⁞"
+  },
+  {
+    "id": "Армянский",
+    "name": "Армянский",
+    "chars": "ԱԲԳԴԵԶԷԸԹԺԻԼԽԾԿՀՁՂՃՄՅՆՇՈՉՊՋՌՍՎՏՐՑՒՓՔՕՖ"
+  },
+  {
+    "id": "Иврит",
+    "name": "Иврит",
+    "chars": "אבגדהוזחטיכלמנסעפצקרשת"
+  },
+  {
+    "id": "Арабский",
+    "name": "Арабский",
+    "chars": "ابتثجحخدذرزسشصضطظعغفقكلمنهوي"
+  },
+  {
+    "id": "Тайский",
+    "name": "Тайский",
+    "chars": "กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ"
+  },
+  {
+    "id": "Латиница",
+    "name": "Латиница",
+    "chars": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  },
+  {
+    "id": "Кириллица",
+    "name": "Кириллица",
+    "chars": "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
+  },
+  {
+    "id": "Японский",
+    "name": "Японский",
+    "chars": "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん"
+  },
+  {
+    "id": "Катакана",
+    "name": "Катакана",
+    "chars": "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポヴ"
+  },
+  {
+    "id": "Корейский",
+    "name": "Корейский",
+    "chars": "ㄱㄲㄳㄴㄵㄶㄷㄸㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅃㅄㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ"
+  }
 ];
 
 const DOTA_W = 30.000000;
@@ -829,8 +881,8 @@ function thinning(binary, W, H){
 }
 
 function angleToChar(angRad, charset, autoOrient, onlyDots){
-    const chars = Array.from(charset || '-\\|/');
-    if(!chars.length) return '-';
+    const chars = Array.from(charset || '.·:+');
+    if(!chars.length) return '.';
     if(onlyDots || !autoOrient || chars.length === 1) return chars[0];
 
     let gradDeg = angRad * 180 / Math.PI;
@@ -893,8 +945,8 @@ function applyPreset(preset){
         $('blur').value = 1.2; $('blurNum').value = 1.2;
         $('shading').checked = false;
     } else if(preset === 'lines'){
-        $('charset').value = '-\\|/';
-        $('charsetPreset').value = '-\\|/';
+        $('charset').value = '.·:+';
+        $('charsetPreset').value = '.·:+';
         $('autoOrient').checked = true;
         $('gridStep').value = 4; $('gridStepNum').value = 4;
         $('density').value = 100; $('densityNum').value = 100;
@@ -928,7 +980,7 @@ function convert(){
     const contra = (+$('contrast').value||0)/100;
     const fill   = Math.max(20, Math.min(100, +$('fill').value||90))/100;
     const density= Math.max(10, Math.min(200, +$('density').value||100))/100;
-    const charset= $('charset').value || '-\\|/';
+    const charset= $('charset').value || '.·:+';
     const auto   = $('autoOrient').checked;
     const dots   = $('onlyDots').checked;
     const doThin = $('thinning').checked;
@@ -1145,8 +1197,8 @@ $('autoBtn').onclick=()=>{
     $('density').value=100; $('densityNum').value=100;
     $('autoOrient').checked=true;
     $('onlyDots').checked=false;
-    $('charset').value='-\\|/';
-    $('charsetPreset').value='-\\|/';
+    $('charset').value='.·:+';
+    $('charsetPreset').value='.·:+';
     $('shading').checked=false;
     $('shadeCharset').value='.·:';
     $('shadeDensity').value=30; $('shadeDensityNum').value=30;

@@ -1,0 +1,479 @@
+/* Shared controls keep the browser semantics and use Focus's own chrome. */
+input[type='radio'] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid #796989;
+  border-radius: 50%;
+  background: var(--field);
+  vertical-align: middle;
+  cursor: pointer;
+}
+input[type='radio']:checked {
+  border: 5px solid var(--accent);
+}
+::-webkit-scrollbar-button { display: none; }
+input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.number-field {
+  display: inline-flex;
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  align-items: center;
+}
+.number-field > input[type='number'] {
+  width: 100%;
+  padding-right: 28px;
+  font-variant-numeric: tabular-nums;
+}
+.number-step-buttons {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  bottom: 2px;
+  width: 22px;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+}
+.number-step-buttons button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+.number-step-buttons svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.number-step-buttons button:hover:not(:disabled) {
+  color: var(--text);
+  background: #4a4058;
+}
+.number-step-buttons button:active:not(:disabled) {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+.number-step-buttons button:disabled,
+.number-field:has(input:disabled) .number-step-buttons {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.canvas-dimension-inputs .number-field {
+  width: 80px;
+}
+.canvas-dimension-inputs .number-field input {
+  min-height: 30px;
+}
+.input-unit.number-field {
+  padding-right: 24px;
+}
+.input-unit.number-field > input {
+  padding-right: 0;
+}
+.input-unit.number-field .unit {
+  display: none;
+}
+.image-control-heading > .number-field {
+  width: 94px;
+  flex: none;
+}
+.image-control-heading > .number-field input {
+  width: 100%;
+}
+.reference-fields .number-field,
+.drawing-settings .number-field {
+  display: flex;
+}
+input[type='checkbox'] {
+  appearance: none;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  border: 1px solid #796989;
+  border-radius: 4px;
+  background: var(--field);
+  vertical-align: middle;
+}
+input[type='checkbox']:checked,
+input[type='checkbox']:indeterminate {
+  border-color: var(--accent);
+  background-color: var(--accent);
+  background-position: center;
+  background-repeat: no-repeat;
+}
+input[type='checkbox']:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3 8 3 3 7-7' fill='none' stroke='%23231b35' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+input[type='checkbox']:indeterminate {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8h8' stroke='%23231b35' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+input[type='range'] {
+  appearance: none;
+  cursor: pointer;
+}
+input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 3px;
+  background: #554861;
+}
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #302639;
+  margin-top: -5px;
+}
+input[type='range']::-moz-range-track {
+  height: 4px;
+  border-radius: 3px;
+  background: #554861;
+}
+input[type='range']::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #302639;
+}
+input[type='search']::-webkit-search-cancel-button {
+  appearance: none;
+  height: 14px;
+  width: 14px;
+  cursor: pointer;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 4 8 8M12 4l-8 8' stroke='%23afa7bf' stroke-width='1.5'/%3E%3C/svg%3E")
+    center/contain;
+}
+select {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23afa7bf' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-position: right 9px center;
+  background-size: 14px;
+  background-repeat: no-repeat;
+}
+/* Customizable select keeps native keyboard navigation and the top-layer picker. */
+@supports (appearance: base-select) {
+  select,
+  select::picker(select) {
+    appearance: base-select;
+  }
+  select::picker-icon {
+    display: none;
+  }
+  select::picker(select) {
+    color: var(--text);
+    background: #282230;
+    border: 1px solid #5e506c;
+    border-radius: 8px;
+    padding: 5px;
+    box-shadow: 0 12px 28px #0006;
+    font:
+      13px/1.4 'SF Pro Display',
+      sans-serif;
+    max-height: min(340px, 60dvh);
+  }
+  select option {
+    border-radius: 4px;
+    padding: 8px 10px;
+    min-height: 34px;
+    cursor: pointer;
+  }
+  select option:hover,
+  select option:focus {
+    outline: none;
+    background: #493e56;
+  }
+  select option:checked {
+    background: #c4b5ed20;
+    color: var(--accent);
+  }
+  select option::checkmark {
+    content: '';
+    width: 12px;
+    height: 12px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3 8 3 3 7-7' fill='none' stroke='%23c4b5ed' stroke-width='2'/%3E%3C/svg%3E")
+      center/contain;
+  }
+}
+.context-reflections {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 4px 3px 9px;
+}
+.context-reflections > span {
+  flex: 1;
+  color: var(--muted);
+  font-size: 12px;
+}
+.context-reflections button {
+  width: 40px;
+  height: 34px;
+  justify-content: center;
+  background: #332b3d;
+}
+.reflection-icon {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.dock-label-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  border: 0;
+  border-radius: 5px;
+  height: 30px;
+  padding: 0 9px;
+  width: 112px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+.dock-label-toggle .dock-tool-label {
+  font-size: 10px;
+}
+.dock-label-toggle:hover {
+  color: var(--text);
+  background: #494054;
+}
+.dock-label-toggle svg {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.dock-label-toggle svg > path:first-child {
+  opacity: 0.4;
+}
+.dock-label-toggle .dock-toggle-arrow {
+  stroke-width: 2;
+  fill: #312b3c;
+}
+.editor-toolbar .tool-dock {
+  transition:
+    left 280ms var(--motion-ease),
+    width 200ms ease;
+}
+.editor-toolbar .tool-dock .tool-button {
+  overflow: hidden;
+  transition:
+    width 200ms ease,
+    min-width 200ms ease,
+    background 130ms ease;
+}
+.dock-tool-label {
+  white-space: nowrap;
+}
+.compact-dock .tool-dock .dock-tool-label {
+  display: none;
+}
+.compact-dock .editor-toolbar .tool-dock .tool-button,
+.compact-dock .dock-label-toggle {
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+  justify-content: center;
+}
+.compact-dock .canvas-viewport {
+  margin-left: 76px;
+}
+.compact-dock .canvas-caption {
+  padding-left: 76px;
+}
+.preview-exit {
+  position: absolute;
+  z-index: 2;
+  right: 18px;
+  top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #59534b;
+  border-radius: 7px;
+  padding: 8px 12px;
+  background: #211d18;
+  color: #e1dbd2;
+  font-size: 12px;
+  cursor: pointer;
+}
+.preview-exit[hidden] {
+  display: none;
+}
+.preview-exit svg {
+  width: 15px;
+  height: 15px;
+}
+.preview-exit kbd {
+  background: transparent;
+  border: 0;
+  color: #b6ada0;
+}
+.game-preview .editor-shell {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  z-index: 300;
+  border-radius: 0;
+  background: linear-gradient(#261e12, #140f0a);
+}
+.game-preview .editor-shell > :not(#canvasViewport):not(#closePreview) {
+  display: none !important;
+}
+.game-preview #canvasViewport {
+  position: absolute;
+  left: var(--preview-x);
+  top: var(--preview-y);
+  width: var(--preview-w);
+  height: var(--preview-h);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  display: block;
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
+}
+.game-preview #stage {
+  cursor: default;
+  touch-action: pan-x pan-y;
+}
+.game-preview #canvasReactOverlay,
+.game-preview #emptyCanvas,
+.game-preview #dropOverlay {
+  display: none !important;
+}
+.game-preview .preview-exit:focus-visible {
+  outline-color: #c4b5ed;
+}
+.export-guide {
+  margin-top: 26px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text);
+}
+dialog:has(.export-guide) {
+  width: min(680px, calc(100vw - 32px));
+}
+summary {
+  list-style: none;
+  cursor: pointer;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+summary::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 9px 2px 1px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 160ms ease;
+}
+details[open] > summary::before {
+  transform: rotate(45deg);
+}
+.export-guide h3 {
+  font-size: 20px;
+  margin-bottom: 14px;
+}
+.export-guide ol {
+  padding-left: 22px;
+  margin: 0;
+}
+.export-guide li {
+  padding-left: 3px;
+  margin-bottom: 14px;
+}
+.export-guide p {
+  font-size: inherit;
+  line-height: inherit;
+  margin: 10px 0;
+  color: var(--text);
+}
+.export-guide code {
+  display: block;
+  padding: 10px 12px;
+  margin-top: 8px;
+  background: var(--field);
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+  font: inherit;
+  color: var(--accent);
+  user-select: all;
+}
+@media (max-width: 900px) {
+  .dock-label-toggle {
+    display: none;
+  }
+  .tool-dock:has(.dock-label-toggle) > .toolbar-separator:nth-last-child(2) {
+    display: none;
+  }
+  .compact-dock .canvas-viewport {
+    margin-left: 70px;
+  }
+  .compact-dock .canvas-caption {
+    padding-left: 16px;
+  }
+}
+@media (max-width: 700px) {
+  .compact-dock .canvas-viewport {
+    margin-left: 64px;
+  }
+  .canvas-dimension-inputs .number-field {
+    width: 76px;
+  }
+  .canvas-dimension-inputs {
+    gap: 4px;
+  }
+  .preview-exit {
+    right: 10px;
+    top: 10px;
+  }
+}
+@media (max-height: 620px) {
+  .dock-label-toggle {
+    height: 24px;
+  }
+}

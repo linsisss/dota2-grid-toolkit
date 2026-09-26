@@ -272,11 +272,10 @@ label.chk input[type=checkbox]{width:auto;cursor:pointer}
 <div class="group">
     <div class="row full"><label>Пресет</label>
         <select id="charsetPreset" style="width:100%">
-            <option value=".">Точка — как у него</option>
+            <option value=".">Точка </option>
             <option value=".·:">Точки разные</option>
             <option value=".-/\\|">Классика (4 напр.)</option>
             <option value="-\\|/" selected>Тонкие линии (4 напр.)</option>
-            <option value="-\\|/─╲│╱">Расширенные (8 напр.)</option>
             <option value=".·:;+*#%@">Плотность</option>
             <option value="custom">— вручную —</option>
         </select>
@@ -314,7 +313,6 @@ const LIBRARY = [
     { id:'misc',     name:'Разное',           chars:'☉☩☺☻☼♁♂' },
     { id:'typo',     name:'Типографские',     chars:'†‡•‰‱′″‴‵‶‷‸‹›※‼‽‾' },
     { id:'lines4',   name:'Линии (4)',        chars:'-\\|/' },
-    { id:'lines8',   name:'Линии (8)',        chars:'-\\|/─╲│╱' },
     { id:'armenian', name:'Армянский',        chars:'ԱԲԳԴԵԶԷԸԹԺԻԼԽԾԿՀՁՂՃՄՅՆՇՈՉՊՋՌՍՎՏՐՑՒՓՔՕՖ' },
     { id:'hebrew',   name:'Иврит',            chars:'אבגדהוזחטיכלמנסעפצקרשת' },
     { id:'arabic',   name:'Арабский',         chars:'ابتثجحخدذرزسشصضطظعغفقكلمنهوي' },
@@ -1088,7 +1086,7 @@ for(const p of points){
         ctx.fillText(p.ch, p.x*s, p.y*s + dy);
     }
 
-    $('verif').textContent = 'Холст '+STAGE_W+'×'+STAGE_H+' · контуры: '+points.length+' · заливка: '+shadePoints.length+' · база: '+basePx+'px';
+    $('verif').textContent = 'Холст '+STAGE_W+'×'+STAGE_H+' · контуры: '+points.length+' · заливка: '+shadePoints.length+' · база: '+baseSize+'px';
 }
 
 $('jsonFreeBtn').onclick=()=>{

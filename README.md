@@ -38,12 +38,24 @@
 | [`data/symbols.txt`](data/symbols.txt) | Библиотека используемых символов (справочно) |
 
 ---
+## 🌐 Онлайн-версия
 
+Не хочешь скачивать? Открой инструменты прямо в браузере:
+
+| Инструмент | Онлайн-ссылка |
+|---|---|
+| 🎨 Line-Art Converter | [открыть](https://linsisss.github.io/dota2-grid-toolkit/tools/lineart-converter.html) |
+| ✏️ Pixel ASCII Editor | [открыть](https://linsisss.github.io/dota2-grid-toolkit/tools/pixel-ascii-editor.html) |
+| 🎴 Hero Grid Editor | [открыть](https://linsisss.github.io/dota2-grid-toolkit/tools/hero-grid-editor.html) |
+
+Всё работает полностью офлайн: после загрузки страницы никакие данные никуда не отправляются.
+
+---
 ## 🚀 Быстрый старт
 
 1. Скачай репозиторий (Code → Download ZIP) или склонируй:
    ```bash
-   git clone https://github.com/USERNAME/dota2-grid-toolkit.git
+   git clone https://github.com/linsisss/dota2-grid-toolkit.git
    ```
 2. Открой любой из `tools/*.html` двойным кликом в браузере (Chrome / Firefox / Edge).
 3. Работай. Ничего устанавливать не нужно.

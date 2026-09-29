@@ -72,11 +72,27 @@ test('cloud writes are debounced, retain full files, and connection failure leav
  const f=await fixture(t),registry=await f.spaces.openWorkspaceRegistry();t.after(()=>registry.database?.close());const meta=await registry.create('File',f.C.demoDocument('roles'),'7');
  let server=null,calls=0,offline=false;const statuses=[];
  const api=async(path,options={})=>{if(offline)throw Error('offline');if(options.method==='PUT'){calls++;server={...options.body,revision:(server?.revision||0)+1,archived:false};return {revision:server.revision};}if(!server)throw Object.assign(Error('not found'),{status:404});return server;};
- const opened=await f.spaces.openWorkspace(meta,registry,api,{id:'7'},s=>statuses.push(s));t.after(()=>opened.storage.database?.close());
+ const opened=await f.spaces.openWorkspace(meta,registry,api,{id:'7'},s=>statuses.push(s),{retryDelay:1});t.after(()=>opened.storage.database?.close());
  const doc=opened.initial.doc;for(let i=0;i<3;i++){doc.name='Edit '+i;await opened.storage.save(doc);}await opened.storage.syncPending();
  assert.equal(calls,1);assert.equal(server.document.name,'Edit 2');assert.equal((await registry.get(meta.id)).dirty,false);
  offline=true;doc.name='Offline edit';await opened.storage.save(doc);await opened.storage.syncPending();assert.equal((await registry.get(meta.id)).dirty,true);assert.match(statuses.at(-1),/Локальная копия/);
  const again=await f.storage.createProjectStorage(f.C.importProject,'1.0.0',meta.id);t.after(()=>again.database?.close());assert.equal((await again.load()).doc.name,'Offline edit');
+});
+test('an upload lost to an API restart is resent automatically, never over a newer edit',async t=>{
+ const f=await fixture(t),registry=await f.spaces.openWorkspaceRegistry();t.after(()=>registry.database?.close());const meta=await registry.create('File',f.C.demoDocument('roles'),'7');
+ let server=null,failures=0;const sent=[],wait=ms=>new Promise(r=>setTimeout(r,ms));
+ // nginx answers 502 while the API restarts; catalogAPI then throws without a status.
+ const api=async(path,options={})=>{if(options.method!=='PUT'){if(!server)throw Object.assign(Error('not found'),{status:404});return server;}
+  if(failures){failures--;throw Error('Каталог сейчас недоступен.');}sent.push(options.body.document.name);server={...options.body,revision:(server?.revision||0)+1,archived:false};return {revision:server.revision};};
+ const opened=await f.spaces.openWorkspace(meta,registry,api,{id:'7'},()=>{},{retryDelay:5});t.after(()=>opened.storage.database?.close());
+ const doc=opened.initial.doc;failures=2;doc.name='Last edit before closing';await opened.storage.save(doc);await opened.storage.syncPending();
+ assert.equal((await registry.get(meta.id)).dirty,true);assert.deepEqual(sent,[]);
+ await wait(150);await opened.storage.syncPending();
+ assert.deepEqual(sent,['Last edit before closing']);assert.equal((await registry.get(meta.id)).dirty,false);
+ failures=1;doc.name='Lost';await opened.storage.save(doc);await opened.storage.syncPending();
+ doc.name='Newer';await opened.storage.save(doc);await opened.storage.syncPending();
+ await wait(100);await opened.storage.syncPending();
+ assert.deepEqual(sent,['Last edit before closing','Newer']);assert.equal(server.document.name,'Newer');
 });
 test('newer cloud version never overwrites dirty local data, and another account cannot open the cache',async t=>{
  const f=await fixture(t),registry=await f.spaces.openWorkspaceRegistry();t.after(()=>registry.database?.close());const doc=f.C.demoDocument('blank');doc.name='Local work';const meta=await registry.create('File',doc,'7');

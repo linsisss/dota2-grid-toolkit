@@ -108,6 +108,13 @@ npm run dev
 root /srv/gridstudio/dist;
 index index.html;
 
+# JSON сеток сжимается в 15–20 раз, сборка JS/CSS — в 3–5.
+gzip on;
+gzip_vary on;
+gzip_proxied any;
+gzip_min_length 1024;
+gzip_types application/json application/javascript text/css image/svg+xml;
+
 location = /editor { try_files /editor.html =404; }
 location = /catalog { try_files /catalog.html =404; }
 location = /editor/ { return 308 /editor$is_args$args; }
@@ -127,7 +134,7 @@ location / {
 }
 ```
 
-Лимит 9 МБ нужен для личных файлов; API отдельно ограничивает размер публичных заявок. `CATALOG_TRUST_PROXY=loopback` используй только с локальным proxy, который перезаписывает `X-Forwarded-For`, как в примере.
+Лимит 9 МБ нужен для личных файлов; API отдельно ограничивает размер публичных заявок. Не добавляй `Cache-Control` в `location /api/catalog/`: API сам запрещает кэш, кроме неизменяемых сеток каталога. `CATALOG_TRUST_PROXY=loopback` используй только с локальным proxy, который перезаписывает `X-Forwarded-For`, как в примере.
 
 </details>
 

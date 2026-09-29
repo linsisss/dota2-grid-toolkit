@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import D from '../../scripts/data.mjs';
 import { drawCatalogGrid } from '../../scripts/catalog-rendering.mjs';
-import { gameFontsReady } from '../typography.js';
+import { gameFontsReady, koreanFontReady, needsKoreanFont } from '../typography.js';
 import { catalogAPI } from './api.js';
 
 const portraits = new Map();
@@ -12,24 +12,36 @@ function portrait(id) {
   }));
   return portraits.get(id);
 }
-export default function GridPreview({ grid: supplied, id, title = 'Превью сетки', large = false }) {
+// Cards remount on every filter and page change. A published revision never
+// changes, so its grid is fetched once per page load and cached by the browser.
+const grids = new Map();
+function publishedGrid(id, revision) {
+  const key = `${id}:${revision}`;
+  if (!grids.has(key)) {
+    grids.set(key, catalogAPI(`/works/${id}/grid?revision=${revision}`).catch(error => { grids.delete(key); throw error; }));
+    if (grids.size > 24) grids.delete(grids.keys().next().value);
+  }
+  return grids.get(key);
+}
+export default function GridPreview({ grid: supplied, id, revision, title = 'Превью сетки', large = false }) {
   const canvas = useRef(null), container = useRef(null);
   const [grid, setGrid] = useState(supplied), [error, setError] = useState('');
   useEffect(() => {
     setGrid(supplied); setError(''); if (supplied || !id) return;
-    const controller = new AbortController();
+    let active = true;
     const observer = new IntersectionObserver(entries => {
       if (!entries.some(entry => entry.isIntersecting)) return; observer.disconnect();
-      catalogAPI(`/works/${id}`, { signal: controller.signal }).then(item => setGrid(item.grid)).catch(error => { if (!controller.signal.aborted) setError(error.message); });
+      publishedGrid(id, revision).then(value => { if (active) setGrid(value); }).catch(error => { if (active) setError(error.message); });
     }, { rootMargin: '150px' }); observer.observe(container.current);
-    return () => { observer.disconnect(); controller.abort(); };
-  }, [id, supplied]);
+    return () => { active = false; observer.disconnect(); };
+  }, [id, revision, supplied]);
   useEffect(() => {
     if (!grid) return;
     let active = true;
     const categories = grid.configs[0].categories;
     const ids = [...new Set(categories.flatMap(category => category.hero_ids))];
-    Promise.all([gameFontsReady, ...ids.map(portrait)]).then(([, ...images]) => {
+    const fonts = categories.some(category => needsKoreanFont(category.category_name)) ? Promise.all([gameFontsReady, koreanFontReady()]) : gameFontsReady;
+    Promise.all([fonts, ...ids.map(portrait)]).then(([, ...images]) => {
       if (!active) return;
       const element = canvas.current, ctx = element.getContext('2d');
       const width = large ? 1193 : 716, scale = width / 1193;

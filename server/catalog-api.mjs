@@ -71,7 +71,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       if (!['GET','HEAD'].includes(method)) {
         if (request.headers.origin !== config.origin || request.headers['sec-fetch-site'] === 'cross-site') fail(403, 'Отправка разрешена только с сайта GridStudio.');
         store.rate(`http:${ipHash}`, 90, 60_000);
-      } else store.rate(`read:${ipHash}`, 600, 60_000);
+      } else store.burst(`read:${ipHash}`, 600, 60_000);
       let browser = cookies(request).gs_catalog_browser || '';
       const [value, proof] = browser.split('.');
       if (!value || !proof || value.length !== 43 || !equal(proof, signature(value))) {
@@ -140,9 +140,16 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         if (concurrentReceipt) return send(200, concurrentReceipt);
         return send(201, store.save(body, identity, null, null, null, user?.id));
       }
-      const match = /^\/(works|manage)\/([0-9a-f-]{36})(?:\/(download|report|like|claim))?$/.exec(path);
+      const match = /^\/(works|manage)\/([0-9a-f-]{36})(?:\/(download|report|like|claim|grid))?$/.exec(path);
       if (match) {
         const [, scope, id, operation] = match;
+        if (scope === 'works' && operation === 'grid' && method === 'GET') {
+          // A revision's grid never changes. A link to an outdated revision still gets the current grid, uncached.
+          const { revision, grid } = store.publicGrid(id);
+          if (url.searchParams.get('revision') === String(revision)) response.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+          response.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          return response.end(grid);
+        }
         if (scope === 'manage' && !operation) {
           if (method === 'GET') return send(200, store.ownerView(id, token(request), user?.id));
           if (method === 'DELETE') { store.remove(id, token(request), user?.id); return send(200, { deleted: true }); }

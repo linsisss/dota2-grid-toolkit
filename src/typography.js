@@ -1,12 +1,22 @@
+const loaded = (list) => list.length > 0 && list.every((font) => font.status === 'loaded');
+
 // Load before the first canvas labels are drawn; CSS still provides instant fallbacks.
-export const gameFontsReady = Promise.all([
-  document.fonts.load('600 16px StudioRadiance', 'MID DIFF SUPPORT GRIND /\\|-_'),
-  document.fonts.load('600 16px StudioDotaKorean', '멈추지')
-])
-  .then((fonts) =>
-    fonts.every((list) => list.length > 0 && list.every((font) => font.status === 'loaded'))
-  )
+export const gameFontsReady = document.fonts
+  .load('600 16px StudioRadiance', 'MID DIFF SUPPORT GRIND /\\|-_')
+  .then(loaded)
   .catch(() => false);
+
+// Dota's Korean fallback is 1.2 MB and most grids have no Hangul. The editor
+// requests it up front so measured text advances never use a substitute font;
+// catalog previews request it only for grids that contain Hangul.
+const HANGUL = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
+export const needsKoreanFont = (text) => HANGUL.test(text);
+let koreanFont;
+export const koreanFontReady = () =>
+  (koreanFont ||= document.fonts
+    .load('600 16px StudioDotaKorean', '멈추지')
+    .then(loaded)
+    .catch(() => false));
 
 export const interfaceFontsReady = Promise.all(
   [400, 500, 700].map((weight) =>

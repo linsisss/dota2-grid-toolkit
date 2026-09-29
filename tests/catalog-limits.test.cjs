@@ -80,6 +80,46 @@ test('generic request limit returns remaining seconds instead of a fresh full wi
   assert.throws(() => store.rate('test', 2, 60_000), error => error.extra.retryAfter === 10);
 });
 
+test('read limit keeps the same sliding window in memory and forgets idle visitors', async t => {
+  const { store, advance } = await fixture(t);
+  store.burst('read:a', 2, 60_000); advance(10_000); store.burst('read:a', 2, 60_000); advance(20_000);
+  assert.throws(() => store.burst('read:a', 2, 60_000), error => error.status === 429 && error.extra.retryAfter === 30 && /30 сек\./.test(error.message));
+  advance(30_000); store.burst('read:a', 2, 60_000); store.burst('read:b', 2, 60_000);
+  assert.equal(store.get('SELECT count(*) n FROM limits').n, 0);
+  advance(3_600_000); store.burst('read:c', 2, 60_000);
+  assert.deepEqual([...store.bursts.keys()], ['read:c']);
+});
+
+test('durable limits still drop day-old rows while pruning at most once a minute', async t => {
+  const { store, advance } = await fixture(t);
+  store.rate('old', 5, DAY); advance(DAY + 1); store.rate('fresh', 5, 60_000);
+  assert.deepEqual(store.all('SELECT key FROM limits').map(row => row.key), ['fresh']);
+  advance(1_000); store.rate('fresh', 5, 60_000);
+  assert.equal(store.get('SELECT count(*) n FROM limits').n, 2);
+});
+
+test('catalog reads write nothing to SQLite and published grids are cacheable per revision', async t => {
+  const [{ CatalogStore }, { createCatalogAPI }] = await modules;
+  const store = new CatalogStore(':memory:', 'test-only-salt');
+  const config = { origin: 'http://127.0.0.1:4173', development: true, salt: 'test-only-salt' };
+  const { server } = createCatalogAPI(config, { store });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { await new Promise(resolve => server.close(resolve)); store.close(); });
+  const get = path => fetch(`http://127.0.0.1:${server.address().port}/api/catalog${path}`);
+  const saved = store.save(input(7), identity(1)), rows = store.get('SELECT count(*) n FROM limits').n;
+  assert.equal((await get(`/works/${saved.id}/grid?revision=${saved.revision}`)).status, 404);
+  store.moderate(saved.id, { action: 'approve', revision: saved.revision });
+  const current = await get(`/works/${saved.id}/grid?revision=${saved.revision}`);
+  assert.equal(current.status, 200); assert.match(current.headers.get('cache-control'), /immutable/);
+  assert.equal((await current.json()).configs[0].categories[0].x_position, 7);
+  const outdated = await get(`/works/${saved.id}/grid?revision=${saved.revision + 1}`);
+  assert.equal(outdated.headers.get('cache-control'), 'no-store'); assert.equal((await outdated.json()).configs[0].categories[0].x_position, 7);
+  assert.equal((await (await get('/works')).json()).items[0].revision, saved.revision);
+  assert.equal((await get('/auth/me')).status, 200);
+  assert.equal((await get('/works/00000000-0000-4000-8000-000000000000/grid')).status, 404);
+  assert.equal(store.get('SELECT count(*) n FROM limits').n, rows);
+});
+
 test('HTTP publication uses the verified account quota, keeps ALTCHA and returns Retry-After', async t => {
   const [{ CatalogStore }, { createCatalogAPI }] = await modules;
   const store = new CatalogStore(':memory:', 'test-only-salt');

@@ -101,7 +101,7 @@ function Gallery() {
     {error && <Notice error>{error}<button className="catalog-link" onClick={()=>setRetry(x=>x+1)}>Повторить</button></Notice>}
     {loading ? <p role="status">Загружаем сетки…</p> : mine ? <OwnedPublications items={privateItems} guestItems={owned} auth={auth}/> : data?.items.length ? <>
       <div className="catalog-results">Сеток: {data.total}{sort==='popular' && ' · По числу лайков'}</div>
-      <section className="catalog-grid" aria-label="Работы игроков">{data.items.map(item=><article key={item.id} className="catalog-card"><a className="catalog-card-art" href={CATALOG_PATH+'?id='+item.id}><GridPreview id={item.id} title={item.title}/></a>
+      <section className="catalog-grid" aria-label="Работы игроков">{data.items.map(item=><article key={item.id} className="catalog-card"><a className="catalog-card-art" href={CATALOG_PATH+'?id='+item.id}><GridPreview id={item.id} revision={item.revision} title={item.title}/></a>
         <div className="catalog-card-info"><div><a href={CATALOG_PATH+'?id='+item.id}><h2>{item.title}</h2></a><p>{item.author||'Без подписи'}</p></div><LikeButton item={item} onChange={value=>updateLike(item.id,value)}/></div>
         <div className="catalog-card-meta"><span>Категорий: {item.stats.categories.toLocaleString('ru-RU')}</span><span>{item.tags.join(', ')}</span></div></article>)}</section>
       {data.total>12 && <nav className="catalog-pagination" aria-label="Страницы каталога"><button className="catalog-button" disabled={!page} onClick={()=>setPage(x=>x-1)}>Назад</button><span>{page+1} / {Math.ceil(data.total/12)}</span><button className="catalog-button" disabled={(page+1)*12>=data.total} onClick={()=>setPage(x=>x+1)}>Дальше</button></nav>}

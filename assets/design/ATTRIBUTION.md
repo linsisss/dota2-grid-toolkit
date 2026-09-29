@@ -9,4 +9,6 @@ These are original supplied/captured images, not AI-generated assets. Hero portr
 
 `editor-landing-reference.png` is the user's supplied editor screenshot, downloaded unchanged from https://i.postimg.cc/6pGNCPyL/chrome-h-XKzu-FA8To.png for the ten Focus landing alternatives. Image size: 1280 × 675.
 
+The site serves WebP copies of these originals to save bandwidth: `linsissya.webp` and `dissonance.webp` are resized to 96 × 96 for the 25 px author pills; `editor-landing-reference.webp` keeps 1280 × 675 at quality 92. Regenerate with `cwebp -q 88 -m 6 -resize 96 96` and `cwebp -q 92 -m 6`.
+
 `apple-red-heart.png`: Apple iOS 18.4 Red Heart, explicitly requested for the author credit. Source: https://emojipedia.org/apple/ios-18.4/red-heart, image https://em-content.zobj.net/source/apple/419/red-heart_2764-fe0f.png. Apple artwork; no additional rights are claimed. Stored locally so the selected appearance is consistent across platforms.

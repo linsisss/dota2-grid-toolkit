@@ -170,3 +170,12 @@ test('rolling snapshots are bounded and pre-update copies survive many saves', a
   assert.equal(storage.length, 1);
   database.close();
 });
+
+test('storage names stay fixed across releases so an update never orphans saved projects', async () => {
+  // Renaming any of these hides every existing autosave after a deploy; old data would still be there, but unread.
+  assert.equal(PROJECT_KEY, 'dota-grid-studio.document.v1');
+  assert.equal(JOURNAL_PREFIX, 'dota-grid-studio.document.v1.pending.');
+  const factory = new IDBFactory();
+  await openProjectDatabase(factory);
+  assert.deepEqual((await factory.databases()).map(({ name, version }) => ({ name, version })), [{ name: 'gridstudio-projects', version: 1 }]);
+});

@@ -4,6 +4,7 @@ import { Icon, Modal, Notice } from './Common.jsx';
 import { attachGuestWorkspaces, openWorkspaceRegistry } from '../../scripts/workspaces.mjs';
 
 const Context = createContext(null);
+const AUTH_RECHECK = 5 * 60_000;
 function openTelegramWindow() {
   const popup = window.open('about:blank', '_blank');
   if (popup) popup.opener = null;
@@ -12,9 +13,10 @@ function openTelegramWindow() {
 export function AccountProvider({ children }) {
   const [user, setUser] = useState(null), [loading, setLoading] = useState(true), [login, setLogin] = useState(false), [reason, setReason] = useState('');
   const telegramWindow = useRef(null);
-  const userRef = useRef(null), transferQueue = useRef(Promise.resolve());
+  const userRef = useRef(null), transferQueue = useRef(Promise.resolve()), checked = useRef(0), channel = useRef(null);
   const [fileSync, setFileSync] = useState({ busy: false, error: '', revision: 0 });
-  async function refresh() { try { const result = await catalogAPI('/auth/me'); userRef.current = result.user; setUser(result.user); return result.user; } finally { setLoading(false); } }
+  async function refresh() { try { const result = await catalogAPI('/auth/me'); checked.current = Date.now(); userRef.current = result.user; setUser(result.user); return result.user; } finally { setLoading(false); } }
+  const announce = () => { try { channel.current?.postMessage('auth'); } catch { /* The other tabs catch up on their next recheck. */ } };
   function syncFiles() {
     const account = userRef.current;
     if (!account) return Promise.resolve();
@@ -29,10 +31,20 @@ export function AccountProvider({ children }) {
     });
     return transferQueue.current;
   }
-  useEffect(() => { refresh().catch(() => {}); const focus = () => refresh().then(() => syncFiles()).catch(() => {}); window.addEventListener('focus', focus); window.addEventListener('online', focus); return () => { window.removeEventListener('focus', focus); window.removeEventListener('online', focus); }; }, []);
+  useEffect(() => {
+    refresh().catch(() => {});
+    // Login and logout in another tab arrive at once. Switching back from Dota
+    // only rechecks a session that is a few minutes old, not on every Alt+Tab.
+    const recheck = () => refresh().then(() => syncFiles()).catch(() => {});
+    const focus = () => { if (Date.now() - checked.current >= AUTH_RECHECK) recheck(); };
+    channel.current = typeof BroadcastChannel === 'function' ? new BroadcastChannel('gridstudio-auth') : null;
+    if (channel.current) channel.current.onmessage = recheck;
+    window.addEventListener('focus', focus); window.addEventListener('online', recheck);
+    return () => { channel.current?.close(); channel.current = null; window.removeEventListener('focus', focus); window.removeEventListener('online', recheck); };
+  }, []);
   useEffect(() => { if (user) syncFiles(); else setFileSync(state => ({ ...state, busy: false, error: '' })); }, [user?.id]);
-  return <Context.Provider value={{ user, loading, refresh, fileSync, syncFiles, requestLogin: text => { telegramWindow.current = openTelegramWindow(); setReason(text || ''); setLogin(true); }, logout: async () => { await catalogAPI('/auth/logout', { method: 'POST', body: {} }); userRef.current = null; setUser(null); } }}>
-    {children}{login && <LoginDialog telegramWindow={telegramWindow} reason={reason} onClose={() => setLogin(false)} onSuccess={async () => { await refresh(); setLogin(false); }}/>}</Context.Provider>;
+  return <Context.Provider value={{ user, loading, refresh, fileSync, syncFiles, requestLogin: text => { telegramWindow.current = openTelegramWindow(); setReason(text || ''); setLogin(true); }, logout: async () => { await catalogAPI('/auth/logout', { method: 'POST', body: {} }); userRef.current = null; setUser(null); announce(); } }}>
+    {children}{login && <LoginDialog telegramWindow={telegramWindow} reason={reason} onClose={() => setLogin(false)} onSuccess={async () => { await refresh(); announce(); setLogin(false); }}/>}</Context.Provider>;
 }
 export const useAccount = () => useContext(Context);
 export const accountLabel = user => user?.username ? `@${user.username}` : 'Telegram';

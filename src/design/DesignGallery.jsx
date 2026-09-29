@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import D from '../../scripts/data.mjs';
 import currentEditor from '../../assets/design/editor-current.png';
-import linsissya from '../../assets/design/linsissya.png';
-import dissonance from '../../assets/design/dissonance.png';
+import linsissya from '../../assets/design/linsissya.webp';
+import dissonance from '../../assets/design/dissonance.webp';
 
 const DIRECTIONS = [
   {

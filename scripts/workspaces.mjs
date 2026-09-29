@@ -127,12 +127,12 @@ export async function openWorkspaceRegistry() {
 
 // Server writes are serialized and compare revisions. Local autosave completes
 // independently; a network failure never discards or rolls back local edits.
-export async function openWorkspace(meta, registry, api, user, onStatus = () => {}) {
+export async function openWorkspace(meta, registry, api, user, onStatus = () => {}, { retryDelay = 2000 } = {}) {
   if (meta.account && meta.account !== user?.id) throw new Error('Войди в Telegram-аккаунт, к которому привязан файл.');
   const storage = await createProjectStorage(C.importProject, APP_VERSION, meta.id);
   let initial = await storage.load(), cloudRevision = meta.cloudRevision || 0, generation = 0, cloudQueue = Promise.resolve(), paused = false;
   let latestDocument = initial.doc;
-  let pending = null, timer = null, deadline = null;
+  let pending = null, timer = null, deadline = null, retry = null, retries = 0;
   const saveLocal = storage.save.bind(storage);
   if (meta.account) {
     try {
@@ -160,14 +160,28 @@ export async function openWorkspace(meta, registry, api, user, onStatus = () => 
       onStatus('Сохраняем в аккаунт…');
       try {
         const result = await api(`/spaces/${cloudWorkspaceId(meta)}`, { method: 'PUT', body: { name: current.name, account: meta.account, revision: cloudRevision, document: doc } });
-        cloudRevision = result.revision;
+        cloudRevision = result.revision; retries = 0;
         await registry.update(meta.id, { cloudRevision, pendingUpload: false, dirty: generation !== revision });
         onStatus(generation === revision ? 'Сохранено в аккаунте' : 'Сохраняем в аккаунт…');
       } catch (error) {
         if ([401, 403, 404, 409].includes(error.status)) paused = true;
+        else if (!error.status || error.status >= 500 || error.status === 429) retryLater(doc, revision);
         onStatus(`${error.message} Локальная копия сохранена.`);
       }
     }).catch(() => onStatus('Не удалось обновить список файлов. Локальная копия сохранена.'));
+  }
+  // An API restart or deploy drops requests for a moment. Resend the last edit
+  // without waiting for the next change; after ~2 minutes the next edit or
+  // reopening the file resumes the upload, as before.
+  function retryLater(doc, revision) {
+    if (retries >= 6) return;
+    clearTimeout(retry);
+    retry = setTimeout(() => {
+      retry = null;
+      // A newer edit already has its own upload scheduled.
+      if (revision === generation && !pending) pending = { doc, revision };
+      flushCloud();
+    }, Math.min(60_000, retryDelay * 2 ** retries++));
   }
   function flushCloud() {
     clearTimeout(timer); clearTimeout(deadline); timer = deadline = null;
@@ -176,7 +190,7 @@ export async function openWorkspace(meta, registry, api, user, onStatus = () => 
   }
   function scheduleCloud(doc, revision) {
     if (!meta.account || paused) return;
-    pending = { doc: C.clone(doc), revision }; clearTimeout(timer);
+    pending = { doc: C.clone(doc), revision }; retries = 0; clearTimeout(timer);
     timer = setTimeout(flushCloud, 1500); deadline ||= setTimeout(flushCloud, 5000);
     onStatus('Сохранено локально · ждёт синхронизации');
   }

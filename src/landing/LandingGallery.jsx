@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import editorImage from '../../assets/design/editor-landing-reference.png';
-import linsissya from '../../assets/design/linsissya.png';
-import dissonance from '../../assets/design/dissonance.png';
+import editorImage from '../../assets/design/editor-landing-reference.webp';
+import linsissya from '../../assets/design/linsissya.webp';
+import dissonance from '../../assets/design/dissonance.webp';
 import StageArtwork from './StageArtwork.jsx';
 import { CATALOG_PATH } from '../catalog/api.js';
 

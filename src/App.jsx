@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { StudioLayout } from './StudioLayout.jsx';
 import { StudioControls } from './StudioControls.jsx';
 import { createStudio } from '../scripts/app.mjs';
-import { interfaceFontsReady, gameFontsReady } from './typography.js';
+import { interfaceFontsReady, gameFontsReady, koreanFontReady } from './typography.js';
 import { openWorkspaceRegistry, openWorkspace, registerActiveWorkspace, rememberWorkspace, enterWorkspace } from '../scripts/workspaces.mjs';
 import Workspaces from './Workspaces.jsx';
 import { AccountProvider, useAccount } from './catalog/Account.jsx';
@@ -11,6 +11,9 @@ import './catalog/catalog.css';
 import './workspaces.css';
 import C from '../scripts/core.mjs';
 import { useAppMotion } from './useAppMotion.js';
+
+// Requested at import, as before, so typed Hangul is measured with Dota's font.
+const editorFontsReady = Promise.all([gameFontsReady, koreanFontReady()]);
 
 export default function App() { useAppMotion(); return <AccountProvider><WorkspaceApp/></AccountProvider>; }
 function WorkspaceApp() {
@@ -69,7 +72,7 @@ function StudioFile({ meta, registry, user, onBack }) {
       setEditor(instance);
       const refresh = () => { if (active) instance.refresh(); };
       interfaceFontsReady.then(refresh);
-      gameFontsReady.then(refresh);
+      editorFontsReady.then(refresh);
     })().catch(() => { if (active) setLoadingError('Не удалось открыть редактор. Сохранённые данные не изменены. Обнови страницу.'); });
     return () => {
       active = false;

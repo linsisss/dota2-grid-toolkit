@@ -58,10 +58,25 @@ export class CatalogStore {
   audit(id, action) { this.run('INSERT INTO audit(work,action,at) VALUES(?,?,?)', id, action, this.now()); }
   rate(key, max, duration, { message = 'Слишком много запросов.', code = 'rate_limited' } = {}) {
     const now = this.now();
-    this.run('DELETE FROM limits WHERE at < ?', now - 86_400_000);
+    // Rows older than a day never affect a window; a full-table prune per call costs more than it saves.
+    if (!(now - this.pruned < 60_000)) { this.pruned = now; this.run('DELETE FROM limits WHERE at < ?', now - 86_400_000); }
     const boundary = this.get('SELECT at FROM limits WHERE key=? AND at>? ORDER BY at DESC LIMIT 1 OFFSET ?', key, now - duration, max - 1);
     if (boundary) rateExceeded(boundary.at, duration, now, message, code);
     this.run('INSERT INTO limits VALUES(?,?)', key, now);
+  }
+  // Same sliding window as rate(), kept in memory for short anti-flood limits on reads:
+  // they need no durability, and a SQLite write per page view dominated the API's CPU.
+  burst(key, max, duration) {
+    const now = this.now(), bursts = this.bursts ||= new Map();
+    let entry = bursts.get(key);
+    if (!entry) bursts.set(key, entry = { duration, hits: [] });
+    while (entry.hits.length && entry.hits[0] <= now - duration) entry.hits.shift();
+    if (entry.hits.length >= max) rateExceeded(entry.hits[entry.hits.length - max], duration, now, 'Слишком много запросов.', 'rate_limited');
+    entry.hits.push(now);
+    if (!(now - this.swept < 60_000)) {
+      this.swept = now;
+      for (const [name, { duration: window, hits }] of bursts) if (!hits.length || hits.at(-1) <= now - window) bursts.delete(name);
+    }
   }
   submitting(identity, account = null) {
     if (this.paused()) fail(503, 'Приём сеток временно приостановлен. Каталог и редактор доступны.');
@@ -145,6 +160,12 @@ export class CatalogStore {
       this.run('DELETE FROM likes WHERE work=?', id);
       this.audit(id, 'owner-delete');
     });
+  }
+  // Stored JSON as-is: previews need neither likes nor a parse/serialize round trip.
+  publicGrid(id) {
+    const row = this.get("SELECT r.id revision, r.grid FROM works w JOIN revisions r ON r.id=w.public_revision WHERE w.id=? AND w.state='active'", id);
+    if (!row) fail(404, 'Сетка не найдена или ещё не опубликована.');
+    return row;
   }
   publicItem(id, account = null) {
     const work = this.get("SELECT * FROM works WHERE id=? AND state='active' AND public_revision IS NOT NULL", id);

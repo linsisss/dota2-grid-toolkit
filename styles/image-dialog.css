@@ -372,3 +372,21 @@
     display: none;
   }
 }
+
+/* Conversion method: cards, the chosen one outlined; a lone last card spans the row.
+   Each method has its own panel. */
+.image-method { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 16px; }
+.image-method button {
+  display: flex; flex-direction: column; gap: 4px; padding: 11px 12px; text-align: left;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--field); color: var(--text); cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+.image-method button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.image-method button:hover { border-color: #ffffff2e; }
+.image-method button[aria-pressed='true'] { border-color: var(--accent); background: #c4b5ed14; }
+.image-method strong { font-size: 13.5px; font-weight: 600; }
+.image-method span { font-size: 11.5px; line-height: 1.35; color: var(--muted); }
+.image-dialog:not([data-method='rows']) [data-method-panel='rows'],
+.image-dialog:not([data-method='trace']) [data-method-panel='trace'],
+.image-dialog:not([data-method='points']) [data-method-panel='points'] { display: none; }
+.image-method-panel > .hint:first-child { margin-top: 0; }

@@ -3,12 +3,19 @@ import D from './data.mjs';
 import { drawCategoryLabel, DOTA, portraitSourceRect } from './dota-rendering.mjs';
 const portraitCrops = new Map(D.heroes.map(hero => [hero.id, hero.portraitCrop]));
 
-// The browser and Telegram render the same validated JSON with the same layout.
-export function drawCatalogGrid(ctx, grid, images, width = 1193) {
-  ctx.save(); ctx.scale(width / 1193, width / 1193);
+// The 1193×593 grid area: the Dota 2 backdrop image (grid-background.mjs) or, without one, the
+// old gradient.
+export function drawGridGround(ctx, background = null) {
+  if (background) { ctx.drawImage(background, 0, 0, 1193, 593); return; }
   const ground = ctx.createLinearGradient(0, 0, 0, 593);
   ground.addColorStop(0, '#261e12'); ground.addColorStop(1, '#140f0a');
   ctx.fillStyle = ground; ctx.fillRect(0, 0, 1193, 593);
+}
+
+// The browser and Telegram render the same validated JSON with the same layout.
+export function drawCatalogGrid(ctx, grid, images, width = 1193, background = null) {
+  ctx.save(); ctx.scale(width / 1193, width / 1193);
+  drawGridGround(ctx, background);
   for (const c of grid.configs[0].categories) {
     drawCategoryLabel(ctx, c.category_name, c.x_position, c.y_position);
     if (!c.hero_ids.length) continue;

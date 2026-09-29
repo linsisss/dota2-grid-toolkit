@@ -568,13 +568,11 @@ body.show-library .editor-toolbar .tool-dock {
   border-color: var(--line);
   color: var(--muted);
 }
-.group-add,
 .rotation-handle {
   background: var(--accent);
   color: var(--accent-ink);
   border-color: var(--accent);
 }
-.group-add:hover,
 .rotation-handle:hover {
   background: var(--accent-strong);
   color: var(--accent-ink);
@@ -1109,4 +1107,11 @@ body.show-library .app-layout > .library-panel {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Replacement symbol in the "Заменить символы" dialog. */
+.glyph-replace-to {
+  width: 88px;
+  text-align: center;
+  font-size: 18px;
 }

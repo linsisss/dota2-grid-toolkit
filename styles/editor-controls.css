@@ -262,6 +262,43 @@ select {
   justify-content: center;
   background: #332b3d;
 }
+/* Context menu blocks: a label, then a row of compact buttons (rotate, align, distribute). */
+.context-block {
+  display: grid;
+  gap: 4px;
+  padding: 4px 4px 4px 9px;
+}
+.context-block > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.context-block > div {
+  display: flex;
+  gap: 4px;
+}
+.canvas-context-menu .context-block button {
+  flex: 1;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0;
+  justify-content: center;
+  background: #332b3d;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.align-icon {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.align-actions .align-icon {
+  display: block;
+  margin: 0 auto;
+}
 .reflection-icon {
   width: 21px;
   height: 21px;
@@ -359,6 +396,10 @@ select {
 .preview-exit[hidden] {
   display: none;
 }
+.preview-background {
+  right: auto;
+  left: 18px;
+}
 .preview-exit svg {
   width: 15px;
   height: 15px;
@@ -375,9 +416,13 @@ select {
   height: 100dvh;
   z-index: 300;
   border-radius: 0;
+  /* The game's hero screen backdrop, fitted to Dota at 1080p (scripts/make-grid-background.mjs). */
+  background: #140f0a url('../assets/backgrounds/dota-screen.webp') center / cover no-repeat;
+}
+:root[data-grid-background='gradient'] .game-preview .editor-shell {
   background: linear-gradient(#261e12, #140f0a);
 }
-.game-preview .editor-shell > :not(#canvasViewport):not(#closePreview) {
+.game-preview .editor-shell > :not(#canvasViewport):not(#closePreview):not(#previewBackground) {
   display: none !important;
 }
 .game-preview #canvasViewport {
@@ -454,6 +499,19 @@ details[open] > summary::before {
 .export-guide > ol {
   padding-top: 14px;
 }
+/* The exact file name: the step people miss. */
+.export-guide .export-name-note {
+  margin: 10px 0 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  background: #c4b5ed12;
+  font-size: 14px;
+}
+.export-guide .export-name-note p { margin: 0; }
+.export-guide .export-name-note ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; color: var(--muted); }
+.export-guide .export-name-note li { margin: 0; padding: 0; }
+
 .export-guide .button {
   padding: 10px 12px;
 }
@@ -481,6 +539,17 @@ details[open] > summary::before {
   font: inherit;
   color: var(--accent);
   user-select: all;
+}
+/* File names inside a sentence stay inline (after the block rule above). */
+.export-guide .export-name-note code {
+  display: inline;
+  margin: 0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #ffffff0f;
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  font-size: 0.88em;
+  color: var(--text);
 }
 @media (max-width: 900px) {
   .dock-label-toggle {

@@ -51,7 +51,14 @@ html:has(#catalog-root) { overflow:auto; height:auto; }
 .catalog-tags button:hover { color:var(--cat-ink); }
 .catalog-tags button[aria-pressed=true] { background:#c4b5ed1a; color:var(--cat-accent); border-color:#77678f; }
 .catalog-filters { margin:22px 0; }
-.catalog-results { color:var(--cat-muted); font-size:13px; margin:25px 0 14px; }
+.catalog-results { color:var(--cat-muted); font-size:13px; margin:25px 0 14px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+/* Preview backdrop: «Как в Dota» / «Градиент». */
+.catalog-background-switch { display:inline-flex; align-items:center; gap:2px; padding:2px; border:1px solid var(--cat-line); border-radius:8px; font-size:12px; }
+.catalog-background-switch span { color:var(--cat-muted); padding:0 8px 0 6px; }
+.catalog-background-switch button { border:0; background:none; color:var(--cat-muted); border-radius:6px; min-height:28px; padding:4px 10px; font-size:12px; cursor:pointer; }
+.catalog-background-switch button[aria-pressed=true] { color:var(--cat-ink); background:#2c2935; }
+.catalog-background-switch button:hover { color:var(--cat-ink); }
+:root[data-grid-background=gradient] .art-submit-preview, :root[data-grid-background=gradient] .art-review-preview { background:linear-gradient(#261e12,#140f0a); }
 .catalog-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:34px 24px; }
 .catalog-card { min-width:0; }
 .catalog-card-art { display:block; border-radius:12px; overflow:hidden; }
@@ -59,6 +66,15 @@ html:has(#catalog-root) { overflow:auto; height:auto; }
 .catalog-preview canvas { display:block; width:100%; height:100%; }
 .catalog-preview-status { position:absolute; inset:0; display:grid; place-content:center; padding:20px; text-align:center; color:#c6becf; font-size:13px; }
 .catalog-card-art:hover { outline:1px solid #77678f; outline-offset:4px; }
+/* 18+ previews stay blurred until the viewer confirms their age once. */
+.catalog-nsfw { position:relative; border-radius:12px; overflow:hidden; }
+.catalog-nsfw-art canvas { filter:blur(20px) saturate(.6); transform:scale(1.1); }
+.catalog-nsfw-reveal { position:absolute; inset:0; display:grid; place-content:center; justify-items:center; gap:4px; border:0; border-radius:inherit; background:#15141a80; color:var(--cat-ink); font:inherit; cursor:pointer; transition:background 140ms ease; }
+.catalog-nsfw-reveal svg { width:30px; height:30px; margin-bottom:4px; }
+.catalog-nsfw-reveal span { font-size:17px; font-weight:600; letter-spacing:.06em; }
+.catalog-nsfw-reveal small { font-size:13px; color:var(--cat-muted); }
+.catalog-nsfw-reveal:hover { background:#15141a59; }
+.catalog-nsfw-reveal:focus-visible { outline:2px solid var(--cat-accent); outline-offset:-2px; }
 .catalog-card-info { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:16px 0 8px; }
 .catalog-card-info h2 { font-size:18px; margin:0 0 3px; overflow-wrap:anywhere; }
 .catalog-card-info p { margin:0; font-size:14px; color:var(--cat-muted); }
@@ -109,19 +125,34 @@ html:has(#catalog-root) { overflow:auto; height:auto; }
 .catalog-stats dt { font-size:12px; color:var(--cat-muted); }
 .catalog-stats dd { font-size:21px; margin:3px 0 0; line-height:1.2; }
 .catalog-muted { color:var(--cat-muted); font-weight:400; font-size:13px; line-height:1.65; }
-.catalog-preview-caption { margin-top:14px; }
+.catalog-preview-caption { margin-top:14px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+.catalog-preview-caption .catalog-muted { margin:0; }
 .catalog-notice { padding:14px 16px; background:#2c2935; border-radius:8px; font-size:14px; color:#dfd3ef; }
 .catalog-notice.is-error { background:#35242c; color:#ffd1d4; }
 .catalog-notice a { text-decoration:underline; }
-.catalog-dialog { border:0; border-radius:10px; box-shadow:0 18px 64px #0008; padding:0; background:#211e29; width:min(1100px,calc(100vw - 40px)); max-width:none; max-height:calc(100dvh - 48px); overflow:auto; animation:catalog-open 180ms cubic-bezier(.16,1,.3,1); }
+/* Windows: a thin light edge, soft depth, sized to their content (Modal size prop). */
+.catalog-dialog { border:1px solid #ffffff17; border-radius:14px; box-shadow:0 1px 0 #ffffff0d inset,0 24px 64px -18px #000d,0 4px 16px #0006; padding:0; background:#221e2b; color:var(--cat-ink);
+  width:min(440px,calc(100vw - 24px)); max-width:none; max-height:calc(100dvh - 32px); overflow:auto; animation:surface-dialog-in 220ms cubic-bezier(.2,.8,.2,1); }
+.catalog-dialog.is-md { width:min(680px,calc(100vw - 24px)); }
+.catalog-dialog.is-lg { width:min(1040px,calc(100vw - 24px)); }
+.catalog-dialog.is-leaving { animation:surface-dialog-out 150ms ease-in forwards; pointer-events:none; }
 dialog.catalog-dialog:focus { outline:none; }
-.catalog-dialog::backdrop { background:#09070ecc; }
-.catalog-dialog-header { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px 28px; border-bottom:1px solid var(--cat-line); }
-.catalog-dialog-header h2 { margin:0; font-size:22px; }
-.catalog-dialog:has(>.catalog-confirm) { width:min(460px,calc(100vw - 32px)); }
-.catalog-dialog:has(>.catalog-confirm) .catalog-dialog-header { padding:16px 16px 12px 24px; gap:12px; border-bottom:0; }
-.catalog-dialog:has(>.catalog-confirm) .catalog-dialog-header h2 { font-size:20px; }
-.catalog-confirm { padding:0 24px 24px; }
+.catalog-dialog::backdrop { background:#0b0912a6; backdrop-filter:blur(6px); }
+.catalog-dialog[open]::backdrop { animation:surface-backdrop-in 200ms ease-out; }
+.catalog-dialog[open].is-leaving::backdrop { animation:surface-backdrop-out 150ms ease-in forwards; }
+.catalog-dialog-header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 12px 4px 22px; }
+.catalog-dialog-header h2 { margin:0; font-size:18px; font-weight:600; letter-spacing:-.01em; }
+.catalog-dialog.is-lg .catalog-dialog-header { padding:16px 14px 14px 26px; border-bottom:1px solid var(--cat-line); }
+.catalog-dialog.is-lg .catalog-dialog-header h2 { font-size:20px; }
+.catalog-dialog-close { width:32px; height:32px; color:var(--cat-muted); transition:background 120ms ease,color 120ms ease; }
+.catalog-dialog-close:hover { background:#ffffff10; color:var(--cat-ink); }
+.catalog-dialog .catalog-dialog-close:focus-visible { outline:2px solid var(--cat-accent); outline-offset:1px; }
+:is(.catalog-dialog.is-sm,.catalog-dialog.is-md) :is(.catalog-report,.catalog-login-flow) { padding:12px 22px 22px; max-width:none; }
+@keyframes surface-dialog-in { from { opacity:0; transform:translateY(10px) scale(.97); } to { opacity:1; transform:none; } }
+@keyframes surface-dialog-out { to { opacity:0; transform:translateY(6px) scale(.98); } }
+@keyframes surface-backdrop-in { from { opacity:0; } }
+@keyframes surface-backdrop-out { to { opacity:0; } }
+.catalog-confirm { padding:6px 22px 22px; }
 .catalog-confirm>p { margin:0 0 20px; line-height:1.55; overflow-wrap:anywhere; }
 .catalog-confirm .catalog-actions { justify-content:flex-end; gap:10px; }
 .catalog-submit { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(285px,1fr); gap:30px; padding:28px; }
@@ -170,11 +201,10 @@ dialog.catalog-dialog:focus { outline:none; }
 @media(min-width:1600px) { .catalog-grid { gap:40px 28px; } }
 @media(max-width:1050px) { .catalog-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .catalog-detail { grid-template-columns:minmax(0,1fr) 290px; gap:24px; } .catalog-nav,.catalog-main { padding-left:28px; padding-right:28px; } .catalog-heading { align-items:start; } }
 @media(max-width:760px) { .catalog-nav { padding:22px 20px; } .catalog-nav nav { gap:16px; } .catalog-nav nav a { font-size:13px; } .catalog-brand { font-size:16px; } .catalog-brand>svg { width:27px; } .catalog-main { padding:0 20px; margin:22px auto 50px; } .catalog-heading { flex-direction:column; gap:18px; margin-bottom:30px; } .catalog-heading h1 { font-size:34px; } .catalog-heading p { font-size:15px; } .catalog-toolbar { align-items:stretch; flex-direction:column; gap:14px; } .catalog-search { width:100%; } .catalog-tabs { gap:2px; } .catalog-tabs button { padding:8px 10px; font-size:13px; } .catalog-grid { grid-template-columns:1fr; gap:28px; } .catalog-detail { grid-template-columns:1fr; gap:12px; } .catalog-detail-info h1 { font-size:30px; } .catalog-submit { grid-template-columns:1fr; padding:20px; gap:20px; } .catalog-dialog { width:calc(100vw - 24px); max-height:calc(100dvh - 24px); } .catalog-dialog-header { padding:16px 20px; } .catalog-dialog-header h2 { font-size:20px; } .catalog-submit-preview .catalog-muted { margin:0; } .catalog-stats { margin:16px 0; } .catalog-footer { margin:0 20px; flex-wrap:wrap; gap:14px; } .catalog-footer span:nth-child(2) { flex-basis:100%; order:2; } .catalog-footer a { margin-left:auto; } .catalog-receipt,.catalog-report { padding:22px; } .catalog-receipt .catalog-actions>* { width:100%; } .catalog-moderation { grid-template-columns:1fr; } .catalog-queue { max-height:240px; overflow:auto; } .catalog-replace { padding:20px 20px 0; } .catalog-login { margin:24px 0; } }
-@media(prefers-reduced-motion:reduce) { .catalog-dialog { animation:none; } .catalog-button { transition:none; } }
+@media(prefers-reduced-motion:reduce) { .catalog-dialog,.catalog-dialog[open]::backdrop { animation:none; } .catalog-button { transition:none; } }
 
 .catalog-login-flow { padding:28px; display:grid; gap:18px; }
 .catalog-login-flow p { margin:0; }
-.catalog-dialog:has(.catalog-login-flow) { width:min(460px,calc(100vw - 24px)); }
 .account-avatar { display:grid; place-content:center; width:32px; height:32px; flex-shrink:0; overflow:hidden; border-radius:50%; background:#51415f; color:#efeaf5; }
 .account-avatar img { width:100%; height:100%; object-fit:cover; }
 .account-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -189,3 +219,94 @@ dialog.catalog-dialog:focus { outline:none; }
 .catalog-like.is-liked svg { fill:#755383; }
 .catalog-like-error { position:absolute; bottom:100%; right:0; width:210px; background:#35242c; color:#ffc3c7; padding:12px; border-radius:8px; font-size:12px; z-index:5; }
 .catalog-nav nav { flex-wrap:wrap; }
+
+.catalog-button.is-disabled { opacity:.5; pointer-events:none; }
+.publish-target { padding:22px 28px 0; display:grid; gap:10px; }
+.publish-target label { font-size:14px; color:var(--cat-muted); }
+.publish-target select { display:block; width:100%; margin-top:7px; padding:11px 12px; border:1px solid var(--cat-line); border-radius:5px; background:var(--cat-field); color:var(--cat-ink); font:inherit; }
+.publish-target .catalog-muted { margin:0; }
+@media(max-width:760px) { .publish-target { padding:18px 20px 0; } }
+.catalog-subscribe { display:grid; gap:6px; }
+.catalog-subscribe .catalog-muted { margin:0; font-size:12px; }
+.catalog-button.is-subscribed { border-color:#c4b5ed55; color:var(--cat-accent); }
+.catalog-tabs .catalog-count { display:inline-block; min-width:20px; margin-left:7px; padding:1px 6px; border-radius:9px; background:#ffffff14; color:var(--cat-muted); font-size:11px; font-variant-numeric:tabular-nums; }
+.catalog-card-actions { display:flex; align-items:center; gap:4px; }
+.catalog-admin-edit { color:var(--cat-muted); }
+.catalog-review-title { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.catalog-meta-form { display:grid; gap:18px; }
+.catalog-meta-form fieldset { margin:0; }
+.catalog-meta-form .catalog-muted { margin:0; }
+.catalog-meta-form > .catalog-button { justify-self:start; margin-top:4px; }
+/* Fields show focus as a soft accent edge, not a second ring floating around them. */
+:is(.catalog-page,.catalog-dialog) :is(input:not([type=checkbox]):not([type=radio]),textarea,select):focus-visible { outline:none; border-color:var(--cat-accent); box-shadow:0 0 0 3px #c4b5ed29; }
+:is(.catalog-page,.catalog-dialog) :is(input,textarea,select) { transition:border-color 120ms ease,box-shadow 120ms ease; }
+
+/* Installation guide: numbered steps and the Steam folder finder shared with the editor's export. */
+.catalog-install { list-style:none; counter-reset:step; margin:0; padding:10px 22px 24px; display:flex; flex-direction:column; gap:22px; }
+.catalog-install>li { counter-increment:step; position:relative; padding-left:40px; line-height:1.55; }
+.catalog-install>li::before { content:counter(step); position:absolute; left:0; top:-1px; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:#c4b5ed1f; color:var(--cat-accent); font-size:13px; font-weight:600; }
+.catalog-install strong { font-weight:600; }
+.catalog-install code { font-family:ui-monospace,'SF Mono',Consolas,monospace; font-size:.88em; background:#ffffff0f; padding:1px 5px; border-radius:4px; overflow-wrap:anywhere; }
+.catalog-install>li>.catalog-button { display:flex; width:fit-content; margin-top:12px; }
+.catalog-install p { margin:6px 0 0; font-size:14px; }
+.catalog-install a { color:var(--cat-accent); text-decoration:underline; text-underline-offset:3px; }
+/* The exact file name: the step people miss. */
+.catalog-install-name { margin-top:14px; padding:12px 14px; border-left:3px solid var(--cat-accent); border-radius:0 8px 8px 0; background:#c4b5ed12; font-size:14px; }
+.catalog-install .catalog-install-name p { margin:0; font-size:14px; }
+.catalog-install-name ul { margin:8px 0 0; padding-left:18px; display:grid; gap:6px; color:#c9c2d6; }
+.catalog-steam { margin-top:12px; }
+.catalog-steam label { font-size:14px; margin-bottom:7px; }
+.catalog-steam-input { display:flex; gap:8px; }
+.catalog-steam .catalog-steam-input input { flex:1; min-width:0; margin-top:0; }
+.catalog-steam-input .catalog-button { flex-shrink:0; }
+.catalog-steam-status { font-size:13px; margin:8px 0 0; color:var(--cat-muted); }
+.catalog-steam-status[data-state=ready] { color:#91c5a3; }
+.catalog-steam-status[data-state=error] { color:#e1a9b8; }
+.catalog-steam-location { margin:12px 0; font-size:13px; color:var(--cat-muted); }
+.catalog-steam-location summary { cursor:pointer; width:fit-content; }
+.catalog-steam-location label { margin:10px 0 0; color:var(--cat-ink); }
+.catalog-steam-location input { margin-top:6px; }
+.catalog-steam-path { display:flex; align-items:center; gap:10px; padding:6px 6px 6px 12px; background:var(--cat-field); border:1px solid var(--cat-line); border-radius:8px; }
+.catalog-install .catalog-steam-path code { flex:1; min-width:0; background:none; padding:0; font-size:13px; }
+.catalog-steam-path .catalog-button { min-height:34px; padding:6px 12px; font-size:13px; gap:6px; }
+.catalog-steam-path .catalog-button svg { width:16px; height:16px; }
+.catalog-install .catalog-steam>.catalog-muted { font-size:13px; margin-top:8px; }
+@media(max-width:560px) { .catalog-install { padding-inline:18px; } .catalog-install>li { padding-left:36px; } .catalog-steam-input,.catalog-steam-path { flex-direction:column; align-items:stretch; } .catalog-steam-path .catalog-button { align-self:flex-end; } }
+
+/* Workshop rules: a readable single column. */
+.catalog-rules { max-width:760px; }
+.catalog-rules header { margin-bottom:34px; }
+.catalog-rules header>p:not(.catalog-muted) { font-size:17px; line-height:1.6; margin:0 0 10px; }
+.catalog-rules header>.catalog-muted { font-size:13px; margin:0; }
+.catalog-rules section { padding:26px 0; border-top:1px solid var(--cat-line); }
+.catalog-rules h2 { font-size:20px; margin:0 0 14px; }
+.catalog-rules ul { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px; }
+.catalog-rules li { position:relative; padding-left:20px; line-height:1.6; color:#dcd6e6; }
+.catalog-rules li::before { content:''; position:absolute; left:3px; top:.72em; width:6px; height:6px; border-radius:50%; background:var(--cat-accent); opacity:.7; }
+.catalog-rules strong { color:var(--cat-ink); font-weight:600; }
+.catalog-rules section>p { margin:0; line-height:1.6; color:#dcd6e6; }
+.catalog-footer a:hover { color:var(--cat-ink); }
+a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text-underline-offset:3px; }
+
+/* Player arts: submission form and admin review. */
+.art-submit-preview { aspect-ratio:1193/593; border-radius:10px; background:#140f0a url('../../assets/backgrounds/dota-grid-1x.webp') center/cover; display:grid; place-items:center; overflow:hidden; position:relative; }
+.art-submit-preview canvas { position:absolute; inset:0; width:100%; height:100%; }
+.art-submit-preview>p { margin:0; padding:20px; color:var(--cat-muted); font-size:14px; text-align:center; }
+.catalog-submit-preview>.catalog-muted { font-size:13px; margin:12px 0 0; }
+.catalog-dialog .art-submit-text { font-family:ui-monospace,'SF Mono',Consolas,monospace; font-size:12px; line-height:1.35; white-space:pre; overflow:auto; resize:vertical; min-height:130px; }
+.art-submit-status { margin:-14px 0 0; font-size:12.5px; color:var(--cat-muted); }
+.art-submit-status.is-error { color:#e1a9b8; }
+:is(.catalog-page,.catalog-dialog) select { display:block; width:100%; margin-top:7px; border:1px solid var(--cat-line); border-radius:5px; background:var(--cat-field); color:var(--cat-ink); font:inherit; padding:11px 12px; }
+.art-submit-login { padding:0; font-size:inherit; text-decoration:underline; text-underline-offset:3px; color:var(--cat-accent); }
+.art-receipt { padding:24px 22px 22px; }
+.art-receipt .catalog-receipt-mark { margin-bottom:16px; }
+.catalog-kind { display:inline-flex; gap:4px; padding:4px; border:1px solid var(--cat-line); border-radius:11px; margin:0 0 22px; }
+.catalog-kind button { border:0; background:none; color:var(--cat-muted); border-radius:8px; padding:9px 16px; font-weight:500; }
+.catalog-kind button[aria-selected=true] { background:#2c2935; color:var(--cat-ink); }
+.catalog-kind .catalog-count { display:inline-block; min-width:20px; margin-left:7px; padding:1px 6px; border-radius:9px; background:#c4b5ed2e; color:var(--cat-ink); font-size:11px; }
+.art-review-preview { aspect-ratio:1193/593; max-height:440px; border-radius:12px; background:#140f0a url('../../assets/backgrounds/dota-grid-1x.webp') center/cover; position:relative; overflow:hidden; }
+.art-review-preview canvas { position:absolute; inset:0; width:100%; height:100%; }
+.art-review-meta { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) auto; gap:12px; align-items:end; margin:18px 0; }
+.catalog-review .art-review-meta label { margin:0; }
+@media(max-width:760px) { .art-review-meta { grid-template-columns:1fr; } }
+

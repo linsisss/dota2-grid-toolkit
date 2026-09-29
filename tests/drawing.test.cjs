@@ -256,7 +256,8 @@ test('crop and eraser split text into surviving glyphs rather than losing the wh
     ['A', 'B']
   );
   E.mergeRows(doc);
-  E.eraseSymbols(doc, { x: 1140, y: 20 }, 5);
+  // The eraser aims at the drawn glyph: A's visible centre, not its category corner.
+  E.eraseSymbols(doc, { x: 1149, y: 28 }, 5);
   assert.deepEqual(
     doc.entities.map((e) => e.text),
     ['B']
@@ -397,4 +398,57 @@ test('malformed row glyphs and stale row strings cannot be loaded', () => {
     mutate(bad.entities[0]);
     assert.throws(() => C.importProject(bad));
   }
+});
+
+test('eraser size follows wheel and bracket steps proportionally within bounds and is remembered', async () => {
+  const Z = await import('../scripts/eraser-size.mjs');
+  assert.equal(Z.readEraserSize({ getItem: () => null }), 44);
+  const bigger = Z.wheelEraserSize(44, -100), smaller = Z.wheelEraserSize(44, 100);
+  assert.ok(bigger > 50 && bigger < 53 && smaller < 38 && smaller > 36);
+  // Line-mode wheels (Firefox) move as far as a pixel-mode notch.
+  assert.ok(Math.abs(Z.wheelEraserSize(44, -3, 1) - Z.wheelEraserSize(44, -48)) < 1e-9);
+  assert.equal(Z.wheelEraserSize(390, -10000), 400);
+  assert.equal(Z.wheelEraserSize(8, 10000), 6);
+  assert.equal(Z.stepEraserSize(6, 1), 8);
+  assert.ok(Z.stepEraserSize(200, 1) > 229 && Z.stepEraserSize(200, -1) < 174);
+  const saved = new Map();
+  const storage = { getItem: (k) => saved.get(k) ?? null, setItem: (k, v) => saved.set(k, v) };
+  Z.storeEraserSize(123.6, storage);
+  assert.equal(Z.readEraserSize(storage), 124);
+  assert.equal(Z.readEraserSize({ getItem: () => { throw new Error('blocked'); } }), 44);
+  assert.equal(Z.readEraserSize({ getItem: () => 'nonsense' }), 44);
+});
+
+test('a larger eraser removes every glyph inside its ring and keeps those outside', () => {
+  const doc = documentOf([
+    { x: 100, y: 100 },
+    { x: 130, y: 100 },
+    { x: 200, y: 100 }
+  ]);
+  E.eraseSymbols(doc, { x: 109, y: 108 }, 5);
+  assert.equal(doc.entities.length, 2);
+  E.eraseSymbols(doc, { x: 139, y: 108 }, 80);
+  assert.equal(doc.entities.length, 0);
+});
+
+test('replacing a symbol in a selection keeps positions, spaces, heroes and other characters', () => {
+  const doc = documentOf([
+    { x: 100, y: 100, text: '•' },
+    { x: 130, y: 100, text: '•' },
+    { x: 160, y: 100, text: '*' },
+    { type: 'text', text: '• • *', x: 100, y: 200, w: 120, textMetrics: { text: '• • *', advances: [8, 4, 8, 4, 8] } }
+  ]);
+  doc.entities.push({ id: 99, type: 'heroes', name: 'Group', heroIds: [1], x: 0, y: 0, w: 60, h: 90, layer: 'decor' });
+  const positions = doc.entities.map((e) => [e.x, e.y]);
+  assert.deepEqual(E.glyphCounts(doc.entities), [['•', 4], ['*', 2]]);
+  assert.equal(E.replaceGlyphs(doc.entities, '•', '♥'), 4);
+  assert.deepEqual(doc.entities.map((e) => e.text), ['♥', '♥', '*', '♥ ♥ *', undefined]);
+  assert.equal(doc.entities[3].name, '♥ ♥ *');
+  assert.equal(doc.entities[3].textMetrics, undefined);
+  assert.deepEqual(doc.entities.map((e) => [e.x, e.y]), positions);
+  // Empty "from" replaces every visible character; a multi-character target uses its first.
+  assert.equal(E.replaceGlyphs(doc.entities, '', '★☆'), 6);
+  assert.deepEqual(doc.entities.slice(0, 4).map((e) => e.text), ['★', '★', '★', '★ ★ ★']);
+  assert.equal(E.replaceGlyphs(doc.entities, '', '★'), 0);
+  assert.throws(() => E.replaceGlyphs(doc.entities, '', ' '), /Укажи/);
 });

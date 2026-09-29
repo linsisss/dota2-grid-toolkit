@@ -86,3 +86,26 @@ test('public lookup route does not require login, validates inputs and limits re
  assert.equal((await lookup('1168402705')).status,429);
  assert.equal(JSON.stringify(await (await fetch(`${base}/config`)).json()).includes('secret-not-for-clients'),false);
 });
+
+test('the shared Steam lookup resolves friend codes locally and custom names through the API, with readable failures', async () => {
+  const { findSteamAccount } = await import('../scripts/steam-folder.mjs');
+  const original = globalThis.fetch, calls = [];
+  let reply;
+  globalThis.fetch = async (url, options) => { calls.push({ url, options }); return reply(); };
+  try {
+    let looked = 0;
+    assert.equal((await findSteamAccount('123456789', { onLookup: () => looked++ })).accountId, '123456789');
+    assert.deepEqual([calls.length, looked], [0, 0]);
+    reply = () => ({ ok: true, json: async () => ({ steamId64: '76561198083722517', accountId: '123456789' }) });
+    assert.equal((await findSteamAccount(' steamcommunity.com/id/player ', { onLookup: () => looked++ })).accountId, '123456789');
+    assert.equal(looked, 1);
+    assert.match(calls[0].url, /^\/api\/catalog\/steam\/resolve\?profile=steamcommunity\.com%2Fid%2Fplayer$/);
+    reply = () => ({ ok: true, json: async () => ({ steamId64: '76561198083722517', accountId: '1' }) });
+    await assert.rejects(findSteamAccount('steamcommunity.com/id/player'), /Введи его вручную/);
+    reply = () => ({ ok: false, json: async () => ({ error: 'Профиль не найден.' }) });
+    await assert.rejects(findSteamAccount('steamcommunity.com/id/player'), /Профиль не найден/);
+    reply = () => { throw new TypeError('fetch failed'); };
+    await assert.rejects(findSteamAccount('steamcommunity.com/id/player'), /Steam сейчас недоступен/);
+    await assert.rejects(findSteamAccount('https://example.com/id/player'), /steamcommunity\.com/);
+  } finally { globalThis.fetch = original; }
+});

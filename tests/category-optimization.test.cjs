@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const C = require('../scripts/core.mjs').default;
-const { planOptimization, optimizeCategories } = require('../scripts/category-optimization.mjs');
+const { planOptimization, optimizeCategories, eliminationOrder } = require('../scripts/category-optimization.mjs');
 const { planCategoryRows } = require('../scripts/export-rows.mjs');
 const { clampZoom, sliderToZoom, zoomToSlider, wheelZoom } = require('../scripts/zoom.mjs');
 const measure = (text) => ({ width: Array.from(text).length * 10 });
@@ -69,9 +69,38 @@ test('optimization protects hero groups, text, hidden and locked layers, other g
 test('a full 10000-symbol canvas can be planned and reduced, including coincident points', () => {
   const doc = C.createDocument();
   for (let i = 0; i < 10000; i++) add(doc, { x: (i % 100) * 3.17, y: Math.floor(i / 100) * 3.19 });
-  const plan = planOptimization(doc, measure), result = optimizeCategories(plan, 2000);
-  assert.ok(result.count <= 2000); assert.equal(result.doc.entities.length, 2000);
+  const plan = planOptimization(doc, measure), result = optimizeCategories(plan, 1000);
+  assert.ok(plan.losslessCount < 2000, `${plan.losslessCount} after joining rows`);
+  assert.ok(result.count <= 1000 && result.count > 900, `${result.count}`);
+  assert.equal(result.doc.entities.length, 10000 - result.removed);
+  assert.equal(optimizeCategories(plan).removed, 0, 'the full budget removes nothing');
+  assert.equal(optimizeCategories(plan, plan.losslessCount - 1).count, plan.losslessCount - 1, 'one less is exactly one less');
   for (const e of doc.entities) { e.x = 40; e.y = 20; }
   const overlap = optimizeCategories(planOptimization(doc, measure), 300);
   assert.equal(overlap.count, 300);
+});
+
+test('elimination removes glyphs lying on others first, then thins a line evenly, never leaving a hole', () => {
+  const units = Array.from({ length: 40 }, (_, i) => ({ layer: 'decor', dots: [{ x: i * 4, y: 0 }] }));
+  units.push({ layer: 'decor', dots: [{ x: 8, y: 0 }] });
+  const order = eliminationOrder(units);
+  assert.equal(order.at(-1), 40, 'the copy goes first');
+  assert.deepEqual([...order].sort((a, b) => a - b), [...units.keys()], 'every unit is ordered once');
+  for (const keep of [20, 10]) {
+    const xs = order.slice(0, keep).map((k) => units[k].dots[0].x).sort((a, b) => a - b);
+    const gaps = xs.slice(1).map((x, i) => x - xs[i]), step = 156 / (keep - 1);
+    assert.ok(Math.max(...gaps) <= step * 1.75 && Math.min(...gaps) >= step * 0.5, `${keep}: gaps ${gaps.join(',')}`);
+  }
+  const layered = eliminationOrder([{ layer: 'a', dots: [{ x: 0, y: 0 }] }, { layer: 'b', dots: [{ x: 0, y: 0 }] }]);
+  assert.deepEqual(layered, [0, 1], 'each layer keeps one unit even when they overlap');
+});
+
+test('small separate shapes (a mouth, an eye) outlast long lines', () => {
+  const units = [];
+  for (let i = 0; i < 120; i++) units.push({ layer: 'decor', dots: [{ x: 20 + i * 4, y: 100 + Math.sin(i / 9) * 6 }] });
+  const ring = [];
+  for (let i = 0; i < 16; i++) { ring.push(units.length); units.push({ layer: 'decor', dots: [{ x: 300 + Math.cos(i / 16 * Math.PI * 2) * 10, y: 40 + Math.sin(i / 16 * Math.PI * 2) * 10 }] }); }
+  const kept = new Set(eliminationOrder(units).slice(0, 50));
+  const ringKept = ring.filter((k) => kept.has(k)).length / ring.length, lineKept = (50 - ring.filter((k) => kept.has(k)).length) / 120;
+  assert.ok(ringKept > lineKept * 1.5, `ring ${ringKept.toFixed(2)} vs line ${lineKept.toFixed(2)}`);
 });

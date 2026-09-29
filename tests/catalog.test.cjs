@@ -72,7 +72,8 @@ test('upstream line, hatching and Unicode presets cannot regress to dot-only rep
   assert.equal(line.onlyDots, false);
   assert.equal(hatching.charset, '-\\|/');
   assert.equal(hatching.shadeCharset, '-/\\|');
-  assert.equal(logo.charset, '-\\|/─╲│╱');
+  // Box drawing is invisible in Dota (symbol test, 29.09.2026): the logo style keeps - \\ | /.
+  assert.equal(logo.charset, '-\\|/');
   assert.equal(japanese.charset, 'あいうえおかきくけこ');
   const width = 96,
     height = 96,

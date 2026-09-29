@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://gridstudio.me/editor?new=1"><strong>Создать сетку</strong></a> ·
-  <a href="https://gridstudio.me/catalog">Каталог сеток</a> ·
+  <a href="https://gridstudio.me/workshop">Мастерская</a> ·
   <a href="#самостоятельный-запуск">Self-hosting</a>
 </p>
 
@@ -22,7 +22,7 @@
 - **Рисуй символами.** Кисти, фигуры, рамки, текст, слои и подложка для обводки. Можно превратить картинку в ASCII и настроить результат перед добавлением.
 - **Продолжай старые сетки.** Импортируй один или несколько JSON, объединяй их и переключай сетки внутри файла. Один файл — отдельное рабочее пространство.
 - **Возвращайся к работе.** Изменения сохраняются в браузере; по нажатию на «Изменения сохранены» открываются резервные версии. Вход через Telegram добавляет синхронизацию файлов с аккаунтом.
-- **Делись работами.** Публикуй выбранную сетку в каталоге после проверки, скачивай чужие или открывай их в редакторе. Публикация доступна без входа; для лайков и изменения опубликованных работ нужен Telegram.
+- **Делись работами.** Публикуй выбранную сетку в мастерской после проверки, скачивай чужие или открывай их в редакторе. Публикация доступна без входа; для лайков и изменения опубликованных работ нужен Telegram.
 
 ### Из редактора в Dota 2
 
@@ -54,7 +54,7 @@
 
 ## Самостоятельный запуск
 
-**Node.js 22.19+**, npm и Git. Интерфейс — React + Vite; каталог и аккаунты — Node.js + SQLite; вход и модерация — Telegram-бот на puregram. ALTCHA работает на своём сервере, без ключей сторонней CAPTCHA.
+**Node.js 22.19+**, npm и Git. Интерфейс — React + Vite; мастерская и аккаунты — Node.js + SQLite; вход и модерация — Telegram-бот на puregram. ALTCHA работает на своём сервере, без ключей сторонней CAPTCHA.
 
 ### Локально
 
@@ -77,7 +77,7 @@ npm run dev
    CATALOG_SECRET=YOUR_RANDOM_SECRET_AT_LEAST_32_CHARACTERS
    CATALOG_DB=/var/lib/gridstudio/catalog.sqlite
    CATALOG_TRUST_PROXY=loopback
-   CATALOG_WEB_MODERATION=0
+   CATALOG_ADMIN_TELEGRAM_IDS=123456789,987654321
    CATALOG_TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN
    CATALOG_TELEGRAM_BOT_USERNAME=your_grid_bot
    CATALOG_TELEGRAM_CHAT_ID=-1001234567890
@@ -116,9 +116,12 @@ gzip_min_length 1024;
 gzip_types application/json application/javascript text/css image/svg+xml;
 
 location = /editor { try_files /editor.html =404; }
-location = /catalog { try_files /catalog.html =404; }
+location = /workshop { try_files /catalog.html =404; }
 location = /editor/ { return 308 /editor$is_args$args; }
-location = /catalog/ { return 308 /catalog$is_args$args; }
+location = /workshop/ { return 308 /workshop$is_args$args; }
+# До 1.5 мастерская называлась каталогом: старые ссылки ведут туда же, #hash браузер сохраняет сам.
+location = /catalog { return 301 /workshop$is_args$args; }
+location = /catalog/ { return 301 /workshop$is_args$args; }
 
 location /api/catalog/ {
     client_max_body_size 9m;
@@ -138,9 +141,9 @@ location / {
 
 </details>
 
-Секреты и базу не помещай в web root или Git. Подробности: [каталог и модерация](docs/catalog.md), [аккаунты и файлы](docs/accounts-workspaces.md), [сохранения и восстановление](docs/project-storage.md).
+Секреты и базу не помещай в web root или Git. Подробности: [мастерская и модерация](docs/catalog.md), [аккаунты и файлы](docs/accounts-workspaces.md), [сохранения и восстановление](docs/project-storage.md).
 
-**Только редактор:** `dist/` можно разместить на статическом хостинге; без API не будут работать каталог, вход и синхронизация. В этом репозитории GitHub Pages отведён под [страницу перехода на gridstudio.me](github-pages/index.html). Workflow `Deploy GitHub Pages` публикует только её, по ручному запуску.
+**Только редактор:** `dist/` можно разместить на статическом хостинге; без API не будут работать мастерская, вход и синхронизация. В этом репозитории GitHub Pages отведён под [страницу перехода на gridstudio.me](github-pages/index.html). Workflow `Deploy GitHub Pages` публикует только её, по ручному запуску.
 
 ### Работа с кодом
 

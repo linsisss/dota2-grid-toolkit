@@ -1,11 +1,12 @@
 import { randomBytes } from 'node:crypto';
 import { fail } from './catalog-store.mjs';
+import { CatalogArts, artKey } from './catalog-arts.mjs';
 
 // Durable notification outbox. Revisions are already committed before discovery;
 // restarting either process cannot lose a submission or publish it by accident.
 export class TelegramQueue {
   constructor(store) {
-    this.store = store;
+    this.store = store; this.arts = new CatalogArts(store);
     store.db.exec(`CREATE TABLE IF NOT EXISTS telegram_reviews(
       id TEXT PRIMARY KEY, kind TEXT NOT NULL, work TEXT NOT NULL, revision INTEGER NOT NULL,
       report_id INTEGER NOT NULL DEFAULT 0, summary TEXT NOT NULL,
@@ -32,6 +33,7 @@ export class TelegramQueue {
     this.store.run("UPDATE telegram_reviews SET state='uncertain' WHERE state='sending'");
   }
   active(job) {
+    if (job.kind === 'art') return this.arts.get(job.revision)?.status === 'pending';
     const work = this.store.get("SELECT * FROM works WHERE id=? AND state='active'", job.work);
     if (!work) return false;
     if (job.kind === 'submission') return work.draft_revision === job.revision && this.store.revision(job.revision)?.status === 'pending';
@@ -45,11 +47,36 @@ export class TelegramQueue {
           randomBytes(12).toString('hex'), kind, row.work, row.id, report?.id || 0, summary);
       };
       for (const row of this.store.all("SELECT r.* FROM revisions r JOIN works w ON w.draft_revision=r.id WHERE w.state='active' AND r.status='pending'")) add('submission', row);
+      // An art has no revisions: its row id doubles as the revision, work is its audit key.
+      for (const art of this.store.all("SELECT * FROM arts WHERE status='pending'")) {
+        const lines = art.text.split('\n');
+        this.store.run("INSERT OR IGNORE INTO telegram_reviews(id,kind,work,revision,report_id,summary) VALUES(?,'art',?,?,0,?)", randomBytes(12).toString('hex'), artKey(art.id), art.id,
+          JSON.stringify({ title: art.name, author: art.author, category: art.category, rows: lines.length, width: Math.max(...lines.map(line => Array.from(line).length)) }));
+      }
       for (const report of this.store.all("SELECT p.*,w.public_revision FROM reports p JOIN works w ON w.id=p.work WHERE p.resolved=0 AND w.state='active' AND w.public_revision IS NOT NULL")) add('report', this.store.revision(report.public_revision), report);
       for (const job of this.store.all("SELECT * FROM telegram_reviews WHERE state NOT IN ('finished')")) {
-        if (!this.active(job)) this.store.run("UPDATE telegram_reviews SET state='finished',outcome='outdated',dirty=1 WHERE id=?", job.id);
+        if (this.active(job)) continue;
+        // A decision taken on the site shows on the card with the admin who took it.
+        const decided = this.siteDecision(job);
+        this.store.run("UPDATE telegram_reviews SET state='finished',outcome=?,actor=COALESCE(?,actor),dirty=1 WHERE id=?", decided?.outcome || 'outdated', decided?.actor ?? null, job.id);
       }
     });
+  }
+  siteDecision(job) {
+    const work = this.store.get('SELECT * FROM works WHERE id=?', job.work);
+    let outcome = null;
+    if (job.kind === 'art') {
+      const status = this.arts.get(job.revision)?.status;
+      outcome = status === 'approved' ? 'approve' : status === 'rejected' ? 'reject' : null;
+    } else if (job.kind === 'submission') {
+      const status = this.store.revision(job.revision)?.status;
+      outcome = status === 'approved' ? 'approve' : status === 'rejected' ? 'reject' : null;
+    } else if (work?.state === 'blocked') outcome = 'hide';
+    else if (this.store.get('SELECT resolved FROM reports WHERE id=?', job.report_id)?.resolved) outcome = 'keep';
+    if (!outcome) return null;
+    const actions = { approve: ['approve'], reject: ['reject'], hide: ['block'], keep: ['resolve'] }[outcome];
+    const entry = this.store.get(`SELECT actor FROM audit WHERE work=? AND action IN (${actions.map(() => '?').join(',')}) AND actor IS NOT NULL ORDER BY id DESC LIMIT 1`, job.work, ...actions);
+    return entry ? { outcome, actor: entry.actor } : null;
   }
   claim() {
     return this.store.tx(() => {
@@ -69,7 +96,10 @@ export class TelegramQueue {
     return this.store.tx(() => {
       const job = this.get(id);
       if (!job || !this.active(job)) fail(409, 'Эта заявка уже проверена, изменена или удалена.');
-      if (job.kind === 'submission') {
+      if (job.kind === 'art') {
+        if (!['approve', 'reject'].includes(action)) fail(400, 'Неизвестное действие.');
+        this.arts.moderate(job.revision, { action, reason: action === 'reject' ? 'Отклонено участником команды в Telegram.' : '' }, { transaction: false });
+      } else if (job.kind === 'submission') {
         if (!['approve', 'reject'].includes(action)) fail(400, 'Неизвестное действие.');
         // moderate has its own transaction; use a savepoint-compatible wrapper.
         this.store.moderate(job.work, { revision: job.revision, action,

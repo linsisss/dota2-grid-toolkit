@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { catalogAPI } from './api.js';
+import { catalogAPI, CATALOG_PATH } from './api.js';
 import { Icon, Modal, Notice } from './Common.jsx';
 import { attachGuestWorkspaces, openWorkspaceRegistry } from '../../scripts/workspaces.mjs';
 
@@ -11,11 +11,11 @@ function openTelegramWindow() {
   return popup;
 }
 export function AccountProvider({ children }) {
-  const [user, setUser] = useState(null), [loading, setLoading] = useState(true), [login, setLogin] = useState(false), [reason, setReason] = useState('');
+  const [user, setUser] = useState(null), [admin, setAdmin] = useState(false), [loading, setLoading] = useState(true), [login, setLogin] = useState(false), [reason, setReason] = useState('');
   const telegramWindow = useRef(null);
   const userRef = useRef(null), transferQueue = useRef(Promise.resolve()), checked = useRef(0), channel = useRef(null);
   const [fileSync, setFileSync] = useState({ busy: false, error: '', revision: 0 });
-  async function refresh() { try { const result = await catalogAPI('/auth/me'); checked.current = Date.now(); userRef.current = result.user; setUser(result.user); return result.user; } finally { setLoading(false); } }
+  async function refresh() { try { const result = await catalogAPI('/auth/me'); checked.current = Date.now(); userRef.current = result.user; setUser(result.user); setAdmin(!!result.admin); return result.user; } finally { setLoading(false); } }
   const announce = () => { try { channel.current?.postMessage('auth'); } catch { /* The other tabs catch up on their next recheck. */ } };
   function syncFiles() {
     const account = userRef.current;
@@ -43,7 +43,7 @@ export function AccountProvider({ children }) {
     return () => { channel.current?.close(); channel.current = null; window.removeEventListener('focus', focus); window.removeEventListener('online', recheck); };
   }, []);
   useEffect(() => { if (user) syncFiles(); else setFileSync(state => ({ ...state, busy: false, error: '' })); }, [user?.id]);
-  return <Context.Provider value={{ user, loading, refresh, fileSync, syncFiles, requestLogin: text => { telegramWindow.current = openTelegramWindow(); setReason(text || ''); setLogin(true); }, logout: async () => { await catalogAPI('/auth/logout', { method: 'POST', body: {} }); userRef.current = null; setUser(null); announce(); } }}>
+  return <Context.Provider value={{ user, admin, loading, refresh, fileSync, syncFiles, requestLogin: text => { telegramWindow.current = openTelegramWindow(); setReason(text || ''); setLogin(true); }, logout: async () => { await catalogAPI('/auth/logout', { method: 'POST', body: {} }); userRef.current = null; setUser(null); setAdmin(false); announce(); } }}>
     {children}{login && <LoginDialog telegramWindow={telegramWindow} reason={reason} onClose={() => setLogin(false)} onSuccess={async () => { await refresh(); announce(); setLogin(false); }}/>}</Context.Provider>;
 }
 export const useAccount = () => useContext(Context);
@@ -89,7 +89,7 @@ export function AccountButton() {
   const auth = useAccount(); const [open, setOpen] = useState(false), [error, setError] = useState('');
   return <><button className="catalog-button account-button" disabled={auth.loading} onClick={() => auth.user ? setOpen(true) : auth.requestLogin()}>
     {auth.user ? <AccountAvatar user={auth.user}/> : <Icon name="telegram"/>}<span className="account-label">{auth.user ? accountLabel(auth.user) : 'Войти через Telegram'}</span></button>
-    {open && <Modal title="Аккаунт" onClose={() => setOpen(false)}><div className="catalog-login-flow"><div className="account-profile"><AccountAvatar user={auth.user}/><h3>{accountLabel(auth.user)}</h3></div>{!auth.user?.username && <p className="catalog-muted">В Telegram не задан @username.</p>}<p>Файлы автоматически сохраняются в аккаунте и доступны на других устройствах.</p>{auth.fileSync.busy && <p role="status">Сохраняем файлы…</p>}{auth.fileSync.error && <Notice error>{auth.fileSync.error}<button className="catalog-link" onClick={() => auth.syncFiles()}>Повторить сохранение</button></Notice>}<button className="catalog-button" onClick={async () => { try { await auth.logout(); setOpen(false); } catch (e) { setError(e.message); } }}>Выйти</button>{error && <Notice error>{error}</Notice>}</div></Modal>}
+    {open && <Modal title="Аккаунт" onClose={() => setOpen(false)}><div className="catalog-login-flow"><div className="account-profile"><AccountAvatar user={auth.user}/><h3>{accountLabel(auth.user)}</h3></div>{!auth.user?.username && <p className="catalog-muted">В Telegram не задан @username.</p>}<p>Файлы автоматически сохраняются в аккаунте и доступны на других устройствах.</p>{auth.admin && <a className="catalog-button" href={`${CATALOG_PATH}?moderate`}>Админка<Icon name="arrow"/></a>}{auth.fileSync.busy && <p role="status">Сохраняем файлы…</p>}{auth.fileSync.error && <Notice error>{auth.fileSync.error}<button className="catalog-link" onClick={() => auth.syncFiles()}>Повторить сохранение</button></Notice>}<button className="catalog-button" onClick={async () => { try { await auth.logout(); setOpen(false); } catch (e) { setError(e.message); } }}>Выйти</button>{error && <Notice error>{error}</Notice>}</div></Modal>}
   </>;
 }
 export function LikeButton({ item, onChange }) {
@@ -99,4 +99,19 @@ export function LikeButton({ item, onChange }) {
     setBusy(true); setError(''); try { const result = await catalogAPI(`/works/${item.id}/like`, { method: 'PUT', body: { liked: !item.liked } }); onChange(result); }
     catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }
   }}><Icon name="heart"/>{item.likes || 0}</button>{error && <span className="catalog-like-error" role="alert">{error}</span>}</span>;
+}
+// Followers get a Telegram message from the bot when this author publishes a new grid.
+export function SubscribeButton({ item, onChange }) {
+  const auth = useAccount(); const [busy, setBusy] = useState(false), [error, setError] = useState('');
+  if (!item.followable) return null;
+  return <div className="catalog-subscribe">
+    <button className={`catalog-button${item.subscribed ? ' is-subscribed' : ''}`} aria-pressed={!!item.subscribed} disabled={busy} onClick={async () => {
+      if (!auth.user) return auth.requestLogin('Войди через Telegram, чтобы подписаться на автора. О новых сетках напишет бот.');
+      setBusy(true); setError('');
+      try { onChange(await catalogAPI(`/works/${item.id}/subscribe`, { method: 'PUT', body: { subscribed: !item.subscribed } })); }
+      catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }
+    }}><Icon name={item.subscribed ? 'check' : 'bell'}/>{item.subscribed ? 'Вы подписаны на автора' : 'Подписаться на автора'}</button>
+    <p className="catalog-muted">{item.subscribed ? 'Бот пришлёт ссылку, когда автор выложит новую сетку.' : 'Новые сетки автора — сообщением от бота в Telegram.'}</p>
+    {error && <Notice error>{error}</Notice>}
+  </div>;
 }

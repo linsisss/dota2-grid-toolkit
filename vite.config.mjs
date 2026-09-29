@@ -4,7 +4,8 @@ import { cpSync, readFileSync } from 'node:fs';
 import { editorRoute } from './scripts/editor-route.mjs';
 
 export default defineConfig({
-  define: { __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version) },
+  // GRIDSTUDIO_BUILD_LABEL marks staging builds (e.g. "dev.c8dfc03") so they are never mistaken for a release.
+  define: { __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version + (process.env.GRIDSTUDIO_BUILD_LABEL ? `-${process.env.GRIDSTUDIO_BUILD_LABEL}` : '')) },
   base: './',
   build: {
     rollupOptions: { input: { home: 'index.html', studio: 'editor.html', catalog: 'catalog.html', design: 'design.html', landing: 'landing.html' } }

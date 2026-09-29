@@ -49,7 +49,7 @@ export class Accounts {
     if (!Number.isSafeInteger(from?.id) || from.id < 1 || from.is_bot) fail(403, 'Вход доступен только пользователям Telegram.');
     return this.store.tx(() => {
       const row = this.request(id);
-      const user = { id: String(from.id), name: [from.first_name, from.last_name].filter(Boolean).join(' ').slice(0, 120) || 'Игрок', username: String(from.username || '').slice(0, 40) };
+      const user = { id: String(from.id), name: [from.first_name, from.last_name].filter(Boolean).join(' ').slice(0, 120) || 'Пользователь', username: String(from.username || '').slice(0, 40) };
       if (row.candidate && JSON.parse(row.candidate).id !== user.id) fail(409, 'Эта попытка входа уже открыта другим пользователем. Начни новую на сайте.');
       this.store.run('UPDATE login_requests SET candidate=? WHERE id=?', JSON.stringify(user), id);
       return { ...row, candidate: JSON.stringify(user) };

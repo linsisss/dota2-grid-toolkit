@@ -8,7 +8,14 @@ const names = [
   ['←↑→↓⇒⇔', 'стрелка стрелки arrow'], ['■□', 'квадрат square'],
   ['▲△▼▽', 'треугольник triangle'], ['◆◇', 'ромб diamond'],
   ['♩♪♫♬♭♯', 'ноты музыка music'], ['♤♧', 'карты card'],
-  ['☉☼', 'солнце sun'], ['#', 'решетка хеш hash'], ['*', 'звездочка asterisk']
+  ['☉☼', 'солнце sun'], ['#', 'решетка хеш hash'], ['*', 'звездочка asterisk'],
+  ['✦✧✩✫✬✭✮✯✰✱✲✳✴✵✶✷✸✹✺✻✼✽✾', 'звезда звезды искра star sparkle'],
+  ['✿❀❁❂❃❊❋', 'цветок цветы flower'], ['❄❅❆', 'снежинка снег snow'],
+  ['♠♣♥♦♢❤❥❦❧', 'карты масть сердце card heart'], ['✓✔☑', 'галочка check'], ['✕✖✗✘☒', 'крестик cross'],
+  ['✝✞✟✠☦☨', 'крест cross'], ['☠', 'череп skull'], ['☯', 'инь янь yin yang'],
+  ['♔♕♖♗♘♙♚♛♜♝♞♟', 'шахматы chess'], ['☀☁☂☃☽☾', 'погода солнце луна weather moon'],
+  ['⚔', 'меч мечи sword'], ['⚡', 'молния lightning'], ['∞', 'бесконечность infinity'],
+  ['😀😂🐱☺', 'эмодзи смайл лицо emoji smile']
 ];
 export function searchSymbols(library, query = '', category = Object.keys(library)[0]) {
   const q = query.trim().toLowerCase();

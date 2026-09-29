@@ -60,9 +60,10 @@
 .grid-row-select > span:last-child { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .grid-row-check { width:16px; height:16px; flex:none; color:var(--accent); }
 .grid-row-check svg { width:16px; height:16px; }
-.grid-row-rename { display:flex; align-items:center; justify-content:center; flex:none; width:32px; height:32px; color:var(--muted); border-radius:4px; }
-.grid-row-rename svg { width:15px; height:15px; }
+.grid-row-rename,.grid-row-delete { display:flex; align-items:center; justify-content:center; flex:none; width:32px; height:32px; color:var(--muted); border-radius:4px; }
+.grid-row-rename svg,.grid-row-delete svg { width:15px; height:15px; }
 .grid-row-rename:hover { color:var(--text); background:#ffffff0c; }
+.grid-row-delete:hover { color:#ffb4b8; background:#ff5a6414; }
 .grid-file-menu button:focus-visible { outline-offset:-2px; border-radius:4px; }
 @media(max-width:700px) { .grid-file-trigger { width:150px; } }
 

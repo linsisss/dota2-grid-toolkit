@@ -120,6 +120,13 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
               <span className="muted">B</span>
             </div>
             <div id="drawingTools" className="drawing-tools"></div>
+            <div id="eraserSizeField" hidden>
+              <label className="range-label" htmlFor="eraserSize">
+                Размер ластика <output id="eraserSizeValue">44 px</output>
+              </label>
+              <input id="eraserSize" type="range" min="6" max="400" defaultValue="44" />
+              <p className="hint">Колесо мыши над холстом или [ и ] — меньше и больше. Ctrl + колесо — масштаб.</p>
+            </div>
             <div className="section-heading">
               <span>СИМВОЛЫ КИСТИ</span>
               <span id="brushPreview">★</span>
@@ -376,6 +383,9 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
               <span>Закрыть превью</span>
               <kbd>Esc</kbd>
             </button>
+            <button id="previewBackground" className="preview-exit preview-background" hidden aria-label="Фон превью">
+              <span id="previewBackgroundLabel">Фон: как в Dota</span>
+            </button>
             <div id="canvasTopTools" />
             <div className="canvas-caption">
               <span>
@@ -491,7 +501,7 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
       </div>
       <div id="toast" className="toast" role="status" aria-live="polite" hidden></div>
       <ImageImportDialog />
-      <dialog id="modal" className="modal">
+      <dialog id="modal" className="modal" tabIndex={-1}>
         <div id="modalContent"></div>
       </dialog>
       <input id="fileInput" type="file" accept=".json,application/json" multiple hidden />

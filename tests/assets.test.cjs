@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
-test('every catalog hero has a local PNG and all template IDs exist', () => {
+test('every catalog hero has a local WebP icon (PNG kept for old tabs) and all template IDs exist', () => {
   const { heroes } = require('../scripts/data.mjs').default;
   assert.ok(heroes.length >= 126);
   for (const hero of heroes) {
@@ -13,9 +13,10 @@ test('every catalog hero has a local PNG and all template IDs exist', () => {
       assert.equal(heroes.filter((h) => h.attr === 'agi')[0].id, 127);
       assert.equal(hero.thumbnail, hero.portrait);
     } else {
-      const image = fs.readFileSync(path.join(root, `assets/heroes/${hero.id}.png`));
-      assert.equal(image.subarray(1, 4).toString(), 'PNG');
-      assert.ok(image.length > 1000);
+      const image = fs.readFileSync(path.join(root, `assets/heroes/${hero.id}.webp`));
+      assert.equal(image.subarray(0, 4).toString(), 'RIFF'); assert.equal(image.subarray(8, 12).toString(), 'WEBP');
+      assert.ok(image.length > 1000 && image.length < 40000, `${hero.id}.webp: ${image.length} bytes`);
+      assert.ok(fs.existsSync(path.join(root, `assets/heroes/${hero.id}.png`)));
     }
     assert.match(hero.portrait, /^assets\/portraits\/\d+\.(jpg|png|webp)$/);
     const portrait = fs.readFileSync(path.join(root, hero.portrait));

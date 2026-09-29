@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import D from '../../scripts/data.mjs';
-import currentEditor from '../../assets/design/editor-current.png';
+import currentEditor from '../../assets/design/editor-current.webp';
 import linsissya from '../../assets/design/linsissya.webp';
 import dissonance from '../../assets/design/dissonance.webp';
 

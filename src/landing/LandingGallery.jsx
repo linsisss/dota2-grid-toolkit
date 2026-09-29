@@ -79,7 +79,7 @@ function Landing({ variant }) {
         <p className="landing-description">{DESCRIPTION}</p>
         <div className="landing-actions">
           <a className="landing-primary" href={`./${import.meta.env.VITE_EDITOR_ENTRY || 'editor'}?new=1`}><Icon name="grid" />Создать свою сетку</a>
-          <a className="landing-catalog" href={CATALOG_PATH}><Icon name="catalog" />Каталог сеток</a>
+          <a className="landing-catalog" href={CATALOG_PATH}><Icon name="catalog" />Мастерская</a>
         </div>
         <Authors />
       </div>

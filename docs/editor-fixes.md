@@ -26,7 +26,7 @@ The editor keeps the approved Focus design and existing browser storage keys. Th
 - `searchSymbols` supports literal glyphs, category names, common Russian/English symbol names and `U+XXXX`/`0xXXXX`. Search applies across categories in the main brush, drawing window and converter picker. Select-all applies to displayed results.
 - Frame presets are applied even when the active brush contains multiple symbols. Frame corners retain their vertices; density dynamics do not resample them away. Four presets add circles, diamonds, stars and arrows from the existing curated alphabet.
 - Converter quick starts: Контур, Фото (1000 symbols), Меньше символов (600). They reuse existing conversion algorithms and style presets. The default is still 1000. Important controls also show inline explanations.
-- Braille and Japanese glyphs are preserved without substitution. Export reminds users that game fallback fonts may differ; the editor does not claim those glyphs work on every game installation.
+- Japanese glyphs are preserved without substitution; export reminds users that game fallback fonts may differ. Glyphs the game does not show at all — Braille, box drawing U+2500–257F, block elements U+2580–259F and a few tested symbols/emoji (`invisibleWarning` in scripts/dota-rendering.mjs, from the in-game symbol test of 29.09.2026) — warn on input and in export warnings.
 
 ## Optimization and export
 

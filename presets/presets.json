@@ -311,8 +311,8 @@
       "shadeCharset": ".·:",
       "shadeDensity": "30",
       "shadeThreshold": "45",
-      "charset": "-\\|/─╲│╱",
-      "charsetPreset": "-\\|/─╲│╱",
+      "charset": "-\\|/",
+      "charsetPreset": "-\\|/",
       "autoOrient": true,
       "onlyDots": false,
       "layout": "h"

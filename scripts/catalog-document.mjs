@@ -1,7 +1,8 @@
 import C from './core.mjs';
 
 export const CATALOG_TAGS = ['Аниме', 'Милота', '18+', 'Рамки', 'С упором на героя', 'Мемы', 'Dead inside'];
-export const CATALOG_LIMITS = Object.freeze({ bytes: 2_000_000, categories: 5000, symbols: 20000, heroes: 500, daily: 3, accountDaily: 10 });
+// No symbol cap: the card shows the count and players decide. Size and category limits protect the server.
+export const CATALOG_LIMITS = Object.freeze({ bytes: 2_000_000, categories: 5000, heroes: 500, daily: 3, accountDaily: 10 });
 const controls = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u;
 class ValidationError extends Error { constructor(message) { super(message); this.status = 400; } }
 export function catalogText(value, max, label, required = false) {
@@ -33,17 +34,22 @@ export function normalizeCatalogGrid(input) {
     if (!item.hero_ids.length) symbols += Array.from(category_name).filter(c => !/\s/u.test(c)).length;
     return { category_name, ...box, width: item.hero_ids.length ? box.width : 30, height: item.hero_ids.length ? box.height : 30, hero_ids: [...item.hero_ids] };
   });
-  if (heroes > CATALOG_LIMITS.heroes || symbols > CATALOG_LIMITS.symbols) throw new ValidationError('Сетка слишком сложная: максимум 500 портретов и 20 000 символов.');
+  if (heroes > CATALOG_LIMITS.heroes) throw new ValidationError(`Сетка слишком сложная: максимум ${CATALOG_LIMITS.heroes} портретов.`);
   if (!heroes && !symbols) throw new ValidationError('В сетке пока нет героев или символов.');
   return { grid: { version: 3, configs: [{ config_name: catalogText(config.config_name, 200, 'Имя сетки'), categories }] }, stats: { categories: categories.length, heroes, symbols } };
 }
-export function catalogSubmission(input) {
+// Title, author and tags: the same rules for a player's submission and an admin's correction.
+export function catalogMeta(input) {
   const title = catalogText(input?.title, 80, 'Название', true);
-  const author = catalogText(input.author ?? '', 40, 'Автор');
-  if (!Array.isArray(input.tags) || input.tags.length > 3 || input.tags.some(tag => !CATALOG_TAGS.includes(tag))) throw new ValidationError('Выбери до трёх тегов из списка.');
+  const author = catalogText(input?.author ?? '', 40, 'Автор');
+  if (!Array.isArray(input?.tags) || input.tags.length > 3 || input.tags.some(tag => !CATALOG_TAGS.includes(tag))) throw new ValidationError('Выбери до трёх тегов из списка.');
+  return { title, author, tags: [...new Set(input.tags)].sort() };
+}
+export function catalogSubmission(input) {
+  const meta = catalogMeta(input);
   const { grid, stats } = normalizeCatalogGrid(input.grid);
-  grid.configs[0].config_name = title;
-  return { title, author, tags: [...new Set(input.tags)].sort(), grid, stats };
+  grid.configs[0].config_name = meta.title;
+  return { ...meta, grid, stats };
 }
 export function selectedCatalogGrid(document, measure = null) {
   const doc = C.clone(document);

@@ -8,6 +8,8 @@ import { CATALOG_TAGS, CATALOG_LIMITS, catalogText } from '../scripts/catalog-do
 import { Accounts, SESSION_AGE } from './accounts.mjs';
 import { CatalogCaptcha } from './catalog-captcha.mjs';
 import { SteamProfiles } from './steam-profile.mjs';
+import { CatalogArts } from './catalog-arts.mjs';
+import { ART_CATEGORIES, ART_LIMITS, artSubmission } from '../scripts/art-document.mjs';
 
 const cookies = (request) => Object.fromEntries((request.headers.cookie || '').split(';').map(pair => {
   const at = pair.indexOf('='); return at < 0 ? ['', ''] : [pair.slice(0, at).trim(), pair.slice(at + 1)];
@@ -26,15 +28,16 @@ export function catalogConfig(env = process.env) {
     salt = readFileSync(path, 'utf8').trim();
   }
   if (!salt || salt.length < 32) throw new Error('Задай CATALOG_SECRET длиной от 32 символов.');
-  const adminPassword = env.CATALOG_ADMIN_PASSWORD || '';
-  const webModeration = env.CATALOG_WEB_MODERATION === '1';
-  if (webModeration && adminPassword.length < 20) throw new Error('CATALOG_ADMIN_PASSWORD должен содержать не менее 20 символов.');
+  // The site admin panel opens only for these Telegram accounts (signed in through the bot).
+  // There is no password fallback; without the list nobody gets in.
+  const adminIds = String(env.CATALOG_ADMIN_TELEGRAM_IDS || '').split(/[\s,]+/).filter(Boolean);
+  if (adminIds.some(id => !/^[1-9]\d{0,15}$/.test(id))) throw new Error('CATALOG_ADMIN_TELEGRAM_IDS: укажи числовые Telegram ID через запятую.');
   const moderationChat = env.CATALOG_TELEGRAM_CHAT_ID || '-1004309207941';
   const moderationTopic = Number(env.CATALOG_TELEGRAM_TOPIC_ID || 6);
   if (!/^-100\d+$/.test(moderationChat) || !Number.isSafeInteger(moderationTopic) || moderationTopic < 1) throw new Error('Неверный чат или топик модерации.');
   const botUsername = env.CATALOG_TELEGRAM_BOT_USERNAME || 'grid_studio_bot';
   if (!/^[A-Za-z0-9_]{5,32}$/.test(botUsername)) throw new Error('Неверное имя Telegram-бота.');
-  return { development, origin, salt, adminPassword, webModeration, botUsername, steamApiKey: env.STEAM_WEB_API_KEY || '',
+  return { development, origin, salt, admins: new Set(adminIds), botUsername, steamApiKey: env.STEAM_WEB_API_KEY || '',
     moderationUrl: `https://t.me/c/${moderationChat.slice(4)}/${moderationTopic}`,
     trustProxy: env.CATALOG_TRUST_PROXY === 'loopback', database: env.CATALOG_DB || '.catalog-data/catalog.sqlite' };
 }
@@ -47,15 +50,12 @@ async function readJSON(request, limit = CATALOG_LIMITS.bytes) {
   catch { fail(400, 'Не удалось прочитать JSON.'); }
 }
 export function createCatalogAPI(config, { store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }) } = {}) {
-  const accounts = new Accounts(store);
+  const accounts = new Accounts(store), arts = new CatalogArts(store);
   const captcha = new CatalogCaptcha(store, config.salt);
   const signature = (value) => createHmac('sha256', config.salt).update(value).digest('base64url');
   const cookie = (name, value, age) => `${name}=${value}; Path=/api/catalog; HttpOnly; SameSite=Strict; Max-Age=${age}${config.development ? '' : '; Secure'}`;
   const token = request => /^Bearer ([A-Za-z0-9_-]{43})$/.exec(request.headers.authorization || '')?.[1] || '';
-  const admin = (request) => {
-    const session = cookies(request).gs_catalog_admin;
-    if (!session || !store.get('SELECT hash FROM sessions WHERE hash=? AND expires>?', digest(session), store.now())) fail(401, 'Войди в модерацию.');
-  };
+  const isAdmin = user => !!user && !!config.admins?.has(String(user.id));
   const handler = async (request, response) => {
     response.setHeader('Cache-Control', 'no-store'); response.setHeader('X-Content-Type-Options', 'nosniff');
     response.setHeader('Referrer-Policy', 'no-referrer'); response.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
@@ -80,13 +80,20 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       const identity = { browser: store.identity('browser', browser), ip: ipHash };
       const session = cookies(request).gs_account, user = accounts.user(session);
       const requireUser = () => accounts.require(session);
+      // Checked on every admin request against the live Telegram session, never cached.
+      const requireAdmin = () => {
+        const member = accounts.user(session);
+        if (!member) fail(401, 'Войди через Telegram, чтобы открыть админку.');
+        if (!isAdmin(member)) fail(403, 'Админка доступна только администраторам GridStudio.');
+        return member;
+      };
       const setCookie = value => response.appendHeader('Set-Cookie', value);
       const loginCookie = () => {
         const [id, verifier] = (cookies(request).gs_login || '').split('.');
         if (!id || !verifier) fail(401, 'Начни вход в этом браузере.');
         return { id, verifier };
       };
-      if (path === '/auth/me' && method === 'GET') return send(200, { user });
+      if (path === '/auth/me' && method === 'GET') return send(200, { user, admin: isAdmin(user) });
       if (path === '/steam/resolve' && method === 'GET') {
         store.rate(`steam:${ipHash}`, 20, 60_000);
         store.rate('steam:global', 300, 60_000);
@@ -129,7 +136,19 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         return send(200, await captcha.issue(identity, url.searchParams.get('action')));
       }
       if (path === '/config' && method === 'GET') return send(200, { captcha: 'altcha', development: config.development, paused: store.paused(), tags: CATALOG_TAGS, limits: CATALOG_LIMITS,
-        webModeration: !!config.webModeration, moderationUrl: config.moderationUrl });
+        artCategories: ART_CATEGORIES, artLimits: ART_LIMITS, moderationUrl: config.moderationUrl });
+      if (path === '/arts' && method === 'GET') {
+        const library = arts.library(), tag = `"arts-${library.version}"`;
+        response.setHeader('Cache-Control', 'no-cache'); response.setHeader('ETag', tag);
+        if (request.headers['if-none-match'] === tag) { response.writeHead(304); return response.end(); }
+        return send(200, { items: library.load() });
+      }
+      if (path === '/arts' && method === 'POST') {
+        const body = await readJSON(request, 200_000);
+        artSubmission(body); // Spare the captcha when the art itself is not accepted.
+        await captcha.verify(body.captcha, identity, 'art');
+        return send(201, arts.submit(body, identity, user?.id));
+      }
       if (path === '/works' && method === 'GET') return send(200, store.list({ query: (url.searchParams.get('q') || '').slice(0, 80), tag: url.searchParams.get('tag') || '', popular: url.searchParams.get('sort') === 'popular', account: user?.id, page: Math.min(1000, Math.max(0, Number(url.searchParams.get('page')) || 0)) | 0 }));
       if (path === '/works' && method === 'POST') {
         const body = await readJSON(request);
@@ -140,7 +159,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         if (concurrentReceipt) return send(200, concurrentReceipt);
         return send(201, store.save(body, identity, null, null, null, user?.id));
       }
-      const match = /^\/(works|manage)\/([0-9a-f-]{36})(?:\/(download|report|like|claim|grid))?$/.exec(path);
+      const match = /^\/(works|manage)\/([0-9a-f-]{36})(?:\/(download|report|like|claim|grid|subscribe))?$/.exec(path);
       if (match) {
         const [, scope, id, operation] = match;
         if (scope === 'works' && operation === 'grid' && method === 'GET') {
@@ -172,32 +191,30 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
           if (typeof body.liked !== 'boolean') fail(400, 'Неверное значение лайка.');
           store.rate(`like:${member.id}`, 90, 60_000); return send(200, store.like(id, member.id, body.liked));
         }
+        if (scope === 'works' && operation === 'subscribe' && method === 'PUT') {
+          const member = requireUser(), body = await readJSON(request);
+          if (typeof body.subscribed !== 'boolean') fail(400, 'Неверное значение подписки.');
+          store.rate(`subscribe:${member.id}`, 60, 60_000); return send(200, store.subscribe(member.id, id, body.subscribed));
+        }
         if (scope === 'works' && operation === 'report' && method === 'POST') {
           const body = await readJSON(request), reason = catalogText(body.reason, 500, 'Причина жалобы', true);
           await captcha.verify(body.captcha, identity, 'report'); store.report(id, identity, reason);
           return send(200, { reported: true });
         }
       }
-      if (path.startsWith('/admin/') && !config.webModeration) fail(403, 'Модерация доступна в Telegram, в топике approve grids here.');
-      if (path === '/admin/login' && method === 'POST') {
-        store.rate(`login:${ipHash}`, 5, 15 * 60_000);
-        const body = await readJSON(request);
-        if (!config.adminPassword || typeof body.password !== 'string' || !equal(config.adminPassword, body.password)) fail(401, 'Неверный ключ модератора.');
-        const session = secret(); store.run('DELETE FROM sessions WHERE expires<?', store.now());
-        store.run('INSERT INTO sessions VALUES(?,?)', digest(session), store.now() + 8 * 3_600_000);
-        response.setHeader('Set-Cookie', cookie('gs_catalog_admin', session, 8 * 3600)); return send(200, { authenticated: true });
-      }
       if (path.startsWith('/admin/')) {
-        admin(request);
-        if (path === '/admin/session' && method === 'GET') return send(200, { authenticated: true });
-        if (path === '/admin/logout' && method === 'POST') {
-          store.run('DELETE FROM sessions WHERE hash=?', digest(cookies(request).gs_catalog_admin));
-          response.setHeader('Set-Cookie', cookie('gs_catalog_admin', '', 0)); return send(200, { authenticated: false });
-        }
-        if (path === '/admin/works' && method === 'GET') return send(200, store.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0));
-        if (path === '/admin/settings' && method === 'PATCH') { const body = await readJSON(request); if (typeof body.paused !== 'boolean') fail(400, 'Неверная настройка.'); store.setPaused(body.paused); return send(200, { paused: store.paused() }); }
+        const member = requireAdmin();
+        // Recorded in the audit log and shown on the Telegram moderation card.
+        const actor = JSON.stringify({ id: String(member.id), name: `${member.username ? `@${member.username}` : member.name} · сайт`.slice(0, 100) });
+        if (path === '/admin/session' && method === 'GET') return send(200, { admin: true });
+        if (path === '/admin/works' && method === 'GET') return send(200, { ...store.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0),
+          artsPending: store.get("SELECT count(*) n FROM arts WHERE status='pending'").n });
+        if (path === '/admin/settings' && method === 'PATCH') { const body = await readJSON(request); if (typeof body.paused !== 'boolean') fail(400, 'Неверная настройка.'); store.setPaused(body.paused, actor); return send(200, { paused: store.paused() }); }
+        if (path === '/admin/arts' && method === 'GET') return send(200, arts.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0));
+        const artReview = /^\/admin\/arts\/([1-9]\d{0,12})$/.exec(path);
+        if (artReview && method === 'POST') { const body = await readJSON(request); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = arts.moderate(Number(artReview[1]), body, { actor }); return send(200, { reviewed: true, ...result }); }
         const review = /^\/admin\/works\/([0-9a-f-]{36})$/.exec(path);
-        if (review && method === 'POST') { const body = await readJSON(request); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); store.moderate(review[1], body); return send(200, { reviewed: true }); }
+        if (review && method === 'POST') { const body = await readJSON(request); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = store.moderate(review[1], body, { actor }); return send(200, { reviewed: true, ...(body.action === 'edit' ? result : {}) }); }
       }
       fail(404, 'Не найдено.');
     } catch (error) {

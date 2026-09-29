@@ -34,7 +34,8 @@ export function GridFilePanel({ editor, state }) {
       onToggle={event => setOpen(event.newState === 'open')} onKeyDown={event => {
         if (event.key === 'Escape') { event.stopPropagation(); return; }
         if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
-        const buttons = [...popup.current.querySelectorAll(event.target.classList.contains('grid-row-rename') ? '.grid-row-rename' : '.grid-row-select')];
+        const column = ['grid-row-rename', 'grid-row-delete'].find(name => event.target.classList.contains(name)) || 'grid-row-select';
+        const buttons = [...popup.current.querySelectorAll(`.${column}`)];
         const current = buttons.indexOf(event.target);
         const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (current + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
         event.preventDefault(); buttons[next]?.focus();
@@ -47,6 +48,8 @@ export function GridFilePanel({ editor, state }) {
         </button>
         <button className="grid-row-rename" aria-label={`Переименовать ${grid.name || 'Без названия'}`}
           data-tooltip="Переименовать сетку" onClick={() => { close(); editor.renameGrid(grid.index); }}><Icon name="edit"/></button>
+        {state.configurations.length > 1 && <button className="grid-row-delete" aria-label={`Удалить ${grid.name || 'Без названия'}`}
+          data-tooltip="Удалить сетку" onClick={() => { close(); editor.deleteGrid(grid.index); }}><Icon name="trash"/></button>}
       </div>)}
     </div>
     <button className="grid-file-append button ghost compact" onClick={editor.importGrids}

@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
+import { applyGridBackground } from '../scripts/grid-background.mjs';
 import '../styles/studio.css';
 import '../styles/site.css';
 import '../styles/refinements.css';
@@ -11,6 +12,8 @@ import '../styles/editor-actions.css';
 import '../styles/editor-controls.css';
 import '../styles/editor-fixes.css';
 import '../styles/editor-chrome.css';
+import '../styles/surfaces.css';
+applyGridBackground();
 // Keep one root if the entry module itself is updated by Vite. App is a separate
 // Fast Refresh boundary, so ordinary component edits do not remount this entry.
 const root = import.meta.hot?.data.root ?? createRoot(document.getElementById('root'));

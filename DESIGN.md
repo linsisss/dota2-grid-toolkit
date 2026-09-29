@@ -392,7 +392,7 @@ The five display roles, gallery body/action/field roles, and canvas-heading role
 
 **The Game Type Rule.** Keep Radiance and game geometry in the game plane; use the interface type roles for tools and properties.
 
-**The Original Art Rule.** Preserve the supplied Unicode artwork, including Braille characters. Never replace Braille with ordinary dots. Catalogue previews and insertion use the same game-text measuring and rendering path.
+**The Original Art Rule.** Preserve supplied artwork characters as they are; never substitute glyphs. Glyphs the game cannot show are the exception by absence: an in-game test (29.09.2026) found no Braille, box drawing or block elements and a few invisible symbols and emoji, so Braille art is not in the library, art submissions with such glyphs are refused, and typing them anywhere in the editor warns that the game will not show them. The symbol library contains only glyphs seen in the game. Catalogue previews and insertion use the same game-text measuring and rendering path.
 
 ## Layout
 
@@ -485,7 +485,7 @@ Custom tooltips use a manual popover with role=tooltip and temporary aria-descri
 
 ### Original artwork catalogue
 
-The ASCII library contains 43 supplied Unicode artworks from arts.txt, recorded in data/ascii-arts.json. Search matches names and categories, a category selector narrows results, and two-column preview cards initially show 12 items with incremental loading. Card previews are 130px tall. The library preserves the original visible characters, including Braille; layout only removes surrounding blank space and common indentation.
+The ASCII library contains the supplied artworks from arts.txt that Dota can show (the Braille drawings are left out), recorded in data/ascii-arts.json, followed by approved arts from users. Search matches names and categories, a category selector narrows results, and two-column preview cards initially show 12 items with incremental loading. Card previews are 130px tall. The library preserves the original visible characters; layout only removes surrounding blank space and common indentation.
 
 Selecting a card opens a larger preview capped at 900 × 740px, with the art's dimensions and an oversize notice when needed. Add to canvas creates one artwork layer containing editable text rows and selects the result. The dialog returns focus to its trigger on close. On phones it uses the available viewport and wraps footer controls. This local supplied-art library is separate from the still-unbuilt public grid catalogue.
 
@@ -529,7 +529,7 @@ Desktop compositions place copy and actions on the left and the supplied editor 
 - **Do** preserve the original logo geometry and lettering.
 - **Do** keep settings, properties, layers, counts, grid, snap, zoom, history, and export accessible.
 - **Do** retain visible keyboard focus and honor reduced-motion preferences.
-- **Do** preserve the original Unicode art, including Braille, through preview and insertion.
+- **Do** preserve the original art characters through preview and insertion.
 
 ### Don't:
 
@@ -537,7 +537,7 @@ Desktop compositions place copy and actions on the left and the supplied editor 
 - **Don't** import the gallery's replacement mark or its simplified control visibility into the working editor.
 - **Don't** mix demonstration groups with claims about a populated public catalogue.
 - **Don't** change document data or Dota JSON to achieve a visual treatment.
-- **Don't** replace the supplied Braille artwork with ordinary dots.
+- **Don't** offer Braille: the game cannot display it.
 
 ### Landing navigation and credits — 2026-09-27
 

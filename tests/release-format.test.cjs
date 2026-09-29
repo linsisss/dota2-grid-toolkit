@@ -24,6 +24,19 @@ test('malformed/empty/oversized release content fails before sending', () => {
   assert.throws(() => formatRelease({ version: 'bad', changes: ['A'] }, config));
   assert.throws(() => formatRelease({ ...example, changes: [] }, config));
   assert.throws(() => formatRelease({ ...example, changes: ['a\nb'] }, config));
-  assert.throws(() => formatRelease({ ...example, changes: ['a'.repeat(17000)] }, config));
+  assert.throws(() => formatRelease({ ...example, changes: ['a'.repeat(31000)] }, config));
+  assert.throws(() => formatRelease({ ...example, changes: Array.from({ length: 460 }, (_, i) => 'пункт ' + i) }, config));
   assert.throws(() => releasePayload(example, { ...config, topicId: 0 }));
+});
+test('sections become collapsed <details> blocks with their own task lists', () => {
+  const html = formatRelease({ version: '1.2.3', sections: [
+    { title: 'Мастерская', changes: ['A', { text: 'B', children: ['C'] }] },
+    { title: 'Редактор <x>', changes: ['D'] }
+  ] }, config);
+  assert.match(html, /<details><summary><b>Мастерская<\/b><\/summary>\n<ul>\n<li><input type="checkbox" checked>A/);
+  assert.match(html, /<summary><b>Редактор &lt;x&gt;<\/b><\/summary>/);
+  assert.equal(html.match(/<details>/g).length, 2); assert.equal(html.match(/<\/details>/g).length, 2);
+  assert.doesNotMatch(html, /<details open/, 'collapsed by default');
+  assert.throws(() => formatRelease({ version: '1.2.3', sections: [{ title: 'Пусто', changes: [] }] }, config));
+  assert.throws(() => formatRelease({ version: '1.2.3', sections: [{ title: 'a\nb', changes: ['A'] }] }, config));
 });

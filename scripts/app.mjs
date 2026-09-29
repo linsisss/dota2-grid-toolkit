@@ -9,12 +9,16 @@ import { readGridFiles } from './grid-import.mjs';
 import { clampZoom, wheelZoom } from './zoom.mjs';
 import { simplifyArtwork, simplifiableItems } from './artwork-optimization.mjs';
 import { planOptimization, optimizeCategories } from './category-optimization.mjs';
-import { canvasPoint, snapPoint, hitItem, hitSelectionFrame, intersectsInk, selectionOnClick, centerBrushPoints } from './canvas-input.mjs';
+import { canvasPoint, snapPoint, hitItem, hitSelectionFrame, inkFrame, intersectsInk, selectionOnClick, centerBrushPoints } from './canvas-input.mjs';
 import { moveHero, heroAt, heroDropIndex, createHeroMotion, targetHeroMotion, advanceHeroMotion } from './hero-order.mjs';
+import { editLayout } from './hero-chrome.mjs';
 import { numberButtons, stepNumber } from './form-controls.mjs';
 import { gamePreviewLayout } from './game-preview.mjs';
 import { layoutAsciiArt, placeAsciiArt } from './ascii-library.mjs';
 import { DRAWING_TOOLS, GRADIENT_CHARS, drawingPoints, lassoContains, setDrawingShift, advanceDrawingStroke } from './drawing.mjs';
+import { clampEraser, readEraserSize, stepEraserSize, storeEraserSize, wheelEraserSize } from './eraser-size.mjs';
+import { guideLines, snapMove } from './smart-guides.mjs';
+import { ALIGN_ACTIONS, DISTRIBUTE_ACTIONS, alignIconSVG } from './align-icons.mjs';
 import {
   searchSymbols,
   categorySelection,
@@ -27,8 +31,12 @@ import {
 import {
   overflow,
   cropSymbols,
-  alignItems,
   eraseSymbols,
+  replaceGlyphs,
+  glyphCounts,
+  selectionUnits,
+  alignUnits,
+  distributeUnits,
   moveItems,
   reflectItems, referenceHandles, referenceHit, transformReference
 } from './edit-operations.mjs';
@@ -37,10 +45,44 @@ import {
   IMAGE_DEFAULTS,
   IMAGE_RANGES,
   IMAGE_CHECKS,
-  IMAGE_TEXT_FIELDS
+  IMAGE_TEXT_FIELDS,
+  ROW_RANGES,
+  ROW_SELECTS,
+  ROW_RECIPES,
+  TRACE_RANGES,
+  TRACE_SELECTS,
+  TRACE_RECIPES
 } from './image-settings.mjs';
-import { DOTA, drawCategoryLabel, measureCategoryText, measureCategoryInk, measureCategoryWidth, portraitSourceRect } from './dota-rendering.mjs';
+import { ROW_DEFAULTS, ROW_FONT, ROW_GLYPH_SETS, rowAtlas, rowBandTop, rowGlyphs } from './ascii-rows.mjs';
+import { TRACE_DEFAULTS, TRACE_MAX_DOTS } from './dot-trace.mjs';
+import { packGlyphs, packSymbols } from './dot-packing.mjs';
+import { gridBackground, onGridBackground, setGridBackground } from './grid-background.mjs';
+import { DOTA, TEXT_MODEL, invisibleWarning, drawCategoryLabel, measureCategoryText, measureCategoryInk, measureCategoryWidth, portraitSourceRect } from './dota-rendering.mjs';
 const ROTATE_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M8 22a10 10 0 1 1 16-9M19 7l5 6 5-5" fill="none" stroke="#10151a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 22a10 10 0 1 1 16-9M19 7l5 6 5-5" fill="none" stroke="#efeaf5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>')}") 16 16, grab`;
+const IMAGE_METHOD_KEY = 'gridstudio.image-method';
+function readImageMethod() {
+  try {
+    const method = localStorage.getItem(IMAGE_METHOD_KEY);
+    return method === 'points' || method === 'trace' ? method : 'rows';
+  } catch { return 'rows'; }
+}
+// The picture at the art's size on the canvas; transparent parts count as white, as in the
+// contour method.
+function rowLuma(pixels, width, height) {
+  const source = document.createElement('canvas');
+  source.width = pixels.width; source.height = pixels.height;
+  source.getContext('2d').putImageData(pixels, 0, 0);
+  const canvas = document.createElement('canvas');
+  canvas.width = width; canvas.height = height;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  context.fillStyle = '#fff'; context.fillRect(0, 0, width, height);
+  context.imageSmoothingQuality = 'high';
+  context.drawImage(source, 0, 0, width, height);
+  const data = context.getImageData(0, 0, width, height).data, luma = new Float32Array(width * height);
+  for (let i = 0; i < luma.length; i++) luma[i] = (data[i * 4] * 0.2126 + data[i * 4 + 1] * 0.7152 + data[i * 4 + 2] * 0.0722) / 255;
+  return luma;
+}
+const plural = (n, one, few, many) => (n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many);
 export function createStudio(projectStorage, initial) {
   const $ = (id) => document.getElementById(id);
   const abort = new AbortController();
@@ -165,6 +207,10 @@ export function createStudio(projectStorage, initial) {
     conversionPoints = [],
     convertTimer,
     convertRevision = 0,
+    imageMethod = readImageMethod(),
+    rowsJobs = { worker: null, busy: false },
+    traceJobs = { worker: null, busy: false },
+    rowAtlases = new Map(),
     imageRequest = 0,
     sourceFilename = '',
     sourceImageURL = null;
@@ -185,6 +231,7 @@ export function createStudio(projectStorage, initial) {
     drawFrame = null;
   let referenceEditing = false;
   let heroMotion = null;
+  let eraserSize = readEraserSize(), eraserHover = null, eraserLabelUntil = 0, eraserLabelTimer;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let frameStyle = { ...D.frames.simple },
     framePending = false;
@@ -397,6 +444,8 @@ export function createStudio(projectStorage, initial) {
       b.setAttribute('aria-pressed', active);
     });
     viewport.classList.toggle('drawing', !['select', 'hand'].includes(tool));
+    $('eraserSizeField').hidden = tool !== 'eraser';
+    if (tool !== 'eraser') eraserHover = null;
     viewport.classList.toggle('panning', tool === 'hand');
     draw();
   }
@@ -585,14 +634,16 @@ export function createStudio(projectStorage, initial) {
         ctx.translate(-center.x, -center.y);
         ctx.strokeStyle = '#c4b5ed';
         ctx.lineWidth = 1.5 / zoom;
-        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        // A hairline off the glyphs, so the frame never covers what it selects.
+        const gap = 2 / zoom;
+        ctx.strokeRect(b.x - gap, b.y - gap, b.w + gap * 2, b.h + gap * 2);
         const handle = 6 / zoom;
-        for (const [x, y] of [
+        for (const [x, y] of resizable(items) ? [
           [b.x, b.y],
           [b.x + b.w, b.y],
           [b.x, b.y + b.h],
           [b.x + b.w, b.y + b.h]
-        ]) {
+        ] : []) {
           ctx.fillStyle = '#211e29';
           ctx.fillRect(x - handle / 2, y - handle / 2, handle, handle);
           ctx.strokeRect(x - handle / 2, y - handle / 2, handle, handle);
@@ -627,8 +678,45 @@ export function createStudio(projectStorage, initial) {
         ctx.stroke();
         ctx.setLineDash([]);
       }
+      if (tool === 'eraser' && eraserHover) drawEraserRing(eraserHover);
+      if (guideFades.size || (gesture?.type === 'move' && gesture.guides?.length)) drawGuides(gesture?.type === 'move' ? gesture.guides || [] : []);
     }
     if (heroesMoving) requestPaint();
+  }
+  // Photoshop-style brush outline: the ring is exactly the area eraseSymbols clears.
+  function drawEraserRing(p) {
+    const radius = eraserSize / 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+    ctx.lineWidth = 3 / zoom;
+    ctx.strokeStyle = '#0c0b10b0';
+    ctx.stroke();
+    ctx.lineWidth = 1.2 / zoom;
+    ctx.strokeStyle = '#efeaf5';
+    ctx.stroke();
+    ctx.fillStyle = '#efeaf5';
+    ctx.fillRect(p.x - 1 / zoom, p.y - 1 / zoom, 2 / zoom, 2 / zoom);
+    if (performance.now() < eraserLabelUntil) {
+      const label = `${Math.round(eraserSize)} px`;
+      ctx.font = `600 ${12 / zoom}px 'SF Pro Display', system-ui, sans-serif`;
+      const x = p.x + radius * 0.72 + 8 / zoom, y = p.y - radius * 0.72 - 8 / zoom, w = ctx.measureText(label).width + 12 / zoom;
+      ctx.fillStyle = '#211e29e8';
+      ctx.fillRect(x, y - 15 / zoom, w, 20 / zoom);
+      ctx.fillStyle = '#efeaf5';
+      ctx.fillText(label, x + 6 / zoom, y);
+    }
+    ctx.restore();
+  }
+  function setEraserSize(value) {
+    eraserSize = clampEraser(value);
+    $('eraserSize').value = Math.round(eraserSize);
+    $('eraserSizeValue').textContent = `${Math.round(eraserSize)} px`;
+    storeEraserSize(eraserSize);
+    eraserLabelUntil = performance.now() + 900;
+    clearTimeout(eraserLabelTimer);
+    eraserLabelTimer = setTimeout(requestPaint, 950);
+    requestPaint();
   }
   function drawHeroPortrait(id, x, y, width, height) {
     const img = loadPortrait(id);
@@ -645,10 +733,16 @@ export function createStudio(projectStorage, initial) {
     if (b.x + b.w < 0 || b.y + b.h < 0 || b.x > workspace().w || b.y > workspace().h) return;
     ctx.save();
     if (e.type === 'heroes') {
+      // A selected group shows its list area, as in Dota's edit mode; otherwise the group
+      // looks as in the game: its title and heroes only.
+      if (!preview && selected.has(e.id)) {
+        ctx.fillStyle = '#0000004d';
+        ctx.fillRect(e.x, e.y + DOTA.header, e.w, e.h);
+      }
       // Titles may overflow their list width in Panorama. Do not squeeze them.
       drawCategoryLabel(ctx, e.name, e.x, e.y);
       const motion = heroMotion?.groupId === e.id ? heroMotion : null;
-      const best = motion?.layout || C.heroLayout(e);
+      const best = motion?.layout || heroLayoutFor(e);
       ctx.beginPath();
       ctx.rect(e.x, e.y + DOTA.header, e.w, e.h);
       ctx.clip();
@@ -669,6 +763,137 @@ export function createStudio(projectStorage, initial) {
       for (const glyph of C.textGlyphs(e)) drawCategoryLabel(ctx, glyph.text, glyph.x, glyph.y);
     }
     ctx.restore();
+  }
+  // Figma-style: several objects align to each other, a single object to the canvas.
+  function alignSection(items) {
+    const count = selectionUnits(doc, items).length;
+    const buttons = (actions) => actions.map(([action, label, path]) => `<button data-action="${action}" title="${label}" aria-label="${label}">${alignIconSVG(path)}</button>`).join('');
+    return `<label class="field-label">${count > 1 ? 'Выровнять объекты' : 'Выровнять по холсту'}</label><div class="align-actions">${buttons(ALIGN_ACTIONS)}</div>${count > 2 ? `<div class="align-actions">${buttons(DISTRIBUTE_ACTIONS)}</div>` : ''}`;
+  }
+  // Replace one character (or all) across the selected symbols and text, e.g. dots to hearts.
+  function openReplaceGlyphs() {
+    const counts = glyphCounts(editableSelection());
+    if (!counts.length) {
+      toast('В выделении нет символов.', true);
+      return;
+    }
+    const total = counts.reduce((sum, [, n]) => sum + n, 0);
+    const brush = Array.from($('brushInput')?.value || '').find((ch) => !/\s/u.test(ch)) || '♥';
+    openModal(
+      'Заменить символы',
+      `<label class="field-label" for="replaceFrom">Что заменить</label><select id="replaceFrom">${counts.length > 1 ? `<option value="">Все символы · ${total}</option>` : ''}${counts
+        .slice(0, 60)
+        .map(([ch, n]) => `<option value="${esc(ch)}">${esc(ch)} · ${n}</option>`)
+        .join('')}</select><label class="field-label" for="replaceTo">На какой символ</label><input id="replaceTo" class="glyph-replace-to" value="${esc(brush)}" maxlength="8"><p class="hint">Позиции символов не меняются. Отменить — Ctrl+Z.</p>`,
+      '<button class="button secondary" data-close>Отмена</button><button id="replaceGlyphs" class="button primary">Заменить</button>'
+    );
+    const replace = () => {
+      const to = $('replaceTo').value, from = $('replaceFrom').value;
+      let count = 0, failed = true;
+      // commit() restores the document and reports the error itself when replacing throws.
+      const changed = commit(() => {
+        const targets = editableSelection();
+        count = replaceGlyphs(targets, from, to);
+        failed = false;
+        for (const item of targets)
+          if (item.type !== 'heroes' && typeof item.text === 'string') {
+            item.type = Array.from(item.text).length === 1 ? 'symbol' : 'text';
+            if (item.type === 'text' && !C.normalizeAngle(item.rotation || 0))
+              item.w = Math.max(30, measureCategoryText(ctx, item.text).advances.reduce((a, b) => a + b, 0) + 30);
+          }
+        prepareTextMetrics(targets);
+      });
+      if (failed) return;
+      closeModal();
+      toast(changed ? `Заменено символов: ${count}` : 'Нечего заменять: символы уже такие.');
+    };
+    $('replaceGlyphs').onclick = replace;
+    $('replaceTo').onkeydown = (event) => {
+      if (event.key === 'Enter') replace();
+    };
+    $('replaceTo').focus();
+    $('replaceTo').select();
+  }
+  // Whole artwork layers (groups or ASCII) inside a selection.
+  function wholeArtworkLayers(items) {
+    const chosen = new Set(items.map((e) => e.id));
+    return [...new Set(items.map((e) => e.layer))].filter((id) =>
+      doc.layers.find((l) => l.id === id)?.kind === 'artwork' && doc.entities.every((e) => e.layer !== id || chosen.has(e.id)));
+  }
+  // A rectangle takes whole groups and ASCII art, like Figma; Alt + rectangle and the lasso pick parts.
+  function expandGroups(ids) {
+    const groups = new Set(doc.layers.filter((l) => l.kind === 'artwork').map((l) => l.id));
+    const touched = new Set(doc.entities.filter((e) => ids.has(e.id) && groups.has(e.layer)).map((e) => e.layer));
+    if (!touched.size) return ids;
+    return new Set([...ids, ...doc.entities.filter((e) => touched.has(e.layer) && editable(e)).map((e) => e.id)]);
+  }
+  // Other objects the dragged selection can snap to: groups and ASCII layers count as one frame.
+  function guideFrames() {
+    const moving = new Set(selected), frames = [], layers = new Map();
+    const artwork = new Set(doc.layers.filter((l) => l.kind === 'artwork').map((l) => l.id));
+    const visible = new Set(doc.layers.filter((l) => l.visible).map((l) => l.id));
+    for (const e of doc.entities) {
+      if (moving.has(e.id) || !visible.has(e.layer)) continue;
+      if (artwork.has(e.layer)) layers.set(e.layer, [...(layers.get(e.layer) || []), e]);
+      else frames.push(frameOf([e]));
+    }
+    for (const items of layers.values()) frames.push(frameOf(items));
+    return frames;
+  }
+  // Smart guides fade in and out (about 0.1 s) instead of blinking, in the selection's
+  // lavender rather than a loud magenta. `current` are the guides of this frame.
+  const guideFades = new Map();
+  let guideClock = 0;
+  function drawGuides(current) {
+    // At most one frame's worth per paint: after an idle pause the fade still takes ~0.1 s.
+    const now = performance.now(), step = reducedMotion.matches ? 1 : 1 - Math.exp(-Math.min(32, Math.max(0, now - (guideClock || now))) / 45);
+    guideClock = now;
+    for (const fade of guideFades.values()) fade.target = 0;
+    for (const g of current) {
+      const key = `${g.axis}:${g.v.toFixed(2)}`, fade = guideFades.get(key);
+      if (fade) Object.assign(fade, { from: g.from, to: g.to, target: 1 });
+      else guideFades.set(key, { ...g, alpha: reducedMotion.matches ? 1 : 0, target: 1 });
+    }
+    let moving = false;
+    ctx.save();
+    ctx.strokeStyle = '#c4b5ed';
+    ctx.lineCap = 'round';
+    for (const [key, fade] of guideFades) {
+      fade.alpha += (fade.target - fade.alpha) * step;
+      if (Math.abs(fade.target - fade.alpha) < 0.02) fade.alpha = fade.target;
+      else moving = true;
+      if (!fade.alpha) { guideFades.delete(key); continue; }
+      const tick = 3 / zoom;
+      ctx.globalAlpha = fade.alpha * 0.85;
+      ctx.lineWidth = 1 / zoom;
+      ctx.beginPath();
+      if (fade.axis === 'x') {
+        ctx.moveTo(fade.v, fade.from); ctx.lineTo(fade.v, fade.to);
+        ctx.moveTo(fade.v - tick, fade.from); ctx.lineTo(fade.v + tick, fade.from);
+        ctx.moveTo(fade.v - tick, fade.to); ctx.lineTo(fade.v + tick, fade.to);
+      } else {
+        ctx.moveTo(fade.from, fade.v); ctx.lineTo(fade.to, fade.v);
+        ctx.moveTo(fade.from, fade.v - tick); ctx.lineTo(fade.from, fade.v + tick);
+        ctx.moveTo(fade.to, fade.v - tick); ctx.lineTo(fade.to, fade.v + tick);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+    if (moving) requestPaint();
+    else if (!guideFades.size) guideClock = 0;
+  }
+  function arrangeState() {
+    const items = editableSelection();
+    if (!items.length) return { units: 0, canGroup: false, canUngroup: false, rotation: [], canReplace: false };
+    const units = selectionUnits(doc, items).length, layers = wholeArtworkLayers(items);
+    const heroes = items.some((e) => e.type === 'heroes');
+    return {
+      units,
+      canGroup: units > 1,
+      canUngroup: layers.length > 0,
+      rotation: canRotateSelection() ? [-90, -45, 45, 90, 180] : heroes && (units > 1 || items.length === 1) ? [-90, 90, 180] : [],
+      canReplace: glyphCounts(items).length > 0
+    };
   }
   function numericField(key, label, value, disabled) {
     return `<label class="input-unit number-field"><span>${key === 'rotation' ? '∠' : label}</span><input data-property="${key}" aria-label="${label}" type="number" step="${key === 'rotation' ? '0.1' : '1'}" value="${Math.round(value * 100) / 100}" ${disabled ? 'disabled' : ''}>${numberButtons(label)}</label>`;
@@ -801,7 +1026,7 @@ export function createStudio(projectStorage, initial) {
         items.every((item) => item.layer === artLayer.id) &&
         doc.entities.filter((item) => item.layer === artLayer.id).length === items.length;
     $('inspectorContent').innerHTML =
-      `<h3>${wholeArtwork ? 'ASCII-слой' : items.length === 1 ? (e.type === 'heroes' ? 'Группа героев' : e.type === 'symbol' ? 'Символ' : 'Текст') : 'Выделение объектов'}</h3>${wholeArtwork ? `<label class="field-label" for="artworkName">Название слоя</label><input id="artworkName" value="${esc(artLayer.name)}" maxlength="200" ${locked ? 'disabled' : ''}>` : items.length === 1 ? `<label class="field-label" for="objectName">${e.type === 'heroes' ? 'Название группы' : 'Текст / символ'}</label><textarea id="objectName" rows="3" maxlength="5000" ${locked ? 'disabled' : ''}>${esc(e.type === 'heroes' ? e.name : e.text)}</textarea>` : `<p class="hint">${items.length} объектов · перемещай и изменяй вместе</p>`}<label class="field-label">Позиция</label><div class="field-pair">${numericField('x', 'X', b.x, locked)}${numericField('y', 'Y', b.y, locked)}</div><label class="field-label">Размер</label><div class="field-pair">${numericField('w', 'W', b.w, locked)}${numericField('h', 'H', b.h, locked)}</div>${rotatable ? `<label class="field-label">Поворот расположения</label>${numericField('rotation', 'Угол, °', C.selectionFrame(items).rotation, locked)}<p class="hint">Символы остаются прямыми. Shift — шаг 15°.</p>` : ''}<label class="field-label">Выровнять по холсту</label><div class="align-actions"><button data-action="align-left" title="По левому краю" aria-label="По левому краю">⊢</button><button data-action="align-center" title="По горизонтальному центру" aria-label="По горизонтальному центру">↔</button><button data-action="align-right" title="По правому краю" aria-label="По правому краю">⊣</button></div><label class="field-label" for="objectLayer">Слой</label><select id="objectLayer" ${locked ? 'disabled' : ''}>${doc.layers.map((l) => `<option value="${l.id}" ${l.id === e.layer ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select><div class="selection-actions"><button class="icon-button" data-action="duplicate" title="Дублировать (Ctrl+D)" aria-label="Дублировать">${icon('copy')}</button><button class="icon-button" data-action="center" title="По центру холста" aria-label="По центру холста">${icon('align')}</button><button class="icon-button" data-action="flip" title="Отразить позиции по горизонтали" aria-label="Отразить позиции по горизонтали">${icon('flip')}</button><button class="icon-button" data-action="rotate" title="${rotatable ? 'Повернуть на 90°' : 'Повернуть расположение на 90°'}" aria-label="${rotatable ? 'Повернуть на 90 градусов' : 'Повернуть расположение на 90 градусов'}">${icon('rotate')}</button><button class="icon-button danger" data-action="delete" title="Удалить (Delete)" aria-label="Удалить">${icon('trash')}</button></div>${locked ? '<p class="hint">Слой заблокирован или скрыт. Открой его в списке слоёв для редактирования.</p>' : ''}${items.length === 1 && e.type === 'heroes' ? `<div class="hero-chips">${e.heroIds.map((id, i) => `<span class="hero-chip" data-hero-order="${i}" tabindex="${locked ? -1 : 0}" role="group" aria-label="${esc(heroById.get(id)?.name || id)}: ${i + 1} из ${e.heroIds.length}" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight">${heroById.has(id) ? `<img src="${heroById.get(id)?.thumbnail || `assets/heroes/${id}.png`}" alt="">` : ''}${esc(heroById.get(id)?.name || '#' + id)}<button data-remove-hero="${i}" aria-label="Убрать ${esc(heroById.get(id)?.name || id)}" ${locked ? 'disabled' : ''}>×</button></span>`).join('')}</div><button id="editGroupHeroes" class="button secondary full compact" ${locked ? 'disabled' : ''}>+ Выбрать героев</button><p class="hint">Перетаскивай портреты, чтобы менять порядок. С клавиатуры: выбери героя в списке и нажми Alt + ← / →. Всю группу можно двигать за название или свободное место; Shift сохраняет пропорции при изменении размера.</p>` : ''}`;
+      `<h3>${wholeArtwork ? (artLayer.group ? 'Группа' : 'ASCII-слой') : items.length === 1 ? (e.type === 'heroes' ? 'Группа героев' : e.type === 'symbol' ? 'Символ' : 'Текст') : 'Выделение объектов'}</h3>${wholeArtwork ? `<label class="field-label" for="artworkName">Название слоя</label><input id="artworkName" value="${esc(artLayer.name)}" maxlength="200" ${locked ? 'disabled' : ''}>` : items.length === 1 ? `<label class="field-label" for="objectName">${e.type === 'heroes' ? 'Название группы' : 'Текст / символ'}</label><textarea id="objectName" rows="3" maxlength="5000" ${locked ? 'disabled' : ''}>${esc(e.type === 'heroes' ? e.name : e.text)}</textarea>` : `<p class="hint">${items.length} объектов · перемещай и изменяй вместе</p>`}<label class="field-label">Позиция</label><div class="field-pair">${numericField('x', 'X', b.x, locked)}${numericField('y', 'Y', b.y, locked)}</div><label class="field-label">Размер</label><div class="field-pair">${numericField('w', 'W', b.w, locked)}${numericField('h', 'H', b.h, locked)}</div>${rotatable ? `<label class="field-label">Поворот расположения</label>${numericField('rotation', 'Угол, °', C.selectionFrame(items).rotation, locked)}<p class="hint">Символы остаются прямыми. Shift — шаг 15°. Быстрый поворот — правой кнопкой мыши.</p>` : ''}${alignSection(items)}<label class="field-label" for="objectLayer">Слой</label><select id="objectLayer" ${locked ? 'disabled' : ''}>${doc.layers.map((l) => `<option value="${l.id}" ${l.id === e.layer ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select><div class="selection-actions"><button class="icon-button" data-action="duplicate" title="Дублировать (Ctrl+D)" aria-label="Дублировать">${icon('copy')}</button><button class="icon-button" data-action="center" title="По центру холста" aria-label="По центру холста">${icon('align')}</button><button class="icon-button" data-action="flip" title="Отразить позиции по горизонтали" aria-label="Отразить позиции по горизонтали">${icon('flip')}</button><button class="icon-button" data-action="rotate" title="${rotatable ? 'Повернуть на 90°' : 'Повернуть расположение на 90°'}" aria-label="${rotatable ? 'Повернуть на 90 градусов' : 'Повернуть расположение на 90 градусов'}">${icon('rotate')}</button><button class="icon-button danger" data-action="delete" title="Удалить (Delete)" aria-label="Удалить">${icon('trash')}</button></div>${locked ? '<p class="hint">Слой заблокирован или скрыт. Открой его в списке слоёв для редактирования.</p>' : ''}${items.length === 1 && e.type === 'heroes' ? `<div class="hero-chips">${e.heroIds.map((id, i) => `<span class="hero-chip" data-hero-order="${i}" tabindex="${locked ? -1 : 0}" role="group" aria-label="${esc(heroById.get(id)?.name || id)}: ${i + 1} из ${e.heroIds.length}" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight">${heroById.has(id) ? `<img src="${heroById.get(id)?.thumbnail || `assets/heroes/${id}.webp`}" alt="">` : ''}${esc(heroById.get(id)?.name || '#' + id)}<button data-remove-hero="${i}" aria-label="Убрать ${esc(heroById.get(id)?.name || id)}" ${locked ? 'disabled' : ''}>×</button></span>`).join('')}</div><button id="editGroupHeroes" class="button secondary full compact" ${locked ? 'disabled' : ''}>+ Выбрать героев</button><p class="hint">Перетаскивай портреты, чтобы менять порядок. С клавиатуры: выбери героя в списке и нажми Alt + ← / →. Всю группу можно двигать за название или свободное место; Shift сохраняет пропорции при изменении размера.</p>` : ''}`;
     if (wholeArtwork && items.length === 1)
       $('artworkName').insertAdjacentHTML(
         'afterend',
@@ -856,7 +1081,7 @@ export function createStudio(projectStorage, initial) {
           const changed = commit(() => {
             if (key === 'rotation') {
               prepareTextMetrics(items);
-              const frame = C.selectionFrame(items);
+              const frame = frameOf(items);
               const rotated = C.rotateItems(items, frame, value - frame.rotation);
               items.forEach((item, index) => Object.assign(item, rotated[index]));
               moveItems(items);
@@ -932,7 +1157,7 @@ export function createStudio(projectStorage, initial) {
     commit(() => {
       const e = C.entity(doc, {
         type: 'heroes',
-        name: 'НОВАЯ ГРУППА',
+        name: 'НОВАЯ КАТЕГОРИЯ',
         x: C.clamp(point.x, 0, Math.max(0, workspace().w - 340)),
         y: C.clamp(point.y, 0, Math.max(0, workspace().h - 195)),
         w: 340,
@@ -961,7 +1186,7 @@ export function createStudio(projectStorage, initial) {
         const p = point || { x: 80, y: 110 };
         group = C.entity(doc, {
           type: 'heroes',
-          name: 'НОВАЯ ГРУППА',
+          name: 'НОВАЯ КАТЕГОРИЯ',
           x: C.clamp(p.x, 0, Math.max(0, workspace().w - 340)),
           y: C.clamp(p.y, 0, Math.max(0, workspace().h - 195)),
           w: 340,
@@ -999,7 +1224,9 @@ export function createStudio(projectStorage, initial) {
         const inputs = clipboard
           .filter((e) => e.layer === layer.id)
           .map((e) => ({ ...e, x: e.x + dx, y: e.y + dy }));
-        copies.push(...C.addArtwork(doc, inputs, layer.name).items);
+        const pasted = C.addArtwork(doc, inputs, layer.name);
+        if (layer.group) pasted.layer.group = true;
+        copies.push(...pasted.items);
       }
       const ordinary = clipboard
         .filter((e) => !artworkIds.has(e.layer))
@@ -1021,8 +1248,12 @@ export function createStudio(projectStorage, initial) {
     const items = editableSelection();
     if (!items.length) return;
     const b = C.bounds(items, true);
-    commit(() => {
-      if (action.startsWith('align-')) alignItems(items, action.slice(6), workspace());
+    const changed = commit(() => {
+      if (action.startsWith('align-'))
+        alignUnits(selectionUnits(doc, items), { center: 'hcenter' }[action.slice(6)] || action.slice(6), workspace(), frameOf);
+      if (action.startsWith('distribute-')) distributeUnits(selectionUnits(doc, items), action.slice(11), frameOf);
+      if (action === 'group') C.groupEntities(doc, items.map((e) => e.id));
+      if (action === 'ungroup') C.ungroupLayers(doc, wholeArtworkLayers(items));
       if (action === 'delete') {
         const ids = new Set(items.map((e) => e.id));
         doc.entities = doc.entities.filter((e) => !ids.has(e.id));
@@ -1035,9 +1266,9 @@ export function createStudio(projectStorage, initial) {
           items.every((e) => e.layer === sourceLayer.id) &&
           doc.entities.filter((e) => e.layer === sourceLayer.id).length === items.length;
         const inputs = items.map((e) => ({ ...C.clone(e), x: e.x + 20, y: e.y + 20 }));
-        const copies = wholeLayer
-          ? C.addArtwork(doc, inputs, sourceLayer.name).items
-          : inputs.map((e) => C.entity(doc, e));
+        const added = wholeLayer ? C.addArtwork(doc, inputs, sourceLayer.name) : null;
+        if (added && sourceLayer.group) added.layer.group = true;
+        const copies = added ? added.items : inputs.map((e) => C.entity(doc, e));
         if (!wholeLayer) doc.entities.push(...copies);
         selected = new Set(copies.map((e) => e.id));
       }
@@ -1055,22 +1286,30 @@ export function createStudio(projectStorage, initial) {
         );
         selected = new Set(reflected.map((e) => e.id));
       }
-      if (action === 'rotate' && items.every((item) => item.type !== 'heroes')) {
+      // "rotate" is the classic quarter turn; "rotate:-45" etc. come from the quick-turn buttons.
+      const turn = action === 'rotate' ? 90 : /^rotate:-?\d+$/.test(action) ? Number(action.slice(7)) : null;
+      if (turn !== null && items.every((item) => item.type !== 'heroes')) {
         prepareTextMetrics(items);
-        const rotated = C.rotateItems(items, C.selectionFrame(items), 90);
+        const rotated = C.rotateItems(items, frameOf(items), turn);
         items.forEach((item, index) => Object.assign(item, rotated[index]));
-      } else if (action === 'rotate')
-        for (const e of items) {
-          const x = e.x,
-            y = e.y,
-            w = e.w;
-          e.x = b.x + b.w / 2 - (y - b.y - b.h / 2) - e.h;
-          e.y = b.y + b.h / 2 + (x - b.x - b.w / 2);
-          e.w = e.h;
-          e.h = w;
+      } else if (turn !== null && turn % 90 === 0)
+        // Hero cards stay upright, so groups turn by whole quarters: positions rotate, boxes transpose.
+        for (let n = (((turn / 90) % 4) + 4) % 4; n > 0; n--) {
+          const frame = C.bounds(items, true);
+          for (const e of items) {
+            const x = e.x,
+              y = e.y,
+              w = e.w;
+            e.x = frame.x + frame.w / 2 - (y - frame.y - frame.h / 2) - e.h;
+            e.y = frame.y + frame.h / 2 + (x - frame.x - frame.w / 2);
+            e.w = e.h;
+            e.h = w;
+          }
         }
-      if (['center', 'flip', 'rotate'].includes(action)) moveItems(items);
+      if (['center', 'flip'].includes(action) || turn !== null) moveItems(items);
     });
+    if (changed && action === 'group') toast('Объединено в группу · Alt + клик — объект внутри');
+    if (changed && action === 'ungroup') toast('Группа разъединена');
   }
   function point(event) {
     return canvasPoint(event, canvas.getBoundingClientRect(), workspace());
@@ -1089,10 +1328,28 @@ export function createStudio(projectStorage, initial) {
   function hit(p) {
     return hitItem(doc, p, ink, 3 / zoom);
   }
+  // A selected group is in Dota's edit mode: its «+» card is one more item of the list.
+  function heroLayoutFor(group) {
+    return !preview && selected.has(group.id) ? editLayout(group) : C.heroLayout(group);
+  }
+
   const inkCache = new Map();
   function ink(text) {
     if (!inkCache.has(text)) inkCache.set(text, measureCategoryInk(ctx, text));
     return inkCache.get(text);
+  }
+  // What the user sees and grabs: glyph ink, not the 30px category boxes of text and symbols.
+  function frameOf(items) {
+    return inkFrame(items, ink);
+  }
+  // A lone symbol or text row has the game font's size: it moves and turns, but has nothing
+  // to resize. Several glyphs spread apart; hero groups change their list size.
+  function resizable(items) {
+    return items.length > 1 || items.some((item) => item.type === 'heroes');
+  }
+  function selectionHandle(items, frame, p) {
+    const handle = C.transformHandle(frame, p, zoom, canRotateSelection());
+    return handle?.type === 'resize' && !resizable(items) ? null : handle;
   }
   function brushSettings() {
     return {
@@ -1197,8 +1454,8 @@ export function createStudio(projectStorage, initial) {
     }
     if (tool === 'select') {
       const items = editableSelection(),
-        b = C.selectionFrame(items),
-        handle = C.transformHandle(b, p, zoom, canRotateSelection());
+        b = frameOf(items),
+        handle = selectionHandle(items, b, p);
       if (handle?.type === 'rotate') {
         startRotation(event);
       } else if (handle) {
@@ -1214,16 +1471,21 @@ export function createStudio(projectStorage, initial) {
         };
       } else {
         const target = hit(p);
-        const selectedHero = target?.type === 'heroes' && selected.size === 1 && selected.has(target.id) && heroAt(target, p) >= 0;
+        const selectedHero = target?.type === 'heroes' && selected.size === 1 && selected.has(target.id) && heroAt(target, p, heroLayoutFor(target)) >= 0;
         if (!event.shiftKey && !event.altKey && hitSelectionFrame(b, p) && !selectedHero) {
           gesture = { type: 'move', start: p, before: C.clone(doc), items: C.clone(items) };
           canvas.style.cursor = 'move';
         } else if (target) {
-          const artwork =
-            event.altKey && doc.layers.find((l) => l.id === target.layer)?.kind === 'artwork';
+          const targetLayer = doc.layers.find((l) => l.id === target.layer);
+          // Groups and ASCII art behave alike, as in Figma: a click takes the whole piece,
+          // Alt+click (or a double click) one member, and a picked member stays picked.
+          const deep = selected.has(target.id) && doc.entities.some((e) => e.layer === target.layer && !selected.has(e.id));
+          const artwork = targetLayer?.kind === 'artwork' && !event.altKey && !deep;
           const ids = artwork
             ? doc.entities.filter((e) => e.layer === target.layer).map((e) => e.id)
             : [target.id];
+          // The hero under the pointer, in the layout that was on screen before this click.
+          const shown = target.type === 'heroes' ? heroLayoutFor(target) : null;
           if (event.shiftKey) {
             const remove = ids.every((id) => selected.has(id));
             for (const id of ids) remove ? selected.delete(id) : selected.add(id);
@@ -1231,7 +1493,7 @@ export function createStudio(projectStorage, initial) {
           else selected = selectionOnClick(selected, target.id);
           if (editable(target) && selected.has(target.id)) {
             const from = target.type === 'heroes' && selected.size === 1 && !event.shiftKey && !event.altKey
-              ? heroAt(target, p) : -1;
+              ? heroAt(target, p, shown) : -1;
             gesture = from >= 0 ? {
               type: 'hero-reorder', groupId: target.id, from, start: p, current: p,
               clientX: event.clientX, clientY: event.clientY, before: C.clone(doc)
@@ -1243,7 +1505,7 @@ export function createStudio(projectStorage, initial) {
         } else {
           const previous = event.shiftKey ? [...selected] : [];
           if (!event.shiftKey) selected.clear();
-          gesture = { type: 'marquee', start: p, current: p, previous };
+          gesture = { type: 'marquee', start: p, current: p, previous, precise: event.altKey };
           draw();
         }
       }
@@ -1279,13 +1541,13 @@ export function createStudio(projectStorage, initial) {
     if (gesture) { gesture.pointerId = event.pointerId; canvas.setPointerCapture(event.pointerId); }
   });
   function eraseAt(p) {
-    eraseSymbols(doc, p);
+    eraseSymbols(doc, p, eraserSize / 2);
   }
   function reorderGroupHero(groupId, from, to) {
     const group = doc.entities.find(e => e.id === groupId && e.type === 'heroes');
     if (!group || !editable(group) || preview || gesture || from === to ||
         ![from, to].every(index => Number.isInteger(index) && index >= 0 && index < group.heroIds.length)) return false;
-    const motion = createHeroMotion(group, from, performance.now());
+    const motion = createHeroMotion(group, from, performance.now(), heroLayoutFor(group));
     if (!commit(() => { group.heroIds = moveHero(group.heroIds, from, to); })) return false;
     targetHeroMotion(motion, to); motion.active = false; heroMotion = motion; draw();
     return true;
@@ -1295,7 +1557,7 @@ export function createStudio(projectStorage, initial) {
     if (!group || !editable(group)) return;
     if (!heroMotion) {
       if (Math.hypot(event.clientX - gesture.clientX, event.clientY - gesture.clientY) < 5) return;
-      heroMotion = createHeroMotion(group, gesture.from, performance.now());
+      heroMotion = createHeroMotion(group, gesture.from, performance.now(), heroLayoutFor(group));
       const slot = heroMotion.slots[gesture.from];
       gesture.offset = { x: gesture.start.x - slot.x, y: gesture.start.y - slot.y };
     }
@@ -1309,11 +1571,15 @@ export function createStudio(projectStorage, initial) {
     if (gesture && gesture.pointerId !== event.pointerId) return;
     const p = point(event);
     lastPoint = p;
+    if (tool === 'eraser') {
+      eraserHover = p;
+      requestPaint();
+    }
     if (!gesture) {
-      const frame = C.selectionFrame(editableSelection());
+      const frame = frameOf(editableSelection());
       const handle =
         tool === 'select' && !preview
-          ? C.transformHandle(frame, p, zoom, canRotateSelection())
+          ? selectionHandle(editableSelection(), frame, p)
           : null;
       const resizeCursors = ['nwse-resize', 'ns-resize', 'nesw-resize', 'ew-resize'];
       canvas.style.cursor =
@@ -1331,9 +1597,9 @@ export function createStudio(projectStorage, initial) {
                 const group = hit(p);
                 const inside = hitSelectionFrame(frame, p);
                 const reorder = group?.type === 'heroes' && (selected.size <= 1 || !selected.has(group.id)) &&
-                  (!inside || selected.has(group.id)) && heroAt(group, p) >= 0;
+                  (!inside || selected.has(group.id)) && heroAt(group, p, heroLayoutFor(group)) >= 0;
                 return reorder ? 'grab' : inside ? 'move' : '';
-              })() : '';
+              })() : tool === 'eraser' && !preview ? 'none' : '';
       return;
     }
     if (gesture.type === 'pan') {
@@ -1348,9 +1614,18 @@ export function createStudio(projectStorage, initial) {
     if (gesture.type === 'move') {
       let dx = p.x - gesture.start.x,
         dy = p.y - gesture.start.y;
+      gesture.guides = [];
       if (snap) {
         dx = Math.round(dx / 8) * 8;
         dy = Math.round(dy / 8) * 8;
+      } else if (!event.ctrlKey && !event.metaKey) {
+        // Figma-style smart guides; Ctrl/Cmd while dragging ignores them.
+        gesture.lines ||= guideLines(guideFrames(), workspace());
+        gesture.frame ||= frameOf(gesture.items);
+        const snapped = snapMove({ ...gesture.frame, x: gesture.frame.x + dx, y: gesture.frame.y + dy }, gesture.lines, 6 / zoom);
+        dx += snapped.dx;
+        dy += snapped.dy;
+        gesture.guides = snapped.guides;
       }
       for (const original of gesture.items) {
         const e = doc.entities.find((e) => e.id === original.id);
@@ -1409,7 +1684,7 @@ export function createStudio(projectStorage, initial) {
       ]);
     else if (!cancel && gesture.type === 'marquee') {
       const b = box(gesture.start, gesture.current);
-      selected = new Set([
+      const picked = new Set([
         ...gesture.previous,
         ...doc.entities
           .filter((e) => {
@@ -1417,6 +1692,7 @@ export function createStudio(projectStorage, initial) {
           })
           .map((e) => e.id)
       ]);
+      selected = gesture.precise ? picked : expandGroups(picked);
     }
     if (!cancel && gesture.before) {
       try {
@@ -1454,6 +1730,11 @@ export function createStudio(projectStorage, initial) {
       if (event.ctrlKey || event.metaKey) {
         event.preventDefault();
         setZoom(wheelZoom(zoom, event.deltaY, event.deltaMode, viewport.clientHeight), event);
+      } else if (tool === 'eraser' && !preview) {
+        // Plain wheel resizes the eraser; Ctrl/Cmd + wheel still zooms.
+        event.preventDefault();
+        eraserHover = point(event);
+        setEraserSize(wheelEraserSize(eraserSize, event.deltaY, event.deltaMode));
       }
     },
     { passive: false }
@@ -1504,6 +1785,10 @@ export function createStudio(projectStorage, initial) {
       .querySelectorAll('[data-close]')
       .forEach((b) => (b.onclick = closeModal));
     if (!modal.open) modal.showModal();
+    // Start in the first field, or on the window itself: never with a focus ring on the close button.
+    const field = [...modal.querySelectorAll('.modal-body :is(input:not([type=hidden]):not([type=checkbox]):not([type=radio]), textarea, select)')]
+      .find((element) => !element.disabled && element.getClientRects().length);
+    (field || modal).focus({ preventScroll: true });
   }
   listen(modal, 'click', (event) => {
     if (event.target === modal) {
@@ -1614,6 +1899,27 @@ export function createStudio(projectStorage, initial) {
     });
     if (changed) resetGridView();
   }
+  function deleteGrid(index) {
+    const config = C.configurations(doc).find((item) => item.index === index);
+    if (!config || doc.source.configs.length < 2) return;
+    openModal(
+      'Удалить сетку?',
+      `<p>«${esc(config.name)}» исчезнет из этого файла. Остальные сетки не изменятся. Вернуть можно через Ctrl+Z.</p>`,
+      '<button class="button secondary" data-close>Отмена</button><button id="confirmDeleteGrid" class="button primary">Удалить сетку</button>'
+    );
+    $('confirmDeleteGrid').onclick = () => {
+      if (gesture) finishGesture(null, true);
+      const wasOpen = index === doc.configIndex;
+      const removed = commit(() => {
+        doc = C.removeConfig(doc, index);
+        selected.clear();
+        pickerGroupId = null;
+      }, 'Сетка удалена · Ctrl+Z вернёт её');
+      closeModal();
+      if (removed && wasOpen) resetGridView();
+    };
+    $('confirmDeleteGrid').focus();
+  }
   function chooseTemplate(kind = 'blank') {
     if (doc.source.configs.length >= C.MAX_CONFIGS) {
       toast('В одном файле допускается до 100 сеток.', true);
@@ -1715,8 +2021,8 @@ export function createStudio(projectStorage, initial) {
     const heroCount = categories.reduce((n, c) => n + c.hero_ids.length, 0);
     openModal(
       'Скачать файл с сетками',
-      `<p>Все сетки (${output.configs.length}) и изменения в них сохранятся в одном JSON.</p><p class="hint">Объекты и герои ниже — в выбранной сетке «${esc(doc.name)}».</p><div class="export-summary"><div><strong id="exportCategoryCount">${categories.length}</strong>КАТЕГОРИЙ</div><div><strong>${heroCount}</strong>ГЕРОЕВ</div><div><strong>${output.configs.length}</strong>СЕТОК В ФАЙЛЕ</div></div>${issues.length ? issues.map((w) => `<div class="export-warning">${esc(w)}</div>`).join('') : `<div class="export-ok">${icon('check')}Объекты находятся внутри холста</div>`}<label class="check-row export-row-option"><input id="compactExportRows" type="checkbox" checked>Объединять точно совпадающие строки при скачивании</label><p class="hint">В редакторе символы останутся отдельными. Отключи, чтобы сохранить каждую категорию отдельно.</p><details class="export-guide"><summary>Как использовать в Dota 2</summary><ol><li>Закрой Dota 2 и сделай резервную копию существующего <strong>hero_grid_config.json</strong>.</li><li>Найди папку своего аккаунта:${steamFolderMarkup()}<p class="steam-folder-note">Код друга — это ID аккаунта в Dota 2. Если Steam установлен в другую папку, укажи её выше.</p></li><li>Помести скачанный <strong>hero_grid_config.json</strong> в эту папку, затем запусти игру и выбери сетку в разделе героев.</li></ol><p>Если импортирован файл с несколькими сетками, остальные сетки сохранятся в экспорте.</p><p>Отображение шрифта и портретов в игре может отличаться от превью.</p></details>`,
-      '<button id="shareCatalogGrid" class="button secondary">Опубликовать в галерею</button><button id="downloadProject" class="button secondary">Сохранить JSON проекта</button><button id="downloadDota" class="button primary">Скачать файл для DOTA</button>',
+      `<p>Все сетки (${output.configs.length}) и изменения в них сохранятся в одном JSON.</p><p class="hint">Объекты и герои ниже — в выбранной сетке «${esc(doc.name)}».</p><div class="export-summary"><div><strong id="exportCategoryCount">${categories.length}</strong>КАТЕГОРИЙ</div><div><strong>${heroCount}</strong>ГЕРОЕВ</div><div><strong>${output.configs.length}</strong>СЕТОК В ФАЙЛЕ</div></div>${issues.length ? issues.map((w) => `<div class="export-warning">${esc(w)}</div>`).join('') : `<div class="export-ok">${icon('check')}Объекты находятся внутри холста</div>`}<label class="check-row export-row-option"><input id="compactExportRows" type="checkbox" checked>Объединять символы одной линии в строки</label><p class="hint">Символы на одной линии становятся одной категорией. Каждый сдвигается меньше чем на полпикселя экрана — в игре не видно. В редакторе символы останутся отдельными.</p><details class="export-guide"><summary>Как использовать в Dota 2</summary><ol><li>Нажми «Скачать файл для DOTA» — браузер сохранит <strong>hero_grid_config.json</strong> в «Загрузки».<div class="export-name-note"><p><strong>Имя файла должно быть ровно <code>hero_grid_config.json</code></strong> — Dota 2 читает только его.</p><ul><li>Если в «Загрузках» уже был такой файл, браузер назовёт новый <code>hero_grid_config (1).json</code>. Переименуй его: убери « (1)».</li><li>Если Windows не показывает «.json» в именах, впиши при переименовании только <code>hero_grid_config</code>, иначе получится <code>hero_grid_config.json.json</code>.</li></ul></div></li><li>Закрой Dota 2 и сделай резервную копию существующего <strong>hero_grid_config.json</strong>.</li><li>Найди папку своего аккаунта:${steamFolderMarkup()}<p class="steam-folder-note">Код друга — это ID аккаунта в Dota 2. Если Steam установлен в другую папку, укажи её выше.</p></li><li><strong>Замени старый файл новым:</strong> скопируй <strong>hero_grid_config.json</strong> в эту папку. Если Windows спросит про файл с таким же именем, выбери «Заменить файл в папке назначения». В папке должен остаться один <strong>hero_grid_config.json</strong>, файлы с другими именами Dota 2 не читает.</li><li>Запусти Dota 2, открой «Герои» и выбери сетку в списке «Сортировка» внизу слева.</li></ol><p>Если импортирован файл с несколькими сетками, остальные сетки сохранятся в экспорте.</p><p>Отображение шрифта и портретов в игре может отличаться от превью.</p></details>`,
+      '<button id="shareCatalogGrid" class="button secondary">Опубликовать в мастерскую</button><button id="downloadProject" class="button secondary">Сохранить JSON проекта</button><button id="downloadDota" class="button primary">Скачать файл для DOTA</button>',
       'export'
     );
     exportGuideCleanup = mountSteamFolder($('steamFolder'), icon);
@@ -1947,7 +2253,144 @@ export function createStudio(projectStorage, initial) {
     for (const { id, key } of IMAGE_TEXT_FIELDS) settings[key] = $(id).value || IMAGE_DEFAULTS[key];
     return settings;
   }
+  function readRowSettings() {
+    const settings = { ...ROW_DEFAULTS };
+    for (const { id, key } of ROW_RANGES) settings[key] = Number($(id).value);
+    for (const { id, key } of ROW_SELECTS) settings[key] = $(id).value;
+    settings.customGlyphs = $('rowCustomGlyphs').value;
+    return settings;
+  }
+  function readTraceSettings() {
+    const settings = { ...TRACE_DEFAULTS };
+    for (const { id, key } of TRACE_RANGES) settings[key] = Number($(id).value);
+    for (const { id, key } of TRACE_SELECTS) settings[key] = $(id).value;
+    settings.pack = $('tracePack').checked;
+    return settings;
+  }
+  // Rows and dots are computed in workers; a newer request replaces one that is still running.
+  function workerJob(jobs, create, message) {
+    if (jobs.worker && jobs.busy) { jobs.worker.terminate(); jobs.worker = null; }
+    const worker = (jobs.worker ||= create());
+    jobs.busy = true;
+    return new Promise((resolve, reject) => {
+      worker.onmessage = ({ data }) => { jobs.busy = false; if (data.error) reject(new Error(data.error)); else resolve(data); };
+      worker.onerror = (event) => { jobs.busy = false; event.preventDefault(); reject(new Error('Image worker failed')); };
+      worker.postMessage(message, [message.luma.buffer]);
+    });
+  }
+  const rowsJob = (message) => workerJob(rowsJobs, () => new Worker(new URL('./ascii-rows.worker.mjs', import.meta.url), { type: 'module' }), message);
+  const traceJob = (message) => workerJob(traceJobs, () => new Worker(new URL('./dot-trace.worker.mjs', import.meta.url), { type: 'module' }), message);
+  function rowAtlasFor(glyphs, bandTop) {
+    const key = `${bandTop}:${glyphs}`;
+    if (!rowAtlases.has(key))
+      rowAtlases.set(key, document.fonts.load(ROW_FONT).then(() =>
+        rowAtlas(glyphs, (width, height) => Object.assign(document.createElement('canvas'), { width, height }), ROW_FONT, bandTop)));
+    return rowAtlases.get(key);
+  }
+  function scheduleRows() {
+    const settings = readRowSettings();
+    for (const { id } of ROW_RANGES) $(id + 'Number').value = $(id).value;
+    const custom = settings.glyphs === 'custom';
+    const { glyphs, skipped } = custom ? rowGlyphs(settings.customGlyphs) : { glyphs: ROW_GLYPH_SETS[settings.glyphs] || ROW_GLYPH_SETS.all, skipped: '' };
+    $('rowCustomField').hidden = !custom;
+    // Dots set their own row step.
+    $('rowPitch').disabled = $('rowPitchNumber').disabled = settings.glyphs === 'dots';
+    $('rowGlyphsHint').hidden = !custom;
+    $('rowGlyphsHint').textContent = skipped
+      ? `Нет в шрифте Dota, пропущены: ${skipped}`
+      : 'Пробел добавляется сам. Строчные буквы игра показывает заглавными.';
+    clearTimeout(convertTimer);
+    const revision = ++convertRevision;
+    if (!imagePixels || !imageDialog.open) return;
+    $('imageCategoryWarning').replaceChildren();
+    $('applyImage').disabled = true;
+    if (Array.from(glyphs).length < 2) {
+      conversionPoints = [];
+      $('conversionStatus').textContent = 'Добавь в набор хотя бы один символ, кроме пробела.';
+      renderImagePreview();
+      return;
+    }
+    $('conversionStatus').textContent = 'Подбираем символы…';
+    convertTimer = setTimeout(async () => {
+      if (disposed || revision !== convertRevision || !imagePixels || !imageDialog.open) return;
+      try {
+        const area = workspace(), fill = settings.fill / 100;
+        const scale = Math.min(((area.w - 30) * fill) / imagePixels.width, ((area.h - 30) * fill) / imagePixels.height);
+        const width = Math.max(8, Math.round(imagePixels.width * scale)), height = Math.max(8, Math.round(imagePixels.height * scale));
+        const luma = rowLuma(imagePixels, width, height), atlas = await rowAtlasFor(glyphs, rowBandTop(settings));
+        if (disposed || revision !== convertRevision) return;
+        const result = await rowsJob({ id: revision, luma, width, height, settings, glyphs: atlas.glyphs, pairs: atlas.pairs });
+        if (disposed || revision !== convertRevision || !imageDialog.open) return;
+        // Row positions are pen positions inside the art; a label draws its text 4px in.
+        const left = (area.w - width) / 2, top = (area.h - height) / 2;
+        conversionPoints = result.rows.map((row) => ({ ch: row.text, x: left + row.x - DOTA.listPadding, y: top + row.y - atlas.bandTop }));
+        const count = conversionPoints.length, chars = result.rows.reduce((sum, row) => sum + Array.from(row.text.replace(/ /g, '')).length, 0);
+        $('conversionStatus').textContent = count
+          ? `${count} ${plural(count, 'строка', 'строки', 'строк')} = ${count} ${plural(count, 'категория', 'категории', 'категорий')} · ${chars.toLocaleString('ru-RU')} ${plural(chars, 'символ', 'символа', 'символов')} · ${width} × ${height} px · символами ${result.ink === 'dark' ? 'тёмные' : 'светлые'} места`
+          : 'Рисунок получился пустым. Попробуй другой режим или «Рисовать символами».';
+        $('applyImage').disabled = !count;
+        renderImagePreview();
+      } catch {
+        if (disposed || revision !== convertRevision) return;
+        conversionPoints = [];
+        $('conversionStatus').textContent = 'Не удалось обработать изображение. Попробуй другой файл.';
+        renderImagePreview();
+      }
+    }, 200);
+  }
+  function categoryAlert(count) {
+    $('imageCategoryWarning').innerHTML = count > 2000
+      ? `<div class="category-warning" role="alert"><span>!</span><div><strong>${count.toLocaleString('ru-RU')} категорий в изображении</strong><p>Больше 2000 категорий могут вызывать лаги и вылет Dota 2.</p></div></div>`
+      : '';
+  }
+  function scheduleTrace() {
+    const settings = readTraceSettings();
+    for (const { id } of TRACE_RANGES) $(id + 'Number').value = $(id).value;
+    clearTimeout(convertTimer);
+    const revision = ++convertRevision;
+    if (!imagePixels || !imageDialog.open) return;
+    $('imageCategoryWarning').replaceChildren();
+    $('applyImage').disabled = true;
+    $('conversionStatus').textContent = 'Ищем линии…';
+    convertTimer = setTimeout(async () => {
+      if (disposed || revision !== convertRevision || !imagePixels || !imageDialog.open) return;
+      try {
+        const area = workspace(), fill = settings.fill / 100;
+        const scale = Math.min(((area.w - 30) * fill) / imagePixels.width, ((area.h - 30) * fill) / imagePixels.height);
+        const width = Math.max(8, Math.round(imagePixels.width * scale)), height = Math.max(8, Math.round(imagePixels.height * scale));
+        const result = await traceJob({ id: revision, luma: rowLuma(imagePixels, width, height), width, height, settings });
+        if (disposed || revision !== convertRevision || !imageDialog.open) return;
+        await document.fonts.load(ROW_FONT);
+        if (disposed || revision !== convertRevision || !imageDialog.open) return;
+        // Dot centres in the picture → category positions: a label draws its dot this far in.
+        const ink = measureCategoryInk(ctx, '.'), left = (area.w - width) / 2 - ink.x - ink.w / 2, top = (area.h - height) / 2 - ink.y - ink.h / 2;
+        const dots = result.dots.map(([x, y]) => ({ ch: '.', x: +(left + x).toFixed(2), y: +(top + y).toFixed(2) }));
+        conversionPoints = settings.pack
+          ? packGlyphs(dots, (text) => measureCategoryWidth(ctx, text)).map((row) => ({ ch: row.text, x: +row.x.toFixed(2), y: +row.y.toFixed(2) }))
+          : dots;
+        const count = conversionPoints.length, total = dots.length;
+        categoryAlert(count);
+        $('conversionStatus').textContent = count
+          ? `${total.toLocaleString('ru-RU')} ${plural(total, 'точка', 'точки', 'точек')}${settings.pack ? ' →' : ' ='} ${count.toLocaleString('ru-RU')} ${plural(count, 'категория', 'категории', 'категорий')} · ${result.source === 'lines' ? 'линии рисунка' : 'границы, как на фото'} · ${width} × ${height} px${result.limited ? ` · достигнут предел ${TRACE_MAX_DOTS.toLocaleString('ru-RU')} точек` : ''}`
+          : 'Линии не найдены. Увеличь детализацию или уменьши «Линии от».';
+        $('applyImage').disabled = !count;
+        renderImagePreview();
+      } catch {
+        if (disposed || revision !== convertRevision) return;
+        conversionPoints = [];
+        $('conversionStatus').textContent = 'Не удалось обработать изображение. Попробуй другой файл.';
+        renderImagePreview();
+      }
+    }, 200);
+  }
+  function showImageMethod() {
+    imageDialog.dataset.method = imageMethod;
+    document.querySelectorAll('[data-image-method]').forEach((button) =>
+      button.setAttribute('aria-pressed', String(button.dataset.imageMethod === imageMethod)));
+  }
   function scheduleConversion() {
+    if (imageMethod === 'rows') return scheduleRows();
+    if (imageMethod === 'trace') return scheduleTrace();
     imageSettings = readImageSettings();
     for (const { id } of IMAGE_RANGES) $(id + 'Number').value = $(id).value;
     $('imageOrient').disabled = imageSettings.onlyDots;
@@ -1966,14 +2409,13 @@ export function createStudio(projectStorage, initial) {
       try {
         const result = convertWithStats(imagePixels, imageSettings, workspace());
         conversionPoints = result.points;
-        $('imageCategoryWarning').innerHTML =
-          conversionPoints.length > 2000
-            ? `<div class="category-warning" role="alert"><span>!</span><div><strong>${conversionPoints.length.toLocaleString('ru-RU')} категорий в изображении</strong><p>Больше 2000 категорий могут вызывать лаги и вылет Dota 2.</p></div></div>`
-            : '';
+        categoryAlert(conversionPoints.length);
         const { contours, shading, limit, width, height } = result.stats;
-        $('conversionStatus').textContent = conversionPoints.length
+        // A saved or imported style may still carry glyphs the game does not show.
+        const hidden = invisibleWarning(imageSettings.charset + (imageSettings.shading ? imageSettings.shadeCharset : ''));
+        $('conversionStatus').textContent = (hidden ? hidden + ' ' : '') + (conversionPoints.length
           ? `${conversionPoints.length} / ${limit} символов · контуры ${contours} · заливка ${shading} · ${width} × ${height} px`
-          : 'Контуры не найдены. Попробуй другой стиль или более контрастный арт.';
+          : 'Контуры не найдены. Попробуй другой стиль или более контрастный арт.');
         $('applyImage').disabled = !conversionPoints.length;
         renderImagePreview();
       } catch {
@@ -2130,6 +2572,11 @@ export function createStudio(projectStorage, initial) {
       ['Переместить на 1 / 10 px', 'Shift + ↑↓←→'],
       ['Выбор героев', '/'],
       ['Сохранить пропорции', 'Shift + угол'],
+      ['Размер ластика', '[ ] или колесо'],
+      ['Объединить / разъединить', 'Ctrl + G / Ctrl + Shift + G'],
+      ['Символ из ASCII-арта или группы', 'Alt + клик или двойной клик'],
+      ['Часть арта рамкой', 'Alt + рамка или лассо (L)'],
+      ['Перетащить без направляющих', 'Ctrl + перетаскивание'],
       ['Сдвинуть фигуру во время рисования', 'Удерживать Shift'],
       ['Поворот текста', 'Снаружи угла'],
       ['Поворот с шагом 15°', 'Shift + поворот']
@@ -2158,6 +2605,18 @@ export function createStudio(projectStorage, initial) {
   }
   focusButton.onclick = () => setFocus(!focused);
   setFocus(true);
+  // Typed or pasted glyphs the game never shows (Braille, box drawing, blocks, a few emoji):
+  // say once per field, and again after the field was cleared of them.
+  const invisibleWarned = new WeakSet();
+  listen(document, 'input', (event) => {
+    const field = event.target;
+    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) return;
+    const warning = invisibleWarning(field.value);
+    if (!warning) return void invisibleWarned.delete(field);
+    if (invisibleWarned.has(field)) return;
+    invisibleWarned.add(field);
+    toast(warning, true);
+  });
   $('dockAddGroup').onclick = () => {
     setMode('heroes');
     addGroup();
@@ -2232,6 +2691,14 @@ export function createStudio(projectStorage, initial) {
     $('brushEndStep').value = mode === 'denser' ? '5' : '40';
   };
   $('brushStep').oninput = () => ($('brushStepValue').textContent = $('brushStep').value + ' px');
+  $('eraserSize').oninput = () => setEraserSize(Number($('eraserSize').value));
+  $('eraserSize').value = Math.round(eraserSize);
+  $('eraserSizeValue').textContent = `${Math.round(eraserSize)} px`;
+  listen(canvas, 'pointerleave', () => {
+    if (!eraserHover) return;
+    eraserHover = null;
+    requestPaint();
+  });
   const frameNames = {
     simple: 'Простая',
     heavy: 'Квадраты',
@@ -2272,7 +2739,7 @@ export function createStudio(projectStorage, initial) {
       closeContextMenu();
       previewView = { zoom, fit, x: viewport.scrollLeft, y: viewport.scrollTop };
       for (const node of document.querySelectorAll(
-        '.app-header, .studio-navigation, .library-panel, .inspector-panel, .editor-shell > :not(#canvasViewport):not(#closePreview)'
+        '.app-header, .studio-navigation, .library-panel, .inspector-panel, .editor-shell > :not(#canvasViewport):not(#closePreview):not(#previewBackground)'
       )) {
         previewInert.set(node, node.inert);
         node.inert = true;
@@ -2284,6 +2751,7 @@ export function createStudio(projectStorage, initial) {
     document.querySelector('.editor-shell').classList.toggle('preview-mode', preview);
     document.body.classList.toggle('game-preview', preview);
     $('closePreview').hidden = !preview;
+    $('previewBackground').hidden = !preview;
     if (preview) {
       viewport.scrollTo(0, 0);
       $('closePreview').focus({ preventScroll: true });
@@ -2313,6 +2781,11 @@ export function createStudio(projectStorage, initial) {
   }
   $('previewButton').onclick = () => setPreview(!preview);
   $('closePreview').onclick = () => setPreview(false);
+  // Preview backdrop: the game's hero screen or the old gradient, shared with the workshop.
+  const showPreviewBackground = (value) => { $('previewBackgroundLabel').textContent = value === 'gradient' ? 'Фон: градиент' : 'Фон: как в Dota'; };
+  showPreviewBackground(gridBackground());
+  $('previewBackground').onclick = () => setGridBackground(gridBackground() === 'gradient' ? 'dota' : 'gradient');
+  const stopPreviewBackground = onGridBackground(showPreviewBackground);
   listen(document, 'fullscreenchange', () => {
     if (!document.fullscreenElement && previewOwnsFullscreen) setPreview(false, false);
     else updateZoom();
@@ -2373,9 +2846,52 @@ export function createStudio(projectStorage, initial) {
     listen($(id), 'input', customizeImage);
   for (const field of IMAGE_TEXT_FIELDS)
     $(field.id + 'Add').onclick = () => openCharsetPicker(field);
+  showImageMethod();
+  document.querySelectorAll('[data-image-method]').forEach((button) => {
+    button.onclick = () => {
+      if (imageMethod === button.dataset.imageMethod) return;
+      imageMethod = button.dataset.imageMethod;
+      try { localStorage.setItem(IMAGE_METHOD_KEY, imageMethod); } catch { /* Only the choice is forgotten. */ }
+      showImageMethod();
+      conversionPoints = [];
+      renderImagePreview();
+      scheduleConversion();
+    };
+  });
+  for (const { id } of [...ROW_RANGES, ...TRACE_RANGES]) {
+    listen($(id), 'input', scheduleConversion);
+    listen($(id + 'Number'), 'input', () => {
+      const field = $(id + 'Number');
+      if (field.value === '' || !Number.isFinite(field.valueAsNumber)) return;
+      $(id).value = field.value;
+      scheduleConversion();
+    });
+    listen($(id + 'Number'), 'blur', () => {
+      $(id + 'Number').value = $(id).value;
+    });
+  }
+  for (const { id } of [...ROW_SELECTS, ...TRACE_SELECTS]) listen($(id), 'change', scheduleConversion);
+  listen($('tracePack'), 'change', scheduleConversion);
+  listen($('rowCustomGlyphs'), 'input', scheduleConversion);
   document.querySelectorAll('[data-image-recipe]').forEach((button) => {
     button.onclick = () => {
-      const recipes = { line: 'Чистый line-art', photo: 'Портрет фото', light: 'Минимализм (мало символов)' };
+      if (imageMethod === 'rows') {
+        // The chosen ink side stays; so do the glyphs, unless the recipe picks them
+        // («Точки») or leaves the dot set.
+        const own = ROW_RECIPES[button.dataset.imageRecipe], recipe = { ...ROW_DEFAULTS, ...own };
+        if (!own.glyphs && $('rowGlyphs').value !== 'dots') delete recipe.glyphs;
+        for (const { id, key } of [...ROW_RANGES, ...ROW_SELECTS]) if (key !== 'ink' && key in recipe) $(id).value = recipe[key];
+        scheduleConversion();
+        return;
+      }
+      if (imageMethod === 'trace') {
+        const own = TRACE_RECIPES[button.dataset.imageRecipe], recipe = { ...TRACE_DEFAULTS, ...own };
+        if (!own.source) delete recipe.source;
+        for (const { id, key } of [...TRACE_RANGES, ...TRACE_SELECTS]) if (key in recipe) $(id).value = recipe[key];
+        scheduleConversion();
+        return;
+      }
+      const recipes = { line: 'Чистый line-art', photo: 'Портрет фото', light: 'Минимализм (мало символов)', dots: 'Аниме точки (базовый)' };
       const name = recipes[button.dataset.imageRecipe];
       applyPreset({ ...D.presets[name], maxCats: button.dataset.imageRecipe === 'light' ? 600 : 1000 });
       $('imagePreset').value = name;
@@ -2388,24 +2904,21 @@ export function createStudio(projectStorage, initial) {
   $('applyImage').onclick = () => {
     if (!imageDialog.open || $('applyImage').disabled || !conversionPoints.length) return;
     let artwork;
+    // Rows and packed dots are text lines; a dot that joined no row stays a symbol.
+    const rows = imageMethod !== 'points';
     const applied = commit(() => {
       artwork = C.addArtwork(
         doc,
-        conversionPoints.map((p) => ({
-          type: 'symbol',
-          name: p.ch,
-          text: p.ch,
-          x: p.x,
-          y: p.y,
-          w: 30,
-          h: 30
-        })),
+        conversionPoints.map((p) => rows && !(imageMethod === 'trace' && Array.from(p.ch).length === 1)
+          ? { type: 'text', name: p.ch, text: p.ch, x: p.x, y: p.y, h: 30,
+              w: Math.max(30, measureCategoryText(ctx, p.ch).advances.reduce((a, b) => a + b, 0) + 8) }
+          : { type: 'symbol', name: p.ch, text: p.ch, x: p.x, y: p.y, w: 30, h: 30 }),
         sourceFilename.replace(/\.[^.]+$/, '') || 'ASCII'
       );
       selected = new Set(artwork.items.map((e) => e.id));
     }, 'Создан отдельный ASCII-слой');
     if (!applied) return;
-    remember(conversionPoints.map((point) => point.ch).join(''));
+    if (!rows) remember(conversionPoints.map((point) => point.ch).join(''));
     closeImageDialog();
     setMode('heroes');
     render();
@@ -2529,7 +3042,7 @@ export function createStudio(projectStorage, initial) {
         event.preventDefault();
       else if (event.key === 'Tab') {
         event.preventDefault();
-        $('closePreview').focus();
+        (document.activeElement === $('closePreview') ? $('previewBackground') : $('closePreview')).focus();
       }
       return;
     }
@@ -2575,6 +3088,10 @@ export function createStudio(projectStorage, initial) {
       if (key === 'd') {
         event.preventDefault();
         selectionAction('duplicate');
+      }
+      if (key === 'g') {
+        event.preventDefault();
+        selectionAction(event.shiftKey ? 'ungroup' : 'group');
       }
       if (key === 'c' && selected.size) {
         event.preventDefault();
@@ -2628,6 +3145,10 @@ export function createStudio(projectStorage, initial) {
       }
     }
     if (event.key === '?') openHelp();
+    if (tool === 'eraser' && (event.code === 'BracketLeft' || event.code === 'BracketRight')) {
+      event.preventDefault();
+      setEraserSize(stepEraserSize(eraserSize, event.code === 'BracketRight' ? 1 : -1));
+    }
     if (key === '0') $('fitButton').click();
     if (key === '+' || key === '=') zoomBy(1.2);
     if (key === '-') zoomBy(1 / 1.2);
@@ -2703,6 +3224,7 @@ export function createStudio(projectStorage, initial) {
       canUndo: history.past.length > 0,
       canRedo: history.future.length > 0,
       canPaste: clipboard.length > 0,
+      arrange: arrangeState(),
       canvas: workspace(),
       recentSymbols,
       categories: C.categoryCount(doc),
@@ -2794,7 +3316,7 @@ export function createStudio(projectStorage, initial) {
   function prepareTextMetrics(items, force = false) {
     for (const item of items) {
       if (item.type === 'heroes' || item.rowGlyphs || Array.from(item.text).length < 2) continue;
-      if (force || item.textMetrics?.text !== item.text.toUpperCase())
+      if (force || item.textMetrics?.text !== item.text.toUpperCase() || item.textMetrics.model !== TEXT_MODEL)
         item.textMetrics = measureCategoryText(ctx, item.text);
     }
   }
@@ -2806,7 +3328,7 @@ export function createStudio(projectStorage, initial) {
         y: gesture.bounds.y + (gesture.originOffset?.y || 0),
         rotation: C.normalizeAngle(gesture.bounds.rotation + gesture.appliedAngle)
       };
-    return C.selectionFrame(items);
+    return frameOf(items);
   }
   function startRotation(event) {
     if (event.button !== 0 || gesture || preview || tool !== 'select' || !canRotateSelection())
@@ -2827,7 +3349,7 @@ export function createStudio(projectStorage, initial) {
       angleSnap: event.shiftKey,
       before: C.clone(doc),
       items: C.clone(items),
-      bounds: C.selectionFrame(items)
+      bounds: frameOf(items)
     };
     canvas.setPointerCapture(event.pointerId);
     canvas.style.cursor = ROTATE_CURSOR;
@@ -2863,18 +3385,20 @@ export function createStudio(projectStorage, initial) {
       const added = commit(() => {
         doc = appendCatalogGrid(doc, grid);
         selected.clear(); pickerGroupId = null;
-      }, 'Сетка из каталога добавлена');
+      }, 'Сетка из мастерской добавлена');
       if (added) resetGridView();
       return added;
     },
     simplifyArt: (percent) => commit(() => { doc = simplifyArtwork(doc, percent).doc; }, 'Плотность уменьшена. Ctrl+Z — отменить'),
-    optimizeArt: (target) => commit(() => {
-      doc = optimizeCategories(planOptimization(doc, (text) => measureCategoryWidth(ctx, text)), target).doc;
-    }, 'Категории сокращены. Ctrl+Z — отменить'),
-    downloadOptimized: (target) => {
+    // pack: «Упаковать точки» (dot-packing.mjs), exactly as the optimizer dialog previews it.
+    optimizeArt: (target, pack = false) => commit(() => {
+      doc = optimizeCategories(planOptimization(doc, (text) => measureCategoryWidth(ctx, text), { pack }), target).doc;
+    }, pack ? 'Точки упакованы в строки. Ctrl+Z — отменить' : 'Категории сокращены. Ctrl+Z — отменить'),
+    downloadOptimized: (target, pack = false) => {
       try {
         const measure = (text) => measureCategoryWidth(ctx, text);
-        const outputDoc = target === null ? doc : optimizeCategories(planOptimization(doc, measure), target).doc;
+        const outputDoc = target === null ? (pack ? packSymbols(doc, measure).doc : doc)
+          : optimizeCategories(planOptimization(doc, measure, { pack }), target).doc;
         const output = C.exportDota(outputDoc, measure);
         download(JSON.stringify(output, null, 2), 'hero_grid_config.json');
         toast('Оптимизированный JSON скачан');
@@ -2898,6 +3422,7 @@ export function createStudio(projectStorage, initial) {
       } else if (action === 'add-text') openText(anchor);
       else if (action === 'select-all') select(doc.entities.filter(editable).map((e) => e.id));
       else if (action === 'fit') $('fitButton').click();
+      else if (action === 'replace-glyphs') openReplaceGlyphs();
       else selectionAction(action);
     },
     addAsciiArt: (art) => {
@@ -2957,7 +3482,7 @@ export function createStudio(projectStorage, initial) {
       commit(() => {
         const items = editableSelection();
         prepareTextMetrics(items);
-        const rotated = C.rotateItems(items, C.selectionFrame(items), delta);
+        const rotated = C.rotateItems(items, frameOf(items), delta);
         items.forEach((item, index) => Object.assign(item, rotated[index]));
         moveItems(items);
       });
@@ -2988,6 +3513,7 @@ export function createStudio(projectStorage, initial) {
     switchGrid,
     newGrid: () => chooseTemplate('blank'),
     renameGrid: renameProject,
+    deleteGrid,
     fitCanvas: () => { if (!preview) { fit = true; updateZoom(); } },
     selectEntity: (id, additive = false) => {
       if (additive) {
@@ -3058,6 +3584,7 @@ export function createStudio(projectStorage, initial) {
       if (preview) setPreview(false);
       flushSave();
       disposed = true;
+      stopPreviewBackground();
       if (referenceImage) referenceImage.onload = null;
       if (customCanvasFont) document.fonts.delete(customCanvasFont);
       abort.abort();
@@ -3068,6 +3595,8 @@ export function createStudio(projectStorage, initial) {
       clearTimeout(saveDeadline);
       clearTimeout(toastTimer);
       clearTimeout(convertTimer);
+      rowsJobs.worker?.terminate();
+      traceJobs.worker?.terminate();
       clearTimeout(modalCloseTimer);
       exportGuideCleanup?.();
       clearTimeout(imageCloseTimer);

@@ -10,9 +10,13 @@ export function editorRoute(request, response, next) {
     return;
   }
   if (pathname === '/editor') request.url = `/editor.html${query}`;
-  if (pathname === '/catalog/') {
-    response.writeHead(308, { Location: `/catalog${query}` }); response.end(); return;
+  // The workshop was the catalog until 1.5; old links keep their query, the browser keeps the #hash.
+  if (pathname === '/catalog' || pathname === '/catalog/') {
+    response.writeHead(301, { Location: `/workshop${query}` }); response.end(); return;
   }
-  if (pathname === '/catalog') request.url = `/catalog.html${query}`;
+  if (pathname === '/workshop/') {
+    response.writeHead(308, { Location: `/workshop${query}` }); response.end(); return;
+  }
+  if (pathname === '/workshop') request.url = `/catalog.html${query}`;
   next();
 }

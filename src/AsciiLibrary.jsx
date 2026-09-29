@@ -1,43 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import catalog from '../data/ascii-arts.json';
-import { layoutAsciiArt } from '../scripts/ascii-library.mjs';
-import { drawCategoryLabel, measureCategoryText } from '../scripts/dota-rendering.mjs';
+import { ArtPreview } from './ArtPreview.jsx';
+import { ArtSubmission } from './ArtSubmission.jsx';
+import { catalogAPI } from './catalog/api.js';
 
-function ArtPreview({ art, onLayout }) {
-  const ref = useRef(null);
-  useEffect(() => {
-    const canvas = ref.current,
-      host = canvas.parentElement,
-      ctx = canvas.getContext('2d');
-    let active = true;
-    const paint = () => {
-      if (!active || !host.clientWidth || !host.clientHeight) return;
-      const layout = layoutAsciiArt(art.text, (text) =>
-        measureCategoryText(ctx, text).advances.reduce((a, b) => a + b, 0)
-      );
-      const w = host.clientWidth,
-        h = host.clientHeight,
-        dpr = Math.min(devicePixelRatio || 1, 2);
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-      const scale = Math.min((w - 24) / layout.width, (h - 24) / layout.height);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.translate((w - layout.width * scale) / 2, (h - layout.height * scale) / 2);
-      ctx.scale(scale, scale);
-      for (const row of layout.rows) drawCategoryLabel(ctx, row.text, row.x, row.y, '#d6c8f7');
-      onLayout?.({ width: layout.width, height: layout.height, rows: layout.rows.length });
-    };
-    const observer = new ResizeObserver(paint);
-    observer.observe(host);
-    document.fonts.ready.then(paint);
-    paint();
-    return () => {
-      active = false;
-      observer.disconnect();
-    };
-  }, [art, onLayout]);
-  return <canvas ref={ref} role="img" aria-label={`Превью: ${art.name}`} />;
-}
+const PLAYERS = 'От пользователей';
 
 function ArtDialog({ art, editor, canvas, close }) {
   const ref = useRef(null);
@@ -54,7 +21,7 @@ function ArtDialog({ art, editor, canvas, close }) {
       <header className="art-dialog-heading">
         <div>
           <h2 id="artDialogTitle">{art.name}</h2>
-          <span>{art.category}</span>
+          <span>{[art.category, art.author, art.player && 'от пользователей'].filter(Boolean).join(' · ')}</span>
         </div>
         <button className="icon-button" aria-label="Закрыть просмотр арта" onClick={close}>
           ×
@@ -96,15 +63,27 @@ export function AsciiLibrary({ editor, canvas }) {
   const [query, setQuery] = useState(''),
     [category, setCategory] = useState('Все'),
     [limit, setLimit] = useState(12),
-    [selected, setSelected] = useState(null);
+    [selected, setSelected] = useState(null),
+    [players, setPlayers] = useState([]),
+    [submitting, setSubmitting] = useState(false);
+  // Approved player arts follow the built-in ones. The server answers 304 while nothing
+  // changed; without the API the editor keeps the built-in library.
+  useEffect(() => {
+    const controller = new AbortController();
+    catalogAPI('/arts', { signal: controller.signal })
+      .then((result) => setPlayers(result.items.map((art) => ({ ...art, id: `player-${art.id}`, player: true }))))
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+  const all = useMemo(() => [...catalog.arts, ...players], [players]);
   const categories = useMemo(
-    () => ['Все', ...new Set(catalog.arts.map((art) => art.category))],
-    []
+    () => ['Все', ...(players.length ? [PLAYERS] : []), ...new Set(all.map((art) => art.category))],
+    [all, players.length]
   );
-  const arts = catalog.arts.filter(
+  const arts = all.filter(
     (art) =>
-      (category === 'Все' || art.category === category) &&
-      `${art.name} ${art.category}`
+      (category === 'Все' || art.category === category || (category === PLAYERS && art.player)) &&
+      `${art.name} ${art.category} ${art.author || ''}`
         .toLocaleLowerCase('ru')
         .includes(query.trim().toLocaleLowerCase('ru'))
   );
@@ -112,8 +91,11 @@ export function AsciiLibrary({ editor, canvas }) {
     <section className="ascii-library" aria-label="Библиотека ASCII-артов">
       <div className="ascii-library-heading">
         <h2>Готовые арты</h2>
-        <span>{catalog.arts.length}</span>
+        <span>{all.length}</span>
       </div>
+      <button className="button secondary full art-offer" onClick={() => setSubmitting(true)}>
+        Предложить свой арт
+      </button>
       <input
         type="search"
         aria-label="Найти ASCII-арт"
@@ -147,7 +129,10 @@ export function AsciiLibrary({ editor, canvas }) {
             <div className="art-thumbnail">
               <ArtPreview art={art} />
             </div>
-            <span>{art.name}</span>
+            <span>
+              {art.name}
+              {art.player && <small>{art.author || 'от пользователей'}</small>}
+            </span>
           </button>
         ))}
       </div>
@@ -157,6 +142,7 @@ export function AsciiLibrary({ editor, canvas }) {
           Показать ещё · {arts.length - limit}
         </button>
       )}
+      {submitting && <ArtSubmission onClose={() => setSubmitting(false)} />}
       {selected && (
         <ArtDialog art={selected} editor={editor} canvas={canvas} close={() => setSelected(null)} />
       )}

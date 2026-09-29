@@ -221,12 +221,15 @@ export function transformReference(r, delta, handle, proportional = false) {
   }
   return { ...r, ...bounds, x: Math.max(0, bounds.x), y: Math.max(0, bounds.y) };
 }
+// Distance is measured to each glyph as Dota draws it (4 px label padding, ~16 px cap height),
+// not to the category corner, so the eraser ring on screen removes exactly what it covers.
+const GLYPH_CENTER = { x: 9, y: 8 };
 export function eraseSymbols(doc, point, radius = 22) {
   doc.entities = doc.entities.flatMap((item) => {
     const layer = doc.layers.find((l) => l.id === item.layer);
     if (item.type === 'heroes' || !layer?.visible || layer.locked) return [item];
     const glyphs = C.textGlyphs(item, true);
-    const keep = glyphs.filter((g) => Math.hypot(g.x - point.x, g.y - point.y) > radius);
+    const keep = glyphs.filter((g) => Math.hypot(g.x + GLYPH_CENTER.x - point.x, g.y + GLYPH_CENTER.y - point.y) > radius);
     if (keep.length === glyphs.length) return [item];
     return keep.map((g) => {
       const clean = { ...g, rotation: 0 };
@@ -237,4 +240,89 @@ export function eraseSymbols(doc, point, radius = 22) {
       return C.entity(doc, clean);
     });
   });
+}
+
+// Replaces characters inside the selected symbol and text objects, keeping every position,
+// e.g. a dotted artwork becomes hearts. `from` is one character, or '' for every visible one;
+// whitespace is never touched. Returns how many characters changed.
+export function replaceGlyphs(items, from, to) {
+  const target = Array.from(String(to ?? '').trim())[0];
+  if (!target) throw new Error('Укажи символ, на который заменить.');
+  const source = from ? Array.from(String(from))[0] : null;
+  let count = 0;
+  for (const item of items) {
+    if (item.type === 'heroes' || typeof item.text !== 'string') continue;
+    const chars = Array.from(item.text);
+    const next = chars.map((ch) => {
+      if (/\s/u.test(ch) || ch === target || (source !== null && ch !== source)) return ch;
+      count++;
+      return target;
+    });
+    const text = next.join('');
+    if (text === item.text) continue;
+    item.text = text;
+    item.name = text;
+    delete item.textMetrics;
+    delete item.rowText;
+    if (item.rowGlyphs) next.filter((ch) => !/\s/u.test(ch)).forEach((ch, i) => item.rowGlyphs[i] && (item.rowGlyphs[i].text = ch));
+  }
+  return count;
+}
+
+// Distinct visible characters of a selection, most frequent first, for the replace picker.
+export function glyphCounts(items) {
+  const counts = new Map();
+  for (const item of items) {
+    if (item.type === 'heroes' || typeof item.text !== 'string') continue;
+    for (const ch of item.text) if (!/\s/u.test(ch)) counts.set(ch, (counts.get(ch) || 0) + 1);
+  }
+  return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+}
+
+// Objects as the player sees them: a whole group or ASCII layer moves as one piece,
+// anything else (including glyphs Alt-picked out of an artwork) is its own object.
+export function selectionUnits(doc, items) {
+  const chosen = new Set(items.map((item) => item.id)), total = new Map(), picked = new Map();
+  for (const entity of doc.entities) {
+    total.set(entity.layer, (total.get(entity.layer) || 0) + 1);
+    if (chosen.has(entity.id)) picked.set(entity.layer, (picked.get(entity.layer) || 0) + 1);
+  }
+  const artwork = new Set(doc.layers.filter((layer) => layer.kind === 'artwork').map((layer) => layer.id));
+  const units = new Map();
+  for (const item of items) {
+    const key = artwork.has(item.layer) && picked.get(item.layer) === total.get(item.layer) ? `layer:${item.layer}` : `item:${item.id}`;
+    if (!units.has(key)) units.set(key, []);
+    units.get(key).push(item);
+  }
+  return [...units.values()];
+}
+
+// Figma-style alignment: several objects line up with each other inside their common
+// bounds; a single object aligns to the canvas. Each object keeps its internal layout.
+// frameOf measures an object; the editor passes the visible (ink) frame.
+const boxFrame = (items) => C.bounds(items, true);
+export function alignUnits(units, side, canvas = C.canvasSize(), frameOf = boxFrame) {
+  if (!units.length) return;
+  const frame = units.length > 1 ? frameOf(units.flat()) : { x: 0, y: 0, w: canvas.w, h: canvas.h };
+  for (const unit of units) {
+    const b = frameOf(unit);
+    const dx = { left: frame.x - b.x, hcenter: frame.x + (frame.w - b.w) / 2 - b.x, right: frame.x + frame.w - b.w - b.x }[side] || 0;
+    const dy = { top: frame.y - b.y, vmiddle: frame.y + (frame.h - b.h) / 2 - b.y, bottom: frame.y + frame.h - b.h - b.y }[side] || 0;
+    moveItems(unit, dx, dy);
+  }
+}
+
+// Equal gaps between three or more objects; the outermost two stay in place.
+export function distributeUnits(units, axis = 'x', frameOf = boxFrame) {
+  if (units.length < 3) return;
+  const [pos, size] = axis === 'y' ? ['y', 'h'] : ['x', 'w'];
+  const boxes = units.map((unit) => ({ unit, b: frameOf(unit) }))
+    .sort((a, c) => a.b[pos] + a.b[size] / 2 - (c.b[pos] + c.b[size] / 2));
+  const first = boxes[0].b, last = boxes.at(-1).b;
+  const gap = (last[pos] + last[size] - first[pos] - boxes.reduce((sum, { b }) => sum + b[size], 0)) / (boxes.length - 1);
+  let cursor = first[pos];
+  for (const { unit, b } of boxes) {
+    moveItems(unit, pos === 'x' ? cursor - b.x : 0, pos === 'y' ? cursor - b.y : 0);
+    cursor += b[size] + gap;
+  }
 }

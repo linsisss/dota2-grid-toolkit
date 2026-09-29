@@ -150,3 +150,33 @@ test('HTTP publication uses the verified account quota, keeps ALTCHA and returns
   assert.equal(Number(blocked.headers.get('Retry-After')), blocked.body.retryAfter);
   assert.equal(store.get("SELECT count(*) n FROM audit WHERE action='submit'").n, 10);
 });
+
+test('subscribing over HTTP needs Telegram, shows in the work card and refuses guest authors', async t => {
+  const [{ CatalogStore }, { createCatalogAPI }] = await modules;
+  const store = new CatalogStore(':memory:', 'test-only-salt');
+  const config = { origin: 'http://127.0.0.1:4173', development: true, salt: 'test-only-salt' };
+  const { server, accounts } = createCatalogAPI(config, { store });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { await new Promise(resolve => server.close(resolve)); store.close(); });
+  const login = accounts.begin('ip', 'browser');
+  accounts.candidate(login.id, { id: 123, first_name: 'Fan', is_bot: false }); accounts.approve(login.id, 123, true);
+  const session = accounts.finish(login.id, login.verifier, '123').session;
+  const call = async (path, method = 'GET', body, signedIn = true) => {
+    const response = await fetch(`http://127.0.0.1:${server.address().port}/api/catalog${path}`, { method,
+      headers: { Origin: config.origin, 'Content-Type': 'application/json', ...(signedIn ? { Cookie: `gs_account=${session}` } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+    return { status: response.status, body: await response.json() };
+  };
+  const linked = store.save(input(1), identity(1), null, null, null, '777'), guest = store.save(input(2), identity(2));
+  for (const work of [linked, guest]) store.moderate(work.id, { action: 'approve', revision: work.revision });
+  assert.equal((await call(`/works/${linked.id}/subscribe`, 'PUT', { subscribed: true }, false)).status, 401);
+  assert.deepEqual((await call(`/works/${linked.id}/subscribe`, 'PUT', { subscribed: true })).body, { followable: true, subscribed: true });
+  const card = (await call(`/works/${linked.id}`)).body;
+  assert.equal(card.subscribed, true); assert.equal(card.followable, true);
+  // The author's account never reaches the public card. Match keys and whole values: a
+  // substring check also hit '777' inside timestamps and IDs now and then.
+  const seen = []; JSON.stringify(card, (key, value) => { seen.push(key, value); return value; });
+  assert.ok(!seen.includes('account') && !seen.includes('777') && !seen.includes(777), 'no account in the card');
+  assert.equal((await call(`/works/${guest.id}/subscribe`, 'PUT', { subscribed: true })).status, 409);
+  assert.equal((await call(`/works/${linked.id}/subscribe`, 'PUT', { subscribed: 'yes' })).status, 400);
+  assert.deepEqual((await call(`/works/${linked.id}/subscribe`, 'PUT', { subscribed: false })).body, { followable: true, subscribed: false });
+});

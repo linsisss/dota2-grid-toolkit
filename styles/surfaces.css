@@ -1,0 +1,202 @@
+/* One look for every editor window, popover and menu, loaded last: a thin light edge,
+   soft depth, compact sizes and a calm entrance and exit. Catalog windows share the
+   same tokens in src/catalog/catalog.css. */
+:root {
+  --surface-edge: #ffffff17;
+  --surface-radius: 14px;
+  --surface-shadow: 0 1px 0 #ffffff0d inset, 0 24px 64px -18px #000d, 0 4px 16px #0006;
+  --surface-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.modal,
+.drawing-dialog,
+.hero-picker,
+.art-dialog,
+.artwork-optimizer {
+  border: 1px solid var(--surface-edge);
+  border-radius: var(--surface-radius);
+  box-shadow: var(--surface-shadow);
+}
+.modal::backdrop,
+.drawing-dialog::backdrop,
+.hero-picker::backdrop,
+.art-dialog::backdrop,
+.artwork-optimizer::backdrop {
+  background: #0b0912a6;
+  backdrop-filter: blur(6px);
+}
+
+/* Small editor windows (rename, new grid, delete, replace symbols, add text). */
+.modal:not(.image-dialog) {
+  width: min(440px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+}
+.modal[data-view='export'] {
+  width: min(760px, calc(100vw - 24px));
+}
+.modal[data-view='help'] {
+  width: min(820px, calc(100vw - 24px));
+}
+.modal[open] {
+  animation: surface-dialog-in 220ms var(--surface-ease);
+}
+.modal.closing {
+  animation: surface-dialog-out 150ms ease-in forwards;
+}
+.modal:focus {
+  outline: none;
+}
+.modal-header {
+  padding: 14px 12px 4px 22px;
+  border-bottom: 0;
+  gap: 12px;
+}
+.modal-header h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.modal-header .icon-button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--muted);
+  background: none;
+}
+.modal-header .icon-button:hover {
+  background: #ffffff10;
+  color: var(--text);
+}
+.modal-body {
+  padding: 8px 22px 16px;
+  font-size: 13px;
+}
+.modal-footer {
+  padding: 4px 22px 20px;
+  border-top: 0;
+  gap: 8px;
+}
+.modal-footer .button {
+  font-size: 13px;
+}
+.modal[data-view='export'] .modal-header,
+.modal[data-view='help'] .modal-header {
+  padding: 16px 14px 14px 26px;
+  border-bottom: 1px solid var(--line);
+}
+.modal[data-view='export'] .modal-footer,
+.modal[data-view='help'] .modal-footer {
+  padding: 14px 26px 20px;
+  border-top: 1px solid var(--line);
+}
+
+/* Fields in windows: a soft accent edge instead of a floating ring. */
+.modal :is(input:not([type='checkbox']):not([type='radio']), textarea, select):focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px #c4b5ed29;
+}
+.modal .hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Menus: compact rows, the same edge and depth. */
+.canvas-context-menu {
+  width: 248px;
+  padding: 5px;
+  border: 1px solid var(--surface-edge);
+  border-radius: 12px;
+  background: #26212e;
+  box-shadow: var(--surface-shadow);
+  animation: surface-menu-in 150ms var(--surface-ease);
+}
+.canvas-context-menu button {
+  min-height: 30px;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+.canvas-context-menu kbd {
+  font-size: 10.5px;
+}
+.canvas-context-menu [role='separator'] {
+  margin: 4px 6px;
+  background: #ffffff12;
+}
+.context-tools {
+  gap: 2px;
+  padding-bottom: 4px;
+}
+.context-tools button,
+.canvas-context-menu .context-block button,
+.context-reflections button {
+  background: #ffffff0a;
+}
+.context-reflections {
+  padding: 2px 3px 2px 8px;
+}
+.context-reflections button {
+  width: 36px;
+  height: 28px;
+}
+.context-block {
+  padding: 3px 3px 3px 8px;
+}
+.canvas-context-menu .context-block button {
+  min-height: 28px;
+}
+.canvas-context-menu .align-icon,
+.reflection-icon {
+  width: 17px;
+  height: 17px;
+}
+.grid-file-menu {
+  padding: 5px;
+  border: 1px solid var(--surface-edge);
+  border-radius: 12px;
+  background: #26212e;
+  box-shadow: var(--surface-shadow);
+  animation: surface-menu-in 150ms var(--surface-ease);
+}
+.grid-file-row {
+  min-height: 34px;
+  border-radius: 6px;
+}
+
+@keyframes surface-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes surface-dialog-out {
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+@keyframes surface-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal[open],
+  .modal.closing,
+  .canvas-context-menu,
+  .grid-file-menu {
+    animation: none;
+  }
+}

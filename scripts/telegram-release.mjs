@@ -9,12 +9,18 @@ import { releasePayload } from './release-format.mjs';
 const args = process.argv.slice(2);
 const file = args.find((arg) => !arg.startsWith('--'));
 const editTestId = Number(args.find((arg) => /^--edit-test=\d+$/.test(arg))?.split('=')[1]);
+// A published release post can be corrected in place (no second notification), only the one
+// message recorded in this version's receipt, and only with the user's approval (--approved).
+const editReleaseId = Number(args.find((arg) => /^--edit-release=\d+$/.test(arg))?.split('=')[1]);
+const editId = editTestId || editReleaseId;
 try {
-  if (!file || args.some((arg) => arg.startsWith('--') && !['--send', '--approved'].includes(arg) && !/^--edit-test=\d+$/.test(arg)))
+  if (!file || args.some((arg) => arg.startsWith('--') && !['--send', '--approved'].includes(arg) && !/^--edit-(test|release)=\d+$/.test(arg)))
     throw new Error('Использование: npm run telegram:preview -- releases/test.json [--send] [--approved]');
   const release = JSON.parse(readFileSync(resolve(file), 'utf8'));
   const config = JSON.parse(readFileSync(new URL('../releases/telegram.json', import.meta.url), 'utf8'));
   if (editTestId && !release.test) throw new Error('Редактировать этой командой можно только тест.');
+  if (editReleaseId && release.test) throw new Error('Тест редактируется через --edit-test.');
+  if (editTestId && editReleaseId) throw new Error('Укажи одно сообщение для правки.');
   let payload = releasePayload(release, config);
   if (!args.includes('--send')) {
     console.log(JSON.stringify(payload, null, 2));
@@ -31,18 +37,22 @@ try {
     const key = createHash('sha256').update(`${config.chatId}:${config.topicId}:${release.test ? 'test' : release.version}`).digest('hex').slice(0, 20);
     mkdirSync('.release-state', { recursive: true });
     const receiptPath = `.release-state/telegram-${key}.json`;
-    if (existsSync(receiptPath) && !editTestId) throw new Error('Отправка уже зарегистрирована. Проверь квитанцию в .release-state и топик; автоматический повтор отключён.');
-    if (editTestId && (!existsSync(receiptPath) || JSON.parse(readFileSync(receiptPath, 'utf8')).messageId !== editTestId)) throw new Error('Можно изменить только собственное тестовое сообщение из квитанции.');
+    if (existsSync(receiptPath) && !editId) throw new Error('Отправка уже зарегистрирована. Проверь квитанцию в .release-state и топик; автоматический повтор отключён.');
+    const previous = existsSync(receiptPath) ? JSON.parse(readFileSync(receiptPath, 'utf8')) : null;
+    if (editTestId && previous?.messageId !== editTestId) throw new Error('Можно изменить только собственное тестовое сообщение из квитанции.');
+    if (editReleaseId && (previous?.status !== 'sent' || previous.messageId !== editReleaseId || previous.version !== release.version))
+      throw new Error('Можно изменить только отправленное сообщение этой версии из квитанции.');
     const telegram = Telegram.fromToken(token, { retryOnFloodWait: false });
     const stickers = await telegram.api.getCustomEmojiStickers({ custom_emoji_ids: [config.emojiId] });
     payload = releasePayload(release, config, stickers[0]?.emoji || '🔷');
     // Reserve before the request. An uncertain timeout must never blindly duplicate a post.
-    if (!editTestId) writeFileSync(receiptPath, JSON.stringify({ status: 'pending', version: release.version, chatId: config.chatId, topicId: config.topicId, startedAt: new Date().toISOString() }, null, 2), { flag: 'wx' });
-    const message = editTestId
-      ? await telegram.api.editMessageText({ chat_id: config.chatId, message_id: editTestId, rich_message: payload.rich_message })
+    if (!editId) writeFileSync(receiptPath, JSON.stringify({ status: 'pending', version: release.version, chatId: config.chatId, topicId: config.topicId, startedAt: new Date().toISOString() }, null, 2), { flag: 'wx' });
+    const message = editId
+      ? await telegram.api.editMessageText({ chat_id: config.chatId, message_id: editId, rich_message: payload.rich_message })
       : await telegram.api.sendRichMessage(payload);
     const customEmoji = JSON.stringify(message.rich_message || {}).includes(config.emojiId);
-    const receipt = { status: 'sent', version: release.version, chatId: String(message.chat.id), topicId: message.message_thread_id, messageId: message.message_id, richMessage: Boolean(message.rich_message), customEmoji, sentAt: new Date().toISOString() };
+    const receipt = { status: 'sent', version: release.version, chatId: String(message.chat.id), topicId: message.message_thread_id, messageId: message.message_id, richMessage: Boolean(message.rich_message), customEmoji,
+      sentAt: editId && previous?.sentAt ? previous.sentAt : new Date().toISOString(), ...(editId ? { editedAt: new Date().toISOString() } : {}) };
     writeFileSync(receiptPath, JSON.stringify(receipt, null, 2));
     console.log(JSON.stringify(receipt, null, 2));
     if (String(message.chat.id) !== config.chatId || message.message_thread_id !== config.topicId) throw new Error('Telegram вернул другой чат или топик. Проверь квитанцию; повтор не выполняется.');

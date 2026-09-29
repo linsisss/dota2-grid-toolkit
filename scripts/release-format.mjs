@@ -4,7 +4,11 @@ export function formatRelease(release, config, emoji = '🔷') {
   if (!release || (!release.test && !/^\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(release.version)))
     throw new Error('Укажи версию релиза в формате 1.2.3.');
   if (!/^\d+$/.test(config.emojiId)) throw new Error('Некорректный ID эмодзи.');
-  if (!Array.isArray(release.changes) || !release.changes.length) throw new Error('Список изменений пуст.');
+  // changes: one list; sections: [{ title, changes }] — each a collapsed <details> block (Bot API
+  // RichBlockDetails: without the open attribute it starts collapsed).
+  const sections = release.sections ?? [{ changes: release.changes }];
+  if (!Array.isArray(sections) || !sections.length || sections.some((section) => !Array.isArray(section?.changes) || !section.changes.length))
+    throw new Error('Список изменений пуст.');
   const lines = [`<h1><tg-emoji emoji-id="${config.emojiId}">${escape(emoji)}</tg-emoji> Обновление ${escape(release.version)}</h1>`];
   function append(items, depth = 0) {
     if (depth > 3) throw new Error('Максимум четыре уровня пунктов.');
@@ -21,7 +25,13 @@ export function formatRelease(release, config, emoji = '🔷') {
     }
     lines.push('</ul>');
   }
-  append(release.changes);
+  for (const section of sections) {
+    if (section.title === undefined) { append(section.changes); continue; }
+    if (typeof section.title !== 'string' || !section.title.trim() || /[\r\n]/.test(section.title)) throw new Error('Название раздела должно быть одной непустой строкой.');
+    lines.push(`<details><summary><b>${escape(section.title)}</b></summary>`);
+    append(section.changes);
+    lines.push('</details>');
+  }
   if (release.test) lines.push('<footer>Тест формата. Новая версия ещё не опубликована.</footer>');
   else if (release.githubUrl) {
     const url = new URL(release.githubUrl);
@@ -29,8 +39,12 @@ export function formatRelease(release, config, emoji = '🔷') {
     lines.push(`<p><a href="${escape(url.href)}">Изменения на GitHub</a></p>`);
   }
   const html = lines.join('\n');
-  if (html.length > 16000 || lines.filter((line) => line.startsWith('<li>')).length > 100)
-    throw new Error('Сводка слишком длинная: максимум 100 пунктов и 16 000 символов разметки.');
+  // Bot API rich message limits: 32 768 characters of text, 500 blocks (list items, lists and
+  // details blocks count), 16 nesting levels; kept with a margin.
+  const text = html.replace(/<[^>]+>/g, '').replace(/&(amp|lt|gt|quot);/g, ' ');
+  const blocks = lines.filter((line) => /^<(li|ul|details)\b/.test(line)).length;
+  if (text.length > 30000 || blocks > 450)
+    throw new Error('Сводка слишком длинная: максимум 30 000 символов текста и 450 блоков.');
   return html;
 }
 

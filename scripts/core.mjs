@@ -1,4 +1,4 @@
-import { DOTA } from './dota-rendering.mjs';
+import { DOTA, invisibleWarning } from './dota-rendering.mjs';
 import { compactCategoryRows } from './export-rows.mjs';
 
 const WIDTH = 1193,
@@ -82,6 +82,35 @@ function deleteArtwork(doc, layerId) {
   doc.entities = doc.entities.filter((e) => e.layer !== layerId);
   doc.layers = doc.layers.filter((l) => l.id !== layerId);
   return true;
+}
+// Groups are artwork layers flagged `group`: the project format is unchanged, a click
+// selects the whole group, Alt+click one member, and the layers panel lists it.
+function groupEntities(doc, ids) {
+  const chosen = new Set(ids), members = doc.entities.filter((e) => chosen.has(e.id));
+  if (members.length < 2) throw new Error('Выдели хотя бы два объекта, чтобы объединить их.');
+  const sources = [...new Set(members.map((e) => e.layer))];
+  const only = sources.length === 1 ? doc.layers.find((l) => l.id === sources[0]) : null;
+  if (only?.kind === 'artwork' && doc.entities.every((e) => e.layer !== only.id || chosen.has(e.id))) {
+    only.group = true;
+    return only;
+  }
+  if (doc.layers.length >= MAX_LAYERS) throw new Error('В проекте допускается до 128 слоёв.');
+  let n = doc.layers.filter((l) => l.group).length + 1;
+  while (doc.layers.some((l) => l.name === `Группа ${n}`)) n++;
+  const layer = { id: `art-${doc.nextId++}`, name: `Группа ${n}`, kind: 'artwork', group: true, visible: true, locked: false };
+  // Keep the group where its topmost member was drawn.
+  doc.layers.splice(Math.max(...sources.map((id) => doc.layers.findIndex((l) => l.id === id))) + 1, 0, layer);
+  for (const e of members) e.layer = layer.id;
+  doc.layers = doc.layers.filter((l) => l.kind !== 'artwork' || l === layer || doc.entities.some((e) => e.layer === l.id));
+  return layer;
+}
+// Dissolves groups (or ASCII layers) into loose objects on the base layers.
+function ungroupLayers(doc, layerIds) {
+  const targets = doc.layers.filter((l) => layerIds.includes(l.id) && l.kind === 'artwork' && !l.locked);
+  const ids = new Set(targets.map((l) => l.id));
+  for (const e of doc.entities) if (ids.has(e.layer)) e.layer = e.type === 'heroes' ? 'heroes' : 'decor';
+  doc.layers = doc.layers.filter((l) => !ids.has(l.id));
+  return targets.length;
 }
 function importDota(data, index = 0) {
   if (!data || data.version !== 3 || !Array.isArray(data.configs) || !data.configs.length)
@@ -301,6 +330,26 @@ function renameConfig(doc, index, value) {
   next.source.configs[index].config_name = name;
   if (index === next.configIndex) next.name = name;
   if (next.configDrafts?.[index]) next.configDrafts[index].name = name;
+  return next;
+}
+// Deletes one grid of the file. Every other grid keeps its edits, drafts and metadata;
+// deleting the active grid opens its neighbour. Callers commit it as one undoable step.
+function removeConfig(doc, index) {
+  if (!Number.isInteger(index) || !doc.source.configs[index]) throw new Error('Сетка не найдена.');
+  if (doc.source.configs.length < 2) throw new Error('В файле должна остаться хотя бы одна сетка.');
+  const drafts = { ...clone(doc.configDrafts || {}), [doc.configIndex]: gridDraft(doc) };
+  const source = clone(doc.source);
+  source.configs.splice(index, 1);
+  const configDrafts = {};
+  for (const [key, draft] of Object.entries(drafts)) {
+    const at = Number(key);
+    if (at !== index && at < doc.source.configs.length) configDrafts[at > index ? at - 1 : at] = draft;
+  }
+  const active = doc.configIndex === index ? Math.min(index, source.configs.length - 1) : doc.configIndex - (doc.configIndex > index ? 1 : 0);
+  const next = importDota(source, active);
+  if (configDrafts[active]) Object.assign(next, clone(configDrafts[active]));
+  next.configDrafts = configDrafts;
+  if (doc.fileName !== undefined) next.fileName = doc.fileName;
   return next;
 }
 function addConfig(doc, name = 'Новая сетка', kind = 'blank') {
@@ -710,10 +759,10 @@ function warnings(doc, exportedCount = categoryCount(doc)) {
   const issues = [];
   const count = visible.filter((e) => outside(e, canvasSize(doc))).length;
   if (count) issues.push(`${count} объект(а) выходят за границы холста.`);
-  if (visible.some((e) => /[║═]/u.test(e.text)))
-    issues.push('Символы ║ и ═ могут отображаться в Dota некорректно.');
-  if (visible.some((e) => /[\u2800-\u28ff\u3040-\u30ff]/u.test(e.text)))
-    issues.push('Брайль и японские символы сохранены без замены. Проверь их в игре: отображение зависит от шрифтов Dota.');
+  const hidden = invisibleWarning(visible.map((e) => (e.type === 'heroes' ? e.name : e.text) || '').join(''));
+  if (hidden) issues.push(hidden);
+  if (visible.some((e) => /[\u3040-\u30ff]/u.test(e.text)))
+    issues.push('Японские символы сохранены без замены. Проверь их в игре: отображение зависит от шрифтов Dota.');
   if (exportedCount > 2000)
     issues.push('Более 2 000 категорий: возможны лаги и вылет Dota 2.');
   if (doc.layers.some((l) => !l.visible && doc.entities.some((e) => e.layer === l.id)))
@@ -970,6 +1019,9 @@ export default {
   switchConfig,
   configurations,
   renameConfig,
+  removeConfig,
+  groupEntities,
+  ungroupLayers,
   addConfig,
   appendConfigs,
   bounds,

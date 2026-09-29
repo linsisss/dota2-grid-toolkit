@@ -30,6 +30,14 @@ test('catalog sanitizes one grid, preserves Unicode spaces and strips unrelated 
   const tooMany = grid(); tooMany.configs[0].categories = Array(5001).fill(tooMany.configs[0].categories[0]); assert.throws(() => normalizeCatalogGrid(tooMany), /5000/);
 });
 
+test('publication has no symbol cap; the card reports the count instead', async () => {
+  const [, , { catalogSubmission }] = await modules;
+  const categories = Array.from({ length: 12 }, (_, i) => ({ category_name: '●'.repeat(2000), x_position: 10, y_position: 10 + i * 40, width: 30, height: 30, hero_ids: [] }));
+  const result = catalogSubmission({ ...input(), grid: { version: 3, configs: [{ config_name: 'Много точек', categories }] } });
+  assert.equal(result.stats.symbols, 24000);
+  const tooMany = grid(); tooMany.configs[0].categories = Array(5001).fill(tooMany.configs[0].categories[0]);
+  assert.throws(() => catalogSubmission({ ...input(), grid: tooMany }), /5000/);
+});
 test('publication accepts the gallery tags and rejects retired or excessive selections', async () => {
   const [, , { catalogSubmission }] = await modules;
   for (const tag of ['Аниме', 'Милота', '18+', 'Рамки', 'С упором на героя', 'Мемы', 'Dead inside'])
@@ -116,11 +124,13 @@ test('production configuration requires HTTPS and a secret without external capt
   assert.equal(catalogConfig({ CATALOG_SECRET: 'x'.repeat(32) }).origin, 'https://gridstudio.me');
   assert.throws(() => catalogConfig({ CATALOG_SECRET: 'x'.repeat(32), CATALOG_ORIGIN: 'http://gridstudio.me' }), /HTTPS/);
 });
-test('HTTP flow protects origin, moderator session, owner tokens and retries after lost submission responses', async t => {
+test('HTTP flow protects origin, Telegram admin access, owner tokens and retries after lost submission responses', async t => {
   const [{ CatalogStore }, { createCatalogAPI }] = await modules;
   const store = new CatalogStore(':memory:', 'test-http-salt');
-  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-http-salt', adminPassword: 'local-test-moderator-password', webModeration: true, database: ':memory:' };
-  const { server } = createCatalogAPI(config, { store }); await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-http-salt', admins: new Set(['1253427']), database: ':memory:' };
+  const { server, accounts } = createCatalogAPI(config, { store }); await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const signIn = id => { const login = accounts.begin('ip', 'browser'); accounts.candidate(login.id, { id: Number(id), first_name: `U${id}`, is_bot: false });
+    accounts.approve(login.id, Number(id), true); return accounts.finish(login.id, login.verifier, id).session; };
   t.after(async () => { await new Promise(resolve => server.close(resolve)); store.close(); });
   const base = `http://127.0.0.1:${server.address().port}/api/catalog`;
   let cookie = '';
@@ -141,9 +151,16 @@ test('HTTP flow protects origin, moderator session, owner tokens and retries aft
   assert.equal(store.moderation().total, 1);
   assert.equal((await call(`/manage/${saved.body.id}`)).status, 404);
   assert.equal((await call(`/manage/${saved.body.id}`, 'GET', null, { Authorization: `Bearer ${request.managementToken}` })).status, 200);
-  assert.equal((await call('/admin/login', 'POST', { password: config.adminPassword })).status, 200);
+  // No password login any more: only the configured Telegram accounts, checked on every request.
+  assert.equal((await call('/admin/login', 'POST', { password: 'local-test-moderator-password' })).status, 401);
+  const fan = signIn('777'), admin = signIn('1253427');
+  assert.equal((await call('/admin/works', 'GET', null, { Cookie: `${cookie}; gs_account=${fan}` })).status, 403);
+  assert.equal((await call('/auth/me', 'GET', null, { Cookie: `${cookie}; gs_account=${fan}` })).body.admin, false);
+  cookie += `; gs_account=${admin}`;
+  assert.equal((await call('/auth/me')).body.admin, true);
   assert.equal((await call('/admin/session')).status, 200);
   assert.equal((await call(`/admin/works/${saved.body.id}`, 'POST', { action: 'approve', revision: saved.body.revision })).status, 200);
+  assert.deepEqual(JSON.parse(store.get("SELECT actor FROM audit WHERE action='approve'").actor), { id: '1253427', name: 'U1253427 · сайт' });
   assert.equal((await call('/works','POST',{...input(40),captcha:request.captcha})).status,400);
   assert.equal((await call(`/works/${saved.body.id}/report`,'POST',{reason:'Test report',captcha:await proof(call,'report')})).status,200);
   const download = await call(`/works/${saved.body.id}/download`); assert.equal(download.body.configs.length, 1); assert.match(download.headers.get('content-disposition'), /attachment/);
@@ -151,5 +168,5 @@ test('HTTP flow protects origin, moderator session, owner tokens and retries aft
   assert.equal((await call(`/manage/${saved.body.id}`, 'PATCH', edited, { Authorization: `Bearer ${'z'.repeat(43)}` })).status, 404);
   assert.equal((await call(`/manage/${saved.body.id}`, 'PATCH', edited, { Authorization: `Bearer ${request.managementToken}` })).status, 401);
   assert.equal((await call(`/works/${saved.body.id}`)).body.grid.configs[0].categories[0].x_position, 10);
-  await call('/admin/logout', 'POST', {}); assert.equal((await call('/admin/session')).status, 401);
+  await call('/auth/logout', 'POST', {}); assert.equal((await call('/admin/session')).status, 401);
 });

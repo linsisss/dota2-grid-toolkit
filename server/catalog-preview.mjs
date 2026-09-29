@@ -1,20 +1,33 @@
 import { createCanvas, GlobalFonts, loadImage } from '@napi-rs/canvas';
 import { fileURLToPath } from 'node:url';
-import { drawCatalogGrid } from '../scripts/catalog-rendering.mjs';
+import { drawCatalogGrid, drawGridGround } from '../scripts/catalog-rendering.mjs';
 import { normalizeCatalogGrid } from '../scripts/catalog-document.mjs';
 import D from '../scripts/data.mjs';
+import { layoutAsciiArt } from '../scripts/ascii-library.mjs';
+import { drawCategoryLabel, measureCategoryText } from '../scripts/dota-rendering.mjs';
 
-let ready = false;
+let ready = false, background = null;
+// Telegram cards always use the Dota 2 backdrop, the site's default.
+function gridBackground() {
+  background ||= loadImage(fileURLToPath(new URL('../assets/backgrounds/dota-grid.webp', import.meta.url))).catch(() => null);
+  return background;
+}
 const portraits = new Map(), knownHeroes = new Map(D.heroes.map(hero => [hero.id, hero.portrait]));
+function loadFonts() {
+  if (ready) return;
+  for (const [file, family] of [['radiance-semibold.otf', 'StudioRadiance'], ['ydygo540.ttf', 'StudioDotaKorean']]) {
+    if (!GlobalFonts.registerFromPath(fileURLToPath(new URL(`../assets/fonts/${file}`, import.meta.url)), family))
+      throw new Error('Не удалось загрузить шрифт превью.');
+  }
+  // Radiance lacks many symbols and the server has no Arial; DejaVu Sans stands in for the
+  // stack's Arial the way a system font does in the browser.
+  const families = new Set(GlobalFonts.families.map(font => font.family));
+  if (!families.has('Arial') && families.has('DejaVu Sans')) GlobalFonts.setAlias('DejaVu Sans', 'Arial');
+  ready = true;
+}
 export async function renderCatalogPreview(source) {
   const { grid } = normalizeCatalogGrid(source);
-  if (!ready) {
-    for (const [file, family] of [['radiance-semibold.otf', 'StudioRadiance'], ['ydygo540.ttf', 'StudioDotaKorean']]) {
-      if (!GlobalFonts.registerFromPath(fileURLToPath(new URL(`../assets/fonts/${file}`, import.meta.url)), family))
-        throw new Error('Не удалось загрузить шрифт превью.');
-    }
-    ready = true;
-  }
+  loadFonts();
   const ids = [...new Set(grid.configs[0].categories.flatMap(c => c.hero_ids))];
   const images = new Map(await Promise.all(ids.map(async id => {
     // No URLs or filesystem paths from a submission are ever opened.
@@ -23,6 +36,18 @@ export async function renderCatalogPreview(source) {
     return [id, await portraits.get(id)];
   })));
   const canvas = createCanvas(1193, 593);
-  drawCatalogGrid(canvas.getContext('2d'), grid, images);
+  drawCatalogGrid(canvas.getContext('2d'), grid, images, 1193, await gridBackground());
   return canvas.encode('png');
 }
+// A submitted art on the card: rows laid out as on insertion, scaled to fit the Dota grid frame.
+export async function renderArtPreview(text) {
+  loadFonts();
+  const canvas = createCanvas(1193, 593), ctx = canvas.getContext('2d');
+  drawGridGround(ctx, await gridBackground());
+  const layout = layoutAsciiArt(text, line => measureCategoryText(ctx, line).advances.reduce((a, b) => a + b, 0));
+  const scale = Math.min(1.5, (1193 - 60) / layout.width, (593 - 60) / layout.height);
+  ctx.translate((1193 - layout.width * scale) / 2, (593 - layout.height * scale) / 2); ctx.scale(scale, scale);
+  for (const row of layout.rows) drawCategoryLabel(ctx, row.text, row.x, row.y, '#d6c8f7');
+  return canvas.encode('png');
+}
+

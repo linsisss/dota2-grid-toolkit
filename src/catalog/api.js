@@ -1,13 +1,15 @@
-export const CATALOG_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'catalog.html' : 'catalog'}`;
+// The workshop lives at /workshop; nginx sends the former /catalog links there with their query and #hash.
+export const CATALOG_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'catalog.html' : 'workshop'}`;
+export const RULES_PATH = `${CATALOG_PATH}?rules`;
 export const EDITOR_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY || 'editor'}`;
 export async function catalogAPI(path, { method = 'GET', body, token, signal } = {}) {
   let response;
   try { response = await fetch(`/api/catalog${path}`, { method, credentials: 'same-origin', referrerPolicy: 'no-referrer',
     headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     ...(body ? { body: JSON.stringify(body) } : {}), signal: signal || AbortSignal.timeout(15000) }); }
-  catch (error) { if (signal?.aborted) throw error; throw new Error('Нет связи с каталогом. Проверь подключение и попробуй ещё раз.'); }
+  catch (error) { if (signal?.aborted) throw error; throw new Error('Нет связи с мастерской. Проверь подключение и попробуй ещё раз.'); }
   let value;
-  try { value = await response.json(); } catch { throw new Error('Каталог сейчас недоступен. Редактор и скачивание файла продолжают работать.'); }
+  try { value = await response.json(); } catch { throw new Error('Мастерская сейчас недоступна. Редактор и скачивание файла продолжают работать.'); }
   if (!response.ok) throw Object.assign(new Error(value.error || 'Не удалось выполнить запрос.'), { status: response.status, duplicateId: value.duplicateId });
   return value;
 }
@@ -26,3 +28,9 @@ export function downloadGrid(grid) {
   const url = URL.createObjectURL(new Blob([JSON.stringify(grid, null, 2)], { type: 'application/json' }));
   const a = document.createElement('a'); a.href = url; a.download = 'hero_grid_config.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+// Which own submission this tab opened in the editor, so publishing can update it in place.
+const EDITING_KEY = 'gridstudio.catalog.editing.v1';
+export function rememberEditing(id) { try { sessionStorage.setItem(EDITING_KEY, id); } catch { /* Only the preselection is lost. */ } }
+export function editingWork() { try { return sessionStorage.getItem(EDITING_KEY) || ''; } catch { return ''; } }
+export function forgetEditing() { try { sessionStorage.removeItem(EDITING_KEY); } catch { /* Nothing to forget. */ } }
+export const ownedToken = id => ownedWorks().find(item => item.id === id)?.token;

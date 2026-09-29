@@ -106,3 +106,42 @@ test('invalid additions leave the original document intact and enforce file limi
   assert.throws(() => C.addConfig(full));
   assert.equal(full.source.configs.length, C.MAX_CONFIGS);
 });
+
+test('deleting a grid keeps every other grid, its edits and the file metadata', () => {
+  let doc = C.importDota(file(), 0);
+  doc.fileName = 'my-grids.json';
+  doc.entities[0].name = 'Edited One';
+  doc = C.switchConfig(doc, 2);
+  doc.entities[0].name = 'Edited Three';
+  doc = C.switchConfig(doc, 3);
+  doc = C.renameConfig(doc, 3, 'Renamed Four');
+  const before = JSON.stringify(doc);
+
+  // Deleting a grid before the active one shifts the active index but not the content.
+  let next = C.removeConfig(doc, 1);
+  assert.equal(JSON.stringify(doc), before);
+  assert.deepEqual(C.configurations(next).map((grid) => grid.name), ['One', 'Three', 'Renamed Four']);
+  assert.equal(next.configIndex, 2);
+  assert.equal(next.name, 'Renamed Four');
+  assert.equal(next.fileName, 'my-grids.json');
+  assert.equal(next.source.extra, 'file metadata');
+  assert.equal(next.source.configs[1].extra, 2);
+  assert.equal(C.switchConfig(next, 0).entities[0].name, 'Edited One');
+  assert.equal(C.switchConfig(next, 1).entities[0].name, 'Edited Three');
+
+  // Deleting the open grid opens its neighbour with that grid's own edits.
+  next = C.removeConfig(C.switchConfig(doc, 2), 2);
+  assert.deepEqual(C.configurations(next).map((grid) => grid.name), ['One', 'Two', 'Renamed Four']);
+  assert.equal(next.configIndex, 2);
+  assert.equal(next.name, 'Renamed Four');
+  next = C.removeConfig(next, 2);
+  assert.equal(next.configIndex, 1);
+  assert.equal(next.name, 'Two');
+  assert.equal(C.switchConfig(next, 0).entities[0].name, 'Edited One');
+
+  // Export keeps the remaining grids only, and the last grid cannot be deleted.
+  assert.deepEqual(C.exportDota(next).configs.map((grid) => grid.config_name), ['One', 'Two']);
+  const single = C.importDota({ version: 3, configs: [file().configs[0]] }, 0);
+  assert.throws(() => C.removeConfig(single, 0), /хотя бы одна/);
+  assert.throws(() => C.removeConfig(doc, 9), /не найдена/);
+});

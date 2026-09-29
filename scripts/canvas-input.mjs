@@ -43,6 +43,24 @@ export function hitItem(doc, point, measure, tolerance = 3) {
   }
   return null;
 }
+// The frame of what is actually drawn: glyph ink for text and symbols (not their 30px
+// category boxes), the title and list for hero groups. Selection frames, handles, smart
+// guides and alignment use it, so the hit box matches the glyph. A shared rotation keeps
+// the frame oriented, as selectionFrame does.
+export function inkFrame(items, measure) {
+  if (!items.length) return null;
+  const first = C.normalizeAngle(items[0].rotation || 0);
+  const angle = items.every((item) => Math.abs(C.normalizeAngle(item.rotation || 0) - first) < 1e-8) ? first : 0;
+  const origin = { x: 0, y: 0 }, points = [];
+  for (const item of items)
+    for (const r of itemInkRects(item, measure))
+      for (const p of [{ x: r.x, y: r.y }, { x: r.x + r.w, y: r.y }, { x: r.x, y: r.y + r.h }, { x: r.x + r.w, y: r.y + r.h }])
+        points.push(angle ? C.rotatePoint(p, origin, -angle) : p);
+  let x = Infinity, y = Infinity, right = -Infinity, bottom = -Infinity;
+  for (const p of points) { x = Math.min(x, p.x); y = Math.min(y, p.y); right = Math.max(right, p.x); bottom = Math.max(bottom, p.y); }
+  const w = right - x, h = bottom - y, center = angle ? C.rotatePoint({ x: x + w / 2, y: y + h / 2 }, origin, angle) : { x: x + w / 2, y: y + h / 2 };
+  return { x: center.x - w / 2, y: center.y - h / 2, w, h, rotation: angle };
+}
 export function intersectsInk(item, box, measure) {
   return itemInkRects(item, measure).some((r) =>
     r.x <= box.x + box.w && r.x + r.w >= box.x && r.y <= box.y + box.h && r.y + r.h >= box.y);

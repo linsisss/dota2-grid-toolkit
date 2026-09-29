@@ -16,7 +16,7 @@ export class CatalogCaptcha {
     ); CREATE INDEX IF NOT EXISTS captcha_expiry ON captcha_challenges(expires);`);
   }
   async issue(identity, action) {
-    if (!['submit', 'report'].includes(action)) fail(400, 'Неизвестная проверка.');
+    if (!['submit', 'report', 'art'].includes(action)) fail(400, 'Неизвестная проверка.');
     const store = this.store;
     store.rate(`captcha:${identity.browser}`, 20, 10 * 60_000);
     store.rate(`captcha-ip:${identity.ip}`, 120, 60_000);

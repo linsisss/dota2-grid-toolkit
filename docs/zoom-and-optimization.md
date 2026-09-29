@@ -8,21 +8,26 @@
 
 ## Optimizer
 
-The counter action is now “Оптимизация”; the >2000-category warning also offers the action. Default mode only reports exact row compaction and permits downloading without changing the editor. Detail reduction is an explicit checkbox, followed by an editable category budget and before/after previews.
+The counter action is “Оптимизация”; the >2000-category warning also offers the action. Default mode reports the download's row joining. «Упаковать точки в строки» moves symbols by up to 1.5 px, so it is off until the user ticks it (user decision, 29.09.2026: nothing that shifts symbols happens automatically, the download stays below half a pixel). Detail reduction is an explicit checkbox, followed by an editable category budget and before/after previews.
 
-`core.categoryEntries` is shared by export and analysis. `export-rows.planCategoryRows` returns both exported categories and their contributing entry indexes. This lets the optimizer treat a losslessly compacted row as one unit instead of deleting arbitrary glyphs from it and accidentally losing its compression.
+### Joining rows on download
+
+`export-rows.planCategoryRows` (used by every download and by the optimizer) joins single glyphs of one layer into text rows when the row's measured text — the calibrated label advances with kerning, `packGlyphs` — puts every glyph back within half a 1080p screen pixel of its own position (`EXACT_PACK`: 0.43 grid units sideways, rows 0.87 high). The game cannot show that difference. Until 29.09.2026 the check demanded an exact baseline and 0.01 px, which hand-placed and converted art never meets: the workshop arts joined 0–6 of thousands of categories; now they shrink 1.35–2.6×.
+
+Glyph roles (`glyphRole`): game-font glyphs anywhere in a row; `#` never first (a label starting with it is a localization key); glyphs Dota draws with a fallback font (⁎, ★, kana) only at the end, because their width in the game is unknown; spaces, right-to-left letters and combining marks never. Heroes and categories with unknown fields stay as they are. `planCategoryRows` also returns the entry indexes of every category.
+
+«Упаковать точки» (`dot-packing.mjs`) is the same packing with 1.5 px sideways and 2 px rows, applied to the document (`packPlan` + `applyPacking`: text rows in place of the symbols).
+
+### Reducing detail
 
 `category-optimization.mjs`:
 
-1. Determines eligible single-symbol objects from visible, unlocked layers. Hero groups, text runs, hidden/locked layers and mixed protected rows are excluded.
-2. Measures neighbourhood density and covariance using spatial-bucket moments. Thin directional regions and isolated details receive higher weight than dense fills. Large compactable runs receive an additional retention weight.
-3. Preserves a representative for each eligible layer and extreme positions where the budget allows.
-4. Allocates the remaining budget through a weighted spatial tree, keeping both subregions represented where possible. All choices are deterministic.
-5. Removes entire selected units and recomputes the actual exported category count. Retained entities keep their IDs, glyphs, positions, dimensions and metadata exactly.
+1. Eligible: single symbols on visible, unlocked layers. Hero groups, text, hidden and locked layers are protected and counted once.
+2. Units: what one category of the result holds — the download's joined rows, or the packed rows with «Упаковать точки». A unit is removed whole; taking one glyph out of a row saves nothing.
+3. Order (`eliminationOrder`): weighted sample elimination (Yuksel 2015). A glyph's crowding is Σ (1 − d/R)^8 over glyphs closer than R (R starts at three typical spacings); its uniqueness is 1 / (1 + 20·crowding), ×0.6 crowding for glyphs other than the layer's usual one. Glyphs of small separate shapes — joined by links shorter than twice the median nearest-neighbour distance, at most 70 px across and 60 glyphs: a mouth, an eye, a button — count ×0.25 crowding, so they stay whole until lines are thinned by about half. The unit with the smallest summed uniqueness goes; its neighbours' crowding drops. Units whose glyphs all sit on earlier glyphs go first. When no unit is crowded, R doubles. Result: overlaps first, then every other row of dense fills, then every other dot of lines — even thinning, never random holes. Every layer keeps one unit.
+4. A budget of N categories keeps the first N − protected units; the actual download count is recomputed (and the kept count lowered if joining differs). Kept symbols keep their IDs, glyphs, positions and metadata; with packing, the kept packed rows become text entities.
 
-The minimum budget includes protected categories and one representative per eligible layer. Actual JSON counts are shown separately from the raw editor count. This is a geometry-based heuristic, not semantic image recognition: small details can still be lost. The preview makes that tradeoff reviewable. It cannot guarantee a particular Dota FPS or that a complex protected document can fit below 2000 categories.
-
-“Применить к холсту” is one undoable transaction. “Скачать JSON” exports the chosen result without applying detail removal to the editor. Other grid drafts and the imported collection remain in the file. Row compaction still happens only during export.
+“Применить к холсту” is one undoable transaction. “Скачать JSON” exports the chosen result without changing the editor. Other grid drafts and the imported collection remain in the file.
 
 ## Validation
 

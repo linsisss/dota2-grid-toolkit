@@ -38,7 +38,7 @@ function PublicationCard({ entry, token, accountId }) {
     <div className="publication-actions">
       <a className="catalog-icon publication-action" href={href} aria-label={`${canEdit ? 'Изменить публикацию' : 'Управлять публикацией'} «${item.title}»`}><Icon name={canEdit ? 'edit' : 'sliders'}/><span className="publication-action-tooltip" aria-hidden="true">{canEdit ? 'Изменить публикацию' : 'Управление'}</span></a>
       <button className="catalog-icon publication-action" disabled={!detail?.grid} onClick={() => downloadGrid(detail.grid)} aria-label={`Скачать сетку «${item.title}»`}><Icon name="download"/><span className="publication-action-tooltip" aria-hidden="true">Скачать сетку</span></button>
-      {item.published && !item.blocked && <a className="catalog-icon publication-action" href={`${CATALOG_PATH}?id=${entry.id}`} aria-label={`Открыть «${item.title}» в каталоге`}><Icon name="external"/><span className="publication-action-tooltip" aria-hidden="true">Открыть в каталоге</span></a>}
+      {item.published && !item.blocked && <a className="catalog-icon publication-action" href={`${CATALOG_PATH}?id=${entry.id}`} aria-label={`Открыть «${item.title}» в мастерской`}><Icon name="external"/><span className="publication-action-tooltip" aria-hidden="true">Открыть в мастерской</span></a>}
       {!item.linked && token && <a className="catalog-link" href={href}>Привязать Telegram</a>}
     </div>
     {error && <p className="publication-error">{error} <button className="catalog-link" onClick={() => setRetry(value => value + 1)}>Повторить</button></p>}
@@ -55,6 +55,6 @@ export default function OwnedPublications({ items, guestItems, auth }) {
     {count ? <div className="catalog-grid publication-files">
       {items.map(item => <PublicationCard key={`${auth.user?.id}:${item.id}`} entry={item} accountId={auth.user?.id}/>)}
       {guestItems.map(item => <PublicationCard key={`guest:${item.id}`} entry={item} token={item.token} accountId={auth.user?.id}/>)}
-    </div> : <div className="catalog-empty"><Icon name="grid"/><h2>Публикаций пока нет</h2><p>Отправь сетку через «Экспортировать» → «Опубликовать в галерею».</p></div>}
+    </div> : <div className="catalog-empty"><Icon name="grid"/><h2>Публикаций пока нет</h2><p>Отправь сетку через «Экспортировать» → «Опубликовать в мастерскую».</p></div>}
   </section>;
 }

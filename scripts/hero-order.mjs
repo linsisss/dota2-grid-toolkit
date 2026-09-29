@@ -31,8 +31,8 @@ export function heroDropIndex(group, point, layout = C.heroLayout(group)) {
 }
 
 // Temporary display coordinates only. The document changes once, on drop.
-export function createHeroMotion(group, from, now) {
-  const layout = C.heroLayout(group), slots = group.heroIds.map((_, index) => heroSlot(group, layout, index));
+export function createHeroMotion(group, from, now, layout = C.heroLayout(group)) {
+  const slots = group.heroIds.map((_, index) => heroSlot(group, layout, index));
   return { groupId: group.id, ids: [...group.heroIds], layout, slots, from, to: from, active: true, valid: true,
     positions: slots.map(slot => ({ ...slot })), targets: slots.map(slot => ({ ...slot })), lastTime: now };
 }

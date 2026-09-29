@@ -3,11 +3,20 @@ import {
   IMAGE_DEFAULTS,
   IMAGE_RANGES,
   IMAGE_CHECKS,
-  IMAGE_TEXT_FIELDS
+  IMAGE_TEXT_FIELDS,
+  ROW_RANGES,
+  ROW_SELECTS,
+  TRACE_RANGES,
+  TRACE_SELECTS
 } from '../scripts/image-settings.mjs';
+import { ROW_DEFAULTS } from '../scripts/ascii-rows.mjs';
+import { TRACE_DEFAULTS } from '../scripts/dot-trace.mjs';
 
-function Range({ name }) {
-  const { id, key, label, min, max, step, hint } = IMAGE_RANGES.find((field) => field.key === name);
+// Ranges whose hint stays visible under the slider.
+const NOTED = new Map([[IMAGE_RANGES, ['thr', 'gridStep', 'blur']], [ROW_RANGES, ['detail', 'pitch']], [TRACE_RANGES, ['length', 'spacing']]]);
+
+function Range({ name, fields = IMAGE_RANGES, defaults = IMAGE_DEFAULTS }) {
+  const { id, key, label, min, max, step, hint } = fields.find((field) => field.key === name);
   return (
     <div className="image-control" title={hint}>
       <div className="image-control-heading">
@@ -19,7 +28,7 @@ function Range({ name }) {
           min={min}
           max={max}
           step={step}
-          defaultValue={IMAGE_DEFAULTS[key]}
+          defaultValue={defaults[key]}
         />
       </div>
       <input
@@ -28,10 +37,32 @@ function Range({ name }) {
         min={min}
         max={max}
         step={step}
-        defaultValue={IMAGE_DEFAULTS[key]}
+        defaultValue={defaults[key]}
       />
-      {['thr', 'gridStep', 'blur'].includes(key) && <p className="hint image-control-hint">{hint}</p>}
+      {NOTED.get(fields).includes(key) && (
+        <p className="hint image-control-hint">{hint}</p>
+      )}
     </div>
+  );
+}
+const RowRange = ({ name }) => <Range name={name} fields={ROW_RANGES} defaults={ROW_DEFAULTS} />;
+const TraceRange = ({ name }) => <Range name={name} fields={TRACE_RANGES} defaults={TRACE_DEFAULTS} />;
+const TraceSelect = ({ name }) => <RowSelect name={name} fields={TRACE_SELECTS} defaults={TRACE_DEFAULTS} />;
+function RowSelect({ name, fields = ROW_SELECTS, defaults = ROW_DEFAULTS }) {
+  const { id, key, label, options } = fields.find((field) => field.key === name);
+  return (
+    <>
+      <label className="field-label" htmlFor={id}>
+        {label}
+      </label>
+      <select id={id} defaultValue={defaults[key]}>
+        {options.map(([value, text]) => (
+          <option key={value} value={value}>
+            {text}
+          </option>
+        ))}
+      </select>
+    </>
   );
 }
 function Check({ name }) {
@@ -74,6 +105,7 @@ export function ImageImportDialog() {
       className="modal image-dialog"
       aria-labelledby="imageDialogTitle"
       data-view="split"
+      data-method="rows"
     >
       <header className="image-dialog-header">
         <div id="imageSource" className="image-dialog-source" hidden>
@@ -138,7 +170,67 @@ export function ImageImportDialog() {
             <button className="button secondary compact" data-image-recipe="line">Контур</button>
             <button className="button secondary compact" data-image-recipe="photo">Фото</button>
             <button className="button secondary compact" data-image-recipe="light">Меньше символов</button>
+            <button className="button secondary compact" data-image-recipe="dots">Точки</button>
           </div>
+          <div className="image-method" role="group" aria-label="Способ конвертации">
+            <button type="button" data-image-method="rows" aria-pressed="true">
+              <strong>Строки символов</strong>
+              <span>Больше деталей, одна категория на строку</span>
+            </button>
+            <button type="button" data-image-method="trace" aria-pressed="false">
+              <strong>Точечный рисунок</strong>
+              <span>Точки ровно по линиям, как от руки</span>
+            </button>
+            <button type="button" data-image-method="points" aria-pressed="false">
+              <strong>Контуры и точки</strong>
+              <span>Прежний способ: символ = категория</span>
+            </button>
+          </div>
+          <div className="image-method-panel" data-method-panel="rows">
+            <p className="hint">Каждая строка рисунка — одна категория, поэтому даже крупный арт не нагружает Доту. Символы подбираются по форме и ширине в игровом шрифте.</p>
+            <div className="image-settings-section">
+              <h3>Рисунок</h3>
+              <RowSelect name="mode" />
+              <RowSelect name="ink" />
+              <RowRange name="fill" />
+              <RowRange name="bright" />
+              <RowRange name="contrast" />
+              <RowRange name="detail" />
+              <RowRange name="density" />
+            </div>
+            <div className="image-settings-section">
+              <h3>Символы</h3>
+              <RowSelect name="glyphs" />
+              <div id="rowCustomField" className="image-charset-field" hidden>
+                <label className="field-label" htmlFor="rowCustomGlyphs">
+                  Свой набор
+                </label>
+                <input id="rowCustomGlyphs" maxLength={300} spellCheck={false} placeholder=".:-=+*%@" />
+              </div>
+              <p id="rowGlyphsHint" className="hint" hidden />
+              <RowRange name="pitch" />
+            </div>
+          </div>
+          <div className="image-method-panel" data-method-panel="trace">
+            <p className="hint">Точки ставятся по линиям рисунка с одинаковым шагом, как в дот-артах от руки, и собираются в строки. Лучше всего подходят рисунки с чёткими контурами.</p>
+            <div className="image-settings-section">
+              <h3>Линии</h3>
+              <TraceSelect name="source" />
+              <TraceRange name="fill" />
+              <TraceRange name="detail" />
+              <TraceRange name="length" />
+            </div>
+            <div className="image-settings-section">
+              <h3>Точки</h3>
+              <TraceRange name="spacing" />
+              <label className="check-row">
+                <input id="tracePack" type="checkbox" defaultChecked={TRACE_DEFAULTS.pack} />
+                Упаковать точки в строки
+              </label>
+              <p className="hint">Точки почти на одной высоте становятся одной категорией. Каждая сдвигается не больше чем на 1,5 px, на глаз не видно, а категорий в 2–3 раза меньше.</p>
+            </div>
+          </div>
+          <div className="image-method-panel" data-method-panel="points">
           <p className="hint">Начни с 1000 символов. Если много шума — увеличь сглаживание и порог контура. Если пропали детали — уменьши шаг.</p>
           <label className="field-label" htmlFor="imagePreset">
             Стиль конвертации
@@ -192,6 +284,7 @@ export function ImageImportDialog() {
             <button id="savePreset" className="button secondary compact">
               Сохранить стиль
             </button>
+          </div>
           </div>
         </section>
       </div>

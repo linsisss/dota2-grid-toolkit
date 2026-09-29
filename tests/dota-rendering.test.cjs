@@ -13,8 +13,9 @@ test('target portrait excludes the screenshot nameplate without stretching or ch
 });
 
 test('custom grid labels use the normal Dota category style, not NewPlayerPool', () => {
-  // Verified against HeroCategoryName in the supplied hero_grid_new.vcss_c.
-  assert.equal(DOTA.fontSize, 16);
+  // HeroCategoryName in the supplied hero_grid_new.vcss_c declares 16px; on screen the
+  // labels measure 15.15 grid units (see the calibration test below).
+  assert.equal(DOTA.fontSize, 15.15);
   assert.equal(DOTA.fontWeight, 600);
   assert.equal(DOTA.letterSpacing, 2);
   assert.equal(DOTA.listPadding, 4);
@@ -77,4 +78,34 @@ test('visible bounds, Shift resizing and export agree about the separate game he
   assert.deepEqual(C.bounds(C.importDota(output).entities, true), after);
   group.y = C.HEIGHT - group.h - DOTA.header + 1;
   assert.equal(C.outside(group), true);
+});
+
+test('label widths reproduce the in-game calibration rows (1920 × 1080 screenshot)', () => {
+  const { createCanvas, GlobalFonts } = require('@napi-rs/canvas');
+  GlobalFonts.registerFromPath(require('node:path').join(__dirname, '../assets/fonts/radiance-semibold.otf'), 'StudioRadiance');
+  const { measureCategoryWidth, measureCategoryText, TEXT_MODEL } = require('../scripts/dota-rendering.mjs');
+  const ctx = createCanvas(8, 8).getContext('2d');
+  // Each row was a label ending in |, with a one-glyph | category placed under it; the gap
+  // between the two bars on screen gives the game's width of the row in grid units.
+  const rows = [['WWWWWWWWWWWWWWWWWWWW', 335], ['IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII', 240.6], ['.........................................', 259.1],
+    ['Ж Ш Щ Ж Ш Щ Ж Ш Щ Ж Ш Щ', 260.8], ['@  @  @  @  @  @  @  @', 197], ['·                                        ', 224.4],
+    ['AVAVAVAVAVAVAVAVAV TATATATA', 282.8], ['/\\/\\/\\/\\/\\/\\/\\/\\/\\ ()()()', 177.9], ["LT.LT.LT.LT.'Y'Y'Y'Y P.P.P.", 235.3],
+    ['%@$·•‹›0123456789 ;:-=+*^~!?', 260.8], ['.:-=+*%@ ЁЁЁ ЙЙЙ ЫЫЫ ЮЮЮ ЯЯЯ ...:::', 354.6]];
+  for (const [text, game] of rows) near(measureCategoryWidth(ctx, text).width, game, 1.5);
+  const metrics = measureCategoryText(ctx, 'AV');
+  assert.equal(metrics.model, TEXT_MODEL);
+  assert.equal(metrics.advances.length, 2);
+});
+
+
+test('glyphs the game does not show (symbol test in Dota) are named on input and on export', () => {
+  const { invisibleGlyphs, invisibleWarning } = require('../scripts/dota-rendering.mjs');
+  const D = require('../scripts/data.mjs').default;
+  // Everything the symbol library offers was seen in the game.
+  assert.deepEqual(invisibleGlyphs(Object.values(D.symbols).flat().join('')), []);
+  assert.equal(invisibleWarning('ABC \u2605 \u2665 \u262f \u{1f600} \u4e2d'), '');
+  assert.equal(invisibleWarning('A\u28ff \u2500\u2551 \u2588\u2591 \u{1f525} \u2b50'), 'Dota не показывает: брайль, символы рамок, блоки ▀█░, \u{1f525}, \u2b50 — в игре этого не будет видно.');
+  const doc = C.createDocument();
+  doc.entities.push(C.entity(doc, { type: 'text', text: 'РАМКА \u2554\u2550\u2557', name: 'РАМКА', x: 10, y: 10, w: 90, h: 30, layer: 'decor' }));
+  assert.ok(C.warnings(doc).includes('Dota не показывает: символы рамок — в игре этого не будет видно.'));
 });

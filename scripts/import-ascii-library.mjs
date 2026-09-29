@@ -51,13 +51,15 @@ const entries = [
 ];
 if (lines.length !== 1194)
   throw new Error('Source changed: review the artwork boundaries before importing.');
+// Dota shows neither Braille nor box drawing (symbol test in the game, 29.09.2026): Braille
+// drawings are left out, and the box diagonals ╱ ╲ become the visible / \.
 const arts = entries.map(([start, end, name, category], index) => ({
   id: `art-${String(index + 1).padStart(2, '0')}`,
   name,
   category,
   sourceLines: [start, end],
-  text: lines.slice(start - 1, end).join('\n')
-}));
+  text: lines.slice(start - 1, end).join('\n').replaceAll('\u2571', '/').replaceAll('\u2572', '\\')
+})).filter((art) => !/[\u2800-\u28ff]/u.test(art.text));
 fs.writeFileSync(
   new URL('../data/ascii-arts.json', import.meta.url),
   JSON.stringify(
@@ -70,4 +72,4 @@ fs.writeFileSync(
     2
   ) + '\n'
 );
-console.log(`${arts.length} artworks imported without replacing Unicode characters.`);
+console.log(`${arts.length} artworks imported; Braille drawings skipped.`);

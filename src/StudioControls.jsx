@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } fr
 import { StudioPortal } from './StudioPortal.jsx';
 import D from '../scripts/data.mjs';
 import C from '../scripts/core.mjs';
+import { editLayout, heroAddSlot } from '../scripts/hero-chrome.mjs';
 import { LayersPanel } from './LayersPanel.jsx';
 import { GridFilePanel } from './GridFilePanel.jsx';
 import { DrawingDialog } from './DrawingDialog.jsx';
@@ -110,17 +111,10 @@ function ProjectPanel({ editor, state }) {
 function GroupControl({ editor, state }) {
   const group = state.group;
   if (!group || state.preview || state.tool !== 'select' || state.reorderingHeroes) return null;
-  const first = C.heroLayout(group),
-    empty = !first;
-  const last = group.heroIds.length - 1;
-  const left =
-    (group.x + (empty ? 8 : first.left + (last % first.cols) * first.stepX + first.cardW)) *
-      state.zoom +
-    (empty ? 0 : 10);
-  const top =
-    (group.y +
-      (empty ? 28 : first.top + Math.floor(last / first.cols) * first.stepY + first.cardH / 2)) *
-    state.zoom;
+  // A selected group is in Dota's edit mode: the «+» is one more item of the hero list.
+  const first = editLayout(group),
+    empty = !group.heroIds.length,
+    slot = heroAddSlot(group, first);
   return (
     <>
       {!empty && !state.resizing && group.heroIds.map((id, index) => {
@@ -144,7 +138,7 @@ function GroupControl({ editor, state }) {
               editor.removeHero(group.id, index, id);
               if (keyboard) requestAnimationFrame(() => {
                 const remaining = overlay.querySelectorAll('.group-remove-hero');
-                (remaining[Math.min(index, remaining.length - 1)] || overlay.querySelector('.group-add'))?.focus({ preventScroll: true });
+                (remaining[Math.min(index, remaining.length - 1)] || overlay.querySelector('.hero-slot-add'))?.focus({ preventScroll: true });
               });
             }}
           >
@@ -152,17 +146,20 @@ function GroupControl({ editor, state }) {
           </button>
         );
       })}
-      <button
-        key={group.id}
-        className={`group-add ${empty ? 'empty' : ''}`}
-        aria-label={`Выбрать героев: ${group.name}`}
-        title="Выбрать героев (/)"
-        style={{ left, top }}
-        onClick={() => editor.openHeroPicker(group.id)}
-      >
-        <Plus />
-        {empty && <span>Добавить</span>}
-      </button>
+      {(
+        // The «+» card of Dota's edit mode, in the next hero slot; it follows the group
+        // while it is resized.
+        <button
+          key={group.id}
+          className="hero-slot-add"
+          aria-label={`Выбрать героев: ${group.name}`}
+          title="Выбрать героев (/)"
+          style={{ left: slot.x * state.zoom, top: slot.y * state.zoom, width: slot.w * state.zoom, height: slot.h * state.zoom }}
+          onClick={() => editor.openHeroPicker(group.id)}
+        >
+          <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 19v62M19 50h62" /></svg>
+        </button>
+      )}
       {state.resizing && (
         <div
           className={`resize-hint ${state.proportional ? 'locked' : ''}`}
@@ -345,7 +342,7 @@ function HeroPicker({ editor, group }) {
           >
             <div className="picker-portrait">
               <img
-                src={hero.thumbnail || `assets/heroes/${hero.id}.png`}
+                src={hero.thumbnail || `assets/heroes/${hero.id}.webp`}
                 style={{ objectPosition: hero.thumbnailPosition }}
                 alt=""
                 loading="lazy"
@@ -386,7 +383,7 @@ function HeroPicker({ editor, group }) {
               .slice(-5)
               .map((id) => {
                 const hero = D.heroes.find((h) => h.id === id);
-                return <img key={id} src={hero?.thumbnail || `assets/heroes/${id}.png`} style={{ objectPosition: hero?.thumbnailPosition }} alt="" />;
+                return <img key={id} src={hero?.thumbnail || `assets/heroes/${id}.webp`} style={{ objectPosition: hero?.thumbnailPosition }} alt="" />;
               })}
           </div>
           <span role="status" aria-live="polite">

@@ -2,7 +2,7 @@ import { NumberInput } from './NumberInput.jsx';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import C from '../scripts/core.mjs';
 import D from '../scripts/data.mjs';
-import { canvasPoint, snapPoint, hitItem, hitSelectionFrame, intersectsInk, selectionOnClick, centerBrushPoints } from '../scripts/canvas-input.mjs';
+import { canvasPoint, snapPoint, hitItem, hitSelectionFrame, inkFrame, intersectsInk, selectionOnClick, centerBrushPoints } from '../scripts/canvas-input.mjs';
 import {
   DRAWING_TOOLS,
   BRUSH_DEFAULTS,
@@ -26,6 +26,7 @@ import { drawCategoryLabel, measureCategoryText, measureCategoryInk } from '../s
 import { ReferencePanel } from './ReferencePanel.jsx';
 import { CategoryCheckbox, RecentSymbols, CategoryWarning } from './SymbolControls.jsx';
 import { pickSymbol, toggleSymbol, searchSymbols, MAX_BRUSH_CHARS } from '../scripts/symbol-tools.mjs';
+import { ERASER, clampEraser, readEraserSize, stepEraserSize, storeEraserSize, wheelEraserSize } from '../scripts/eraser-size.mjs';
 
 export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) {
   const dialog = useRef(null),
@@ -57,6 +58,67 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     [revision, setRevision] = useState(0);
   const selectionRef = useRef(selected);
   selectionRef.current = selected;
+  // Eraser ring lives on its own overlay canvas: hovering never repaints the drawing or re-renders React.
+  const [eraserSize, setEraserSize] = useState(readEraserSize);
+  const ring = useRef(null), eraserHover = useRef(null), eraserRef = useRef(eraserSize), eraserLabelUntil = useRef(0), eraserLabelTimer = useRef(0);
+  const live = useRef({});
+  live.current = { tool, board, size, paintRing: paintEraserRing, changeEraser };
+  function paintEraserRing() {
+    const node = ring.current;
+    if (!node) return;
+    const ratio = Math.min(devicePixelRatio || 1, 2), w = Math.round(size.w * ratio), h = Math.round(size.h * ratio);
+    if (node.width !== w || node.height !== h) Object.assign(node, { width: w, height: h });
+    const ctx = node.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    const p = eraserHover.current;
+    if (tool !== 'eraser' || !p) return;
+    ctx.setTransform(w / board.w, 0, 0, h / board.h, 0, 0);
+    const css = board.w / size.w, radius = eraserRef.current / 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+    ctx.lineWidth = 3 * css;
+    ctx.strokeStyle = '#0c0b10b0';
+    ctx.stroke();
+    ctx.lineWidth = 1.2 * css;
+    ctx.strokeStyle = '#efeaf5';
+    ctx.stroke();
+    ctx.fillStyle = '#efeaf5';
+    ctx.fillRect(p.x - css, p.y - css, 2 * css, 2 * css);
+    if (performance.now() < eraserLabelUntil.current) {
+      const label = `${Math.round(eraserRef.current)} px`;
+      ctx.font = `600 ${12 * css}px 'SF Pro Display', system-ui, sans-serif`;
+      const x = p.x + radius * 0.72 + 8 * css, y = p.y - radius * 0.72 - 8 * css;
+      ctx.fillStyle = '#211e29e8';
+      ctx.fillRect(x, y - 15 * css, ctx.measureText(label).width + 12 * css, 20 * css);
+      ctx.fillStyle = '#efeaf5';
+      ctx.fillText(label, x + 6 * css, y);
+    }
+  }
+  function changeEraser(value) {
+    const next = clampEraser(value);
+    eraserRef.current = next;
+    setEraserSize(next);
+    storeEraserSize(next);
+    eraserLabelUntil.current = performance.now() + 900;
+    paintEraserRing();
+    clearTimeout(eraserLabelTimer.current);
+    eraserLabelTimer.current = setTimeout(() => live.current.paintRing(), 950);
+  }
+  useEffect(() => paintEraserRing(), [tool, size, board.w, board.h]);
+  useEffect(() => {
+    const node = canvas.current;
+    // React wheel listeners are passive; this one must cancel page scrolling.
+    const wheel = (event) => {
+      const { tool: current, board: area, changeEraser: change } = live.current;
+      if (current !== 'eraser' || event.ctrlKey || event.metaKey) return;
+      event.preventDefault();
+      eraserHover.current = canvasPoint(event, node.getBoundingClientRect(), area);
+      change(wheelEraserSize(eraserRef.current, event.deltaY, event.deltaMode));
+    };
+    node.addEventListener('wheel', wheel, { passive: false });
+    return () => { node.removeEventListener('wheel', wheel); clearTimeout(eraserLabelTimer.current); };
+  }, []);
   const tools = [
     ['select', '↖', 'Выделение'],
     ['reference', '▧', 'Переместить фон'],
@@ -64,7 +126,13 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
   ];
   const bounds = overflow(doc);
   const matchingSymbols = searchSymbols(D.symbols, query, category);
-  const ink = (text) => measureCategoryInk(canvas.current.getContext('2d'), text);
+  // Ink bounds per text, cached: selection frames are measured on every pointer move.
+  const inkCache = useRef(new Map());
+  const ink = (text) => {
+    const cache = inkCache.current;
+    if (!cache.has(text)) { if (cache.size > 5000) cache.clear(); cache.set(text, measureCategoryInk(canvas.current.getContext('2d'), text)); }
+    return cache.get(text);
+  };
   useLayoutEffect(() => {
     const trigger = document.activeElement,
       node = dialog.current;
@@ -126,11 +194,9 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     ctx.strokeStyle = '#c4b5ed';
     ctx.lineWidth = board.w / size.w;
     if (selected.length) {
-      const b = C.bounds(
-        doc.entities.filter((e) => selected.includes(e.id)),
-        true
-      );
-      ctx.strokeRect(b.x, b.y, b.w, b.h);
+      // The glyphs' own ink, as in the editor, a hairline off them.
+      const b = inkFrame(doc.entities.filter((e) => selected.includes(e.id)), ink), gap = (2 * board.w) / size.w;
+      ctx.strokeRect(b.x - gap, b.y - gap, b.w + gap * 2, b.h + gap * 2);
     }
     if (tool === 'reference' && r?.visible) {
       ctx.strokeRect(r.x, r.y, r.w, r.h);
@@ -225,7 +291,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
       return;
     }
     if (tool === 'select') {
-      const frame = C.bounds(before.entities.filter(item => selectionRef.current.includes(item.id)), true);
+      const frame = inkFrame(before.entities.filter(item => selectionRef.current.includes(item.id)), ink);
       if (!e.shiftKey && hitSelectionFrame(frame, p)) {
         stroke.current = { type: 'move', before, start: p, ids: [...selectionRef.current] };
         canvas.current.style.cursor = 'move';
@@ -252,7 +318,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     setSelected([]);
     if (tool === 'eraser') {
       const next = C.clone(before);
-      eraseSymbols(next, p);
+      eraseSymbols(next, p, eraserRef.current / 2);
       update(next);
     } else previewStroke(e.shiftKey);
   }
@@ -260,12 +326,16 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     const s = stroke.current;
     if (s && e.pointerId !== activePointer.current) return;
     const p = point(e);
+    if (tool === 'eraser') {
+      eraserHover.current = p;
+      paintEraserRing();
+    }
     if (!s) {
       if (tool === 'reference') {
         const handle = referenceHit(doc.reference, p, (9 * board.w) / size.w);
         canvas.current.style.cursor = referenceCursor(handle);
       } else if (tool === 'select') {
-        const frame = C.bounds(latest.current.entities.filter(item => selectionRef.current.includes(item.id)), true);
+        const frame = inkFrame(latest.current.entities.filter(item => selectionRef.current.includes(item.id)), ink);
         canvas.current.style.cursor = hitSelectionFrame(frame, p) ? 'move' : '';
       }
       return;
@@ -293,7 +363,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
       setPath([s.start, { x:p.x, y:s.start.y }, p, { x:s.start.x, y:p.y }]);
     } else if (s.type === 'erase') {
       const next = C.clone(latest.current);
-      eraseSymbols(next, p);
+      eraseSymbols(next, p, eraserRef.current / 2);
       update(next);
     } else if (s.type === 'draw') {
       advanceDrawingStroke(s, snapPoint(p, snap), e.shiftKey);
@@ -382,6 +452,10 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
       next.entities = next.entities.filter((item) => !selected.includes(item.id));
       commit(next);
     }
+    if (tool === 'eraser' && (e.code === 'BracketLeft' || e.code === 'BracketRight')) {
+      e.preventDefault();
+      changeEraser(stepEraserSize(eraserRef.current, e.code === 'BracketRight' ? 1 : -1));
+    }
     if (!e.ctrlKey && !e.metaKey) {
       if (key === 'l') setTool('lasso');
       if (key === 'b') setTool('pencil');
@@ -468,6 +542,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
           <CategoryWarning count={C.categoryCount(doc)} />
           <RecentSymbols symbols={recentSymbols} onPick={useSymbol} />
           <div ref={viewport} className="drawing-viewport">
+            <div className="drawing-canvas-frame">
             <canvas
               ref={canvas}
               aria-label="Холст нового рисунка"
@@ -475,16 +550,19 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
               style={{
                 width: size.w,
                 height: size.h,
-                cursor: tool === 'reference' ? 'move' : tool === 'select' ? 'default' : 'crosshair'
+                cursor: tool === 'reference' ? 'move' : tool === 'select' ? 'default' : tool === 'eraser' ? 'none' : 'crosshair'
               }}
               onPointerDown={down}
               onPointerMove={move}
               onPointerUp={finish}
+              onPointerLeave={() => { eraserHover.current = null; paintEraserRing(); }}
               onPointerCancel={(e) => finish(e, true)}
               onLostPointerCapture={(e) => {
                 if (stroke.current) finish(e, true);
               }}
             />
+            <canvas ref={ring} className="drawing-eraser-ring" aria-hidden="true" style={{ width: size.w, height: size.h }} />
+            </div>
           </div>
           <div className="drawing-status">
             <span>
@@ -516,6 +594,9 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
         <aside className="drawing-settings" aria-label="Настройки рисунка">
           <button className="button secondary full" onClick={() => document.getElementById('draftReferencePanel').scrollIntoView({ block:'nearest', behavior:'smooth' })}>Фон для обводки</button>
           <label className="check-row"><input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />Привязка к сетке 8 px</label>
+          {tool === 'eraser' && <><label className="range-label" htmlFor="draftEraserSize">Размер ластика <output>{Math.round(eraserSize)} px</output></label>
+            <input id="draftEraserSize" type="range" min={ERASER.min} max={ERASER.max} value={Math.round(eraserSize)} onChange={(e) => changeEraser(Number(e.target.value))} />
+            <p className="hint">Колесо мыши над холстом или [ и ] — меньше и больше.</p></>}
           {tool === 'frame' && <><label className="field-label" htmlFor="draftFrame">Стиль рамки</label>
             <select id="draftFrame" value={frameStyle} onChange={(e) => setFrameStyle(e.target.value)}>
               {Object.entries(D.frames).map(([key, frame]) => <option key={key} value={key}>{frame.tl} {frame.h} {frame.tr} · {frame.v}</option>)}

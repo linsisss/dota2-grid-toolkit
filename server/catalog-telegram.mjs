@@ -8,7 +8,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { CatalogStore } from './catalog-store.mjs';
 import { catalogConfig } from './catalog-api.mjs';
 import { TelegramQueue } from './catalog-telegram-store.mjs';
-import { renderCatalogPreview } from './catalog-preview.mjs';
+import { renderCatalogPreview, renderArtPreview } from './catalog-preview.mjs';
 import { Accounts } from './accounts.mjs';
 import { telegramAvatar } from './telegram-profile.mjs';
 
@@ -32,11 +32,22 @@ const reviewEmojis = Object.freeze({
   waiting: ['5776213190387961618', '🕓']
 });
 const reviewEmoji = name => `<tg-emoji emoji-id="${reviewEmojis[name][0]}">${reviewEmojis[name][1]}</tg-emoji>`;
-const resultLabel = { approve: 'Одобрено', reject: 'Отклонено', keep: 'Жалоба отклонена', hide: 'Скрыто из каталога', outdated: 'Заявка уже проверена, изменена или удалена' };
+const resultLabel = { approve: 'Одобрено', reject: 'Отклонено', keep: 'Жалоба отклонена', hide: 'Скрыто из мастерской', outdated: 'Заявка уже проверена, изменена или удалена' };
 const errorCode = error => Number(error?.code ?? error?.error_code);
 export function reviewCaption(job, config) {
   const s = JSON.parse(job.summary), actor = job.actor ? JSON.parse(job.actor) : null;
   const decisionIcon = { approve: 'approve', reject: 'reject', keep: 'approve', hide: 'reject' }[job.outcome] || 'notice';
+  const decision = job.outcome
+    ? `${reviewEmoji(decisionIcon)} ${resultLabel[job.outcome] || 'Проверено'}${actor ? ` · ${escape(actor.name)} (ID ${escape(actor.id)})` : ''}`
+    : `${reviewEmoji('waiting')} Ожидает принятия решения`;
+  if (job.kind === 'art') return [
+    ...(config.local ? ['<i>Локальная проверка</i>'] : []),
+    `${reviewEmoji('notice')} <b>Новый арт на проверку:</b> "${escape(s.title)}"`,
+    `${reviewEmoji('author')} Автор: ${escape(s.author || 'не указан')}`,
+    `${reviewEmoji('categories')} Строк: ${s.rows}, ширина: ${s.width} символов`,
+    `${reviewEmoji('tags')} Категория: ${escape(s.category)}`,
+    '', decision
+  ].join('\n');
   return [
     ...(config.local ? ['<i>Локальная проверка</i>'] : []),
     `${reviewEmoji('notice')} <b>${job.kind === 'report' ? 'Жалоба на сетку' : 'Новая сетка на проверку'}:</b> "${escape(s.title)}"`,
@@ -45,14 +56,12 @@ export function reviewCaption(job, config) {
     `${reviewEmoji('tags')} Теги: ${s.tags.length ? s.tags.map(escape).join(', ') : 'не указаны'}`,
     ...(s.stats.categories > 2000 ? [`${reviewEmoji('notice')} Более 2 000 категорий: возможны просадки FPS и вылеты Dota.`] : []),
     ...(s.reason ? [`${reviewEmoji('tags')} Жалоба: ${escape(s.reason.slice(0, 350))}`] : []),
-    '', job.outcome
-      ? `${reviewEmoji(decisionIcon)} ${resultLabel[job.outcome] || 'Проверено'}${actor ? ` · ${escape(actor.name)} (ID ${escape(actor.id)})` : ''}`
-      : `${reviewEmoji('waiting')} Ожидает принятия решения`
+    '', decision
   ].join('\n');
 }
 export function reviewKeyboard(job, config) {
   if (job.outcome) {
-    return { inline_keyboard: job.outcome === 'approve' && !config.local ? [[{ text: 'Открыть в каталоге', url: `${config.origin}/catalog?id=${job.work}` }]] : [] };
+    return { inline_keyboard: job.outcome === 'approve' && job.kind !== 'art' && !config.local ? [[{ text: 'Открыть в мастерской', url: `${config.origin}/workshop?id=${job.work}` }]] : [] };
   }
   const actions = job.kind === 'report'
     ? [['keep', 'Оставить сетку', 'approve'], ['hide', 'Скрыть сетку', 'reject']]
@@ -62,8 +71,8 @@ export function reviewKeyboard(job, config) {
 export const isChatMember = member => ['creator', 'administrator', 'member'].includes(member?.status) || (member?.status === 'restricted' && member.is_member === true);
 
 export class CatalogTelegram {
-  constructor(store, config, api, { render = renderCatalogPreview, log = console.log, avatar = telegramAvatar } = {}) {
-    this.store = store; this.config = config; this.api = api; this.render = render; this.log = log;
+  constructor(store, config, api, { render = renderCatalogPreview, renderArt = renderArtPreview, log = console.log, avatar = telegramAvatar } = {}) {
+    this.store = store; this.config = config; this.api = api; this.render = render; this.renderArt = renderArt; this.log = log;
     this.queue = new TelegramQueue(store); this.owner = randomUUID(); this.botId = null;
     this.accounts = new Accounts(store);
     this.loadAvatar = avatar;
@@ -82,13 +91,13 @@ export class CatalogTelegram {
     this.queue.sync();
     const job = this.queue.claim(); if (!job) return false;
     let preview;
-    try { preview = await this.render(JSON.parse(this.store.revision(job.revision).grid)); }
+    try { preview = await (job.kind === 'art' ? this.renderArt(this.queue.arts.get(job.revision).text) : this.render(JSON.parse(this.store.revision(job.revision).grid))); }
     catch { this.queue.retry(job, 'queued', 60_000); this.log(`Не удалось нарисовать превью заявки ${job.id}; повтор через минуту.`); return false; }
     if (!this.queue.active(job)) { this.queue.sync(); return false; }
     this.queue.sending(job, this.config);
     try {
       const message = await this.api.sendPhoto({ chat_id: this.config.chatId, message_thread_id: this.config.topicId,
-        photo: MediaSource.buffer(preview, { filename: 'grid-preview.png' }), caption: reviewCaption(job, this.config),
+        photo: MediaSource.buffer(preview, { filename: job.kind === 'art' ? 'art-preview.png' : 'grid-preview.png' }), caption: reviewCaption(job, this.config),
         parse_mode: 'HTML', reply_markup: reviewKeyboard(job, this.config) });
       if (String(message.chat?.id) !== this.config.chatId || message.message_thread_id !== this.config.topicId || !message.message_id)
         throw new Error('Unexpected message destination');
@@ -115,8 +124,82 @@ export class CatalogTelegram {
       }
     }
   }
+  // One private message from an outbox row. Players who signed in pressed Start, so the bot may
+  // write to them; blocked or deleted chats fail for good, 429 waits. False stops the round.
+  async direct(table, key, note, message) {
+    const set = (change, ...args) => this.store.run(`UPDATE ${table} SET ${change} WHERE ${key}=?`, ...args, note[key]);
+    try {
+      await this.api.sendMessage({ chat_id: note.account, parse_mode: 'HTML', link_preview_options: { is_disabled: true }, ...message });
+      set("state='sent'");
+    } catch (error) {
+      const code = errorCode(error);
+      if (code === 429) { set('next_at=?', this.store.now() + Math.max(5, error.parameters?.retry_after || 30) * 1000); return false; }
+      if ((code >= 400 && code < 500) || note.attempts >= 4) set("state='failed'");
+      else set('attempts=attempts+1, next_at=?', this.store.now() + 60_000 * 2 ** note.attempts);
+    }
+    await delay(40); // Telegram allows about 30 messages per second per bot.
+    return true;
+  }
+  // New works of followed authors.
+  async deliverNotifications(limit = 20) {
+    const due = this.store.all("SELECT * FROM notifications WHERE state='queued' AND next_at<=? ORDER BY id LIMIT ?", this.store.now(), limit);
+    for (const note of due) {
+      const work = this.store.get(`SELECT w.id, w.account, r.title, r.author, a.name, a.username FROM works w JOIN revisions r ON r.id=w.public_revision
+        LEFT JOIN accounts a ON a.id=w.account WHERE w.id=? AND w.state='active'`, note.work);
+      if (!work || !this.store.get('SELECT 1 x FROM subscriptions WHERE account=? AND author=?', note.account, work.account)) {
+        this.store.run("UPDATE notifications SET state='dropped' WHERE id=?", note.id); continue;
+      }
+      const url = `${this.config.origin}/workshop?id=${work.id}`;
+      const name = work.author || (work.username ? `@${work.username}` : work.name) || 'Автор';
+      if (!await this.direct('notifications', 'id', note, {
+        text: `<b>${escape(name)}</b> выложил новую сетку героев <a href="${escape(url)}">«${escape(work.title)}»</a>`,
+        reply_markup: { inline_keyboard: [[{ text: 'Открыть сетку', url }], [{ text: 'Отписаться от автора', callback_data: `sub:off:${work.id}` }]] } })) return;
+    }
+  }
+  // The author's own grid or its update was approved, on the site or in the moderation topic.
+  async deliverAuthorNotices(limit = 20) {
+    const due = this.store.all("SELECT * FROM author_notices WHERE state='queued' AND next_at<=? ORDER BY created, revision LIMIT ?", this.store.now(), limit);
+    for (const note of due) {
+      const work = this.store.get(`SELECT w.id, w.account, w.public_revision, r.title FROM works w JOIN revisions r ON r.id=w.public_revision
+        WHERE w.id=? AND w.state='active'`, note.work);
+      // Hidden since, or a newer version already went live and has its own message.
+      if (!work || work.public_revision !== note.revision || work.account !== note.account) {
+        this.store.run("UPDATE author_notices SET state='dropped' WHERE revision=?", note.revision); continue;
+      }
+      const url = `${this.config.origin}/workshop?id=${work.id}`, link = `<a href="${escape(url)}">«${escape(work.title)}»</a>`;
+      if (!await this.direct('author_notices', 'revision', note, {
+        text: note.first ? `${reviewEmoji('approve')} Твоя сетка ${link} одобрена и опубликована в мастерской.`
+          : `${reviewEmoji('approve')} Изменения в сетке ${link} одобрены — в мастерской уже новая версия.`,
+        reply_markup: { inline_keyboard: [[{ text: 'Открыть в мастерской', url }]] } })) return;
+    }
+  }
+  // A player's art was approved; it is now in every editor's library.
+  async deliverArtNotices(limit = 20) {
+    const due = this.store.all("SELECT * FROM art_notices WHERE state='queued' AND next_at<=? ORDER BY created, art LIMIT ?", this.store.now(), limit);
+    for (const note of due) {
+      const art = this.queue.arts.get(note.art);
+      if (!art || art.status !== 'approved' || art.account !== note.account) {
+        this.store.run("UPDATE art_notices SET state='dropped' WHERE art=?", note.art); continue;
+      }
+      const url = `${this.config.origin}/editor`;
+      if (!await this.direct('art_notices', 'art', note, {
+        text: `${reviewEmoji('approve')} Твой арт <b>«${escape(art.name)}»</b> одобрен и появился в «Готовых артах» редактора.`,
+        reply_markup: { inline_keyboard: [[{ text: 'Открыть редактор', url }]] } })) return;
+    }
+  }
+  async subscriptionCallback(query) {
+    const answer = text => this.api.answerCallbackQuery({ callback_query_id: query.id, text, show_alert: false }).catch(() => {});
+    const match = /^sub:off:([0-9a-f-]{36})$/.exec(query.data || ''), m = query.message;
+    if (!match || m?.chat.type !== 'private' || m.chat.id !== query.from?.id || m.from?.id !== this.botId || query.from.is_bot) return answer('Эта кнопка работает только в личном чате с ботом.');
+    try { this.store.subscribe(String(query.from.id), match[1], false); }
+    catch (error) { if (error.status !== 404) return answer(error.status ? error.message : 'Не удалось отписаться. Попробуй на сайте.'); }
+    await answer('Ты отписался от автора.');
+    const open = m.reply_markup?.inline_keyboard?.[0];
+    await this.api.editMessageReplyMarkup({ chat_id: m.chat.id, message_id: m.message_id, reply_markup: { inline_keyboard: open ? [open] : [] } }).catch(() => {});
+  }
   async callback(query) {
     if (query.data?.startsWith('login:')) return this.loginCallback(query);
+    if (query.data?.startsWith('sub:')) return this.subscriptionCallback(query);
     const answer = text => this.api.answerCallbackQuery({ callback_query_id: query.id, text, show_alert: true }).catch(() => {});
     const match = /^gs:(approve|reject|keep|hide):([a-f0-9]{24})$/.exec(query.data || '');
     if (!match) return;
@@ -187,7 +270,7 @@ export class CatalogTelegram {
     try {
       while (!signal.aborted) {
         if (leaseLost || !this.queue.lease(this.owner)) throw new Error('Процесс потерял право обрабатывать очередь.');
-        await this.deliverOne(); await this.refreshCards();
+        await this.deliverOne(); await this.refreshCards(); await this.deliverAuthorNotices(); await this.deliverArtNotices(); await this.deliverNotifications();
         let updates;
         try { updates = await this.api.getUpdates({ offset: Number(this.queue.setting('offset') || 0), timeout: 10, limit: 20, allowed_updates: ['callback_query', 'message'] }); }
         catch (error) {

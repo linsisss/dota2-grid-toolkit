@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ALIGN_ACTIONS, DISTRIBUTE_ACTIONS } from '../scripts/align-icons.mjs';
 
 const contextTools = [
   ['select', 'Выделение', 'V'],
@@ -85,8 +86,9 @@ export function CanvasContextMenu({ editor, state }) {
   }, [editor, menu]);
   if (!menu) return null;
   const run = (action) => editor.runContextAction(action);
-  const item = (action, label, key, disabled = false) => (
-    <button role="menuitem" disabled={disabled} onClick={() => run(action)}>
+  const arrange = state.arrange || { units: 0, rotation: [] };
+  const item = (action, label, key, disabled = false, tooltip) => (
+    <button role="menuitem" disabled={disabled} data-tooltip={tooltip} onClick={() => run(action)}>
       <span>{label}</span>
       {key && <kbd>{key}</kbd>}
     </button>
@@ -167,6 +169,42 @@ export function CanvasContextMenu({ editor, state }) {
           );
         })}
       </div>
+      {arrange.rotation.length > 0 && (
+        <div className="context-block" role="group" aria-label="Повернуть расположение">
+          <span>Повернуть</span>
+          <div>
+            {arrange.rotation.map((angle) => {
+              const label = angle === 180 ? 'Повернуть на 180°' : `Повернуть на ${Math.abs(angle)}° ${angle < 0 ? 'против часовой' : 'по часовой'}`;
+              return (
+                <button key={angle} role="menuitem" aria-label={label} data-tooltip={label} onClick={() => run(`rotate:${angle}`)}>
+                  {angle === 180 ? '180°' : `${angle < 0 ? '↺' : '↻'} ${Math.abs(angle)}°`}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {state.editableCount > 0 && (
+        <div className="context-block" role="group" aria-label={arrange.units > 1 ? 'Выровнять объекты' : 'Выровнять по холсту'}>
+          <span>{arrange.units > 1 ? 'Выровнять объекты' : 'Выровнять по холсту'}</span>
+          {[ALIGN_ACTIONS, ...(arrange.units > 2 ? [DISTRIBUTE_ACTIONS] : [])].map((actions, row) => (
+            <div key={row}>
+              {actions.map(([action, label, path]) => (
+                <button key={action} role="menuitem" aria-label={label} data-tooltip={label} onClick={() => run(action)}>
+                  <svg className="align-icon" viewBox="0 0 24 24" aria-hidden="true"><path d={path} /></svg>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+      {arrange.canReplace && item('replace-glyphs', 'Заменить символы…')}
+      {state.editableCount > 0 && (
+        <div className="context-action-pair">
+          {item('group', 'Объединить', null, !arrange.canGroup, 'Объединить в группу · Ctrl+G')}
+          {item('ungroup', 'Разъединить', null, !arrange.canUngroup, 'Разъединить · Ctrl+Shift+G')}
+        </div>
+      )}
       {item('center', 'В центр холста', null, !state.editableCount)}
       {item('select-all', 'Выделить всё', 'Ctrl A')}
       <div role="separator" />

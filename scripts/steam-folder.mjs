@@ -2,6 +2,27 @@ import { DEFAULT_STEAM_DIRECTORY, parseSteamProfile, steamConfigFolder } from '.
 
 // Convenience within this page only; never part of a grid or an exported file.
 const remembered = { profile: '', directory: DEFAULT_STEAM_DIRECTORY, account: null };
+
+// Steam link or friend code → { accountId, steamId64 }. Custom profile names are resolved by the
+// catalog API; onLookup runs only before that network request. Shared by the editor and the workshop.
+export async function findSteamAccount(value, { signal, onLookup } = {}) {
+  const parsed = parseSteamProfile(value);
+  if (parsed.kind !== 'vanity') return parsed;
+  onLookup?.();
+  let response, result;
+  try {
+    response = await fetch(`/api/catalog/steam/resolve?${new URLSearchParams({ profile: value.trim() })}`,
+      { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(12000)]) : AbortSignal.timeout(12000) });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    throw new Error('Steam сейчас недоступен. Попробуй ещё раз или введи код друга.');
+  }
+  try { result = await response.json(); } catch { throw new Error('Не удалось связаться с сервером. Попробуй ещё раз или введи код друга.'); }
+  if (!response.ok) throw new Error(result.error || 'Не удалось найти профиль. Введи код друга.');
+  const checked = parseSteamProfile(result.steamId64);
+  if (checked.kind !== 'account' || checked.accountId !== result.accountId) throw new Error('Не удалось определить код друга. Введи его вручную.');
+  return result;
+}
 export function steamFolderMarkup() {
   return `<div class="steam-folder" id="steamFolder">
     <form class="steam-folder-form" novalidate>
@@ -41,24 +62,14 @@ export function mountSteamFolder(host, icon) {
     event.preventDefault(); clearRequest(); account = remembered.account = null; updatePath();
     const current = new AbortController(); request = current;
     try {
-      const parsed = parseSteamProfile(input.value);
-      let result = parsed;
-      if (parsed.kind === 'vanity') {
+      const result = await findSteamAccount(input.value, { signal: current.signal, onLookup: () => {
         submit.disabled = true; submit.textContent = 'Ищем…'; form.setAttribute('aria-busy', 'true'); message('Ищем профиль Steam…');
-        const response = await fetch(`/api/catalog/steam/resolve?${new URLSearchParams({ profile: input.value.trim() })}`, { signal: AbortSignal.any([current.signal, AbortSignal.timeout(12000)]) });
-        try { result = await response.json(); } catch { throw new Error('Не удалось связаться с сервером. Попробуй ещё раз или введи код друга.'); }
-        if (!response.ok) throw new Error(result.error || 'Не удалось найти профиль. Введи код друга.');
-        const checked = parseSteamProfile(result.steamId64);
-        if (checked.kind !== 'account' || checked.accountId !== result.accountId) throw new Error('Не удалось определить код друга. Введи его вручную.');
-      }
+      } });
       if (current.signal.aborted || lifetime.signal.aborted) return;
       account = remembered.account = result; remembered.profile = input.value;
       input.removeAttribute('aria-invalid'); updatePath(); message(`Код друга: ${result.accountId}`, 'ready');
     } catch (error) {
-      if (!current.signal.aborted && !lifetime.signal.aborted) {
-        input.setAttribute('aria-invalid', 'true');
-        message(error.name === 'TimeoutError' || error instanceof TypeError ? 'Steam сейчас недоступен. Попробуй ещё раз или введи код друга.' : error.message, 'error');
-      }
+      if (!current.signal.aborted && !lifetime.signal.aborted) { input.setAttribute('aria-invalid', 'true'); message(error.message, 'error'); }
     } finally { if (request === current) clearRequest(); }
   }, { signal: lifetime.signal });
   copy.addEventListener('click', async () => {

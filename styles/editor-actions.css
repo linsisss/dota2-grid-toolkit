@@ -295,7 +295,9 @@
 }
 .art-card > span {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
   padding: 8px 9px;
   font-size: 12px;
   line-height: 1.3;
@@ -434,4 +436,11 @@
   .editor-toolbar .tool-dock {
     gap: 1px;
   }
+}
+.art-card small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.art-offer {
+  margin-bottom: 12px;
 }

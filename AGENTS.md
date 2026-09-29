@@ -3,6 +3,7 @@
 User decision, 2026-09-28. These rules supersede the previous automatic server deployment workflow.
 
 - Work locally. Do not run a production build until the user explicitly requests a build. Development server, syntax checks and tests are allowed.
+- User decision, 2026-09-29: work in progress is reviewed on the staging site dev.gridstudio.me. Staging builds (labelled `-dev.<sha>`) may be rebuilt and redeployed there at any time; staging has its own API, database, secret and bot and never touches production data. Moving work to production still needs the user's explicit command.
 - Do not deploy, push commits/tags, publish a GitHub release or post release announcements until the user explicitly approves that release for publication. Approval to build alone is not approval to publish.
 - Number releases with SemVer. `package.json` is the source of the application version. The existing 1.0.0 is the numbering baseline, not a claim that a tagged release exists. Increment only when preparing the next authorized build; keep unfinished changes under Unreleased in CHANGELOG.md.
 - Every approved release must have a source commit/tag on GitHub and a reviewed changelog. Contributor account: justkiddingxd; upstream: linsisss/dota2-grid-toolkit. Without write access, publish a branch in the contributor's fork and open a PR. Never force-push upstream.

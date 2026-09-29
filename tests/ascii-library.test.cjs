@@ -4,19 +4,20 @@ const { artLines, layoutAsciiArt, placeAsciiArt } = require('../scripts/ascii-li
 const { arts } = require('../data/ascii-arts.json');
 const C = require('../scripts/core.mjs').default;
 
-test('art layout retains original Braille, internal blank lines and spacing', () => {
-  const source = '\u2800\r\n\u2800\u2800⣿⠀⠁\r\n\u2800\u2800\r\n\u2800\u2800⠀⣀\r\n';
-  assert.deepEqual(artLines(source), ['⣿⠀⠁', '', '⠀⣀']);
+test('art layout keeps the drawing, internal blank lines and spacing, trimming only blank edges and the shared indent', () => {
+  const source = '\r\n  @@ :.\r\n  \r\n    ##\r\n';
+  assert.deepEqual(artLines(source), ['@@ :.', '', '  ##']);
   const layout = layoutAsciiArt(source, (line) => [...line].length * 12);
-  assert.deepEqual(layout.rows.map((row) => [row.text,row.y]), [['⣿⠀⠁',0],['⠀⣀',40]]);
+  assert.deepEqual(layout.rows.map((row) => [row.text,row.y]), [['@@ :.',0],['  ##',40]]);
   assert.equal(layout.height, 70);
-  assert.ok(!layout.rows.some((row) => row.text.includes('.')));
-  assert.deepEqual(artLines('\u2800 \n\t'), []);
+  assert.deepEqual(artLines(' \n\t'), []);
 });
 
 test('catalog art survives native and Dota exports as original Unicode on separate layers', () => {
   const doc = C.createDocument();
-  assert.equal(arts.length, 43);
+  // Dota's fonts have no Braille: the Braille drawings of arts.txt are not in the library.
+  assert.ok(arts.length >= 1);
+  assert.ok(arts.every((art) => !/[\u2800-\u28ff]/u.test(art.text)));
   assert.equal(new Set(arts.map((art) => art.id)).size, arts.length);
   for (const art of arts) {
     const layout = layoutAsciiArt(art.text);
@@ -33,11 +34,11 @@ test('catalog art survives native and Dota exports as original Unicode on separa
 });
 
 test('art placement centers small drawings, preserves big drawings and supports undo/redo', () => {
-  const layout = layoutAsciiArt('⣿⠀⡇\n⠀⣀⣿');
+  const layout = layoutAsciiArt('@ :\n .@');
   const rows = placeAsciiArt(layout, {w:1193,h:593});
   assert.equal(rows[0].x, (1193-layout.width)/2);
   assert.equal(rows[0].y, (593-layout.height)/2);
-  const oversized = layoutAsciiArt(Array.from({length:70},()=> '⣿'.repeat(200)).join('\n'));
+  const oversized = layoutAsciiArt(Array.from({length:70},()=> '@'.repeat(200)).join('\n'));
   assert.equal(placeAsciiArt(oversized,{w:1193,h:593})[0].x,0);
   assert.equal(placeAsciiArt(oversized,{w:1193,h:593})[0].y,0);
   const doc=C.createDocument(), before=C.clone(doc), history=new C.History();

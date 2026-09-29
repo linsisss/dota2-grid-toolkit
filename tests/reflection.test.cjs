@@ -5,18 +5,18 @@ const { reflectItems, mergeRows } = require('../scripts/edit-operations.mjs');
 const { gamePreviewLayout } = require('../scripts/game-preview.mjs');
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-7, `${a} != ${b}`);
 
-test('reflection preserves Braille, measured text spacing, upright glyphs and Dota export', () => {
+test('reflection preserves the glyphs, measured text spacing, upright glyphs and Dota export', () => {
   for (const axis of ['horizontal', 'vertical']) {
     const doc = C.createDocument();
     doc.entities.push(
       C.entity(doc, {
         type: 'text',
-        text: '⠿ A\n⣷',
+        text: '@ A\n#',
         x: 110,
         y: 100,
         w: 70,
         h: 60,
-        textMetrics: { text: '⠿ A\n⣷', advances: [11, 7, 16, 0, 14] },
+        textMetrics: { text: '@ A\n#', advances: [11, 7, 16, 0, 14] },
         rotation: 37
       })
     );
@@ -27,7 +27,7 @@ test('reflection preserves Braille, measured text spacing, upright glyphs and Do
     assert.equal(flipped.length, 3);
     assert.deepEqual(
       flipped.map((g) => g.text),
-      ['⠿', 'A', '⣷']
+      ['@', 'A', '#']
     );
     assert.ok(flipped.every((g) => g.rotation === 0));
     const a = C.bounds(before, true),
@@ -41,10 +41,10 @@ test('reflection preserves Braille, measured text spacing, upright glyphs and Do
     const output = C.exportDota(doc).configs[0].categories;
     assert.deepEqual(
       output.map((g) => g.category_name),
-      ['⠿', 'A', '⣷']
+      ['@', 'A', '#']
     );
     assert.ok(output.every((g) => g.width === 30 && g.height === 30));
-    assert.equal(history.undo(doc).entities[0].text, '⠿ A\n⣷');
+    assert.equal(history.undo(doc).entities[0].text, '@ A\n#');
   }
 });
 
@@ -108,5 +108,7 @@ test('game preview uses a fixed 1193×593 viewport within the picking screen at 
     near(frame.w / frame.h, 1193 / 593);
     assert.ok(frame.x >= 0 && frame.y >= 0 && frame.x + frame.w <= w && frame.y + frame.h <= h);
   }
-  near(gamePreviewLayout(1920, 1080).scale, 1.5);
+  // Measured in the game at 1920×1080: the grid at (269, 174), 1.1497 px per grid unit.
+  const game = gamePreviewLayout(1920, 1080);
+  near(game.scale, 1.1497); near(game.x, 269); near(game.y, 174);
 });

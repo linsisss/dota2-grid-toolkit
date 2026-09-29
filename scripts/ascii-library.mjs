@@ -1,14 +1,14 @@
-// Keep the supplied Unicode art intact: Braille is artwork, not an alphabet to replace.
+// Art text is kept as supplied; only blank edges and the shared indent are trimmed.
 export function artLines(text) {
   const lines = String(text).replace(/\r/g, '').replace(/\t/g, '    ').split('\n');
-  const blank = (line) => /^[\s\u2800]*$/u.test(line);
+  const blank = (line) => /^\s*$/u.test(line);
   while (lines.length && blank(lines[0])) lines.shift();
   while (lines.length && blank(lines.at(-1))) lines.pop();
   if (!lines.length) return [];
   const indent = Math.min(
-    ...lines.filter((line) => !blank(line)).map((line) => line.match(/^[ \u2800]*/u)[0].length)
+    ...lines.filter((line) => !blank(line)).map((line) => line.match(/^ */u)[0].length)
   );
-  return lines.map((line) => line.slice(indent).replace(/[ \u2800]+$/u, ''));
+  return lines.map((line) => line.slice(indent).replace(/ +$/u, ''));
 }
 
 export function layoutAsciiArt(text, measure = (line) => Array.from(line).length * 10.8) {

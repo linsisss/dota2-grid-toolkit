@@ -87,6 +87,18 @@ svg { flex-shrink: 0; display: block; }
 .landing-primary:active { transform: translateY(0); }
 .landing-catalog { border: 1px solid #494152; background: #211e29; padding: 0 20px; min-height: 52px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; font-size: 15px; font-weight: 500; color: var(--lp-ink); white-space: nowrap; transition: background 180ms, border-color 180ms; }
 .landing-catalog:hover, .landing-catalog[aria-expanded='true'] { background: #2c2935; border-color: #81728f; }
+.landing-catalog.is-soon { cursor: default; color: #afa7bf; }
+.landing-catalog.is-soon:hover { background: #211e29; border-color: #494152; }
+.landing-catalog small { margin-left: -2px; padding: 1px 7px; border-radius: 999px; background: #c4b5ed24; color: #c4b5ed; font-size: 11px; font-weight: 500; }
+/* The tools under the two main buttons: smaller, three in a row. */
+/* Both rows share one width, the wider row's: each row's buttons stretch to it, so the edges line
+   up whatever fonts the system draws them with. Narrow screens stack them (see the 520px query). */
+.landing-buttons { display: grid; gap: 10px; width: max-content; max-width: 100%; margin-top: 31px; }
+.landing-buttons .landing-actions { display: grid; grid-auto-flow: column; margin-top: 0; }
+.landing-tools { display: grid; grid-auto-flow: column; gap: 8px; }
+.landing-catalog.landing-tool { min-height: 40px; padding: 0 11px; gap: 7px; font-size: 13px; }
+.landing-tool svg { width: 16px; height: 16px; }
+.landing-tool small { font-size: 10px; padding: 1px 6px; }
 .catalog-status { flex-basis: 100%; margin: 0; padding: 10px 13px; background: var(--lp-panel); border-radius: 7px; font-size: 13px; line-height: 1.5; max-width: 42ch; animation: status-reveal 180ms var(--lp-ease); }
 @keyframes status-reveal { from { opacity: 0; transform: translateY(-4px); } }
 .landing-authors { display: flex; align-items: center; flex-wrap: nowrap; gap: 9px; margin-top: 32px; font-size: 12px; color: var(--lp-muted); white-space: nowrap; }
@@ -179,6 +191,17 @@ svg { flex-shrink: 0; display: block; }
 .stage-contact-shadow { position: absolute; left: -.5%; width: 101%; top: 100%; height: 3cqw; transform-origin: 50% 0; transform: translateY(-.05cqw) translateZ(-1cqw) rotateX(90deg); background: #09070dd9; filter: blur(.45cqw); border-radius: 50%; }
 .stage-screen { position: absolute; inset: 0; padding: 5px 5px 9px; border-radius: 10px 10px 3px 3px; background: linear-gradient(145deg, #80718f, #332c3e 26%, #211e29 64%, #65576f); transform-origin: 50% 100%; transform: rotateX(14deg); }
 .stage-screen .editor-shot { width: 100%; height: 100%; object-fit: fill; border-radius: 6px 6px 0 0; user-select: none; }
+/* The most liked grid fades in over the editor shot once its image has loaded. */
+.stage-display { position: relative; width: 100%; height: 100%; }
+.stage-display .stage-grid { position: absolute; inset: 0; animation: stage-grid-in 700ms var(--lp-ease) both; }
+@keyframes stage-grid-in { from { opacity: 0; } to { opacity: 1; } }
+.stage-caption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; width: fit-content; max-width: 100%; margin: -26px auto 0; padding: 7px 12px;
+  border: 1px solid var(--lp-line); border-radius: 999px; background: #1b1922cc; color: var(--lp-ink); font-size: 13px; text-decoration: none; position: relative; z-index: 1;
+  transition: border-color 160ms ease, background 160ms ease; }
+.stage-caption:hover { border-color: #c4b5ed66; background: #211e29; }
+.stage-caption-likes { color: var(--lp-accent); font-weight: 600; }
+.stage-caption-title { font-weight: 500; }
+.stage-caption-note { color: var(--lp-muted); font-size: 12px; }
 .landing-stage .landing-footer { padding-top: 30px; }
 
 /* The image becomes a selected object: exact handles, no invented tool UI. */
@@ -358,6 +381,7 @@ svg { flex-shrink: 0; display: block; }
   .landing-main { padding-left: 18px; padding-right: 18px; }
   .landing-actions { gap: 8px; }
   .landing-primary, .landing-catalog { font-size: 12px; padding: 0 7px; min-height: 46px; gap: 6px; }
+  .landing-catalog.landing-tool { font-size: 12px; padding: 0 9px; min-height: 40px; gap: 6px; }
   .landing-primary svg, .landing-catalog svg { width: 16px; height: 16px; }
   .landing-authors { font-size: 10px; gap: 5px; }
   .author-credit { gap: 3px; }
@@ -367,5 +391,13 @@ svg { flex-shrink: 0; display: block; }
   .landing-footer { padding-left: 18px; padding-right: 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .stage-display .stage-grid { animation: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+@media (max-width: 520px) {
+  .landing-buttons { width: 100%; }
+  .landing-buttons .landing-actions { grid-auto-flow: row; }
+  .landing-tools { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }
+  .landing-tools > :last-child { grid-column: 1 / -1; }
 }

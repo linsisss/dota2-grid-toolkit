@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { Icon } from './Icon.jsx';
 import { NumberInput } from './NumberInput.jsx';
 import { ImageImportDialog } from './ImageImportDialog.jsx';
 // Stable shell: the editor exclusively owns the canvas and empty imperative hosts.
@@ -6,7 +7,7 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
   return (
     <>
       <header className="app-header">
-        <button className="workspace-back" onClick={onBack} aria-label="Вернуться к файлам"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M19 12H5m6-6-6 6 6 6"/></svg><span>Файлы</span></button>
+        <button className="workspace-back" onClick={onBack} aria-label="Вернуться в студию"><Icon name="back" /><span>Студия</span></button>
         <a className="brand" href="./" aria-label="Grid Studio, главная">
           <span className="brand-mark" aria-hidden="true">
             <svg viewBox="0 0 32 32">
@@ -440,7 +441,7 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
                   aria-pressed="true"
                   title="Сетка (G)"
                 >
-                  <span data-icon="grid"></span>
+                  <span data-icon="gridLines"></span>
                   <span>Сетка</span>
                 </button>
                 <button

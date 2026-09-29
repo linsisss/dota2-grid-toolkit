@@ -8,7 +8,7 @@ export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version + (process.env.GRIDSTUDIO_BUILD_LABEL ? `-${process.env.GRIDSTUDIO_BUILD_LABEL}` : '')) },
   base: './',
   build: {
-    rollupOptions: { input: { home: 'index.html', studio: 'editor.html', catalog: 'catalog.html', design: 'design.html', landing: 'landing.html' } }
+    rollupOptions: { input: { home: 'index.html', studio: 'editor.html', catalog: 'catalog.html', customize: 'customize.html', design: 'design.html', landing: 'landing.html' } }
   },
   server: {
     proxy: { '/api/catalog': { target: `http://127.0.0.1:${process.env.CATALOG_PORT || 4174}` } },
@@ -29,6 +29,7 @@ export default defineConfig({
         cpSync('assets/heroes', 'dist/assets/heroes', { recursive: true });
         cpSync('assets/portraits', 'dist/assets/portraits', { recursive: true });
         cpSync('assets/attributes', 'dist/assets/attributes', { recursive: true });
+        cpSync('assets/dota-fonts', 'dist/assets/dota-fonts', { recursive: true });
         cpSync('assets/favicon.svg', 'dist/assets/favicon.svg');
         cpSync('assets/favicon-focus.svg', 'dist/assets/favicon-focus.svg');
         cpSync('tools', 'dist/tools', { recursive: true });

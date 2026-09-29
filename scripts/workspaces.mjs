@@ -28,6 +28,14 @@ export async function resumeWorkspace(registry, user, session) {
   return { ...meta, openConfigIndex: Number.isInteger(position.configIndex) && position.configIndex >= 0 ? position.configIndex : undefined };
 }
 export async function enterWorkspace(registry, user, { url = new URL(globalThis.location.href), history = globalThis.history, session } = {}) {
+  // Studio links open the file list even if this tab last edited a file (e.g. a blank one from the landing).
+  // The flag is consumed so a reload inside a file opened from the list resumes that file.
+  if (url.searchParams.has('files')) {
+    rememberWorkspace(null, session);
+    url.searchParams.delete('files');
+    history.replaceState(history.state, '', url);
+    return null;
+  }
   if (url.searchParams.get('new') !== '1') return resumeWorkspace(registry, user, session);
   const meta = await registry.create('Без названия', C.demoDocument('blank'), user?.id || null);
   rememberWorkspace({ id: meta.id, configIndex: 0 }, session);

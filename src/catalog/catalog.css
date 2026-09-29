@@ -44,7 +44,8 @@ html:has(#catalog-root) { overflow:auto; height:auto; }
 .catalog-search { display:flex!important; align-items:center; gap:12px; width:310px; flex-shrink:0; }
 .catalog-search:focus-within { outline:2px solid #c4b5ed; outline-offset:2px; border-radius:8px; }
 .catalog-search input { border:0!important; background:none!important; margin:0!important; padding:8px 0!important; }
-.catalog-search input:focus-visible { outline:none; box-shadow:none; }
+/* The label shows the focus; the input's own ring (the rule for all fields below) would be a second one. */
+.catalog-search input:focus-visible { outline:none!important; box-shadow:none!important; }
 .catalog-search button { border:0; background:none; color:var(--cat-muted); display:flex; }
 .catalog-tags { display:flex; flex-wrap:wrap; gap:8px; }
 .catalog-tags :is(button,span) { padding:5px 12px; border:1px solid var(--cat-line); background:none; border-radius:99px; color:var(--cat-muted); font-size:13px; min-height:32px; }
@@ -216,7 +217,7 @@ dialog.catalog-dialog:focus { outline:none; }
 .catalog-like { display:inline-flex; align-items:center; gap:7px; border:0; background:none; color:#afa7bf; padding:8px; border-radius:8px; min-height:36px; font-variant-numeric:tabular-nums; }
 .catalog-like:hover { background:#2c2935; color:#efeaf5; }
 .catalog-like.is-liked { color:#d5b6f2; }
-.catalog-like.is-liked svg { fill:#755383; }
+.catalog-like.is-liked svg * { fill:#755383; }
 .catalog-like-error { position:absolute; bottom:100%; right:0; width:210px; background:#35242c; color:#ffc3c7; padding:12px; border-radius:8px; font-size:12px; z-index:5; }
 .catalog-nav nav { flex-wrap:wrap; }
 
@@ -310,3 +311,39 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 .catalog-review .art-review-meta label { margin:0; }
 @media(max-width:760px) { .art-review-meta { grid-template-columns:1fr; } }
 
+
+.background-review-video { display:block; width:100%; aspect-ratio:16/9; border-radius:10px; background:#000; object-fit:contain; }
+
+/* Shared menu backgrounds (BackgroundGallery.jsx): the workshop's «Фоны» and the builder's «Готовые фоны». */
+@keyframes background-card-in { from { opacity:0; transform:translateY(6px); } }
+.background-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:22px; }
+.background-card { display:grid; gap:10px; animation:background-card-in 280ms cubic-bezier(.2,.8,.2,1) both; }
+.background-card-picture { position:relative; aspect-ratio:16/9; overflow:hidden; border-radius:10px; background:#000; box-shadow:0 0 0 1px var(--cat-line); }
+.background-card-picture img, .background-card-picture video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.background-card-picture video { opacity:0; transition:opacity 240ms ease; }
+.background-card:hover .background-card-picture video, .background-card:focus-within .background-card-picture video { opacity:1; }
+.background-card-info { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; }
+.background-card-info > div { min-width:0; }
+.background-card-info h3 { margin:0!important; font-size:15px!important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.background-card-info p { margin:2px 0 0; color:var(--cat-muted); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.background-card-meta { display:flex; justify-content:space-between; gap:12px; margin-top:-4px; font-size:12px; color:var(--cat-muted); }
+.background-more { display:flex; margin:28px auto 0; }
+
+/* «Сетки / Фоны» next to the workshop's title: a pill whose thumb slides to the chosen side. */
+.catalog-title { display:flex; align-items:center; gap:14px 22px; flex-wrap:wrap; margin-bottom:16px; }
+.catalog-title h1 { margin:0!important; }
+.workshop-switch { position:relative; display:grid; grid-template-columns:repeat(var(--count, 2), 1fr); padding:4px; border:1px solid var(--cat-line); border-radius:11px; background:#19171f; }
+.workshop-switch button { position:relative; z-index:1; min-width:92px; min-height:36px; padding:6px 16px; border:0; border-radius:8px; background:none; color:var(--cat-muted); font-weight:500; transition:color 200ms ease; }
+.workshop-switch button[aria-selected=true] { color:var(--cat-ink); }
+.workshop-switch button:hover { color:var(--cat-ink); }
+.workshop-switch-thumb { position:absolute; top:4px; bottom:4px; left:4px; width:calc((100% - 8px) / var(--count, 2)); border-radius:8px; background:#2c2935; transform:translateX(calc(var(--index) * 100%)); transition:transform 320ms cubic-bezier(.2,.8,.2,1); }
+@keyframes workshop-switch-in { from { opacity:0; transform:translateY(8px); } }
+.workshop-switch-view { animation:workshop-switch-in 300ms cubic-bezier(.2,.8,.2,1) both; }
+@media(max-width:760px) { .workshop-switch button { min-width:76px; min-height:32px; font-size:14px; } }
+@media (prefers-reduced-motion: reduce) { .workshop-switch-thumb, .workshop-switch-view { transition:none; animation:none; } }
+.background-card-actions { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+.background-card-actions .catalog-icon { width:36px; height:36px; color:var(--cat-muted); }
+.background-card-actions .catalog-icon:hover { color:var(--cat-ink); }
+.background-card-actions .catalog-icon svg { width:17px; height:17px; }
+.catalog-background-switch button:disabled { opacity:.45; cursor:default; }
+.background-card-actions .catalog-button { min-height:36px; padding:0 14px; font-size:14px; }

@@ -13,9 +13,11 @@ export function drawGridGround(ctx, background = null) {
 }
 
 // The browser and Telegram render the same validated JSON with the same layout.
-export function drawCatalogGrid(ctx, grid, images, width = 1193, background = null) {
+// background: an image, null for the gradient, false when the caller painted the ground.
+// portraits: the canvas filter for hero portraits; the editor shows them unfiltered ('none').
+export function drawCatalogGrid(ctx, grid, images, width = 1193, background = null, { portraits = 'saturate(0.7)' } = {}) {
   ctx.save(); ctx.scale(width / 1193, width / 1193);
-  drawGridGround(ctx, background);
+  if (background !== false) drawGridGround(ctx, background);
   for (const c of grid.configs[0].categories) {
     drawCategoryLabel(ctx, c.category_name, c.x_position, c.y_position);
     if (!c.hero_ids.length) continue;
@@ -26,7 +28,7 @@ export function drawCatalogGrid(ctx, grid, images, width = 1193, background = nu
         y = c.y_position + layout.top + Math.floor(index / layout.cols) * layout.stepY, image = images.get(id);
       ctx.fillStyle = '#202831'; ctx.fillRect(x, y, layout.cardW, layout.cardH);
       if (!image) return;
-      ctx.filter = 'saturate(0.7)'; ctx.drawImage(image, ...portraitSourceRect(image, layout.cardW, layout.cardH, portraitCrops.get(id)), x, y, layout.cardW, layout.cardH); ctx.filter = 'none';
+      ctx.filter = portraits; ctx.drawImage(image, ...portraitSourceRect(image, layout.cardW, layout.cardH, portraitCrops.get(id)), x, y, layout.cardW, layout.cardH); ctx.filter = 'none';
     }); ctx.restore();
   }
   ctx.restore();

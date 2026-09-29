@@ -19,6 +19,8 @@ import { DRAWING_TOOLS, GRADIENT_CHARS, drawingPoints, lassoContains, setDrawing
 import { clampEraser, readEraserSize, stepEraserSize, storeEraserSize, wheelEraserSize } from './eraser-size.mjs';
 import { guideLines, snapMove } from './smart-guides.mjs';
 import { ALIGN_ACTIONS, DISTRIBUTE_ACTIONS, alignIconSVG } from './align-icons.mjs';
+import { iconSVG } from './icons.mjs';
+import { applyMyBackground, hasMyBackground } from '../src/my-background.js';
 import {
   searchSymbols,
   categorySelection,
@@ -41,7 +43,7 @@ import {
   reflectItems, referenceHandles, referenceHit, transformReference
 } from './edit-operations.mjs';
 import { convertWithStats } from './converter.mjs';
-import {
+import { IMAGE_STYLES,
   IMAGE_DEFAULTS,
   IMAGE_RANGES,
   IMAGE_CHECKS,
@@ -57,14 +59,15 @@ import { ROW_DEFAULTS, ROW_FONT, ROW_GLYPH_SETS, rowAtlas, rowBandTop, rowGlyphs
 import { TRACE_DEFAULTS, TRACE_MAX_DOTS } from './dot-trace.mjs';
 import { packGlyphs, packSymbols } from './dot-packing.mjs';
 import { gridBackground, onGridBackground, setGridBackground } from './grid-background.mjs';
-import { DOTA, TEXT_MODEL, invisibleWarning, drawCategoryLabel, measureCategoryText, measureCategoryInk, measureCategoryWidth, portraitSourceRect } from './dota-rendering.mjs';
+import { DOTA, TEXT_MODEL, invisibleWarning, drawCategoryLabel, measureCategoryText, measureCategoryInk, measureCategoryWidth, glyphWidths, portraitSourceRect } from './dota-rendering.mjs';
 const ROTATE_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M8 22a10 10 0 1 1 16-9M19 7l5 6 5-5" fill="none" stroke="#10151a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 22a10 10 0 1 1 16-9M19 7l5 6 5-5" fill="none" stroke="#efeaf5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>')}") 16 16, grab`;
 const IMAGE_METHOD_KEY = 'gridstudio.image-method';
+// «Контуры и точки» is the default again (1.6); a method the user picked is remembered.
 function readImageMethod() {
   try {
     const method = localStorage.getItem(IMAGE_METHOD_KEY);
-    return method === 'points' || method === 'trace' ? method : 'rows';
-  } catch { return 'rows'; }
+    return method === 'rows' || method === 'trace' ? method : 'points';
+  } catch { return 'points'; }
 }
 // The picture at the art's size on the canvas; transparent parts count as white, as in the
 // contour method.
@@ -97,55 +100,8 @@ export function createStudio(projectStorage, initial) {
     contextMenu = null;
   let customCanvasFont = null;
   const PRESETS_KEY = 'dota-grid-studio.presets.v1';
-  const icons = {
-    groupPlus:
-      '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17.5 13v9M13 17.5h9"/>',
-    plus: '<path d="M12 5v14M5 12h14"/>',
-    minus: '<path d="M5 12h14"/>',
-    chevron: '<path d="m8 10 4 4 4-4"/>',
-    arrow: '<path d="M5 12h14m-5-5 5 5-5 5"/>',
-    import: '<path d="M12 3v12m-4-4 4 4 4-4M5 15v5h14v-5"/>',
-    export: '<path d="M12 15V3m-4 4 4-4 4 4M5 15v5h14v-5"/>',
-    heroes:
-      '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
-    pen: '<path d="m4 16 12-12 4 4L8 20l-5 1 1-5Zm10-10 4 4"/>',
-    eyedropper: '<path d="m15 3 6 6-3 3-2-2-9 9-4 2 2-4 9-9-2-2 3-3Z"/>',
-    lasso: '<ellipse cx="12" cy="9" rx="9" ry="6"/><path d="M6 13c-5 5 0 10 4 7 3-3-1-5-3-2"/>',
-    image:
-      '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/>',
-    search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/>',
-    cursor: '<path d="m5 3 14 10-7 1-3 7-4-18Z"/>',
-    hand: '<path d="M8 12V6a2 2 0 0 1 4 0v6-8a2 2 0 0 1 4 0v8-5a2 2 0 0 1 4 0v8c0 4-2 6-6 6h-2c-2 0-3-1-4-3l-4-6c-1-2 1-3 2-2l2 2Z"/>',
-    text: '<path d="M4 5h16M12 5v15M8 20h8M4 5v3m16-3v3"/>',
-    rect: '<rect x="4" y="4" width="16" height="16" rx="1"/>',
-    eraser: '<path d="m14 3 7 7-11 11H5l-3-3L14 3Zm-7 9 7 7M10 21h11"/>',
-    undo: '<path d="M4 10h10a6 6 0 0 1 0 12M8 5l-5 5 5 5" transform="translate(0 -2)"/>',
-    redo: '<path d="M20 10H10a6 6 0 0 0 0 12m6-17 5 5-5 5" transform="translate(0 -2)"/>',
-    eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
-    eyeOff:
-      '<path d="m3 3 18 18M9 5a11 11 0 0 1 3 0c6 0 10 7 10 7a17 17 0 0 1-3 4M6 6a20 20 0 0 0-4 6s4 7 10 7a11 11 0 0 0 5-1"/>',
-    grid: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',
-    magnet: '<path d="M4 4h5v9a3 3 0 0 0 6 0V4h5v9a8 8 0 0 1-16 0V4ZM4 8h5m6 0h5"/>',
-    fit: '<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M8 8h8v8H8Z"/>',
-    help: '<path d="M12 6c-3-2-6-2-10-1v15c4-1 7-1 10 1 3-2 6-2 10-1V5c-4-1-7-1-10 1Zm0 0v15M5 9h4M5 13h4m6-4h4m-4 4h4"/>',
-    sparkle: '<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z"/>',
-    sliders:
-      '<path d="M5 3v4m0 4v10M12 3v10m0 4v4M19 3v3m0 4v11M2 7h6v4H2Zm7 6h6v4H9Zm7-7h6v4h-6Z"/>',
-    shield: '<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/>',
-    layers: '<path d="m12 3 10 5-10 5L2 8l10-5Zm-10 9 10 5 10-5M2 16l10 5 10-5"/>',
-    lock: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/>',
-    unlock:
-      '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0m-4 9v2"/>',
-    copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',
-    trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M9 10v7m6-7v7"/>',
-    flip: '<path d="M12 2v20M3 6l6 6-6 6V6Zm18 0-6 6 6 6V6Z"/>',
-    rotate: '<path d="M4 10a8 8 0 1 1 0 5M4 4v6h6"/>',
-    align: '<path d="M12 2v20M5 5h14v5H5ZM8 14h8v5H8Z"/>',
-    close: '<path d="m6 6 12 12M18 6 6 18"/>',
-    check: '<path d="m5 12 4 4L19 6"/>'
-  };
-  const icon = (name) =>
-    `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[name] || icons.rect}</svg>`;
+  // Lucide icons, shared with the React pages (scripts/icons.mjs).
+  const icon = (name) => iconSVG(name);
   function hydrateIcons(scope = document) {
     scope.querySelectorAll('[data-icon]').forEach((el) => {
       el.innerHTML = icon(el.dataset.icon);
@@ -767,7 +723,7 @@ export function createStudio(projectStorage, initial) {
   // Figma-style: several objects align to each other, a single object to the canvas.
   function alignSection(items) {
     const count = selectionUnits(doc, items).length;
-    const buttons = (actions) => actions.map(([action, label, path]) => `<button data-action="${action}" title="${label}" aria-label="${label}">${alignIconSVG(path)}</button>`).join('');
+    const buttons = (actions) => actions.map(([action, label, icon]) => `<button data-action="${action}" title="${label}" aria-label="${label}">${alignIconSVG(icon)}</button>`).join('');
     return `<label class="field-label">${count > 1 ? 'Выровнять объекты' : 'Выровнять по холсту'}</label><div class="align-actions">${buttons(ALIGN_ACTIONS)}</div>${count > 2 ? `<div class="align-actions">${buttons(DISTRIBUTE_ACTIONS)}</div>` : ''}`;
   }
   // Replace one character (or all) across the selected symbols and text, e.g. dots to hearts.
@@ -2005,41 +1961,50 @@ export function createStudio(projectStorage, initial) {
       };
     });
   }
+  // Downloads hold on the hero-pick screen and at every resolution (core.mjs pickSafeCategories).
+  const pickWidths = (line) => glyphWidths(ctx, line);
+  const pickCount = (entries) => C.pickSafeCategories(entries.map((entry) => entry.category), pickWidths).length;
   function openExport() {
     finishLiveEdit();
     for (const state of [doc, ...Object.values(doc.configDrafts || {})])
       prepareTextMetrics(state.entities.filter((e) => e.rotation));
     let output;
     try {
-      output = C.exportDota(doc, (text) => measureCategoryWidth(ctx, text));
+      output = C.exportDota(doc, null, { widths: pickWidths });
     } catch (error) {
       toast(error.message, true);
       return;
     }
+    // The load warning follows the row option below (exportWarnings), so it is not listed here.
     const categories = output.configs[doc.configIndex].categories,
-      issues = C.warnings(doc, categories.length);
+      issues = C.warnings(doc, 0);
     const heroCount = categories.reduce((n, c) => n + c.hero_ids.length, 0);
     openModal(
       'Скачать файл с сетками',
-      `<p>Все сетки (${output.configs.length}) и изменения в них сохранятся в одном JSON.</p><p class="hint">Объекты и герои ниже — в выбранной сетке «${esc(doc.name)}».</p><div class="export-summary"><div><strong id="exportCategoryCount">${categories.length}</strong>КАТЕГОРИЙ</div><div><strong>${heroCount}</strong>ГЕРОЕВ</div><div><strong>${output.configs.length}</strong>СЕТОК В ФАЙЛЕ</div></div>${issues.length ? issues.map((w) => `<div class="export-warning">${esc(w)}</div>`).join('') : `<div class="export-ok">${icon('check')}Объекты находятся внутри холста</div>`}<label class="check-row export-row-option"><input id="compactExportRows" type="checkbox" checked>Объединять символы одной линии в строки</label><p class="hint">Символы на одной линии становятся одной категорией. Каждый сдвигается меньше чем на полпикселя экрана — в игре не видно. В редакторе символы останутся отдельными.</p><details class="export-guide"><summary>Как использовать в Dota 2</summary><ol><li>Нажми «Скачать файл для DOTA» — браузер сохранит <strong>hero_grid_config.json</strong> в «Загрузки».<div class="export-name-note"><p><strong>Имя файла должно быть ровно <code>hero_grid_config.json</code></strong> — Dota 2 читает только его.</p><ul><li>Если в «Загрузках» уже был такой файл, браузер назовёт новый <code>hero_grid_config (1).json</code>. Переименуй его: убери « (1)».</li><li>Если Windows не показывает «.json» в именах, впиши при переименовании только <code>hero_grid_config</code>, иначе получится <code>hero_grid_config.json.json</code>.</li></ul></div></li><li>Закрой Dota 2 и сделай резервную копию существующего <strong>hero_grid_config.json</strong>.</li><li>Найди папку своего аккаунта:${steamFolderMarkup()}<p class="steam-folder-note">Код друга — это ID аккаунта в Dota 2. Если Steam установлен в другую папку, укажи её выше.</p></li><li><strong>Замени старый файл новым:</strong> скопируй <strong>hero_grid_config.json</strong> в эту папку. Если Windows спросит про файл с таким же именем, выбери «Заменить файл в папке назначения». В папке должен остаться один <strong>hero_grid_config.json</strong>, файлы с другими именами Dota 2 не читает.</li><li>Запусти Dota 2, открой «Герои» и выбери сетку в списке «Сортировка» внизу слева.</li></ol><p>Если импортирован файл с несколькими сетками, остальные сетки сохранятся в экспорте.</p><p>Отображение шрифта и портретов в игре может отличаться от превью.</p></details>`,
+      `<p>Все сетки (${output.configs.length}) и изменения в них сохранятся в одном JSON.</p><p class="hint">Объекты и герои ниже — в выбранной сетке «${esc(doc.name)}».</p><div class="export-summary"><div><strong id="exportCategoryCount">${categories.length}</strong>КАТЕГОРИЙ</div><div><strong>${heroCount}</strong>ГЕРОЕВ</div><div><strong>${output.configs.length}</strong>СЕТОК В ФАЙЛЕ</div></div>${issues.length ? issues.map((w) => `<div class="export-warning">${esc(w)}</div>`).join('') : `<div class="export-ok">${icon('check')}Объекты находятся внутри холста</div>`}<label class="check-row export-row-option"><input id="compactExportRows" type="checkbox" checked>Склеивать символы одной линии в строки</label><p class="hint">Символы одной линии становятся одной категорией — файл в разы легче. Строки собраны так, что рисунок стоит на месте и на экране выбора героя, и при любом разрешении. Без склейки каждый символ — отдельная категория.</p><details class="export-guide"><summary>Как использовать в Dota 2</summary><ol><li>Нажми «Скачать файл для DOTA» — браузер сохранит <strong>hero_grid_config.json</strong> в «Загрузки».<div class="export-name-note"><p><strong>Имя файла должно быть ровно <code>hero_grid_config.json</code></strong> — Dota 2 читает только его.</p><ul><li>Если в «Загрузках» уже был такой файл, браузер назовёт новый <code>hero_grid_config (1).json</code>. Переименуй его: убери « (1)».</li><li>Если Windows не показывает «.json» в именах, впиши при переименовании только <code>hero_grid_config</code>, иначе получится <code>hero_grid_config.json.json</code>.</li></ul></div></li><li>Закрой Dota 2 и сделай резервную копию существующего <strong>hero_grid_config.json</strong>.</li><li>Найди папку своего аккаунта:${steamFolderMarkup()}<p class="steam-folder-note">Код друга — это ID аккаунта в Dota 2. Если Steam установлен в другую папку, укажи её выше.</p></li><li><strong>Замени старый файл новым:</strong> скопируй <strong>hero_grid_config.json</strong> в эту папку. Если Windows спросит про файл с таким же именем, выбери «Заменить файл в папке назначения». В папке должен остаться один <strong>hero_grid_config.json</strong>, файлы с другими именами Dota 2 не читает.</li><li>Запусти Dota 2, открой «Герои» и выбери сетку в списке «Сортировка» внизу слева.</li></ol><p>Если импортирован файл с несколькими сетками, остальные сетки сохранятся в экспорте.</p><p>Отображение шрифта и портретов в игре может отличаться от превью.</p></details>`,
       '<button id="shareCatalogGrid" class="button secondary">Опубликовать в мастерскую</button><button id="downloadProject" class="button secondary">Сохранить JSON проекта</button><button id="downloadDota" class="button primary">Скачать файл для DOTA</button>',
       'export'
     );
     exportGuideCleanup = mountSteamFolder($('steamFolder'), icon);
-    const exportCurrent = () => C.exportDota(doc, (text) => measureCategoryWidth(ctx, text), { compactRows: $('compactExportRows').checked });
+    const exportCurrent = () => C.exportDota(doc, null, { compactRows: $('compactExportRows').checked, widths: pickWidths });
     const exportWarnings = document.createElement('div');
     $('compactExportRows').closest('label').before(exportWarnings);
-    // Recompute the load warning too: disabling compaction can cross 2000 categories.
-    $('compactExportRows').onchange = () => {
-      const count = exportCurrent().configs[doc.configIndex].categories.length;
+    // The count and the load warning follow the option (rows make fewer categories).
+    const showCount = () => {
+      let count;
+      try { count = exportCurrent().configs[doc.configIndex].categories.length; } catch (error) { exportWarnings.innerHTML = `<div class="export-warning" role="alert">${esc(error.message)}</div>`; return; }
       $('exportCategoryCount').textContent = count;
-      exportWarnings.innerHTML = count > 2000 && categories.length <= 2000
+      exportWarnings.innerHTML = count > 2000
         ? '<div class="export-warning" role="alert">Более 2 000 категорий: возможны лаги и вылет Dota 2.</div>'
         : '';
     };
+    $('compactExportRows').onchange = showCount;
+    exportWarnings.innerHTML = categories.length > 2000 ? '<div class="export-warning">Более 2 000 категорий: возможны лаги и вылет Dota 2.</div>' : '';
     $('downloadProject').onclick = downloadProject;
     $('downloadDota').onclick = () => {
-      download(JSON.stringify(exportCurrent(), null, 2), 'hero_grid_config.json');
+      let output;
+      try { output = exportCurrent(); } catch (error) { toast(error.message, true); return; }
+      download(JSON.stringify(output, null, 2), 'hero_grid_config.json');
       closeModal();
       toast('hero_grid_config.json скачан');
     };
@@ -2112,6 +2077,7 @@ export function createStudio(projectStorage, initial) {
   function clearImageDraft() {
     imageRequest++;
     convertRevision++;
+    styleRevision++;
     clearTimeout(convertTimer);
     imagePixels = null;
     conversionPoints = [];
@@ -2238,6 +2204,7 @@ export function createStudio(projectStorage, initial) {
       if (!imageDialog.open) imageDialog.showModal();
       renderImagePreview();
       scheduleConversion();
+      buildStyleStrip();
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
@@ -2266,6 +2233,83 @@ export function createStudio(projectStorage, initial) {
     for (const { id, key } of TRACE_SELECTS) settings[key] = $(id).value;
     settings.pack = $('tracePack').checked;
     return settings;
+  }
+  // The style strip (IMAGE_STYLES): a card per look with a thumbnail of the loaded picture. The
+  // thumbnails are computed one after another, rows and dots in workers of their own, so the main
+  // preview is never cancelled; a newer picture drops them (styleRevision).
+  let styleRevision = 0, styleSelected = null;
+  const thumbJobs = { rows: { worker: null, busy: false }, trace: { worker: null, busy: false } };
+  function styleSettings(style) {
+    if (style.method === 'rows') return { ...ROW_DEFAULTS, ...style.rows };
+    if (style.method === 'trace') return { ...TRACE_DEFAULTS, ...style.trace };
+    const settings = { ...IMAGE_DEFAULTS, ...D.presets[style.preset], maxCats: style.maxCats || 1000 };
+    for (const { key } of IMAGE_RANGES) settings[key] = Number(settings[key]);
+    for (const { key } of IMAGE_CHECKS) settings[key] = !!settings[key];
+    return settings;
+  }
+  async function stylePoints(style, settings) {
+    const area = workspace();
+    if (style.method === 'points') return convertWithStats(imagePixels, settings, area).points;
+    const fill = settings.fill / 100;
+    const scale = Math.min(((area.w - 30) * fill) / imagePixels.width, ((area.h - 30) * fill) / imagePixels.height);
+    const width = Math.max(8, Math.round(imagePixels.width * scale)), height = Math.max(8, Math.round(imagePixels.height * scale));
+    const luma = rowLuma(imagePixels, width, height), left = (area.w - width) / 2, top = (area.h - height) / 2;
+    if (style.method === 'rows') {
+      const atlas = await rowAtlasFor(ROW_GLYPH_SETS[settings.glyphs] || ROW_GLYPH_SETS.all, rowBandTop(settings));
+      const result = await workerJob(thumbJobs.rows, () => new Worker(new URL('./ascii-rows.worker.mjs', import.meta.url), { type: 'module' }),
+        { id: 0, luma, width, height, settings, glyphs: atlas.glyphs, pairs: atlas.pairs });
+      return result.rows.map((row) => ({ ch: row.text, x: left + row.x - DOTA.listPadding, y: top + row.y - atlas.bandTop }));
+    }
+    const result = await workerJob(thumbJobs.trace, () => new Worker(new URL('./dot-trace.worker.mjs', import.meta.url), { type: 'module' }), { id: 0, luma, width, height, settings });
+    const ink = measureCategoryInk(ctx, '.');
+    return result.dots.map(([x, y]) => ({ ch: '.', x: left + x - ink.x - ink.w / 2, y: top + y - ink.y - ink.h / 2 }));
+  }
+  // A thumbnail: every label drawn small in the game font, on the editor's canvas colour.
+  function drawStyleThumb(canvas, points) {
+    const area = workspace(), ratio = Math.min(2, devicePixelRatio || 1), width = canvas.clientWidth || 132;
+    canvas.width = Math.round(width * ratio); canvas.height = Math.round(width * ratio * area.h / area.w);
+    const context = canvas.getContext('2d'), scale = canvas.width / area.w;
+    context.fillStyle = '#191821'; context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#c3cad6'; context.font = `600 ${Math.max(3, DOTA.fontSize * scale * 1.3)}px StudioRadiance, sans-serif`;
+    for (const point of points) context.fillText(String(point.ch).toUpperCase(), (point.x + DOTA.listPadding) * scale, (point.y + DOTA.fontSize * 0.857) * scale);
+  }
+  async function buildStyleStrip() {
+    const revision = ++styleRevision, strip = $('imageStyles');
+    strip.replaceChildren(...IMAGE_STYLES.map((style) => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'image-style'; button.dataset.style = style.id;
+      button.setAttribute('aria-pressed', String(style.id === styleSelected));
+      button.innerHTML = `<canvas aria-hidden="true"></canvas><span>${esc(style.label)}</span>`;
+      button.onclick = () => applyStyle(style);
+      return button;
+    }));
+    await document.fonts.load(ROW_FONT).catch(() => {});
+    for (const style of IMAGE_STYLES) {
+      if (disposed || revision !== styleRevision || !imagePixels || !imageDialog.open) return;
+      const button = strip.querySelector(`[data-style="${style.id}"]`);
+      try {
+        const points = await stylePoints(style, styleSettings(style));
+        if (revision !== styleRevision) return;
+        drawStyleThumb(button.querySelector('canvas'), points);
+        button.classList.add('is-ready');
+      } catch { button.classList.add('is-failed'); }
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }
+  function applyStyle(style) {
+    styleSelected = style.id;
+    $('imageStyles').querySelectorAll('[data-style]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.style === style.id)));
+    const settings = styleSettings(style);
+    if (imageMethod !== style.method) {
+      imageMethod = style.method;
+      try { localStorage.setItem(IMAGE_METHOD_KEY, imageMethod); } catch { /* Only the choice is forgotten. */ }
+      showImageMethod(); conversionPoints = []; renderImagePreview();
+    }
+    if (style.method === 'points') { applyPreset(settings); $('imagePreset').value = style.preset; return; }
+    const fields = style.method === 'rows' ? [...ROW_RANGES, ...ROW_SELECTS] : [...TRACE_RANGES, ...TRACE_SELECTS];
+    for (const { id, key } of fields) if (key in settings) $(id).value = settings[key];
+    if (style.method === 'trace') $('tracePack').checked = !!settings.pack;
+    scheduleConversion();
   }
   // Rows and dots are computed in workers; a newer request replaces one that is still running.
   function workerJob(jobs, create, message) {
@@ -2584,10 +2628,12 @@ export function createStudio(projectStorage, initial) {
     openModal(
       `GridStudio ${APP_VERSION} · Работа с холстом`,
       `<p>Выбери группу на холсте и нажми «+» после последнего героя. В попапе можно искать героев и выбирать атрибут. Перетаскивай портреты внутри группы, чтобы менять их порядок; за название или свободное место перемещается вся группа. Esc отменяет перетаскивание, Ctrl+Z — готовую перестановку. На вкладке «Рисование» можно рисовать символами, а «ASCII» превращает изображение в редактируемый рисунок.</p><p>Тяни объекты для перемещения. Любой угол выделения меняет размер. Удерживай <kbd>Shift</kbd>, чтобы сохранить пропорции. Для поворота текста тяни снаружи угла рамки или за круглую ручку; <kbd>Shift</kbd> задаёт шаг 15°. Точный угол можно ввести в свойствах. <kbd>Shift</kbd> + клик добавляет объект к выделению. Протяни рамку на пустом месте, чтобы выделить несколько объектов. <kbd>Alt</kbd> + клик выбирает весь слой рисунка. Двойной клик открывает редактирование текста.</p><h3>Горячие клавиши</h3><div class="shortcuts-grid">${shortcuts.map(([text, key]) => `<div><span>${text}</span><kbd>${key}</kbd></div>`).join('')}</div><h3>О сохранении</h3><p class="hint">Проект сохраняется в этом браузере вместе со всеми сетками, слоями и подложкой. Перед обновлением сохраняется резервная копия. Нажми «Изменения сохранены» в шапке или «Версии проекта» в этой справке, чтобы скачать или восстановить сохранение. Очистка данных браузера удаляет локальные копии — для независимого хранения скачай файл проекта. Картинка конвертера и рисунок в отдельном окне сохранятся в проект только после добавления на холст.</p><p class="hint">Превью приблизительное: файл Dota не хранит цвета и произвольные размеры шрифта. Поворот меняет расположение символов и сохраняется в Dota JSON. Можно загрузить локальный Radiance для более близкого отображения текста.</p><p><a class="source-link" href="https://github.com/linsisss/dota2-grid-toolkit" target="_blank" rel="noreferrer">Исходный репозиторий ↗</a></p>`,
-      '<button id="helpRecovery" class="button secondary">Версии проекта</button><button class="button primary" data-close>Всё понятно</button>',
+      '<button id="helpTour" class="button secondary">Обучение</button><button id="helpRecovery" class="button secondary">Версии проекта</button><button class="button primary" data-close>Всё понятно</button>',
       'help'
     );
     $('helpRecovery').onclick = openRecovery;
+    // src/EditorTour.jsx listens for this and walks through the editor again.
+    $('helpTour').onclick = () => { closeModal(); window.dispatchEvent(new CustomEvent('gridstudio:tour')); };
   }
 
   hydrateIcons();
@@ -2781,10 +2827,18 @@ export function createStudio(projectStorage, initial) {
   }
   $('previewButton').onclick = () => setPreview(!preview);
   $('closePreview').onclick = () => setPreview(false);
-  // Preview backdrop: the game's hero screen or the old gradient, shared with the workshop.
-  const showPreviewBackground = (value) => { $('previewBackgroundLabel').textContent = value === 'gradient' ? 'Фон: градиент' : 'Фон: как в Dota'; };
+  // Preview backdrop: the game's hero screen, the old gradient or «Мой фон» (the user's menu
+  // background from «Студия», when this browser has one), shared with the workshop.
+  const PREVIEW_BACKGROUNDS = { dota: 'Фон: как в Dota', gradient: 'Фон: градиент', mine: 'Фон: мой' };
+  const showPreviewBackground = (value) => {
+    $('previewBackgroundLabel').textContent = PREVIEW_BACKGROUNDS[value] || PREVIEW_BACKGROUNDS.dota;
+    if (value === 'mine') applyMyBackground();
+  };
   showPreviewBackground(gridBackground());
-  $('previewBackground').onclick = () => setGridBackground(gridBackground() === 'gradient' ? 'dota' : 'gradient');
+  $('previewBackground').onclick = async () => {
+    const order = ['dota', 'gradient', ...(await hasMyBackground() ? ['mine'] : [])];
+    setGridBackground(order[(order.indexOf(gridBackground()) + 1) % order.length]);
+  };
   const stopPreviewBackground = onGridBackground(showPreviewBackground);
   listen(document, 'fullscreenchange', () => {
     if (!document.fullscreenElement && previewOwnsFullscreen) setPreview(false, false);
@@ -3392,14 +3446,14 @@ export function createStudio(projectStorage, initial) {
     simplifyArt: (percent) => commit(() => { doc = simplifyArtwork(doc, percent).doc; }, 'Плотность уменьшена. Ctrl+Z — отменить'),
     // pack: «Упаковать точки» (dot-packing.mjs), exactly as the optimizer dialog previews it.
     optimizeArt: (target, pack = false) => commit(() => {
-      doc = optimizeCategories(planOptimization(doc, (text) => measureCategoryWidth(ctx, text), { pack }), target).doc;
+      doc = optimizeCategories(planOptimization(doc, (text) => measureCategoryWidth(ctx, text), { pack, count: pickCount }), target).doc;
     }, pack ? 'Точки упакованы в строки. Ctrl+Z — отменить' : 'Категории сокращены. Ctrl+Z — отменить'),
     downloadOptimized: (target, pack = false) => {
       try {
         const measure = (text) => measureCategoryWidth(ctx, text);
         const outputDoc = target === null ? (pack ? packSymbols(doc, measure).doc : doc)
-          : optimizeCategories(planOptimization(doc, measure, { pack }), target).doc;
-        const output = C.exportDota(outputDoc, measure);
+          : optimizeCategories(planOptimization(doc, measure, { pack, count: pickCount }), target).doc;
+        const output = C.exportDota(outputDoc, null, { widths: pickWidths });
         download(JSON.stringify(output, null, 2), 'hero_grid_config.json');
         toast('Оптимизированный JSON скачан');
         return true;

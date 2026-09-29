@@ -4,7 +4,8 @@ import { drawCatalogGrid, drawGridGround } from '../scripts/catalog-rendering.mj
 import { normalizeCatalogGrid } from '../scripts/catalog-document.mjs';
 import D from '../scripts/data.mjs';
 import { layoutAsciiArt } from '../scripts/ascii-library.mjs';
-import { drawCategoryLabel, measureCategoryText } from '../scripts/dota-rendering.mjs';
+import { drawCategoryLabel, glyphWidths, measureCategoryText } from '../scripts/dota-rendering.mjs';
+import C from '../scripts/core.mjs';
 
 let ready = false, background = null;
 // Telegram cards always use the Dota 2 backdrop, the site's default.
@@ -13,7 +14,7 @@ function gridBackground() {
   return background;
 }
 const portraits = new Map(), knownHeroes = new Map(D.heroes.map(hero => [hero.id, hero.portrait]));
-function loadFonts() {
+export function loadFonts() {
   if (ready) return;
   for (const [file, family] of [['radiance-semibold.otf', 'StudioRadiance'], ['ydygo540.ttf', 'StudioDotaKorean']]) {
     if (!GlobalFonts.registerFromPath(fileURLToPath(new URL(`../assets/fonts/${file}`, import.meta.url)), family))
@@ -25,19 +26,30 @@ function loadFonts() {
   if (!families.has('Arial') && families.has('DejaVu Sans')) GlobalFonts.setAlias('DejaVu Sans', 'Arial');
   ready = true;
 }
+// A stored grid as the API's download link gives it: made to hold on the hero-pick screen and
+// at every resolution, as the workshop page's download is (src/catalog/pick-safe.js).
+let measuring = null;
+export function pickSafeGrid(grid) {
+  loadFonts();
+  measuring ||= createCanvas(8, 8).getContext('2d');
+  const widths = (line) => glyphWidths(measuring, line);
+  return { ...grid, configs: grid.configs.map((config) => ({ ...config, categories: C.pickSafeCategories(config.categories, widths, { singles: false }) })) };
+}
 export async function renderCatalogPreview(source) {
   const { grid } = normalizeCatalogGrid(source);
   loadFonts();
+  const canvas = createCanvas(1193, 593);
+  drawCatalogGrid(canvas.getContext('2d'), grid, await heroImages(grid), 1193, await gridBackground());
+  return canvas.encode('png');
+}
+export async function heroImages(grid) {
   const ids = [...new Set(grid.configs[0].categories.flatMap(c => c.hero_ids))];
-  const images = new Map(await Promise.all(ids.map(async id => {
+  return new Map(await Promise.all(ids.map(async id => {
     // No URLs or filesystem paths from a submission are ever opened.
     if (!knownHeroes.has(id)) return [id, null];
     if (!portraits.has(id)) portraits.set(id, loadImage(fileURLToPath(new URL(`../${knownHeroes.get(id)}`, import.meta.url))).catch(() => null));
     return [id, await portraits.get(id)];
   })));
-  const canvas = createCanvas(1193, 593);
-  drawCatalogGrid(canvas.getContext('2d'), grid, images, 1193, await gridBackground());
-  return canvas.encode('png');
 }
 // A submitted art on the card: rows laid out as on insertion, scaled to fit the Dota grid frame.
 export async function renderArtPreview(text) {

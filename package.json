@@ -1,6 +1,6 @@
 {
   "name": "dota2-grid-studio",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": true,
   "description": "A unified React workspace for Dota 2 hero grids, symbol art and image conversion",
   "scripts": {
@@ -8,7 +8,7 @@
     "start": "npm run dev",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
-    "check": "node --check scripts/disclosure-motion.mjs && node --check scripts/core.mjs && node --check scripts/converter.mjs && node --check scripts/drawing.mjs && node --check scripts/eraser-size.mjs && node --check scripts/hero-order.mjs && node --check scripts/edit-operations.mjs && node --check scripts/reference-image.mjs && node --check scripts/symbol-tools.mjs && node --check scripts/zoom.mjs && node --check scripts/category-optimization.mjs && node --check scripts/export-rows.mjs && node --check scripts/app.mjs && node --check scripts/project-storage.mjs && node --check scripts/telegram-release.mjs && node --check scripts/release-format.mjs && node --check scripts/release-check.mjs && node --check scripts/catalog-document.mjs && node --check server/catalog-store.mjs && node --check server/catalog-api.mjs && node --check server/catalog-telegram.mjs && node --check server/catalog-telegram-store.mjs && node --check server/catalog-preview.mjs && node --check scripts/catalog-rendering.mjs && node --check server/accounts.mjs && node --check scripts/workspaces.mjs && node --check server/telegram-profile.mjs && node --check scripts/workspace-preview.mjs && node --check scripts/save-status.mjs && node --check server/catalog-captcha.mjs && node --check scripts/steam-profile.mjs && node --check scripts/steam-folder.mjs && node --check scripts/ascii-rows.mjs && node --check scripts/hero-chrome.mjs && node --check server/steam-profile.mjs && node --check scripts/dot-trace.mjs && node --check scripts/dot-packing.mjs && node --check scripts/grid-background.mjs && node --check scripts/game-preview.mjs && node --check scripts/art-document.mjs && node --check server/catalog-arts.mjs && node --check scripts/smart-guides.mjs && node --check scripts/align-icons.mjs && node --check scripts/make-grid-background.mjs && node --check scripts/ascii-rows.worker.mjs && node --check scripts/dot-trace.worker.mjs",
+    "check": "node --check scripts/disclosure-motion.mjs && node --check scripts/core.mjs && node --check scripts/converter.mjs && node --check scripts/drawing.mjs && node --check scripts/eraser-size.mjs && node --check scripts/hero-order.mjs && node --check scripts/edit-operations.mjs && node --check scripts/reference-image.mjs && node --check scripts/symbol-tools.mjs && node --check scripts/zoom.mjs && node --check scripts/category-optimization.mjs && node --check scripts/export-rows.mjs && node --check scripts/app.mjs && node --check scripts/project-storage.mjs && node --check scripts/telegram-release.mjs && node --check scripts/release-format.mjs && node --check scripts/release-check.mjs && node --check scripts/catalog-document.mjs && node --check server/catalog-store.mjs && node --check server/catalog-api.mjs && node --check server/catalog-telegram.mjs && node --check server/catalog-telegram-store.mjs && node --check server/catalog-preview.mjs && node --check scripts/catalog-rendering.mjs && node --check server/accounts.mjs && node --check scripts/workspaces.mjs && node --check server/telegram-profile.mjs && node --check scripts/workspace-preview.mjs && node --check scripts/save-status.mjs && node --check server/catalog-captcha.mjs && node --check scripts/steam-profile.mjs && node --check scripts/steam-folder.mjs && node --check scripts/ascii-rows.mjs && node --check scripts/hero-chrome.mjs && node --check server/steam-profile.mjs && node --check scripts/dot-trace.mjs && node --check scripts/dot-packing.mjs && node --check scripts/grid-background.mjs && node --check scripts/game-preview.mjs && node --check scripts/art-document.mjs && node --check server/catalog-arts.mjs && node --check scripts/smart-guides.mjs && node --check scripts/align-icons.mjs && node --check scripts/make-grid-background.mjs && node --check scripts/ascii-rows.worker.mjs && node --check scripts/dot-trace.worker.mjs && node --check scripts/vpk.mjs && node --check scripts/menu-background.mjs && node --check scripts/dota-font.mjs && node --check scripts/zip.mjs && node --check scripts/fetch-dota-fonts.mjs && node --check scripts/md5.mjs && node --check scripts/make-menu-sprites.mjs && node --check scripts/make-menu-rail.mjs && node --check scripts/make-menu-notice.mjs && node --check scripts/check-dota-menu.mjs && node --check scripts/installer.mjs && node --check scripts/icons.mjs && node --check scripts/make-icons.mjs && node --check scripts/studio-background.mjs && node --check scripts/background-library.mjs && node --check server/studio-backgrounds.mjs",
     "test": "node --test tests/*.test.cjs",
     "release:check": "node scripts/release-check.mjs",
     "telegram:preview": "node scripts/telegram-release.mjs",
@@ -22,11 +22,13 @@
     "@napi-rs/canvas": "1.0.9",
     "altcha": "3.2.3",
     "altcha-lib": "2.5.0",
+    "mediabunny": "^1.61.0",
     "puregram": "3.10.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.137",
     "@vitejs/plugin-react": "6.1.1",
     "fake-indexeddb": "6.2.5",
     "vite": "8.3.1"

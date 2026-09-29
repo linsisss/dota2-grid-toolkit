@@ -2,8 +2,9 @@ import { useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 're
 import C from '../scripts/core.mjs';
 import { planOptimization, optimizeCategories } from '../scripts/category-optimization.mjs';
 import { packPlan } from '../scripts/dot-packing.mjs';
-import { drawCategoryLabel, measureCategoryWidth } from '../scripts/dota-rendering.mjs';
+import { drawCategoryLabel, glyphWidths, measureCategoryWidth } from '../scripts/dota-rendering.mjs';
 import { NumberInput } from './NumberInput.jsx';
+import { Icon } from './Icon.jsx';
 
 function ArtPreview({ doc, label }) {
   const ref = useRef(null);
@@ -36,10 +37,15 @@ export function ArtworkOptimizer({ editor, source, onClose }) {
       return cache.get(text);
     };
   }, []);
+  // Counts as the download makes them (core.mjs pickSafeCategories).
+  const count = useMemo(() => {
+    const ctx = document.createElement('canvas').getContext('2d'), widths = (line) => glyphWidths(ctx, line);
+    return (entries) => C.pickSafeCategories(entries.map((entry) => entry.category), widths).length;
+  }, []);
   const canPack = useMemo(() => packPlan(source, measure).rows.some((row) => row.members.length > 1), [source, measure]);
   const [pack, setPack] = useState(false);
   const packed = pack && canPack;
-  const plan = useMemo(() => planOptimization(source, measure, { pack: packed }), [packed, source, measure]);
+  const plan = useMemo(() => planOptimization(source, measure, { pack: packed, count }), [packed, source, measure, count]);
   const initialTarget = (p) => Math.max(p.minimum, Math.min(2000, Math.round(p.losslessCount * 0.75)));
   const [reduce, setReduce] = useState(false);
   const [target, setTarget] = useState(() => initialTarget(plan));
@@ -66,7 +72,7 @@ export function ArtworkOptimizer({ editor, source, onClose }) {
   return <dialog className="artwork-optimizer" ref={dialog} aria-labelledby="optimizeTitle"
     onCancel={(e) => { e.preventDefault(); onClose(); }}>
     <header className="modal-header"><h2 id="optimizeTitle">Оптимизация категорий</h2>
-      <button className="icon-button" aria-label="Закрыть оптимизацию" onClick={onClose}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12m0-12L6 18" /></svg></button></header>
+      <button className="icon-button" aria-label="Закрыть оптимизацию" onClick={onClose}><Icon name="close" /></button></header>
     <div className="optimizer-body">
       <p>При скачивании символы одной линии и так объединяются в строки — со сдвигом меньше полпикселя экрана, в игре это не видно. Если категорий всё ещё много, упакуй точки или сократи детали.</p>
       <div className="optimizer-stats" role="status" aria-live="polite">

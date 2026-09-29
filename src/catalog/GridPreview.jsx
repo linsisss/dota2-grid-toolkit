@@ -3,6 +3,7 @@ import D from '../../scripts/data.mjs';
 import { drawCatalogGrid } from '../../scripts/catalog-rendering.mjs';
 import { gridBackground, gridBackgroundImage, onGridBackground } from '../../scripts/grid-background.mjs';
 import { gameFontsReady, koreanFontReady, needsKoreanFont } from '../typography.js';
+import { myGridBackground } from '../my-background.js';
 import { catalogAPI } from './api.js';
 
 const portraits = new Map();
@@ -44,7 +45,8 @@ export default function GridPreview({ grid: supplied, id, revision, title = 'П�
     const categories = grid.configs[0].categories;
     const ids = [...new Set(categories.flatMap(category => category.hero_ids))];
     const fonts = categories.some(category => needsKoreanFont(category.category_name)) ? Promise.all([gameFontsReady, koreanFontReady()]) : gameFontsReady;
-    const ground = background === 'dota' ? gridBackgroundImage(large) : null;
+    // «Мой фон» without a background built here falls back to the Dota backdrop.
+    const ground = background === 'gradient' ? null : background === 'mine' ? myGridBackground(large).then((mine) => mine || gridBackgroundImage(large)) : gridBackgroundImage(large);
     Promise.all([fonts, ground, ...ids.map(portrait)]).then(([, groundImage, ...images]) => {
       if (!active) return;
       const element = canvas.current, ctx = element.getContext('2d');

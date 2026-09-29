@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CATALOG_TAGS, normalizeCatalogGrid } from '../../scripts/catalog-document.mjs';
-import { Brand, Captcha, Icon, Modal, Notice, Stats, useCatalogConfig } from './Common.jsx';
-import { catalogAPI, CATALOG_PATH, EDITOR_PATH, RULES_PATH, downloadGrid, forgetWork, managementLink, ownedWorks, rememberWork } from './api.js';
+import { Brand, Captcha, Icon, Modal, Notice, SegmentSwitch, Stats, useCatalogConfig } from './Common.jsx';
+import { catalogAPI, CATALOG_PATH, CUSTOMIZE_PATH, EDITOR_PATH, RULES_PATH, STUDIO_PATH, downloadGrid, forgetWork, managementLink, ownedWorks, rememberWork } from './api.js';
 import GridPreview from './GridPreview.jsx';
 import { SensitiveArt } from './Sensitive.jsx';
 import { AdminEditButton } from './AdminEdit.jsx';
@@ -13,17 +13,20 @@ import OwnedPublications from './OwnedPublications.jsx';
 import { AccountProvider, AccountButton, LikeButton, SubscribeButton, useAccount } from './Account.jsx';
 import { useAppMotion } from '../useAppMotion.js';
 import { GridBackgroundSwitch } from './GridBackgroundSwitch.jsx';
+import { BackgroundCard, BackgroundTagFilter, useBackgrounds } from './BackgroundGallery.jsx';
 
-function Report({ item, onClose }) {
+// A report on a grid or (kind 'background') a menu background; the captcha, then the moderators.
+function Report({ item, onClose, kind = 'grid' }) {
+  const background = kind === 'background';
   const [reason, setReason] = useState(''), [captcha, setCaptcha] = useState(''), [reset, setReset] = useState(0);
   const [busy, setBusy] = useState(false), [sent, setSent] = useState(false), [error, setError] = useState('');
   const { config, error: configError } = useCatalogConfig();
-  return <Modal title="Пожаловаться на сетку" onClose={onClose}><form className="catalog-report" onSubmit={async event => {
+  return <Modal title={background ? 'Пожаловаться на фон' : 'Пожаловаться на сетку'} onClose={onClose}><form className="catalog-report" onSubmit={async event => {
     event.preventDefault(); setBusy(true); setError('');
-    try { await catalogAPI(`/works/${item.id}/report`, { method: 'POST', body: { reason, captcha } }); setSent(true); }
+    try { await catalogAPI(background ? `/backgrounds/${item.id}/report` : `/works/${item.id}/report`, { method: 'POST', body: { reason, captcha } }); setSent(true); }
     catch (error) { setError(error.message); setReset(x => x + 1); } finally { setBusy(false); }
   }}>{sent ? <><h3>Жалоба отправлена</h3><p>Модераторы проверят «{item.title}».</p><button type="button" className="catalog-button" onClick={onClose}>Закрыть</button></> : <>
-    <label>Что не так с работой «{item.title}»?<textarea required maxLength={500} rows={4} value={reason} onChange={e => setReason(e.target.value)} autoFocus/></label>
+    <label>{background ? `Что не так с фоном «${item.title}»?` : `Что не так с работой «${item.title}»?`}<textarea required maxLength={500} rows={4} value={reason} onChange={e => setReason(e.target.value)} autoFocus/></label>
     <Captcha config={config} action="report" reset={reset} onToken={setCaptcha}/>{(error || configError) && <Notice error>{error || configError}</Notice>}
     <button className="catalog-button primary" disabled={busy || !config || !captcha}>{busy ? 'Отправляем…' : 'Отправить жалобу'}</button>
   </>}</form></Modal>;
@@ -76,12 +79,36 @@ function WorkDetail({ id, ownerToken, managing }) {
     {report && <Report item={item} onClose={() => setReport(false)}/>}
   </>;
 }
+// «Сетки» or «Фоны» next to the title; ?backgrounds keeps the choice in the address.
+const KINDS = [['grids', 'Сетки'], ['backgrounds', 'Фоны']];
+// Menu backgrounds users shared (server/catalog-backgrounds.mjs); «Использовать» opens one in the builder.
+function Backgrounds() {
+  const [tag, setTag] = useState(''), [query, setQuery] = useState(''), [sort, setSort] = useState('new'), [report, setReport] = useState(null);
+  const { items, total, error, more, update } = useBackgrounds({ tag, query, sort });
+  return <>
+    <div className="catalog-toolbar"><div className="catalog-tabs" aria-label="Подборка"><button aria-pressed={sort === 'new'} onClick={() => setSort('new')}>Новые</button><button aria-pressed={sort === 'popular'} onClick={() => setSort('popular')}>Популярные</button></div>
+      <label className="catalog-search"><Icon name="search"/><input aria-label="Поиск фонов" placeholder="Название или автор" value={query} maxLength={80} onChange={e => setQuery(e.target.value)}/></label></div>
+    <BackgroundTagFilter value={tag} onChange={setTag}/>
+    {error && <Notice error>{error}</Notice>}
+    {!items ? !error && <p role="status">Загружаем фоны…</p> : items.length ? <>
+      <div className="catalog-results"><span>Фонов: {total}{sort === 'popular' && ' · По числу лайков'}</span></div>
+      <section className="background-grid" aria-label="Фоны пользователей">{items.map(item => <BackgroundCard key={item.id} item={item}><div className="background-card-actions">
+        <LikeButton item={item} path={`/backgrounds/${item.id}/like`} onChange={value => update(item.id, value)}/>
+        <button className="catalog-icon" aria-label={`Пожаловаться на фон ${item.title}`} title="Пожаловаться" onClick={() => setReport(item)}><Icon name="flag"/></button>
+        <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`}>Использовать</a></div></BackgroundCard>)}</section>
+      {items.length < total && <button className="catalog-button background-more" onClick={more}>Показать ещё</button>}
+    </> : <section className="catalog-empty"><h2>{query || tag ? 'Таких фонов пока нет' : 'Здесь появятся фоны пользователей'}</h2><p>{query || tag ? 'Попробуй другой запрос. ' : ''}Собери фон из картинки, GIF или видео и нажми «Опубликовать в мастерскую».</p><a className="catalog-button" href={CUSTOMIZE_PATH}>Собрать фон</a></section>}
+    {report && <Report kind="background" item={report} onClose={() => setReport(null)}/>}
+  </>;
+}
 function Gallery() {
   const auth = useAccount();
+  const [kind, setKind] = useState(() => new URLSearchParams(location.search).has('backgrounds') ? 'backgrounds' : 'grids');
   const [query, setQuery] = useState(''), [tag, setTag] = useState(''), [sort, setSort] = useState('new'), [mine, setMine] = useState(() => new URLSearchParams(location.search).has('mine')), [page, setPage] = useState(0);
   const [data, setData] = useState(null), [privateItems, setPrivateItems] = useState([]), [error, setError] = useState(''), [retry, setRetry] = useState(0), [loading, setLoading] = useState(true);
   const owned = ownedWorks().filter(x => !privateItems.some(item => item.id === x.id));
   useEffect(() => {
+    if (kind !== 'grids') return;
     const controller = new AbortController(); setLoading(true); setError('');
     const timer = setTimeout(async () => {
       try {
@@ -91,12 +118,18 @@ function Gallery() {
       finally { if (!controller.signal.aborted) setLoading(false); }
     }, query && !mine ? 220 : 0);
     return () => {clearTimeout(timer);controller.abort();};
-  }, [query,tag,sort,mine,page,retry,auth.user?.id]);
+  }, [kind,query,tag,sort,mine,page,retry,auth.user?.id]);
   function showMine(value) {
     const url = new URL(location.href);
     if (value) url.searchParams.set('mine', '1'); else url.searchParams.delete('mine');
     history.replaceState(history.state, '', url); setMine(value);
   }
+  function showKind(value) {
+    const url = new URL(location.href); url.searchParams.delete('mine');
+    if (value === 'backgrounds') url.searchParams.set('backgrounds', ''); else url.searchParams.delete('backgrounds');
+    history.replaceState(history.state, '', url.href.replace(/backgrounds=(&|$)/, 'backgrounds$1')); setMine(false); setKind(value);
+  }
+  const backgrounds = kind === 'backgrounds';
   const filter = (fn,value) => {fn(value);setPage(0);showMine(false);};
   // Preserve the mounted previews and the reader's position after a like.
   // Popularity order is fetched again on the next filter/page visit.
@@ -104,7 +137,10 @@ function Gallery() {
     ...current, items: current.items.map(item => item.id === id ? { ...item, ...value } : item)
   }));
   return <>
-    <header className="catalog-heading"><div><h1>{mine ? 'Мои публикации' : 'Мастерская'}</h1><p>{mine ? 'Опубликованные сетки и заявки на проверке.' : 'Найди свой вариант. Открой в редакторе и сделай по-своему.'}</p></div><div className="catalog-actions">{!mine && <InstallButton/>}<a className="catalog-button primary" href={EDITOR_PATH}><Icon name="plus"/>Создать сетку</a></div></header>
+    <header className="catalog-heading"><div><div className="catalog-title"><h1>{mine ? 'Мои публикации' : 'Мастерская'}</h1>{!mine && <SegmentSwitch label="Что показать" value={kind} options={KINDS} onChange={showKind}/>}</div>
+      <p>{mine ? 'Опубликованные сетки и заявки на проверке.' : backgrounds ? 'Фоны главного меню от пользователей. Возьми готовый или собери свой.' : 'Найди свой вариант. Открой в редакторе и сделай по-своему.'}</p></div>
+      <div className="catalog-actions">{backgrounds ? <a className="catalog-button primary" href={CUSTOMIZE_PATH}><Icon name="plus"/>Собрать фон</a> : <>{!mine && <InstallButton/>}<a className="catalog-button primary" href={`${EDITOR_PATH}?new=1`}><Icon name="plus"/>Создать сетку</a></>}</div></header>
+    <div key={kind} className="workshop-switch-view">{backgrounds ? <Backgrounds/> : <>
     <div className="catalog-toolbar"><div className="catalog-tabs" aria-label="Подборка"><button aria-pressed={!mine && sort==='new'} onClick={()=>filter(setSort,'new')}>Новые</button><button aria-pressed={!mine && sort==='popular'} onClick={()=>filter(setSort,'popular')}>Популярные</button><button aria-pressed={mine} onClick={()=>showMine(true)}>Мои публикации</button></div>
       {!mine && <label className="catalog-search"><Icon name="search"/><input aria-label="Поиск сеток" placeholder="Название или автор" value={query} maxLength={80} onChange={e=>filter(setQuery,e.target.value)}/></label>}</div>
     {!mine && <div className="catalog-tags catalog-filters"><button aria-pressed={!tag} onClick={()=>filter(setTag,'')}>Все теги</button>{CATALOG_TAGS.map(value=><button key={value} aria-pressed={tag===value} onClick={()=>filter(setTag,tag===value?'':value)}>{value}</button>)}</div>}
@@ -115,7 +151,8 @@ function Gallery() {
         <div className="catalog-card-info"><div><a href={CATALOG_PATH+'?id='+item.id}><h2>{item.title}</h2></a><p>{item.author||'Без подписи'}</p></div><div className="catalog-card-actions"><AdminEditButton item={item} compact onSaved={value=>updateLike(item.id,value)}/><LikeButton item={item} onChange={value=>updateLike(item.id,value)}/></div></div>
         <div className="catalog-card-meta"><span>Символов: {(item.stats.symbols || 0).toLocaleString('ru-RU')} · категорий: {item.stats.categories.toLocaleString('ru-RU')}</span><span>{item.tags.join(', ')}</span></div></article>)}</section>
       {data.total>12 && <nav className="catalog-pagination" aria-label="Страницы мастерской"><button className="catalog-button" disabled={!page} onClick={()=>setPage(x=>x-1)}>Назад</button><span>{page+1} / {Math.ceil(data.total/12)}</span><button className="catalog-button" disabled={(page+1)*12>=data.total} onClick={()=>setPage(x=>x+1)}>Дальше</button></nav>}
-    </> : !error && <section className="catalog-empty"><h2>{query||tag?'Таких сеток пока нет':'Мастерская начинается с твоей сетки'}</h2><p>{query||tag?'Попробуй другой запрос.':'Создай сетку в редакторе и отправь её на проверку.'}</p><a className="catalog-button" href={EDITOR_PATH}>Мои файлы</a></section>}
+    </> : !error && <section className="catalog-empty"><h2>{query||tag?'Таких сеток пока нет':'Мастерская начинается с твоей сетки'}</h2><p>{query||tag?'Попробуй другой запрос.':'Создай сетку в редакторе и отправь её на проверку.'}</p><a className="catalog-button" href={STUDIO_PATH}>Открыть студию</a></section>}
+    </>}</div>
   </>;
 }
 export default function CatalogApp() { useAppMotion(); return <AccountProvider><CatalogShell/></AccountProvider>; }
@@ -124,5 +161,5 @@ function CatalogShell() {
   const params = new URLSearchParams(location.search), id = params.get('id'), moderation = params.has('moderate'), rules = params.has('rules');
   const ownerToken = new URLSearchParams(location.hash.slice(1)).get('manage');
   const managing = !!ownerToken || params.has('manage');
-  return <div className="catalog-page"><header className="catalog-nav"><Brand/><nav>{auth.admin && <a href={`${CATALOG_PATH}?moderate`}>Админка</a>}<a href={EDITOR_PATH}>Мои файлы<Icon name="arrow"/></a><AccountButton/></nav></header><main className="catalog-main">{moderation ? <Moderation/> : rules ? <Rules/> : id ? <WorkDetail id={id} ownerToken={ownerToken} managing={managing}/> : <Gallery/>}</main><footer className="catalog-footer"><span>GridStudio</span><a href={RULES_PATH}>Правила мастерской</a><a href="https://github.com/linsisss/dota2-grid-toolkit">GitHub</a></footer></div>;
+  return <div className="catalog-page"><header className="catalog-nav"><Brand/><nav>{auth.admin && <a href={`${CATALOG_PATH}?moderate`}>Админка</a>}<a href={STUDIO_PATH}>Студия<Icon name="arrow"/></a><AccountButton/></nav></header><main className="catalog-main">{moderation ? <Moderation/> : rules ? <Rules/> : id ? <WorkDetail id={id} ownerToken={ownerToken} managing={managing}/> : <Gallery/>}</main><footer className="catalog-footer"><span>GridStudio</span><a href={RULES_PATH}>Правила мастерской</a><a href="https://github.com/linsisss/dota2-grid-toolkit">GitHub</a></footer></div>;
 }

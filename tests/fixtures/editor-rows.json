@@ -1,0 +1,78 @@
+{
+  "version": 3,
+  "configs": [
+    {
+      "config_name": "Образец строк",
+      "categories": [
+        {
+          "category_name": "ЗАГОЛОВОК",
+          "x_position": 400,
+          "y_position": 20,
+          "width": 30,
+          "height": 30,
+          "hero_ids": []
+        },
+        {
+          "category_name": ".",
+          "x_position": 700,
+          "y_position": 300,
+          "width": 30,
+          "height": 30,
+          "hero_ids": []
+        },
+        {
+          "category_name": ".",
+          "x_position": 710,
+          "y_position": 300,
+          "width": 30,
+          "height": 30,
+          "hero_ids": []
+        },
+        {
+          "category_name": ".",
+          "x_position": 720,
+          "y_position": 300,
+          "width": 30,
+          "height": 30,
+          "hero_ids": []
+        },
+        {
+          "category_name": ".",
+          "x_position": 730,
+          "y_position": 300,
+          "width": 30,
+          "height": 30,
+          "hero_ids": []
+        },
+        {
+          "category_name": ".",
+          "x_position": 740,
+          "y_position": 300,
+          "width": 30,
+          "height": 30,
+          "hero_ids": []
+        },
+        {
+          "category_name": ".",
+          "x_position": 750,
+          "y_position": 300,
+          "width": 30,
+          "height": 30,
+          "hero_ids": []
+        },
+        {
+          "category_name": "КЕРРИ",
+          "x_position": 20,
+          "y_position": 20,
+          "width": 340,
+          "height": 195,
+          "hero_ids": [
+            1,
+            8,
+            44
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -141,7 +141,7 @@ location / {
 
 </details>
 
-Секреты и базу не помещай в web root или Git. Подробности: [мастерская и модерация](docs/catalog.md), [аккаунты и файлы](docs/accounts-workspaces.md), [сохранения и восстановление](docs/project-storage.md).
+Секреты и базу не помещай в web root или Git. Подробности: [мастерская и модерация](docs/catalog.md), [аккаунты и файлы](docs/accounts-workspaces.md), [сохранения и восстановление](docs/project-storage.md), [фон меню и шрифт Dota](docs/customize.md).
 
 **Только редактор:** `dist/` можно разместить на статическом хостинге; без API не будут работать мастерская, вход и синхронизация. В этом репозитории GitHub Pages отведён под [страницу перехода на gridstudio.me](github-pages/index.html). Workflow `Deploy GitHub Pages` публикует только её, по ручному запуску.
 
@@ -157,5 +157,9 @@ npm test
 ---
 
 Авторы: **[@linsissya](https://t.me/linsissya)** & **[@dissonance](https://t.me/dissonance)**. Проект вырос из [Dota 2 Grid Toolkit](https://github.com/linsisss/dota2-grid-toolkit); прежние инструменты сохранены в [`tools/`](tools/).
+
+### Использование кода и материалов
+
+С версии 1.6: если вы используете что-либо с сайта [gridstudio.me](https://gridstudio.me) или из этого репозитория — код, алгоритмы или их части, — укажите это там, где они используются: в описании проекта или страницы, в README, в комментарии рядом с кодом. Достаточно строки вида: «Использовано из GridStudio — https://gridstudio.me, https://github.com/linsisss/dota2-grid-toolkit».
 
 Код — [MIT](LICENSE). Ресурсы и шрифты Dota 2 принадлежат своим правообладателям и не входят в эту лицензию: [источники ресурсов](assets/ATTRIBUTION.md). GridStudio — проект сообщества, не официальный продукт Valve.

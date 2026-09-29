@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { Icon } from './Icon.jsx';
 import { stepNumber } from '../scripts/form-controls.mjs';
 
 export function NumberInput({ onStep, ...props }) {
@@ -23,9 +24,7 @@ export function NumberInput({ onStep, ...props }) {
                 props.onBlur({ target: input, currentTarget: input });
             }}
           >
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d={direction > 0 ? 'm4 10 4-4 4 4' : 'm4 6 4 4 4-4'} />
-            </svg>
+            <Icon name={direction > 0 ? 'chevronUp' : 'chevron'} />
           </button>
         ))}
       </span>

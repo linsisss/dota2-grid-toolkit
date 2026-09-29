@@ -92,11 +92,12 @@ export function AccountButton() {
     {open && <Modal title="Аккаунт" onClose={() => setOpen(false)}><div className="catalog-login-flow"><div className="account-profile"><AccountAvatar user={auth.user}/><h3>{accountLabel(auth.user)}</h3></div>{!auth.user?.username && <p className="catalog-muted">В Telegram не задан @username.</p>}<p>Файлы автоматически сохраняются в аккаунте и доступны на других устройствах.</p>{auth.admin && <a className="catalog-button" href={`${CATALOG_PATH}?moderate`}>Админка<Icon name="arrow"/></a>}{auth.fileSync.busy && <p role="status">Сохраняем файлы…</p>}{auth.fileSync.error && <Notice error>{auth.fileSync.error}<button className="catalog-link" onClick={() => auth.syncFiles()}>Повторить сохранение</button></Notice>}<button className="catalog-button" onClick={async () => { try { await auth.logout(); setOpen(false); } catch (e) { setError(e.message); } }}>Выйти</button>{error && <Notice error>{error}</Notice>}</div></Modal>}
   </>;
 }
-export function LikeButton({ item, onChange }) {
+// `path`: the like endpoint — a grid's by default, `/backgrounds/:id/like` for a menu background.
+export function LikeButton({ item, onChange, path = `/works/${item.id}/like` }) {
   const auth = useAccount(); const [busy, setBusy] = useState(false), [error, setError] = useState('');
   return <span className="catalog-like-wrap"><button className={`catalog-like${item.liked ? ' is-liked' : ''}`} aria-label={item.liked ? 'Убрать лайк' : 'Поставить лайк'} aria-pressed={!!item.liked} disabled={busy} onClick={async () => {
     if (!auth.user) return auth.requestLogin('Войди через Telegram, чтобы поставить лайк.');
-    setBusy(true); setError(''); try { const result = await catalogAPI(`/works/${item.id}/like`, { method: 'PUT', body: { liked: !item.liked } }); onChange(result); }
+    setBusy(true); setError(''); try { const result = await catalogAPI(path, { method: 'PUT', body: { liked: !item.liked } }); onChange(result); }
     catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }
   }}><Icon name="heart"/>{item.likes || 0}</button>{error && <span className="catalog-like-error" role="alert">{error}</span>}</span>;
 }

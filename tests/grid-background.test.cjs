@@ -11,8 +11,9 @@ test('the grid backdrop defaults to the Dota look, remembers the gradient and te
   const seen = [], stop = G.onGridBackground((value) => seen.push(value));
   G.setGridBackground('gradient');
   assert.equal(G.gridBackground(), 'gradient'); assert.equal(attrs.gridBackground, 'gradient'); assert.deepEqual(seen, ['gradient']);
+  G.setGridBackground('mine'); assert.equal(G.gridBackground(), 'mine'); assert.equal(attrs.gridBackground, 'mine');
   G.setGridBackground('anything'); assert.equal(G.gridBackground(), 'dota');
-  stop(); G.setGridBackground('gradient'); assert.deepEqual(seen, ['gradient', 'dota']);
+  stop(); G.setGridBackground('gradient'); assert.deepEqual(seen, ['gradient', 'mine', 'dota']);
   globalThis.localStorage = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
   assert.equal(G.gridBackground(), 'dota', 'blocked storage falls back to the default');
   delete globalThis.localStorage; delete globalThis.window; delete globalThis.document;

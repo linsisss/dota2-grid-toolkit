@@ -18,5 +18,9 @@ export function editorRoute(request, response, next) {
     response.writeHead(308, { Location: `/workshop${query}` }); response.end(); return;
   }
   if (pathname === '/workshop') request.url = `/catalog.html${query}`;
+  if (pathname === '/customize/') {
+    response.writeHead(308, { Location: `/customize${query}` }); response.end(); return;
+  }
+  if (pathname === '/customize') request.url = `/customize.html${query}`;
   next();
 }

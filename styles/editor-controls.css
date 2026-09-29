@@ -339,13 +339,6 @@ select {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.dock-label-toggle svg > path:first-child {
-  opacity: 0.4;
-}
-.dock-label-toggle .dock-toggle-arrow {
-  stroke-width: 2;
-  fill: #312b3c;
-}
 .editor-toolbar .tool-dock {
   transition:
     left 280ms var(--motion-ease),
@@ -421,6 +414,10 @@ select {
 }
 :root[data-grid-background='gradient'] .game-preview .editor-shell {
   background: linear-gradient(#261e12, #140f0a);
+}
+/* «Мой фон»: the user's menu background, dimmed as on the game's hero page (src/my-background.js). */
+:root[data-grid-background='mine'] .game-preview .editor-shell {
+  background: #140f0a var(--my-grid-background, url('../assets/backgrounds/dota-screen.webp')) center / cover no-repeat;
 }
 .game-preview .editor-shell > :not(#canvasViewport):not(#closePreview):not(#previewBackground) {
   display: none !important;

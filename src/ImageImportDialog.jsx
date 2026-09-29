@@ -105,7 +105,7 @@ export function ImageImportDialog() {
       className="modal image-dialog"
       aria-labelledby="imageDialogTitle"
       data-view="split"
-      data-method="rows"
+      data-method="points"
     >
       <header className="image-dialog-header">
         <div id="imageSource" className="image-dialog-source" hidden>
@@ -161,6 +161,8 @@ export function ImageImportDialog() {
               </div>
             </section>
           </div>
+          {/* Styles with thumbnails of the loaded picture (app.mjs buildStyleStrip). */}
+          <div id="imageStyles" className="image-styles" role="group" aria-label="Стиль" />
           <div id="conversionStatus" className="image-preview-status" role="status">
             Настрой изображение перед добавлением.
           </div>
@@ -173,7 +175,7 @@ export function ImageImportDialog() {
             <button className="button secondary compact" data-image-recipe="dots">Точки</button>
           </div>
           <div className="image-method" role="group" aria-label="Способ конвертации">
-            <button type="button" data-image-method="rows" aria-pressed="true">
+            <button type="button" data-image-method="rows" aria-pressed="false">
               <strong>Строки символов</strong>
               <span>Больше деталей, одна категория на строку</span>
             </button>
@@ -181,7 +183,7 @@ export function ImageImportDialog() {
               <strong>Точечный рисунок</strong>
               <span>Точки ровно по линиям, как от руки</span>
             </button>
-            <button type="button" data-image-method="points" aria-pressed="false">
+            <button type="button" data-image-method="points" aria-pressed="true">
               <strong>Контуры и точки</strong>
               <span>Прежний способ: символ = категория</span>
             </button>

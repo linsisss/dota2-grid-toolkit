@@ -43,6 +43,18 @@ test('Telegram account can submit after the browser guest budget was exhausted',
   assert.throws(() => store.save(input(16), identity(1)), error => error.extra.code === 'submission_guest_limit');
 });
 
+test('trusted authors (CATALOG_UNLIMITED_TELEGRAM_IDS) have no account limit; others keep it', async t => {
+  const [, { catalogConfig }] = await modules;
+  const config = catalogConfig({ CATALOG_DEV: '1', CATALOG_SECRET: 'x'.repeat(40), CATALOG_UNLIMITED_TELEGRAM_IDS: '424242424, 42' });
+  assert.deepEqual([...config.unlimited], ['424242424', '42']);
+  assert.throws(() => catalogConfig({ CATALOG_DEV: '1', CATALOG_SECRET: 'x'.repeat(40), CATALOG_UNLIMITED_TELEGRAM_IDS: '@someone' }), /UNLIMITED/);
+  const { store } = await fixture(t);
+  store.unlimited = config.unlimited;
+  for (let i = 1; i <= 14; i++) store.save(input(i), identity(i), null, null, null, '424242424');
+  for (let i = 15; i <= 24; i++) store.save(input(i), identity(i), null, null, null, 'account-a');
+  assert.throws(() => store.save(input(25), identity(25), null, null, null, 'account-a'), error => error.extra.code === 'submission_account_limit');
+});
+
 test('account quota includes updates, deleted works and legacy claims across restarts', async t => {
   const directory = mkdtempSync(join(tmpdir(), 'gridstudio-quota-'));
   const [{ CatalogStore }] = await modules; let now = Date.now();

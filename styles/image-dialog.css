@@ -390,3 +390,16 @@
 .image-dialog:not([data-method='trace']) [data-method-panel='trace'],
 .image-dialog:not([data-method='points']) [data-method-panel='points'] { display: none; }
 .image-method-panel > .hint:first-child { margin-top: 0; }
+
+/* The style strip (app.mjs buildStyleStrip): cards with thumbnails, scrolled sideways. */
+.image-styles { flex:none; display:flex; gap:8px; overflow-x:auto; margin:0 16px; padding:10px 0 6px; scroll-snap-type:x proximity; scrollbar-width:thin; }
+.image-styles:empty { display:none; }
+.image-style { flex:none; display:grid; gap:6px; width:132px; padding:6px 6px 8px; border:1px solid var(--line, #383340); border-radius:10px; background:var(--panel, #211e29);
+  color:var(--muted, #afa7bf); font:inherit; font-size:12px; text-align:left; cursor:pointer; scroll-snap-align:start; transition:border-color 160ms ease, color 160ms ease, transform 160ms ease; }
+.image-style:hover { border-color:#5a5068; color:var(--text, #efeaf5); }
+.image-style[aria-pressed=true] { border-color:var(--accent, #c4b5ed); color:var(--text, #efeaf5); box-shadow:0 0 0 1px var(--accent, #c4b5ed); }
+.image-style canvas { display:block; width:100%; aspect-ratio:1193/593; border-radius:6px; background:#191821; opacity:.35; transition:opacity 260ms ease; }
+.image-style.is-ready canvas { opacity:1; }
+.image-style.is-failed canvas { opacity:.15; }
+.image-style span { padding:0 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+@media (max-width: 700px) { .image-style { width:112px; } }

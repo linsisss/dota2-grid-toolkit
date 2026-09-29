@@ -161,7 +161,10 @@ a {
   color: var(--accent);
   text-decoration: none;
 }
-a:hover {
+/* Editor links underline on hover; the studio list and dialogs styled like the workshop
+   (.catalog-page, .catalog-dialog) keep their own link looks. :where keeps the weight of a plain
+   a:hover, so rules like the brand's (no underline) still win. */
+a:hover:where(:not(:is(.catalog-page, .catalog-dialog) *)) {
   text-decoration: underline;
 }
 .muted {

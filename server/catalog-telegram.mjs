@@ -1,6 +1,6 @@
 import { Telegram, MediaSource } from 'puregram';
 import { randomUUID } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { loadEnvFile } from 'node:process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,6 +10,7 @@ import { catalogConfig } from './catalog-api.mjs';
 import { TelegramQueue } from './catalog-telegram-store.mjs';
 import { renderCatalogPreview, renderArtPreview } from './catalog-preview.mjs';
 import { Accounts } from './accounts.mjs';
+import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
 import { telegramAvatar } from './telegram-profile.mjs';
 
 export const MODERATION_CHAT = '-1004309207941', MODERATION_TOPIC = 6;
@@ -48,6 +49,15 @@ export function reviewCaption(job, config) {
     `${reviewEmoji('tags')} Категория: ${escape(s.category)}`,
     '', decision
   ].join('\n');
+  if (job.kind === 'background' || job.kind === 'background-report') return [
+    ...(config.local ? ['<i>Локальная проверка</i>'] : []),
+    `${reviewEmoji('notice')} <b>${job.kind === 'background-report' ? 'Жалоба на фон меню' : 'Новый фон меню на проверку'}:</b> "${escape(s.title)}"`,
+    `${reviewEmoji('author')} Автор: ${escape(s.author || 'не указан')}`,
+    `${reviewEmoji('categories')} Экран ${escape(s.aspect)}, ${escape(String(s.seconds).replace('.', ','))} с`,
+    `${reviewEmoji('tags')} Теги: ${escape(s.tags?.length ? s.tags.join(', ') : 'нет')}`,
+    ...(s.reason ? [`${reviewEmoji('tags')} Жалоба: ${escape(s.reason.slice(0, 350))}`] : []),
+    '', decision
+  ].join('\n');
   return [
     ...(config.local ? ['<i>Локальная проверка</i>'] : []),
     `${reviewEmoji('notice')} <b>${job.kind === 'report' ? 'Жалоба на сетку' : 'Новая сетка на проверку'}:</b> "${escape(s.title)}"`,
@@ -61,19 +71,25 @@ export function reviewCaption(job, config) {
 }
 export function reviewKeyboard(job, config) {
   if (job.outcome) {
-    return { inline_keyboard: job.outcome === 'approve' && job.kind !== 'art' && !config.local ? [[{ text: 'Открыть в мастерской', url: `${config.origin}/workshop?id=${job.work}` }]] : [] };
+    // Backgrounds have no page of their own: the link opens the workshop's «Фоны».
+    const page = job.kind === 'background' ? `${config.origin}/workshop?backgrounds` : `${config.origin}/workshop?id=${job.work}`;
+    return { inline_keyboard: job.outcome === 'approve' && job.kind !== 'art' && !config.local ? [[{ text: 'Открыть в мастерской', url: page }]] : [] };
   }
-  const actions = job.kind === 'report'
-    ? [['keep', 'Оставить сетку', 'approve'], ['hide', 'Скрыть сетку', 'reject']]
+  const actions = job.kind === 'report' ? [['keep', 'Оставить сетку', 'approve'], ['hide', 'Скрыть сетку', 'reject']]
+    : job.kind === 'background-report' ? [['keep', 'Оставить фон', 'approve'], ['hide', 'Скрыть фон', 'reject']]
     : [['approve', 'Одобрить', 'approve'], ['reject', 'Отклонить', 'reject']];
-  return { inline_keyboard: [actions.map(([action, text, icon]) => ({ text, icon_custom_emoji_id: reviewEmojis[icon][0], callback_data: `gs:${action}:${job.id}` }))] };
+  const buttons = [actions.map(([action, text, icon]) => ({ text, icon_custom_emoji_id: reviewEmojis[icon][0], callback_data: `gs:${action}:${job.id}` }))];
+  // The card shows a poster; the moving picture is in the admin panel.
+  if ((job.kind === 'background' || job.kind === 'background-report') && !config.local)
+    buttons.push([{ text: 'Посмотреть видео', url: `${config.origin}/workshop?moderate=backgrounds${job.kind === 'background-report' ? '&filter=reports' : ''}` }]);
+  return { inline_keyboard: buttons };
 }
 export const isChatMember = member => ['creator', 'administrator', 'member'].includes(member?.status) || (member?.status === 'restricted' && member.is_member === true);
 
 export class CatalogTelegram {
-  constructor(store, config, api, { render = renderCatalogPreview, renderArt = renderArtPreview, log = console.log, avatar = telegramAvatar } = {}) {
+  constructor(store, config, api, { render = renderCatalogPreview, renderArt = renderArtPreview, log = console.log, avatar = telegramAvatar, backgrounds = null } = {}) {
     this.store = store; this.config = config; this.api = api; this.render = render; this.renderArt = renderArt; this.log = log;
-    this.queue = new TelegramQueue(store); this.owner = randomUUID(); this.botId = null;
+    this.queue = new TelegramQueue(store, { backgrounds }); this.owner = randomUUID(); this.botId = null;
     this.accounts = new Accounts(store);
     this.loadAvatar = avatar;
   }
@@ -91,13 +107,16 @@ export class CatalogTelegram {
     this.queue.sync();
     const job = this.queue.claim(); if (!job) return false;
     let preview;
-    try { preview = await (job.kind === 'art' ? this.renderArt(this.queue.arts.get(job.revision).text) : this.render(JSON.parse(this.store.revision(job.revision).grid))); }
+    try {
+      preview = job.kind === 'background' || job.kind === 'background-report' ? readFileSync(this.queue.backgrounds.file(job.revision, 'poster'))
+        : await (job.kind === 'art' ? this.renderArt(this.queue.arts.get(job.revision).text) : this.render(JSON.parse(this.store.revision(job.revision).grid)));
+    }
     catch { this.queue.retry(job, 'queued', 60_000); this.log(`Не удалось нарисовать превью заявки ${job.id}; повтор через минуту.`); return false; }
     if (!this.queue.active(job)) { this.queue.sync(); return false; }
     this.queue.sending(job, this.config);
     try {
       const message = await this.api.sendPhoto({ chat_id: this.config.chatId, message_thread_id: this.config.topicId,
-        photo: MediaSource.buffer(preview, { filename: job.kind === 'art' ? 'art-preview.png' : 'grid-preview.png' }), caption: reviewCaption(job, this.config),
+        photo: MediaSource.buffer(preview, { filename: { art: 'art-preview.png', background: 'background.jpg', 'background-report': 'background.jpg' }[job.kind] || 'grid-preview.png' }), caption: reviewCaption(job, this.config),
         parse_mode: 'HTML', reply_markup: reviewKeyboard(job, this.config) });
       if (String(message.chat?.id) !== this.config.chatId || message.message_thread_id !== this.config.topicId || !message.message_id)
         throw new Error('Unexpected message destination');
@@ -296,7 +315,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const config = telegramConfig(), catalog = catalogConfig();
     store = new CatalogStore(catalog.database, catalog.salt);
     const telegram = Telegram.fromToken(config.token, { retryOnFloodWait: false, apiRetryLimit: 0, apiTimeout: 30_000 });
-    const worker = new CatalogTelegram(store, config, telegram.api);
+    const worker = new CatalogTelegram(store, config, telegram.api, { backgrounds: new CatalogBackgrounds(store, { dir: catalog.media }) });
     if (process.argv.includes('--check')) console.log(JSON.stringify(await worker.check()));
     else if (process.argv.includes('--status')) {
       worker.queue.sync(); console.log(JSON.stringify(store.all('SELECT id,state,outcome,revision,message FROM telegram_reviews ORDER BY rowid')));

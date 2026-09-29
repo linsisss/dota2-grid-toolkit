@@ -181,3 +181,23 @@ export const TRACE_RECIPES = Object.freeze({
   light: { fill: 70, length: 24, spacing: 5.5 },
   dots: { source: 'auto', fill: 85, detail: 60, length: 16, spacing: 4.5 }
 });
+
+// The style strip of «Изображение в ASCII»: a card per look with a thumbnail of the loaded picture,
+// so a style is picked by eye. method: which conversion; preset: a points style (D.presets name);
+// rows / trace: settings over ROW_DEFAULTS / TRACE_DEFAULTS.
+export const IMAGE_STYLES = Object.freeze([
+  { id: 'contour', label: 'Контур', method: 'points', preset: 'Чистый line-art' },
+  { id: 'sketch', label: 'Рисунок', method: 'points', preset: 'Карандашный рисунок' },
+  { id: 'dashed', label: 'Пунктир', method: 'points', preset: 'Пунктир редкий' },
+  { id: 'dotted', label: 'Точечный', method: 'trace', trace: {} },
+  { id: 'engraving', label: 'Тени', method: 'points', preset: 'Гравюра (штриховка)' },
+  { id: 'photo', label: 'Фото', method: 'rows', rows: { mode: 'mix', detail: 60, density: 80 } },
+  { id: 'halftone', label: 'ASCII-полутона', method: 'rows', rows: { mode: 'tone', glyphs: 'signs' } },
+  { id: 'silhouette', label: 'Силуэт', method: 'points', preset: 'Силуэт' },
+  { id: 'anime', label: 'Аниме точки', method: 'points', preset: 'Аниме точки (базовый)' },
+  { id: 'kanji', label: 'Иероглифы', method: 'points', preset: 'Японский стиль (иероглифы)' },
+  { id: 'letters', label: 'Буквы', method: 'rows', rows: { mode: 'mix', glyphs: 'letters' } },
+  { id: 'minimal', label: 'Минимализм', method: 'points', preset: 'Минимализм (мало символов)', maxCats: 600 },
+  { id: 'tattoo', label: 'Тату', method: 'points', preset: 'Тату-эскиз' },
+  { id: 'meme', label: 'Мем', method: 'points', preset: 'Мем (толстые линии)' }
+]);

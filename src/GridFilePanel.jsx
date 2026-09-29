@@ -25,7 +25,7 @@ export function GridFilePanel({ editor, state }) {
     <div className="grid-file-controls">
       <button ref={trigger} id="activeGrid" className="grid-file-trigger" popoverTarget={id}
         aria-label={`Сетка в файле: ${active?.name || 'Без названия'}`} aria-haspopup="dialog" aria-expanded={open}>
-        <span>{active?.name || 'Без названия'}</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>
+        <span>{active?.name || 'Без названия'}</span><Icon name="chevron"/>
       </button>
       <button className="button secondary" aria-label="Новая сетка в этом файле" title="Новая сетка в этом файле"
         onClick={editor.newGrid} disabled={state.configurations.length >= 100}><Icon name="plus"/></button>

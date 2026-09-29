@@ -1,5 +1,5 @@
-import { DOTA, invisibleWarning } from './dota-rendering.mjs';
-import { compactCategoryRows } from './export-rows.mjs';
+import { DOTA, advanceAt, invisibleGlyphs, invisibleWarning } from './dota-rendering.mjs';
+import { compactCategoryRows, packPickRows, plainCategory } from './export-rows.mjs';
 
 const WIDTH = 1193,
   HEIGHT = 593,
@@ -200,24 +200,91 @@ function categoryEntries(state) {
         hero_ids: e.type === 'heroes' ? [...e.heroIds] : []
       } }));
 }
-function exportDota(doc, measure = null, { compactRows = true } = {}) {
+// A download for every screen (docs/zoom-and-optimization.md «Экран выбора героя»). Dota's hero-
+// pick screen shows only the first line of a name, and it and every resolution but 1080p set
+// the glyphs of one name apart from where the «Герои» page puts them. So every multi-line name
+// becomes one category per line (the page's line step, DOTA.header); every row of art glyphs
+// (no letters or digits, or runs of spaces: rows of the ASCII methods, rows from 1.5 files) and
+// every single glyph becomes glyphs at the page's advances, which join again into rows that
+// hold on every screen (export-rows.mjs packPickRows) — or, without `rows`, stay one per
+// category. `singles: false` leaves one-glyph names where they are (grids from before 1.5 are
+// exact everywhere already). Plain text lines and lines Dota does not draw at all (braille)
+// stay whole. Hero categories go last: drawn on top, nothing covers
+// their cards and takes their clicks.
+// widths(line) → raw glyph widths of one upper-cased line (dota-rendering glyphWidths).
+const artLine = (line) => /\s{2,}/u.test(line) || !/[\p{L}\p{N}]/u.test(line);
+function pickSafeCategories(categories, widths, { rows = true, singles = true } = {}) {
+  const heroes = [], out = [], points = [];
+  categories.forEach((category, index) => {
+    const name = category.category_name;
+    if (category.hero_ids?.length) return void heroes.push(category);
+    if (typeof name !== 'string' || !plainCategory(category)) return void out.push({ category, index, x: 0 });
+    const lines = name.split('\n');
+    lines.forEach((line, row) => {
+      if (!line.trim()) return;
+      const y = +(category.y_position + row * DOTA.header).toFixed(6), chars = Array.from(line);
+      const upper = chars.map((char) => char.toUpperCase());
+      const glyphs = chars.filter((char) => !/\s/u.test(char)), shown = glyphs.filter((char) => !invisibleGlyphs(char).length).length;
+      if ((glyphs.length > 1 && !artLine(line)) || !shown || (!singles && glyphs.length === 1) || upper.some((char) => Array.from(char).length !== 1)) {
+        out.push({ category: lines.length === 1 ? category : { ...category, category_name: line, y_position: y }, index, row, x: 0 });
+        return;
+      }
+      const steps = widths(upper.join(''));
+      let pen = category.x_position;
+      chars.forEach((char, k) => {
+        if (!/\s/u.test(char)) points.push({ ch: char, x: pen, y, base: category, index, row });
+        pen += advanceAt(steps[k]);
+      });
+    });
+  });
+  const cards = heroes.flatMap((c) => {
+    const layout = heroLayout({ w: c.width, h: c.height, heroIds: c.hero_ids });
+    return c.hero_ids.map((_, i) => ({ x: c.x_position + layout.left + (i % layout.cols) * layout.stepX,
+      y: c.y_position + layout.top + Math.floor(i / layout.cols) * layout.stepY, w: layout.cardW, h: layout.cardH }));
+  });
+  const pairs = new Map();
+  const width = (before, char) => {
+    const key = before + '\u0000' + char;
+    if (!pairs.has(key)) {
+      const upper = (before + char).toUpperCase(), steps = widths(upper);
+      pairs.set(key, steps[steps.length - 1]);
+    }
+    return pairs.get(key);
+  };
+  const glyphs = rows ? packPickRows(points, width, { cards })
+    : points.map((point, i) => ({ text: point.ch, x: point.x, y: point.y, members: [i] }));
+  for (const glyph of glyphs) {
+    const first = points[glyph.members[0]];
+    out.push({ category: { ...first.base, category_name: glyph.text, x_position: +glyph.x.toFixed(6), y_position: +glyph.y.toFixed(6) },
+      index: first.index, row: first.row, x: glyph.x });
+  }
+  out.sort((a, b) => a.index - b.index || (a.row ?? 0) - (b.row ?? 0) || a.x - b.x);
+  return [...out.map((item) => item.category), ...heroes];
+}
+// compactRows: glyphs of one line merged into rows. widths: a download for every screen
+// (pickSafeCategories); without it rows are merged for the 1080p «Герои» page only (publishing,
+// previews: the workshop makes its download safe itself, src/catalog/pick-safe.js).
+function exportDota(doc, measure = null, { compactRows = true, widths = null } = {}) {
   if (!compactRows) measure = null;
   assertCategoryLimit(doc);
   const result = clone(doc.source);
   const states = { ...(doc.configDrafts || {}), [doc.configIndex]: doc };
   for (const [index, state] of Object.entries(states)) {
     const entries = categoryEntries(state);
-    const categories = compactCategoryRows(entries, measure);
+    const categories = widths ? pickSafeCategories(entries.map((entry) => entry.category), widths, { rows: compactRows })
+      : compactCategoryRows(entries, measure);
     if (categories.length > MAX_ENTITIES)
       throw new Error(
-        'После разделения текста получается больше 10 000 категорий. Уменьши количество символов.'
+        compactRows ? 'После разделения текста получается больше 10 000 категорий. Уменьши количество символов.'
+          : 'Больше 10 000 категорий. Включи «Склеивать символы одной линии в строки» или сократи детали в «Оптимизации».'
       );
     result.configs[index] = { ...result.configs[index], config_name: state.name, categories };
   }
   // Dota does not store an editor canvas size. Only category positions and hero
   // dimensions are exported; every category without heroes has a 30px box.
   for (const [index, config] of result.configs.entries()) {
-    if (measure && !Object.hasOwn(states, index))
+    if (widths && !Object.hasOwn(states, index)) config.categories = pickSafeCategories(config.categories, widths, { rows: compactRows });
+    else if (measure && !Object.hasOwn(states, index))
       config.categories = compactCategoryRows(config.categories.map((category) => ({
         category, layer: category.hero_ids.length ? 'heroes' : 'decor'
       })), measure);
@@ -1014,6 +1081,7 @@ export default {
   deleteArtwork,
   importDota,
   exportDota,
+  pickSafeCategories,
   assertCategoryLimit,
   importProject,
   switchConfig,

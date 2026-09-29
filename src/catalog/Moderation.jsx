@@ -5,6 +5,7 @@ import { useAccount } from './Account.jsx';
 import GridPreview from './GridPreview.jsx';
 import { AdminEditButton } from './AdminEdit.jsx';
 import ArtModeration from './ArtModeration.jsx';
+import BackgroundModeration from './BackgroundModeration.jsx';
 
 const TABS = [['pending', 'На проверке'], ['reports', 'Жалобы'], ['published', 'Опубликованы'], ['blocked', 'Заблокированы']];
 
@@ -25,8 +26,8 @@ function AdminPanel({ auth }) {
   const [error, setError] = useState(''), [busy, setBusy] = useState(false), [filter, setFilter] = useState('pending');
   const [data, setData] = useState(null), [selected, setSelected] = useState(''), [page, setPage] = useState(0), [refresh, setRefresh] = useState(0);
   const [reason, setReason] = useState(''), [blockIP, setBlockIP] = useState(false);
-  const [kind, setKind] = useState(() => new URLSearchParams(location.search).get('moderate') === 'arts' ? 'arts' : 'works');
-  const showKind = value => { const url = new URL(location.href); url.searchParams.set('moderate', value === 'arts' ? 'arts' : ''); history.replaceState(history.state, '', url); setKind(value); };
+  const [kind, setKind] = useState(() => { const value = new URLSearchParams(location.search).get('moderate'); return ['arts', 'backgrounds'].includes(value) ? value : 'works'; });
+  const showKind = value => { const url = new URL(location.href); url.searchParams.set('moderate', value === 'works' ? '' : value); history.replaceState(history.state, '', url); setKind(value); };
   const denied = error => { if (error.status === 401 || error.status === 403) auth.refresh().catch(() => {}); };
   useEffect(() => {
     const c = new AbortController(); setError('');
@@ -46,9 +47,9 @@ function AdminPanel({ auth }) {
       {data?.paused ? 'Возобновить приём' : 'Приостановить приём'}</button>
       {config?.moderationUrl && <a className="catalog-button" href={config.moderationUrl} target="_blank" rel="noreferrer">Топик модерации<Icon name="external"/></a>}</div></header>
     {data?.paused && <Notice>Новые заявки, обновления и арты временно не принимаются. Просмотр и скачивание доступны.</Notice>}
-    <div className="catalog-kind" role="tablist" aria-label="Что проверять">{[['works', 'Сетки', data?.counts?.pending], ['arts', 'Готовые арты', data?.artsPending]].map(([value, label, count]) =>
+    <div className="catalog-kind" role="tablist" aria-label="Что проверять">{[['works', 'Сетки', data?.counts?.pending], ['arts', 'Готовые арты', data?.artsPending], ['backgrounds', 'Фоны', data?.backgroundsPending]].map(([value, label, count]) =>
       <button key={value} role="tab" aria-selected={kind === value} onClick={() => showKind(value)}>{label}{count ? <span className="catalog-count">{count}</span> : null}</button>)}</div>
-    {kind === 'arts' ? <ArtModeration denied={denied}/> : <>
+    {kind === 'arts' ? <ArtModeration denied={denied}/> : kind === 'backgrounds' ? <BackgroundModeration denied={denied}/> : <>
     <div className="catalog-toolbar"><div className="catalog-tabs">{TABS.map(([value, label]) => <button key={value} aria-pressed={filter === value} onClick={() => { setFilter(value); setPage(0); setData(null); }}>
       {label}{data?.counts?.[value] ? <span className="catalog-count">{data.counts[value]}</span> : null}</button>)}</div></div>
     {error && <Notice error>{error}</Notice>}

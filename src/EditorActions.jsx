@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ALIGN_ACTIONS, DISTRIBUTE_ACTIONS } from '../scripts/align-icons.mjs';
+import { Icon } from './Icon.jsx';
 
 const contextTools = [
   ['select', 'Выделение', 'V'],
@@ -12,14 +13,7 @@ const contextTools = [
 ];
 
 function ReflectionIcon({ vertical = false }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="reflection-icon">
-      <g transform={vertical ? 'rotate(90 12 12)' : undefined}>
-        <path d="M12 3v18" strokeDasharray="2 3" />
-        <path d="M3 5 9 12 3 19Z M21 5 15 12 21 19Z" />
-      </g>
-    </svg>
-  );
+  return <Icon name={vertical ? 'flipVertical' : 'flip'} className="reflection-icon" />;
 }
 
 export function DockLabels() {
@@ -49,10 +43,7 @@ export function DockLabels() {
       aria-pressed={compact}
       onClick={() => setCompact(!compact)}
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 5h16M4 12h16M4 19h16" />
-        <path className="dock-toggle-arrow" d={compact ? 'm8 8 4 4-4 4' : 'm12 8-4 4 4 4'} />
-      </svg>
+      <Icon name={compact ? 'labelsShow' : 'labelsHide'} />
       <span className="dock-tool-label">Скрыть подписи</span>
     </button>
   );
@@ -189,9 +180,9 @@ export function CanvasContextMenu({ editor, state }) {
           <span>{arrange.units > 1 ? 'Выровнять объекты' : 'Выровнять по холсту'}</span>
           {[ALIGN_ACTIONS, ...(arrange.units > 2 ? [DISTRIBUTE_ACTIONS] : [])].map((actions, row) => (
             <div key={row}>
-              {actions.map(([action, label, path]) => (
+              {actions.map(([action, label, icon]) => (
                 <button key={action} role="menuitem" aria-label={label} data-tooltip={label} onClick={() => run(action)}>
-                  <svg className="align-icon" viewBox="0 0 24 24" aria-hidden="true"><path d={path} /></svg>
+                  <Icon name={icon} className="align-icon" />
                 </button>
               ))}
             </div>

@@ -8,6 +8,7 @@
 // (the calibrated label advances with kerning), at most `tol` px sideways and half of `py`
 // up or down from where it stood. «Упаковать точки» (dot-packing.mjs) uses PACK_DEFAULTS.
 import { ROW_GLYPH_SETS } from './ascii-rows.mjs';
+import { DOTA, ZERO_WIDTH_SPACE, advanceAt } from './dota-rendering.mjs';
 
 export const PACK_DEFAULTS = Object.freeze({ py: 2, tol: 1.5 });
 // One grid unit is 1.1497 screen pixels at 1080p.
@@ -89,6 +90,64 @@ export function packGlyphs(points, measure, { py = PACK_DEFAULTS.py, tol = PACK_
 const fields = new Set([
   'category_name', 'x_position', 'y_position', 'width', 'height', 'hero_ids'
 ]);
+// A category with only Dota's own fields: its glyphs may move into other categories.
+export const plainCategory = (c) => Object.keys(c).every((key) => fields.has(key));
+
+// Rows for every screen (docs/zoom-and-optimization.md «Экран выбора героя»). Dota snaps each
+// glyph of a category to whole pixels at the size it draws the grid, so a row that is exact on
+// the 1080p «Герои» page drifts elsewhere, by up to a unit per glyph. Here gaps are made of zero-
+// width spaces, which advance exactly 2 units at every size, and a glyph joins a row only while
+// it stays within `drift` units of its place on the page and on the hero-pick screen at every
+// common resolution (SCREENS), and within `tol` on the 1080p page. A row never covers a hero card
+// (`cards`): Dota's category name is a draggable header, 20 units tall and as wide as its text,
+// and one lying on a card takes its clicks.
+export const PICK_ROWS = Object.freeze({ py: 0.87, tol: 1, drift: 2.5, spacers: 90 });
+// Hero-pick screen: 0.8695 of the page (1680 × 1050, 29.09.2026).
+const SCREENS = [768, 900, 1050, 1080, 1200, 1440, 1600, 2160]
+  .flatMap((height) => [1, 0.8695].map((pick) => DOTA.screenScale * height / 1080 * pick));
+const covers = (cards, left, right, y) => cards.some((c) => left < c.x + c.w && right > c.x && y < c.y + c.h && y + DOTA.header > c.y);
+// points: [{ ch, x, y }]; width(before, ch) → raw kerned width of ch after `before` ('' after a gap),
+// as glyphWidths gives it. cards: [{ x, y, w, h }]. Returns rows as packGlyphs does.
+export function packPickRows(points, width, { cards = [], py = PICK_ROWS.py, tol = PICK_ROWS.tol, drift = PICK_ROWS.drift, spacers = PICK_ROWS.spacers } = {}) {
+  const order = points.map((_, i) => i).sort((a, b) => points[a].y - points[b].y || points[a].x - points[b].x);
+  const rows = [];
+  for (let start = 0; start < order.length;) {
+    let end = start;
+    const top = points[order[start]].y;
+    while (end < order.length && points[order[end]].y - top <= py) end++;
+    const band = order.slice(start, end).sort((a, b) => points[a].x - points[b].x || a - b);
+    const y = (top + points[order[end - 1]].y) / 2, runs = [];
+    for (const index of band) {
+      const { ch, x } = points[index], role = glyphRole(ch);
+      let best = null;
+      for (const run of role ? runs : []) {
+        if (!run.open) continue;
+        const target = x - run.x, gaps = Math.max(0, Math.round((target - run.width) / 2));
+        const pen = run.width + gaps * 2, error = Math.abs(pen - target);
+        if (gaps > spacers || error > tol || run.pens.some((p) => Math.abs(p + gaps * 2 - target) > drift)) continue;
+        const raw = width(gaps ? '' : run.last, ch);
+        if (covers(cards, run.x, run.x + DOTA.listPadding + pen + advanceAt(raw), y)) continue;
+        const cost = error - run.members.length * 0.01;
+        if (!best || cost < best.cost) best = { run, gaps, pen, raw, cost };
+      }
+      if (best) {
+        const { run, gaps, pen, raw } = best;
+        run.text += ZERO_WIDTH_SPACE.repeat(gaps) + ch;
+        run.width = pen + advanceAt(raw);
+        run.pens = run.pens.map((p, i) => p + gaps * 2 + advanceAt(raw, SCREENS[i]));
+        run.last = ch; run.members.push(index); run.open = role !== 'end';
+      } else {
+        const raw = width('', ch);
+        runs.push({ x, text: ch, width: advanceAt(raw), pens: SCREENS.map((scale) => advanceAt(raw, scale)),
+          last: ch, members: [index], open: role === 'lead' });
+      }
+    }
+    for (const run of runs)
+      rows.push({ text: run.text, x: run.x, y: run.members.length > 1 ? y : points[run.members[0]].y, width: run.width, members: run.members });
+    start = end;
+  }
+  return rows;
+}
 export function compactCategoryRows(entries, measure) {
   return planCategoryRows(entries, measure).categories;
 }
@@ -98,7 +157,7 @@ export function planCategoryRows(entries, measure) {
   if (!measure) return unchanged();
   const layers = new Map();
   entries.forEach(({ category: c, layer }, index) => {
-    if (c.hero_ids.length || !glyphRole(c.category_name) || Object.keys(c).some((key) => !fields.has(key))) return;
+    if (c.hero_ids.length || !glyphRole(c.category_name) || !plainCategory(c)) return;
     (layers.get(layer) || layers.set(layer, []).get(layer)).push(index);
   });
   const replacements = new Map(), removed = new Set(), members = new Map();

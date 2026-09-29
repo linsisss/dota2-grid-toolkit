@@ -1,3 +1,4 @@
+import EditorTour from './EditorTour.jsx';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { StudioLayout } from './StudioLayout.jsx';
 import { StudioControls } from './StudioControls.jsx';
@@ -84,8 +85,9 @@ function StudioFile({ meta, registry, user, onBack }) {
   return (
     <>
       <StudioLayout onBack={async () => { try { if (editor) await editor.flush(); onBack(); } catch (error) { setSyncStatus(error.message); } }} />
-      {!editor && <div className="studio-loading" role="status">{loadingError || 'Открываем проект…'}{loadingError && <button onClick={onBack}>Вернуться к файлам</button>}</div>}
+      {!editor && <div className="studio-loading" role="status">{loadingError || 'Открываем проект…'}{loadingError && <button onClick={onBack}>Вернуться в студию</button>}</div>}
       {editor && <StudioControls editor={editor} />}
+      {editor && <EditorTour/>}
     </>
   );
 }

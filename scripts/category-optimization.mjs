@@ -157,11 +157,14 @@ export function eliminationOrder(units) {
 }
 
 // pack: reduce the packed rows of «Упаковать точки» instead of the download's own rows.
-export function planOptimization(doc, measure, { pack = false } = {}) {
+// count(entries) → categories the download makes of them (the editor's download: core.mjs
+// pickSafeCategories); by default the rows merged for the «Герои» page.
+export function planOptimization(doc, measure, { pack = false, count = null } = {}) {
+  count ||= (list) => compactCategoryRows(list, measure).length;
   const width = textWidth(measure), candidates = simplifiableItems(doc), ids = new Set(candidates.map((e) => e.id));
   const byId = new Map(candidates.map((e) => [e.id, e]));
   const entries = C.categoryEntries(doc), own = entries.filter((e) => ids.has(e.entityId));
-  const protectedCount = compactCategoryRows(entries.filter((e) => !ids.has(e.entityId)), measure).length;
+  const protectedCount = count(entries.filter((e) => !ids.has(e.entityId)));
   let units;
   if (pack) {
     const { rows } = packPlan(doc, measure), packed = new Set(rows.flatMap((row) => row.members.map((e) => e.id)));
@@ -179,7 +182,7 @@ export function planOptimization(doc, measure, { pack = false } = {}) {
   }
   const order = eliminationOrder(units.map((unit) => ({ layer: unit.items[0].layer,
     dots: unit.items.map((e) => ({ x: e.x + width(e.text) / 2, y: e.y, rare: e.text !== usual.get(e.layer) })) })));
-  const plan = { doc, measure, pack, units, order, protectedCount, rawCount: entries.length,
+  const plan = { doc, measure, count, pack, units, order, protectedCount, rawCount: entries.length,
     minimumKeep: new Set(units.map((unit) => unit.items[0].layer)).size };
   plan.losslessCount = build(plan, units.length).count;
   plan.minimum = Math.min(plan.losslessCount, build(plan, plan.minimumKeep).count);
@@ -193,7 +196,7 @@ function build(plan, keep) {
   let doc = C.clone(plan.doc), packed = 0;
   doc.entities = doc.entities.filter((e) => !remove.has(e.id));
   if (plan.pack) ({ doc, packed } = applyPacking(doc, kept.filter((unit) => unit.row).map((unit) => unit.row), plan.measure));
-  const count = compactCategoryRows(C.categoryEntries(doc), plan.measure).length;
+  const count = plan.count(C.categoryEntries(doc));
   return { doc, count, removed: remove.size, remaining: keepIds.size, packed };
 }
 

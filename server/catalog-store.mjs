@@ -21,6 +21,11 @@ export function gridHash(grid) {
   // Category order and the file/grid name cannot turn the same content into a new work.
   return digest(JSON.stringify(grid.configs[0].categories.map(c => JSON.stringify(c)).sort()));
 }
+export const LANDING_LIKES = 3;
+const LANDING_FROM = `FROM works w JOIN revisions r ON r.id=w.public_revision
+  WHERE w.state='active' AND NOT EXISTS (SELECT 1 FROM json_each(r.tags) WHERE value='18+')
+    AND NOT EXISTS (SELECT 1 FROM reports WHERE work=w.id AND resolved=0)
+    AND (SELECT count(*) FROM likes WHERE work=w.id) >= ?`;
 export class CatalogStore {
   constructor(path, salt, now = Date.now) {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
@@ -96,7 +101,9 @@ export class CatalogStore {
   submitting(identity, account = null) {
     if (this.paused()) fail(503, 'Приём сеток временно приостановлен. Мастерская и редактор доступны.');
     for (const key of [identity.browser, identity.ip]) if (this.get('SELECT key FROM blocks WHERE key=? AND until_at>?', key, this.now())) fail(403, 'Отправка с этого источника временно ограничена.');
-    if (account) {
+    if (account && this.unlimited?.has(String(account))) {
+      // Trusted authors (CATALOG_UNLIMITED_TELEGRAM_IDS) have no account budget.
+    } else if (account) {
       // The existing audit includes updates and deleted/claimed works. Using it
       // preserves the budget across this change, restarts and browser switches.
       const boundary = this.get(`SELECT a.at FROM audit a JOIN works w ON w.id=a.work
@@ -203,6 +210,15 @@ export class CatalogStore {
     else this.run('DELETE FROM subscriptions WHERE account=? AND author=?', account, work.account);
     return this.following(work, account);
   }
+  // The landing page shows a random well-liked grid: public, not 18+, no open reports, at
+  // least LANDING_LIKES likes. except: the grid this browser saw last time, skipped while there
+  // is another one, so a reload always changes the picture.
+  landingWork(except = '') {
+    const pick = (skip) => this.get(`SELECT w.id ${LANDING_FROM} AND w.id<>? ORDER BY random() LIMIT 1`, LANDING_LIKES, skip);
+    const row = pick(except) || (except ? pick('') : null);
+    return row ? this.publicItem(row.id) : null;
+  }
+  landingEligible(id) { return !!this.get(`SELECT 1 x ${LANDING_FROM} AND w.id=?`, LANDING_LIKES, id); }
   list({ query = '', tag = '', popular = false, page = 0, account = null } = {}) {
     const clauses = ["w.state='active'", 'w.public_revision IS NOT NULL'], args = [];
     if (query) { clauses.push('(unicode_lower(r.title) LIKE ? ESCAPE \'!\' OR unicode_lower(r.author) LIKE ? ESCAPE \'!\')'); const q = `%${query.toLowerCase().replace(/[!%_]/g, c => `!${c}`)}%`; args.push(q, q); }

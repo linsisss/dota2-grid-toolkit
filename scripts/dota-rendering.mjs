@@ -37,31 +37,45 @@ export const TEXT_MODEL = 2;
 const FONT = `${DOTA.fontWeight} ${DOTA.fontSize}px ${DOTA.fontFamily}`;
 const BASELINE = DOTA.fontSize * 0.857;
 
-// The game's advance of every glyph in a line: its kerned width, snapped to the 1080p pixel
-// grid, plus the letter spacing. Cached per context once fonts have loaded.
-const advanceCaches = new WeakMap();
-function lineAdvances(ctx, line) {
+// The game's advance of every glyph in a line: its kerned width snapped to whole screen pixels
+// at the size the grid is drawn, plus the letter spacing, which scales with the grid (measured
+// in the game, 29.09.2026: 1920 × 1080 and 1680 × 1050, the «Герои» page and the hero-pick screen,
+// within 0.01 px). The editor shows the «Герои» page at 1080p; at any other size — the hero-pick
+// screen draws the grid at 0.87 of the page, other resolutions at their own scale — the same
+// line snaps differently, so glyphs of one category drift apart (export-rows.mjs packPickRows).
+// En, em, ⅓ em and ⅙ em spaces are not in Radiance and Dota draws them with no width: they
+// advance by the letter spacing alone, exactly 2 units at every size.
+export const ZERO_WIDTH_SPACE = '\u2006';
+const ZERO_WIDTH = /[\u2002-\u2004\u2006]/u;
+export const advanceAt = (width, scale = DOTA.screenScale) => Math.max(0, Math.round(width * scale) / scale + DOTA.letterSpacing);
+// Cached per context once fonts have loaded: { widths (raw, grid units), advances (1080p page) }.
+const lineCaches = new WeakMap();
+function lineMetrics(ctx, line) {
   const settled = typeof document === 'undefined' || document.fonts?.status !== 'loading';
-  let cache = advanceCaches.get(ctx);
-  if (!cache) advanceCaches.set(ctx, (cache = new Map()));
+  let cache = lineCaches.get(ctx);
+  if (!cache) lineCaches.set(ctx, (cache = new Map()));
   if (settled && cache.has(line)) return cache.get(line);
   ctx.save();
   ctx.font = FONT;
   ctx.letterSpacing = '0px';
   let prefix = '', width = 0;
-  const advances = Array.from(line, (char) => {
+  const widths = Array.from(line, (char) => {
     prefix += char;
     const next = ctx.measureText(prefix).width, advance = next - width;
     width = next;
-    return Math.max(0, Math.round(advance * DOTA.screenScale) / DOTA.screenScale + DOTA.letterSpacing);
+    return ZERO_WIDTH.test(char) ? 0 : advance;
   });
   ctx.restore();
+  const metrics = { widths, advances: widths.map((value) => advanceAt(value)) };
   if (settled) {
     if (cache.size > 4000) cache.clear();
-    cache.set(line, advances);
+    cache.set(line, metrics);
   }
-  return advances;
+  return metrics;
 }
+const lineAdvances = (ctx, line) => lineMetrics(ctx, line).advances;
+// Raw kerned glyph widths of an upper-cased line, for placing it at another size (advanceAt).
+export const glyphWidths = (ctx, line) => lineMetrics(ctx, line).widths;
 
 // Crop the display viewport, keeping the original image intact. A supplied
 // portrait viewport can exclude screenshot chrome before fitting a hero card.

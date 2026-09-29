@@ -18,6 +18,18 @@ test('landing creates a separate blank file and reload resumes it without duplic
  assert.equal((await registry.list()).length,2);assert.equal((await registry.get(old.id)).name,'Existing art');
 });
 
+test('studio links open the file list even after a blank landing file, and reload then resumes the file picked from it',async t=>{
+ const f=await fixture(t),registry=await f.spaces.openWorkspaceRegistry();t.after(()=>registry.database?.close());
+ const art=await registry.create('Existing art',f.C.demoDocument('roles')),session=memory();
+ const history={state:{test:true},replaceState(state,_,next){assert.equal(state,this.state);this.url=String(next);}};
+ const blank=await f.spaces.enterWorkspace(registry,null,{url:new URL('https://gridstudio.me/editor?new=1'),history,session});
+ assert.equal(await f.spaces.enterWorkspace(registry,null,{url:new URL('https://gridstudio.me/editor?files=1&show=grids'),history,session}),null);
+ assert.equal(history.url,'https://gridstudio.me/editor?show=grids');assert.equal(session.length,0);
+ assert.deepEqual((await registry.list()).map(x=>x.id).sort(),[art.id,blank.id].sort());
+ f.spaces.rememberWorkspace({id:art.id,configIndex:0},session);
+ assert.equal((await f.spaces.enterWorkspace(registry,null,{url:new URL(history.url),history,session})).id,art.id);
+});
+
 test('landing file belongs to the signed-in account and failed creation keeps the current navigation',async t=>{
  const f=await fixture(t),registry=await f.spaces.openWorkspaceRegistry();t.after(()=>registry.database?.close());
  const session=memory(),url=new URL('https://gridstudio.me/editor.html?new=1'),history={state:null,replaceState(){}};

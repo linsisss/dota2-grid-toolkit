@@ -1,0 +1,408 @@
+{
+  "source": "Google Fonts",
+  "fonts": [
+    {
+      "id": "montserrat",
+      "family": "Montserrat",
+      "style": "Строгий",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 300,
+          "file": "montserrat-300.ttf",
+          "bytes": 175396
+        },
+        {
+          "weight": 400,
+          "file": "montserrat-400.ttf",
+          "bytes": 175484
+        },
+        {
+          "weight": 600,
+          "file": "montserrat-600.ttf",
+          "bytes": 176000
+        },
+        {
+          "weight": 700,
+          "file": "montserrat-700.ttf",
+          "bytes": 176444
+        },
+        {
+          "weight": 900,
+          "file": "montserrat-900.ttf",
+          "bytes": 178596
+        }
+      ]
+    },
+    {
+      "id": "rubik",
+      "family": "Rubik",
+      "style": "Строгий",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 300,
+          "file": "rubik-300.ttf",
+          "bytes": 174128
+        },
+        {
+          "weight": 400,
+          "file": "rubik-400.ttf",
+          "bytes": 174968
+        },
+        {
+          "weight": 600,
+          "file": "rubik-600.ttf",
+          "bytes": 175576
+        },
+        {
+          "weight": 700,
+          "file": "rubik-700.ttf",
+          "bytes": 175604
+        },
+        {
+          "weight": 900,
+          "file": "rubik-900.ttf",
+          "bytes": 175172
+        }
+      ]
+    },
+    {
+      "id": "nunito",
+      "family": "Nunito",
+      "style": "Мягкий",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 300,
+          "file": "nunito-300.ttf",
+          "bytes": 125540
+        },
+        {
+          "weight": 400,
+          "file": "nunito-400.ttf",
+          "bytes": 125504
+        },
+        {
+          "weight": 600,
+          "file": "nunito-600.ttf",
+          "bytes": 125512
+        },
+        {
+          "weight": 700,
+          "file": "nunito-700.ttf",
+          "bytes": 125440
+        },
+        {
+          "weight": 900,
+          "file": "nunito-900.ttf",
+          "bytes": 125352
+        }
+      ]
+    },
+    {
+      "id": "comfortaa",
+      "family": "Comfortaa",
+      "style": "Мягкий",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 300,
+          "file": "comfortaa-300.ttf",
+          "bytes": 109976
+        },
+        {
+          "weight": 400,
+          "file": "comfortaa-400.ttf",
+          "bytes": 109976
+        },
+        {
+          "weight": 600,
+          "file": "comfortaa-600.ttf",
+          "bytes": 110116
+        },
+        {
+          "weight": 700,
+          "file": "comfortaa-700.ttf",
+          "bytes": 110148
+        }
+      ]
+    },
+    {
+      "id": "exo-2",
+      "family": "Exo 2",
+      "style": "Игровой",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 300,
+          "file": "exo-2-300.ttf",
+          "bytes": 143780
+        },
+        {
+          "weight": 400,
+          "file": "exo-2-400.ttf",
+          "bytes": 143756
+        },
+        {
+          "weight": 600,
+          "file": "exo-2-600.ttf",
+          "bytes": 143892
+        },
+        {
+          "weight": 700,
+          "file": "exo-2-700.ttf",
+          "bytes": 143872
+        },
+        {
+          "weight": 900,
+          "file": "exo-2-900.ttf",
+          "bytes": 143732
+        }
+      ]
+    },
+    {
+      "id": "oswald",
+      "family": "Oswald",
+      "style": "Узкий",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 300,
+          "file": "oswald-300.ttf",
+          "bytes": 86288
+        },
+        {
+          "weight": 400,
+          "file": "oswald-400.ttf",
+          "bytes": 86044
+        },
+        {
+          "weight": 600,
+          "file": "oswald-600.ttf",
+          "bytes": 86420
+        },
+        {
+          "weight": 700,
+          "file": "oswald-700.ttf",
+          "bytes": 86392
+        }
+      ]
+    },
+    {
+      "id": "unbounded",
+      "family": "Unbounded",
+      "style": "Широкий",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 300,
+          "file": "unbounded-300.ttf",
+          "bytes": 344636
+        },
+        {
+          "weight": 400,
+          "file": "unbounded-400.ttf",
+          "bytes": 343580
+        },
+        {
+          "weight": 600,
+          "file": "unbounded-600.ttf",
+          "bytes": 348084
+        },
+        {
+          "weight": 700,
+          "file": "unbounded-700.ttf",
+          "bytes": 349224
+        },
+        {
+          "weight": 900,
+          "file": "unbounded-900.ttf",
+          "bytes": 395768
+        }
+      ]
+    },
+    {
+      "id": "jura",
+      "family": "Jura",
+      "style": "Техно",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 300,
+          "file": "jura-300.ttf",
+          "bytes": 150920
+        },
+        {
+          "weight": 400,
+          "file": "jura-400.ttf",
+          "bytes": 151188
+        },
+        {
+          "weight": 600,
+          "file": "jura-600.ttf",
+          "bytes": 151120
+        },
+        {
+          "weight": 700,
+          "file": "jura-700.ttf",
+          "bytes": 150808
+        }
+      ]
+    },
+    {
+      "id": "tektur",
+      "family": "Tektur",
+      "style": "Техно",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 400,
+          "file": "tektur-400.ttf",
+          "bytes": 67208
+        },
+        {
+          "weight": 600,
+          "file": "tektur-600.ttf",
+          "bytes": 67620
+        },
+        {
+          "weight": 700,
+          "file": "tektur-700.ttf",
+          "bytes": 67416
+        },
+        {
+          "weight": 900,
+          "file": "tektur-900.ttf",
+          "bytes": 66468
+        }
+      ]
+    },
+    {
+      "id": "russo-one",
+      "family": "Russo One",
+      "style": "Игровой",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 400,
+          "file": "russo-one-400.ttf",
+          "bytes": 36792
+        }
+      ]
+    },
+    {
+      "id": "play",
+      "family": "Play",
+      "style": "Игровой",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 400,
+          "file": "play-400.ttf",
+          "bytes": 84888
+        },
+        {
+          "weight": 700,
+          "file": "play-700.ttf",
+          "bytes": 85872
+        }
+      ]
+    },
+    {
+      "id": "press-start-2p",
+      "family": "Press Start 2P",
+      "style": "Пиксельный",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 400,
+          "file": "press-start-2p-400.ttf",
+          "bytes": 55168
+        }
+      ]
+    },
+    {
+      "id": "jetbrains-mono",
+      "family": "JetBrains Mono",
+      "style": "Моноширинный",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 300,
+          "file": "jetbrains-mono-300.ttf",
+          "bytes": 112276
+        },
+        {
+          "weight": 400,
+          "file": "jetbrains-mono-400.ttf",
+          "bytes": 112148
+        },
+        {
+          "weight": 600,
+          "file": "jetbrains-mono-600.ttf",
+          "bytes": 112136
+        },
+        {
+          "weight": 700,
+          "file": "jetbrains-mono-700.ttf",
+          "bytes": 112068
+        }
+      ]
+    },
+    {
+      "id": "philosopher",
+      "family": "Philosopher",
+      "style": "Фэнтези",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 400,
+          "file": "philosopher-400.ttf",
+          "bytes": 71632
+        },
+        {
+          "weight": 700,
+          "file": "philosopher-700.ttf",
+          "bytes": 71472
+        }
+      ]
+    },
+    {
+      "id": "caveat",
+      "family": "Caveat",
+      "style": "Рукописный",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 400,
+          "file": "caveat-400.ttf",
+          "bytes": 251000
+        },
+        {
+          "weight": 600,
+          "file": "caveat-600.ttf",
+          "bytes": 251792
+        },
+        {
+          "weight": 700,
+          "file": "caveat-700.ttf",
+          "bytes": 251232
+        }
+      ]
+    },
+    {
+      "id": "lobster",
+      "family": "Lobster",
+      "style": "Рукописный",
+      "license": "SIL Open Font License 1.1",
+      "files": [
+        {
+          "weight": 400,
+          "file": "lobster-400.ttf",
+          "bytes": 201400
+        }
+      ]
+    }
+  ]
+}

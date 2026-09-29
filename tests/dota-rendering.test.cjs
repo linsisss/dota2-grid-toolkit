@@ -97,6 +97,25 @@ test('label widths reproduce the in-game calibration rows (1920 × 1080 screensh
   assert.equal(metrics.advances.length, 2);
 });
 
+test('the text model at another size: the pick-screen sheet (1680 × 1050, «Герои» and hero pick)', () => {
+  const { createCanvas, GlobalFonts } = require('@napi-rs/canvas');
+  GlobalFonts.registerFromPath(require('node:path').join(__dirname, '../assets/fonts/radiance-semibold.otf'), 'StudioRadiance');
+  const { glyphWidths, advanceAt, ZERO_WIDTH_SPACE } = require('../scripts/dota-rendering.mjs');
+  const ctx = createCanvas(8, 8).getContext('2d');
+  // Screen pixels per grid unit, from the sheet's single-dot markers; then the measured step of
+  // every row «.» + spacers, in screen pixels (29.09.2026).
+  const screens = { page: 1.11821, pick: 0.97232 };
+  const rows = [['.', { page: 7.237 }], ['.  ', { page: 19.7, pick: 15.824 }], ['.\u2006\u2006\u2006', { page: 13.939, pick: 11.776 }],
+    ['.\u2004\u2004', { page: 11.702, pick: 9.83 }], ['.\u2002', { page: 9.474, pick: 7.885 }], ['.\u2003', { page: 9.476, pick: 7.88 }],
+    ['.\u2003\u2003', { page: 11.709, pick: 9.835 }]];
+  for (const [unit, measured] of rows)
+    for (const [screen, px] of Object.entries(measured)) {
+      const scale = screens[screen], step = glyphWidths(ctx, unit).reduce((sum, width) => sum + advanceAt(width, scale), 0) * scale;
+      near(step, px, 0.02);
+    }
+  assert.equal(glyphWidths(ctx, ZERO_WIDTH_SPACE)[0], 0);
+});
+
 
 test('glyphs the game does not show (symbol test in Dota) are named on input and on export', () => {
   const { invisibleGlyphs, invisibleWarning } = require('../scripts/dota-rendering.mjs');

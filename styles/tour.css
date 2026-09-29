@@ -1,0 +1,28 @@
+/* The editor's welcome and first-steps tour (src/EditorTour.jsx). */
+@keyframes tour-in { from { opacity:0; transform:translateY(8px) scale(.98); } }
+@keyframes tour-fade { from { opacity:0; } }
+.tour-backdrop { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:16px; background:#0b0a10b8; backdrop-filter:blur(3px); animation:tour-fade 200ms ease both; }
+.tour-welcome { width:min(460px, 100%); padding:30px 30px 22px; border:1px solid var(--line); border-radius:16px; background:var(--panel); box-shadow:0 30px 80px #000a; text-align:center; animation:tour-in 320ms var(--motion-ease) both; }
+.tour-logo { width:44px; height:44px; margin:0 auto 14px; stroke:var(--accent); stroke-width:2.6; }
+.tour-welcome h2 { margin:0 0 10px; font-size:22px; color:var(--text); }
+.tour-welcome p { margin:0 0 20px; color:var(--muted); font-size:14px; line-height:1.55; }
+.tour-actions { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
+.tour-actions .button { display:inline-flex; align-items:center; gap:8px; }
+.tour-welcome .tour-note { margin:16px 0 0; font-size:12px; color:var(--subtle); }
+/* The spotlight is a hole: one box whose huge shadow dims everything else; it glides between steps. */
+.tour-layer { position:fixed; inset:0; z-index:1000; }
+.tour-spotlight { position:fixed; border-radius:12px; box-shadow:0 0 0 2px var(--accent), 0 0 0 9999px #0b0a10b0; pointer-events:none;
+  transition:left 360ms var(--motion-ease), top 360ms var(--motion-ease), width 360ms var(--motion-ease), height 360ms var(--motion-ease); animation:tour-fade 240ms ease both; }
+.tour-card { position:fixed; padding:16px 18px 14px; border:1px solid var(--line); border-radius:14px; background:var(--panel); box-shadow:0 20px 50px #000b; animation:tour-in 280ms var(--motion-ease) both; }
+.tour-card header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.tour-count { font-size:12px; color:var(--accent); font-variant-numeric:tabular-nums; }
+.tour-skip { border:0; background:none; color:var(--muted); font:inherit; font-size:12px; cursor:pointer; padding:2px 0; }
+.tour-skip:hover { color:var(--text); }
+.tour-card h3 { margin:0 0 6px; font-size:16px; color:var(--text); }
+.tour-card p { margin:0 0 14px; font-size:13px; line-height:1.5; color:var(--muted); }
+.tour-card footer { display:flex; align-items:center; gap:8px; }
+.tour-card footer .button { min-height:34px; padding:6px 14px; }
+.tour-dots { display:flex; gap:5px; margin-right:auto; }
+.tour-dots i { width:6px; height:6px; border-radius:50%; background:var(--line); transition:background 200ms ease, transform 200ms ease; }
+.tour-dots i.is-on { background:var(--accent); transform:scale(1.3); }
+@media (prefers-reduced-motion: reduce) { .tour-spotlight, .tour-card, .tour-welcome, .tour-backdrop { transition:none; animation:none; } }

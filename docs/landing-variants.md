@@ -19,6 +19,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 ## Source
 
 - Editor screenshot: https://i.postimg.cc/6pGNCPyL/chrome-h-XKzu-FA8To.png, explicitly provided by the user on 2026-09-27; stored unchanged at assets/design/editor-landing-reference.png (1280 × 675).
+- Since 2026-09-29 (1.6: Lucide icons, «Студия») the file is rendered instead of the screenshot: `server/editor-showcase.mjs` with the recaptured editor (`scripts/capture-editor-template.cjs`) and the same «Marci SWAGA» grid from the workshop (the floating tool dock folded to icons, as in the live picture), 2880 × 1520 scaled to 1280 × 675, `cwebp -q 90`. The live landing picture comes from the same renderer.
 - Avatars: existing user-provided assets, origins in assets/design/ATTRIBUTION.md.
 - Gallery controls are comparison UI, separate from each proposed landing. Query `v=1` through `v=10` selects a candidate; `clean=1` hides comparison controls.
 

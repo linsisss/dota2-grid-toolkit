@@ -1,3 +1,4 @@
+import { Icon } from './Icon.jsx';
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { StudioPortal } from './StudioPortal.jsx';
 import D from '../scripts/data.mjs';
@@ -36,11 +37,7 @@ function AttributeIcon({ attribute }) {
   );
 }
 function Plus() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
+  return <Icon name="plus" />;
 }
 
 function ProjectPanel({ editor, state }) {
@@ -142,7 +139,7 @@ function GroupControl({ editor, state }) {
               });
             }}
           >
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m5 5 6 6m0-6-6 6" /></svg>
+            <Icon name="close" />
           </button>
         );
       })}
@@ -203,9 +200,7 @@ function RotationControl({ editor, state }) {
           editor.rotateSelection(delta * (event.shiftKey ? 15 : 1));
         }}
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M5 15a7 7 0 1 1 11 3M4 9l1 6 6-1" />
-        </svg>
+        <Icon name="rotateHandle" />
       </button>
       {state.rotating && (
         <output
@@ -293,10 +288,7 @@ function HeroPicker({ editor, group }) {
         </button>
       </div>
       <div className="picker-search">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="10.5" cy="10.5" r="6.5" />
-          <path d="m16 16 4 4" />
-        </svg>
+        <Icon name="search" />
         <input
           ref={search}
           type="search"
@@ -518,10 +510,10 @@ export function StudioControls({ editor }) {
       <StudioPortal targetId="libraryDismiss">
         <button className="panel-pin" aria-pressed={pinned} aria-label={pinned ? 'Открепить панель' : 'Закрепить панель'}
           data-tooltip={pinned ? 'Открепить панель' : 'Закрепить панель'} onClick={() => setPinned(value => !value)}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3 6 0-1 6 4 4v2H6v-2l4-4-1-6ZM12 15v6"/></svg>
+          <Icon name="pin" />
         </button>
         <button className="panel-dismiss" onClick={closeLibrary} aria-label="Закрыть панель">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg>
+          <Icon name="close" />
         </button>
       </StudioPortal>
       <StudioPortal targetId="inspectorDismiss">

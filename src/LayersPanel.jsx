@@ -1,65 +1,6 @@
 import { useLayoutEffect, useRef } from 'react';
+import { Icon } from './Icon.jsx';
 
-function Icon({ name }) {
-  const paths = {
-    chevron: <path d="m9 5 7 7-7 7" />,
-    eye: (
-      <>
-        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
-        <circle cx="12" cy="12" r="3" />
-      </>
-    ),
-    hidden: (
-      <>
-        <path d="m3 3 18 18M9.5 5.3A12 12 0 0 1 12 5c6.5 0 10 7 10 7a19 19 0 0 1-3 3.8M6 6.3A21 21 0 0 0 2 12s3.5 7 10 7c1.8 0 3.4-.5 4.8-1.3" />
-      </>
-    ),
-    lock: (
-      <>
-        <rect x="5" y="10" width="14" height="11" rx="2" />
-        <path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" />
-      </>
-    ),
-    unlock: (
-      <>
-        <rect x="5" y="10" width="14" height="11" rx="2" />
-        <path d="M8 10V7a4 4 0 0 1 8 0M12 14v3" />
-      </>
-    ),
-    trash: (
-      <>
-        <path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7M14 10v7" />
-      </>
-    ),
-    art: (
-      <>
-        <rect x="3" y="3" width="18" height="18" rx="3" />
-        <path d="m7 16 3-4 3 3 2-2 3 3" />
-        <circle cx="8" cy="8" r="1" />
-      </>
-    ),
-    heroes: (
-      <>
-        <rect x="3" y="5" width="7" height="14" rx="1" />
-        <rect x="14" y="5" width="7" height="14" rx="1" />
-      </>
-    ),
-    text: <path d="M4 5h16M12 5v15M8 20h8" />
-  };
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {paths[name]}
-    </svg>
-  );
-}
 
 export function LayersPanel({ editor, layers }) {
   const root = useRef(null);
@@ -100,7 +41,7 @@ export function LayersPanel({ editor, layers }) {
                   aria-expanded={layer.expanded}
                   onClick={() => editor.collapseLayer(layer.id)}
                 >
-                  <Icon name="chevron" />
+                  <Icon name="chevronRight" />
                 </button>
               )}
               <button
@@ -121,7 +62,7 @@ export function LayersPanel({ editor, layers }) {
                 aria-pressed={layer.visible}
                 onClick={() => editor.toggleLayer(layer.id, 'visible')}
               >
-                <Icon name={layer.visible ? 'eye' : 'hidden'} />
+                <Icon name={layer.visible ? 'eye' : 'eyeOff'} />
               </button>
               <button
                 className={`icon-button ${layer.locked ? 'off' : ''}`}

@@ -1,11 +1,13 @@
-// Behind grid previews: the Dota 2 hero-grid backdrop («Как в Dota», the default) or the old
-// gradient. The choice is a per-browser preference, shared by the workshop and the editor preview.
+// Behind grid previews: the Dota 2 hero-grid backdrop («Как в Dota», the default), the old
+// gradient, or «Мой фон» — the user's own menu background from «Студия» (src/my-background.js).
+// The choice is a per-browser preference, shared by the workshop and the editor preview.
 // The backdrop images come from scripts/make-grid-background.mjs (fitted to the game at 1080p).
 export const GRID_BACKGROUND_KEY = 'gridstudio.grid-background';
 const EVENT = 'gridstudio:grid-background';
 
+const known = (value) => ['gradient', 'mine'].includes(value) ? value : 'dota';
 export function gridBackground() {
-  try { return localStorage.getItem(GRID_BACKGROUND_KEY) === 'gradient' ? 'gradient' : 'dota'; } catch { return 'dota'; }
+  try { return known(localStorage.getItem(GRID_BACKGROUND_KEY)); } catch { return 'dota'; }
 }
 // Pages style their CSS backdrops from <html data-grid-background>.
 export function applyGridBackground(value = gridBackground()) {
@@ -13,7 +15,7 @@ export function applyGridBackground(value = gridBackground()) {
   return value;
 }
 export function setGridBackground(value) {
-  const next = value === 'gradient' ? 'gradient' : 'dota';
+  const next = known(value);
   try { localStorage.setItem(GRID_BACKGROUND_KEY, next); } catch { /* Only this page remembers it. */ }
   applyGridBackground(next);
   window.dispatchEvent(new CustomEvent(EVENT, { detail: next }));

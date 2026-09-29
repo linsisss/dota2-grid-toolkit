@@ -1,34 +1,25 @@
+import { Icon } from '../Icon.jsx';
 import { useEffect, useRef, useState } from 'react';
 import editorImage from '../../assets/design/editor-landing-reference.webp';
 import linsissya from '../../assets/design/linsissya.webp';
 import dissonance from '../../assets/design/dissonance.webp';
 import StageArtwork from './StageArtwork.jsx';
-import { CATALOG_PATH } from '../catalog/api.js';
+import { CATALOG_PATH, CUSTOMIZE_PATH } from '../catalog/api.js';
 
 const VARIANTS = [
   { id: 'edge', name: 'За край', heading: <>Твоя сетка<br />героев.</> },
   { id: 'panels', name: 'Панели', heading: <>Собери свою<br />сетку героев.</> },
   { id: 'portal', name: 'Проём', heading: <>Твоя сетка.<br />В твоём стиле.</> },
   { id: 'fold', name: 'Разворот', heading: <>Настрой сетку<br />под себя.</> },
-  { id: 'stage', name: 'Сцена', heading: <>Твоя сетка<br /><span className="heading-line">героев Dota 2.</span></> },
+  { id: 'stage', name: 'Сцена', heading: <>Настрой Dota 2<br /><span className="heading-line">под себя.</span></> },
   { id: 'selection', name: 'Выделение', heading: <>Собери свою<br />сетку героев.</> },
   { id: 'panorama', name: 'Панорама', heading: <>Твоя сетка<br />героев.</> },
   { id: 'surface', name: 'Акцент', heading: <>Настрой сетку<br />под себя.</> },
   { id: 'ribbon', name: 'Лента', heading: <>Твоя сетка.<br />В твоём стиле.</> },
   { id: 'closeup', name: 'Крупный план', heading: <>GridStudio</> },
 ];
-const DESCRIPTION = 'Grid Studio — сайт, на котором вы можете создать свою сетку героев используя встроенные инструменты и своё воображение.';
-
-function Icon({ name, ...props }) {
-  const paths = {
-    chevron: <path d="m9 5 7 7-7 7" />,
-    expand: <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" />,
-    grid: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path d="M14 17h7m-3.5-3.5v7" /></>,
-    catalog: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
-    link: <path d="M14 3h7v7m0-7L10 14M10 4H4v16h16v-6" />,
-  };
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>{paths[name]}</svg>;
-}
+// Grids, menu backgrounds and fonts (1.6): the landing says all three.
+const DESCRIPTION = 'GridStudio — сетки героев, фоны главного меню и шрифты для Dota 2. Собери своё в студии или возьми готовое в мастерской.';
 
 function Brand() {
   return <a className="landing-brand" href="./" aria-label="GridStudio, главная">
@@ -77,15 +68,25 @@ function Landing({ variant }) {
       <div className="landing-copy">
         <h1>{variant.heading}</h1>
         <p className="landing-description">{DESCRIPTION}</p>
-        <div className="landing-actions">
-          <a className="landing-primary" href={`./${import.meta.env.VITE_EDITOR_ENTRY || 'editor'}?new=1`}><Icon name="grid" />Создать свою сетку</a>
-          <a className="landing-catalog" href={CATALOG_PATH}><Icon name="catalog" />Мастерская</a>
+        <div className="landing-buttons">
+          <div className="landing-actions">
+            {/* «Студия» (/editor) is where grids and menu backgrounds are made; the background and the font
+                also have buttons of their own, so the landing says what the site can do; fonts and guides are
+              coming (the font page, /customize?tab=font, waits for a check in the game). */}
+            <a className="landing-primary" href={`./${import.meta.env.VITE_EDITOR_ENTRY || 'editor'}?files=1`}><Icon name="studio" />Открыть студию</a>
+            <a className="landing-catalog" href={CATALOG_PATH}><Icon name="workshop" />Смотреть сетки и фоны</a>
+          </div>
+          <div className="landing-tools">
+            <a className="landing-catalog landing-tool" href={CUSTOMIZE_PATH}><Icon name="brush" />Фон меню Dota</a>
+            <span className="landing-catalog landing-tool is-soon" aria-disabled="true" title="Шрифты для Dota — скоро"><Icon name="font" />Шрифты<small>скоро</small></span>
+            <span className="landing-catalog landing-tool is-soon" aria-disabled="true" title="Гайды по оформлению профиля — скоро"><Icon name="book" />Гайды<small>скоро</small></span>
+          </div>
         </div>
         <Authors />
       </div>
       <EditorArtwork variant={variant} />
     </main>
-    <footer className="landing-footer"><a href="https://github.com/linsisss/dota2-grid-toolkit" target="_blank" rel="noreferrer">Проект на GitHub<Icon name="link" /></a><span>gridstudio.me</span></footer>
+    <footer className="landing-footer"><a href="https://github.com/linsisss/dota2-grid-toolkit" target="_blank" rel="noreferrer">Проект на GitHub<Icon name="external" /></a><span>gridstudio.me</span></footer>
   </div>;
 }
 
@@ -113,7 +114,7 @@ export default function LandingGallery({ home = false }) {
     return () => window.removeEventListener('popstate', pop);
   }, [home]);
   useEffect(() => {
-    document.title = home ? 'GridStudio — своя сетка героев Dota 2' : `GridStudio — ${index + 1}. ${variant.name}`;
+    document.title = home ? 'GridStudio — сетки героев, фоны и шрифты для Dota 2' : `GridStudio — ${index + 1}. ${variant.name}`;
     const list = variantList.current;
     const active = list?.querySelector('[aria-pressed="true"]');
     if (active) {
@@ -141,7 +142,7 @@ export default function LandingGallery({ home = false }) {
       <nav className="variant-list" aria-label="Варианты лендинга" ref={variantList}>
         {VARIANTS.map((item, i) => <button key={item.id} aria-pressed={i === index} onClick={() => choose(i)}><span>{String(i + 1).padStart(2, '0')}</span>{item.name}</button>)}
       </nav>
-      <div className="gallery-arrows"><button aria-label="Предыдущий вариант" onClick={() => choose(index - 1)}><Icon name="chevron" /></button><button aria-label="Следующий вариант" onClick={() => choose(index + 1)}><Icon name="chevron" /></button></div>
+      <div className="gallery-arrows"><button aria-label="Предыдущий вариант" onClick={() => choose(index - 1)}><Icon name="chevronRight" /></button><button aria-label="Следующий вариант" onClick={() => choose(index + 1)}><Icon name="chevronRight" /></button></div>
     </div>}
     <Landing key={variant.id} variant={variant} />
   </div>;

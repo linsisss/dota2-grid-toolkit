@@ -108,3 +108,6 @@
 .workspace-sidebar nav button.is-soon { cursor:default; opacity:.6; }
 .workspace-sidebar nav button.is-soon:hover { background:none; color:#afa7bf; }
 .workspace-sidebar nav small { margin-left:auto; padding:1px 7px; border-radius:999px; background:#c4b5ed24; color:#c4b5ed; font-size:11px; }
+/* «Студия» cards show transparent pictures of the grids (WorkspacePreview.jsx); the ground comes from the preview switch. */
+.workspace-thumbnail { display:block; }
+.workspace-thumbnail img { display:block; width:100%; height:100%; object-fit:contain; user-select:none; }

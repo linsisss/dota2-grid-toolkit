@@ -15,6 +15,10 @@ export class Accounts {
         document TEXT NOT NULL, revision INTEGER NOT NULL, updated INTEGER NOT NULL, preview TEXT, archived INTEGER NOT NULL DEFAULT 0);
       CREATE INDEX IF NOT EXISTS workspace_owner ON workspaces(account,updated);
       CREATE TABLE IF NOT EXISTS account_avatars(account TEXT PRIMARY KEY, image BLOB NOT NULL, version TEXT NOT NULL);`);
+    // 1.6.1: the grids of a file (names and the open one), so «Студия» on another device lists
+    // them without the document. Older rows get it on their next save.
+    if (!store.all('PRAGMA table_info(workspaces)').some((column) => column.name === 'grids')) store.db.exec('ALTER TABLE workspaces ADD COLUMN grids TEXT');
+    this.thumbnails = new Map();
   }
   user(session) {
     if (!session || !/^[\w-]{43}$/.test(session)) return null;
@@ -86,6 +90,8 @@ export class Accounts {
       if (work?.account === user.id) return { linked: true };
       this.store.owned(id, token);
       this.store.run('UPDATE works SET account=? WHERE id=? AND account IS NULL', user.id, id);
+      // A like this account gave the guest grid would now be a like on its own work (refused by store.like).
+      this.store.run('DELETE FROM likes WHERE work=? AND account=?', id, user.id);
       this.store.audit(id, `account-claim:${user.id}`); return { linked: true };
     });
   }
@@ -95,8 +101,11 @@ export class Accounts {
     });
   }
   listSpaces(user, archived = false) {
-    return this.store.all('SELECT id,name,revision,updated,preview,archived FROM workspaces WHERE account=? AND archived=? ORDER BY updated DESC', user.id, archived ? 1 : 0)
-      .map(row => ({ ...row, account: user.id, preview: row.preview ? JSON.parse(row.preview) : null }));
+    return this.store.all('SELECT id,name,revision,updated,preview,archived,grids FROM workspaces WHERE account=? AND archived=? ORDER BY updated DESC', user.id, archived ? 1 : 0)
+      .map(({ grids, ...row }) => {
+        const info = grids ? JSON.parse(grids) : null;
+        return { ...row, account: user.id, preview: row.preview ? JSON.parse(row.preview) : null, ...(info ? { gridNames: info.names, configIndex: info.configIndex } : {}) };
+      });
   }
   space(id, user) {
     const row = this.store.get('SELECT * FROM workspaces WHERE id=? AND account=?', id, user.id);
@@ -111,6 +120,7 @@ export class Accounts {
     const raw = JSON.stringify(document);
     if (Buffer.byteLength(raw) > 8_000_000) fail(413, 'Файл больше 8 МБ. Скачай его для резервной копии или уменьши размер подложки.');
     let preview = null; try { preview = JSON.stringify(selectedCatalogGrid(document)); if (preview.length > 150_000) preview = null; } catch { /* Large private documents still save. */ }
+    const grids = JSON.stringify({ names: C.configurations(document).map((config) => config.name), configIndex: document.configIndex });
     return this.store.tx(() => {
       const old = this.store.get('SELECT * FROM workspaces WHERE id=?', id);
       if (old && old.account !== user.id) fail(404, 'Рабочее пространство не найдено.');
@@ -120,9 +130,26 @@ export class Accounts {
       const size = this.store.get('SELECT count(*) n,coalesce(sum(length(CAST(document AS BLOB))),0) bytes FROM workspaces WHERE account=?', user.id);
       if ((!old && size.n >= 100) || size.bytes - (old ? Buffer.byteLength(old.document) : 0) + Buffer.byteLength(raw) > 200_000_000) fail(413, 'Лимит аккаунта: 100 файлов или 200 МБ. Сохрани резервную копию на устройство.');
       const revision = (old?.revision || 0) + 1, updated = this.store.now();
-      this.store.run('INSERT INTO workspaces(id,account,name,document,revision,updated,preview,archived) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,document=excluded.document,revision=excluded.revision,updated=excluded.updated,preview=excluded.preview', id, user.id, name, raw, revision, updated, preview, input.archived === true ? 1 : 0);
+      this.store.run('INSERT INTO workspaces(id,account,name,document,revision,updated,preview,archived,grids) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,document=excluded.document,revision=excluded.revision,updated=excluded.updated,preview=excluded.preview,grids=excluded.grids', id, user.id, name, raw, revision, updated, preview, input.archived === true ? 1 : 0, grids);
       return { id, revision, updated };
     });
+  }
+  // A picture of one grid of the account's copy (catalog-preview renderSpaceThumbnail), drawn once
+  // per revision and kept for the 48 most recent. The URL names the revision, so browsers cache it.
+  async spaceThumbnail(id, user, index, render) {
+    const row = this.store.get('SELECT revision,document FROM workspaces WHERE id=? AND account=?', id, user.id);
+    if (!row) fail(404, 'Рабочее пространство не найдено в этом аккаунте.');
+    const key = `${id}:${row.revision}:${index}`;
+    if (!this.thumbnails.has(key)) {
+      let document;
+      try { document = C.importProject(JSON.parse(row.document)); } catch { fail(422, 'Не удалось прочитать файл для превью.'); }
+      if (!Number.isInteger(index) || index < 0 || index >= document.source.configs.length) fail(404, 'Сетка не найдена.');
+      const picture = render(document, index);
+      this.thumbnails.set(key, picture);
+      picture.catch(() => this.thumbnails.delete(key));
+      if (this.thumbnails.size > 48) this.thumbnails.delete(this.thumbnails.keys().next().value);
+    }
+    return this.thumbnails.get(key);
   }
   archiveSpace(id, user, revision, archived) {
     return this.store.tx(() => {

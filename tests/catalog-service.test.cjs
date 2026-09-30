@@ -170,3 +170,13 @@ test('HTTP flow protects origin, Telegram admin access, owner tokens and retries
   assert.equal((await call(`/works/${saved.body.id}`)).body.grid.configs[0].categories[0].x_position, 10);
   await call('/auth/logout', 'POST', {}); assert.equal((await call('/admin/session')).status, 401);
 });
+test('admin search finds grids by title or author in any case; the tab counts stay whole', async t => {
+  const { store } = await fixture(t);
+  store.save({ ...input(60), title: 'Корги на пляже' }, identity(1));
+  store.save({ ...input(61), title: 'Лес', author: 'КОРГИ-фан' }, identity(2));
+  store.save({ ...input(62), title: 'Горы' }, identity(3));
+  const found = store.moderation('pending', 0, 'корги');
+  assert.deepEqual(found.items.map(item => item.title).sort(), ['Корги на пляже', 'Лес']);
+  assert.equal(found.total, 2); assert.equal(found.counts.pending, 3);
+  assert.equal(store.moderation('pending', 0, '100%').total, 0, 'LIKE wildcards are plain text');
+});

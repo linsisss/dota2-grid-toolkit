@@ -72,3 +72,30 @@ test('dot style: only dots, and their density follows the tone', async () => {
   }
   assert.ok(black > gray * 1.3 && gray > 0, `black ${black}, gray ${gray}`);
 });
+
+test('a slider draft typesets a smaller picture into the same rows, and never changes the full result', async () => {
+  const { atlasKern, rowAtlas, rowDraftAtlas, rowDraftScale, rowTarget, rowTypesetOptions, typesetRows, ROW_GLYPH_SETS } = await load;
+  // The row step stays whole pixels, and a draft is never larger than the picture.
+  assert.equal(rowDraftScale({ pitch: 12 }, 0.5), 0.5);
+  assert.equal(rowDraftScale({ pitch: 13 }, 0.5), 7 / 13);
+  assert.equal(rowDraftScale({ glyphs: 'dots', pitch: 13 }, 0.4), 0.5, 'dots keep their 4 px step');
+  assert.equal(rowDraftScale({ pitch: 12 }, 1.5), 1);
+  assert.deepEqual(rowTypesetOptions({ pitch: 12 }, 1), { pitch: 12 }, 'full size: the options of before');
+  assert.deepEqual(rowTypesetOptions({ pitch: 12 }, 0.5), { pitch: 6, sigma: 0.4, scale: 0.5 });
+  // The filled block of the test above, at full size and as a draft at 7/13.
+  const W = 300, H = 78, settings = { mode: 'tone', detail: 0, pitch: 13 }, k = rowDraftScale(settings, 0.5);
+  const atlas = rowAtlas(ROW_GLYPH_SETS.signs, createCanvas);
+  const block = (s) => picture(Math.round(W * s), Math.round(H * s), (x, y) => x >= 100 * s && x < 220 * s && y >= 13 * s && y < 65 * s);
+  const full = typesetRows(rowTarget(block(1), W, H, settings).target, W, H, { glyphs: atlas.glyphs, kern: atlasKern(atlas.glyphs, atlas.pairs) }, rowTypesetOptions(settings));
+  assert.deepEqual(full, typesetRows(rowTarget(block(1), W, H, settings, 1).target, W, H, atlas, rowTypesetOptions(settings, 1)), 'scale 1 is the full result');
+  const w = Math.round(W * k), h = Math.round(H * k);
+  const draft = typesetRows(rowTarget(block(k), w, h, settings, k).target, w, h, rowDraftAtlas(atlas.glyphs, atlas.pairs, settings, k), rowTypesetOptions(settings, k));
+  assert.deepEqual(draft.map((row) => Math.round(row.y / k)), full.map((row) => row.y), 'the same rows at the same heights');
+  const ctx = createCanvas(8, 8).getContext('2d'); ctx.font = '600 16px StudioRadiance'; ctx.letterSpacing = '2px';
+  for (const row of draft) {
+    assert.ok(Math.abs(row.x / k - 100) < 14, `draft row starts at the block: ${(row.x / k).toFixed(1)}`);
+    const end = row.x / k + ctx.measureText(row.text).width;
+    assert.ok(Math.abs(end - 220) < 18, `draft row ends at the block: ${end.toFixed(1)}`);
+    assert.ok(/^[@%$#&]+$/.test(row.text.replace(/\s/g, '')) || row.text.length > 5, row.text);
+  }
+});

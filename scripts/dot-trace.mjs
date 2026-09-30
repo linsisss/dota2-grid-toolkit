@@ -64,15 +64,16 @@ export function kuwahara(src, w, h, r) {
 
 // 1-px skeleton of the lines. detail 0..1: more detail means fainter strokes and weaker
 // edges still count. Photos are flattened by kuwahara first (radius ~1/120 of the picture).
-export function traceSkeleton(tone, level, w, h, source, detail = 0.6, flatten = true) {
+// scale < 1: a draft's smaller picture, so the fixed radii shrink with it.
+export function traceSkeleton(tone, level, w, h, source, detail = 0.6, flatten = true, scale = 1) {
   if (source === 'lines') {
-    const soft = gaussianBlur(tone, w, h, 0.8), bin = new Uint8Array(w * h), limit = 0.75 - 0.5 * detail;
+    const soft = gaussianBlur(tone, w, h, 0.8 * scale), bin = new Uint8Array(w * h), limit = 0.75 - 0.5 * detail;
     for (let i = 0; i < bin.length; i++) bin[i] = soft[i] > limit ? 1 : 0;
     return thinning(bin, w, h);
   }
-  const high = Math.max(0.03, 0.22 - 0.16 * detail);
-  const flat = flatten ? kuwahara(kuwahara(level, w, h, Math.max(2, Math.round(Math.min(w, h) / 120))), w, h, 2) : level;
-  const { mag, ang } = sobel(gaussianBlur(flat, w, h, flatten ? 1.2 : 2), w, h);
+  const high = Math.max(0.03, 0.22 - 0.16 * detail), r = Math.max(1, Math.round(2 * scale));
+  const flat = flatten ? kuwahara(kuwahara(level, w, h, Math.max(r, Math.round(Math.min(w, h) / 120))), w, h, r) : level;
+  const { mag, ang } = sobel(gaussianBlur(flat, w, h, (flatten ? 1.2 : 2) * scale), w, h);
   return thinning(hysteresis(nonMaxSuppression(mag, ang, w, h), w, h, high, high * 0.42), w, h);
 }
 
@@ -180,12 +181,15 @@ export function dotsAlong(paths, { spacing = 4.5, length = 16, gap = spacing * 0
 }
 
 // luma: Float32Array w×h, 0..1. Returns dot centres in picture pixels.
+// settings.scale < 1: a draft while a slider moves — the picture comes at that fraction of
+// its size (a few times faster), pixel lengths shrink with it, dots are in the draft's pixels.
 export function traceDots(luma, w, h, settings = {}) {
-  const s = { ...TRACE_DEFAULTS, ...settings }, detail = clamp01(s.detail / 100);
+  const s = { ...TRACE_DEFAULTS, ...settings }, detail = clamp01(s.detail / 100), scale = Number(s.scale) || 1;
   const { tone, level, ink } = traceTone(luma, w, h);
   const source = s.source === 'lines' || s.source === 'edges' ? s.source : traceSource(tone);
-  const skeleton = pruneSpurs(traceSkeleton(tone, level, w, h, source, detail, s.flatten !== false), w, h);
-  const spacing = Math.max(2, Number(s.spacing) || TRACE_DEFAULTS.spacing);
-  const dots = dotsAlong(smoothPaths(tracePaths(skeleton, w, h)), { spacing, length: Math.max(0, Number(s.length) || 0) });
+  const skeleton = pruneSpurs(traceSkeleton(tone, level, w, h, source, detail, s.flatten !== false, scale), w, h, Math.round(10 * scale));
+  const spacing = Math.max(2, Number(s.spacing) || TRACE_DEFAULTS.spacing) * scale;
+  const paths = smoothPaths(tracePaths(skeleton, w, h), Math.max(1, Math.round(2 * scale)));
+  const dots = dotsAlong(paths, { spacing, length: Math.max(0, Number(s.length) || 0) * scale });
   return { dots, source, ink, limited: dots.length >= TRACE_MAX_DOTS };
 }

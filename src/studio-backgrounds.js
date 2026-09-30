@@ -39,11 +39,13 @@ const signedIn = () => (account ||= catalogAPI('/auth/me').then((result) => resu
 // After a build: the background (new, or the one opened from the studio) is kept in this browser
 // with its WebM; a signed-in account gets the recipe. Syncing failures are left to the studio,
 // which uploads anything not yet synced when it opens.
-export async function saveBuiltBackground({ id = null, recipe, video, codec, seconds }) {
+export async function saveBuiltBackground({ id = null, recipe, video, heroVideo = null, codec, seconds }) {
   const [user, old] = await Promise.all([signedIn(), id ? getBackground(id) : null]);
   const now = Date.now(), checked = studioRecipe(recipe);
   const record = { id: old?.id || id || crypto.randomUUID(), name: old?.name || defaultStudioName(checked.source), account: old?.account || user,
     recipe: checked, poster: await posterFrame(video, 480, 0.8), video: new Blob([video], { type: 'video/webm' }), codec, seconds,
+    // The video behind the hero, when it has its own (recipe.hero.mode 'own'); like `video`, this browser only.
+    heroVideo: heroVideo ? new Blob([heroVideo], { type: 'video/webm' }) : null,
     created: old?.created || now, updated: now, synced: false };
   await putBackground(record);
   keepBackgrounds();

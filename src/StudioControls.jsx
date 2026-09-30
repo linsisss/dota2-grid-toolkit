@@ -479,8 +479,9 @@ export function StudioControls({ editor }) {
         <GridFilePanel editor={editor} state={state} />
       </StudioPortal>
       <StudioPortal targetId="canvasTopTools">
-        <CategoryWarning count={state.categories} onOptimize={() => setOptimization(editor.getDocument())} />
+        {/* The first row keeps room for the undo/redo/preview buttons pinned to the canvas corner. */}
         <RecentSymbols symbols={state.recentSymbols} onPick={editor.useBrushSymbol} />
+        <CategoryWarning count={state.categories} onOptimize={() => setOptimization(editor.getDocument())} />
         {(state.canvas.w !== C.WIDTH || state.canvas.h !== C.HEIGHT) && (
           <p className="canvas-size-note canvas-size-persistent">
             При изменении размеров холста в Доте появятся ползунки.
@@ -536,6 +537,7 @@ export function StudioControls({ editor }) {
           value={state.reference}
           canvasSize={state.canvas}
           onChange={editor.setReference}
+          onPreview={editor.previewReference}
           onEdit={editor.editReference}
           editing={state.referenceEditing}
         />

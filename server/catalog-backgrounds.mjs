@@ -58,6 +58,8 @@ export class CatalogBackgrounds {
       ALTER TABLE backgrounds ADD COLUMN tags TEXT NOT NULL DEFAULT '[]';
       UPDATE backgrounds SET tags=json_array(category) WHERE category<>'Другое';
       ALTER TABLE backgrounds DROP COLUMN category;`); });
+    // Own backgrounds cannot be liked any more (like()); earlier self-likes go, as for grids.
+    store.removeSelfLikes('background_likes', 'background', 'backgrounds', backgroundKey('*'));
   }
   get(id) { return this.store.get('SELECT * FROM backgrounds WHERE id=?', id); }
   file(id, kind) { return join(this.dir, `${id}.${kind === 'poster' ? 'jpg' : 'webm'}`); }
@@ -100,7 +102,8 @@ export class CatalogBackgrounds {
     const now = store.now();
     return store.tx(() => {
       guard();
-      if (account) store.rate(`bg-account:${account}`, limits.accountDaily, 86_400_000, { message: `С Telegram можно отправить ${limits.accountDaily} фонов за 24 часа.`, code: 'background_account_limit' });
+      if (store.trusted(account)) { /* No account budget; the network cap below still applies. */ }
+      else if (account) store.rate(`bg-account:${account}`, limits.accountDaily, 86_400_000, { message: `С Telegram можно отправить ${limits.accountDaily} фонов за 24 часа.`, code: 'background_account_limit' });
       else store.rate(`bg:${identity.browser}`, limits.daily, 86_400_000, { message: `Без входа можно отправить ${limits.daily} фона за 24 часа. С Telegram — до ${limits.accountDaily}.`, code: 'background_guest_limit' });
       store.rate(`bg-ip:${identity.ip}`, limits.networkDaily, 86_400_000, { message: 'Достигнут общий лимит отправки фонов из этой сети за 24 часа.', code: 'background_network_limit' });
       const { lastInsertRowid } = store.run('INSERT INTO backgrounds(title,author,tags,aspect,seconds,bytes,hash,account,browser,ip,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
@@ -112,10 +115,11 @@ export class CatalogBackgrounds {
       return { id, status: 'pending', token: this.token(id) };
     });
   }
+  // liked and mine are the viewer's (the like button is off on their own background); the answers are never cached.
   view(row, account = null) {
     return { id: row.id, title: row.title, author: row.author, tags: JSON.parse(row.tags), aspect: row.aspect, seconds: row.seconds, bytes: row.bytes, updated: row.updated,
       likes: this.store.get('SELECT count(*) n FROM background_likes WHERE background=?', row.id).n,
-      liked: !!(account && this.store.get('SELECT 1 FROM background_likes WHERE background=? AND account=?', row.id, account)) };
+      liked: !!(account && this.store.get('SELECT 1 FROM background_likes WHERE background=? AND account=?', row.id, account)), mine: !!(account && row.account === account) };
   }
   // The author's key to the moderation result of one submission (no account needed): derived from
   // the id, so nothing more is stored. The studio card keeps it (docs/customize.md).
@@ -133,7 +137,7 @@ export class CatalogBackgrounds {
   like(id, account, liked) {
     if (!account) fail(401, 'Войди через Telegram, чтобы поставить лайк.');
     return this.store.tx(() => {
-      this.item(id);
+      if (this.item(id, account).mine && liked) fail(403, 'Свою работу лайкнуть нельзя.');
       if (liked) this.store.run('INSERT OR IGNORE INTO background_likes VALUES(?,?,?)', id, account, this.store.now());
       else this.store.run('DELETE FROM background_likes WHERE background=? AND account=?', id, account);
       return { likes: this.store.get('SELECT count(*) n FROM background_likes WHERE background=?', id).n, liked };
@@ -159,20 +163,30 @@ export class CatalogBackgrounds {
     return { items, total };
   }
   // A file may be read when it is approved, or by an admin.
-  media(id, kind, admin = false) {
+  // Approved files are public; the others only for admins and the author's Telegram account.
+  media(id, kind, admin = false, account = null) {
     const row = this.get(id);
-    if (!row || (row.status !== 'approved' && !admin)) fail(404, 'Фон не найден.');
+    if (!row || (row.status !== 'approved' && !admin && !(account && row.account === account))) fail(404, 'Фон не найден.');
     const path = this.file(id, kind);
     if (!existsSync(path)) fail(404, 'Файл фона не найден.');
     return { path, size: statSync(path).size, public: row.status === 'approved' };
   }
-  moderation(filter = 'pending', page = 0) {
-    const where = FILTERS[filter] || FILTERS.pending, store = this.store;
+  // The author's own backgrounds on their Telegram account, every status (the workshop's «Мои публикации»).
+  mine(account) {
+    return this.store.all("SELECT * FROM backgrounds WHERE account=? AND status IN ('pending','approved','rejected','hidden') ORDER BY created DESC, id DESC LIMIT 200", account)
+      .map((row) => ({ ...this.view(row, account), status: row.status, reason: row.status === 'rejected' || row.status === 'hidden' ? row.reason : '', created: row.created }));
+  }
+  // The admin queue; `search` finds a title or an author in it, as the gallery's search does (tab counts stay whole).
+  moderation(filter = 'pending', page = 0, search = '') {
+    const store = this.store, match = search ? " AND (unicode_lower(title) LIKE ? ESCAPE '!' OR unicode_lower(author) LIKE ? ESCAPE '!')" : '';
+    const args = search ? Array(2).fill(`%${search.toLowerCase().replace(/[!%_]/g, (c) => `!${c}`)}%`) : [];
+    const where = (FILTERS[filter] || FILTERS.pending) + match;
     const counts = Object.fromEntries(Object.entries(FILTERS).map(([key, sql]) => [key, store.get(`SELECT count(*) n FROM backgrounds WHERE ${sql}`).n]));
-    const items = store.all(`SELECT * FROM backgrounds WHERE ${where} ORDER BY ${filter === 'pending' ? 'id' : 'updated DESC, id DESC'} LIMIT 20 OFFSET ?`, page * 20)
+    const total = search ? store.get(`SELECT count(*) n FROM backgrounds WHERE ${where}`, ...args).n : counts[filter in FILTERS ? filter : 'pending'];
+    const items = store.all(`SELECT * FROM backgrounds WHERE ${where} ORDER BY ${filter === 'pending' ? 'id' : 'updated DESC, id DESC'} LIMIT 20 OFFSET ?`, ...args, page * 20)
       .map((row) => ({ ...this.view(row), status: row.status, reason: row.reason, created: row.created, linked: !!row.account, related: store.get('SELECT count(*) n FROM backgrounds WHERE browser=?', row.browser).n,
         reports: store.all('SELECT id,reason,created FROM background_reports WHERE background=? AND resolved=0 ORDER BY id', row.id) }));
-    return { items, total: counts[filter in FILTERS ? filter : 'pending'], counts, paused: store.paused() };
+    return { items, total, counts, paused: store.paused() };
   }
   moderate(id, { action, reason = '', title, author, tags }, { transaction = true, actor = null } = {}) {
     const store = this.store;

@@ -179,3 +179,33 @@ test('storage names stay fixed across releases so an update never orphans saved 
   await openProjectDatabase(factory);
   assert.deepEqual((await factory.databases()).map(({ name, version }) => ({ name, version })), [{ name: 'gridstudio-projects', version: 1 }]);
 });
+
+test('previews peek at the latest save only: no backups listed, no copies written, even across versions', async () => {
+  const database = await db(), storage = new MemoryStorage(); let time = 1;
+  const { store } = await open(storage, '1.0.0', database, { now: () => time });
+  time = 100; await store.save(doc('Первая'));
+  time = 200; await store.save(doc('Вторая'));
+  const before = (await database.list()).map((r) => r.key).sort();
+  const reader = new ProjectStorage({ storage, database, importProject: C.importProject, version: '9.9.9', now: () => time });
+  const seen = await reader.peek();
+  assert.equal(seen.name, 'Вторая');
+  assert.deepEqual((await database.list()).map((r) => r.key).sort(), before, 'a newer app version peeks without protecting');
+  assert.equal(await new ProjectStorage({ storage: new MemoryStorage(), database: null, importProject: C.importProject, version: '1' }).peek(), null);
+  database.close();
+});
+
+test('«Перед обновлением» copies keep the newest three and everything younger than 30 days', async () => {
+  const database = await db(), day = 86_400_000, now = 400 * day;
+  const copy = (name, age, reason = 'Перед обновлением') => database.archive({ key: `protected:${name}`, raw: JSON.stringify(doc(name)), savedAt: now - age * day, reason });
+  await copy('a', 200); await copy('b', 150); await copy('c', 120); await copy('d', 100); await copy('e', 40); await copy('fresh', 10);
+  await copy('restore', 300, 'Перед восстановлением');
+  const storage = new MemoryStorage(); storage.setItem(PROJECT_KEY, JSON.stringify(doc('Старая версия')));
+  // Opening with a new app version protects the old save and prunes.
+  await open(storage, '2.0.0', database, { now: () => now });
+  const keys = (await database.list()).map((r) => r.key).filter((key) => key.startsWith('protected:'));
+  const kept = keys.filter((key) => !/^protected:[0-9a-f-]{36}$/.test(key)).sort();
+  // The new copy, «fresh» (10 days) and «e» are the newest three; nothing else is younger than 30 days.
+  assert.deepEqual(kept, ['protected:e', 'protected:fresh', 'protected:restore']);
+  assert.equal(keys.length, 4, 'the copy just made stays');
+  database.close();
+});

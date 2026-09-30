@@ -33,6 +33,8 @@ export default defineConfig({
         cpSync('assets/favicon.svg', 'dist/assets/favicon.svg');
         cpSync('assets/favicon-focus.svg', 'dist/assets/favicon-focus.svg');
         cpSync('tools', 'dist/tools', { recursive: true });
+        // Link preview pictures (Open Graph) need a stable address.
+        cpSync('assets/og', 'dist/assets/og', { recursive: true });
       }
     }
   ]

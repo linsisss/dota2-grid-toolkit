@@ -18,8 +18,11 @@ export const DRAWING_TOOLS = [
   ['frame', '▣', 'Рамка'],
   ['fill', '▦', 'Заливка'],
   ['lasso', '⌕', 'Лассо'],
+  ['scatter', '⁂', 'Распыление'],
   ['eraser', '⌫', 'Ластик']
 ];
+// Tools that work on what is already drawn with a round brush (its size is shared).
+export const BRUSH_TOOLS = new Set(['eraser', 'scatter']);
 export const GRADIENT_CHARS = '.·:;+*#%@';
 const POSITIONABLE_SHAPES = new Set(['line', 'hline', 'vline', 'rect', 'ellipse', 'triangle',
   'diamond', 'star', 'spiral', 'wave', 'frame', 'fill', 'rectfill']);
@@ -137,7 +140,7 @@ export function drawingPoints(
   frame = null,
   size = C.canvasSize()
 ) {
-  if (!path.length || ['eyedropper', 'lasso', 'eraser'].includes(tool)) return [];
+  if (!path.length || ['eyedropper', 'lasso', 'eraser', 'scatter'].includes(tool)) return [];
   const first = path[0],
     last = path.at(-1);
   const end = shift ? constrainAxis(first, last) : last;
@@ -261,4 +264,15 @@ export function lassoContains(item, polygon, measure = null) {
       return pointInPolygon({ x: glyph.x + ink.x + ink.w / 2, y: glyph.y + ink.y + ink.h / 2 }, polygon);
     })
   );
+}
+
+// «Изогнутая линия»: a drawn line bent by dragging its middle. The curve is the quadratic Bézier
+// that passes through `through` halfway (its control point is 2·through − the chord's middle), as
+// a polyline for strokePoints, so its glyphs keep the line's spacing along the curve.
+export function bentLine(a, b, through, segments = 64) {
+  const c = { x: 2 * through.x - (a.x + b.x) / 2, y: 2 * through.y - (a.y + b.y) / 2 };
+  return Array.from({ length: segments + 1 }, (_, i) => {
+    const t = i / segments, u = 1 - t;
+    return { x: u * u * a.x + 2 * u * t * c.x + t * t * b.x, y: u * u * a.y + 2 * u * t * c.y + t * t * b.y };
+  });
 }

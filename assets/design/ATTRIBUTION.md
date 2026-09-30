@@ -12,3 +12,5 @@ These are original supplied/captured images, not AI-generated assets. Hero portr
 The site serves WebP copies of these originals to save bandwidth: `linsissya.webp` and `dissonance.webp` are resized to 96 × 96 for the 25 px author pills; `editor-landing-reference.webp` keeps 1280 × 675 at quality 92. Regenerate with `cwebp -q 88 -m 6 -resize 96 96` and `cwebp -q 92 -m 6`.
 
 `apple-red-heart.png`: Apple iOS 18.4 Red Heart, explicitly requested for the author credit. Source: https://emojipedia.org/apple/ios-18.4/red-heart, image https://em-content.zobj.net/source/apple/419/red-heart_2764-fe0f.png. Apple artwork; no additional rights are claimed. Stored locally so the selected appearance is consistent across platforms.
+
+`editor-readme.webp` is the README screenshot: the GridStudio 1.6 editor captured on 2026-09-29 (1600 × 860 CSS px at 2×, WebP q88), showing the workshop grid «Invoker» by IRimuru_TempestI, credited under the image.

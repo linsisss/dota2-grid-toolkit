@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { BACKGROUND_TAGS } from '../../scripts/background-document.mjs';
+import { isAdultWork, SensitiveArt, useAdultConfirmed } from './Sensitive.jsx';
 import { catalogAPI } from './api.js';
 
 // Shared menu backgrounds (server/catalog-backgrounds.mjs): the workshop's «Фоны» lists them with
@@ -37,16 +38,20 @@ export function BackgroundTagPicker({ value, onChange }) {
 
 // A card like a grid's: the poster (the video while the pointer is on it), title, author and one
 // action («Использовать»), then the screen and length on the left and the tags on the right.
-export function BackgroundCard({ item, children }) {
-  const video = useRef(null);
-  const play = () => { const node = video.current; if (!node) return; if (!node.src) node.src = backgroundMedia(item.id, 'video.webm'); node.play().catch(() => {}); };
+// An 18+ background stays blurred (Sensitive.jsx) and does not play until the viewer confirms their age.
+// «Мои публикации» give a poster of their own (a guest's submission kept in this browser, whose
+// files the server does not show yet) and a status line (`footer`).
+export function BackgroundCard({ item, children, poster = null, playable = true, footer = null }) {
+  const video = useRef(null), covered = isAdultWork(item) && !useAdultConfirmed();
+  const play = () => { const node = video.current; if (!node || covered || !playable) return; if (!node.src) node.src = backgroundMedia(item.id, 'video.webm'); node.play().catch(() => {}); };
   const stop = () => { video.current?.pause(); };
   return <article className="background-card" onPointerEnter={play} onPointerLeave={stop} onFocus={play} onBlur={stop}>
-    <div className="background-card-picture">
-      <img src={backgroundMedia(item.id, 'poster.jpg')} alt="" loading="lazy"/>
+    <SensitiveArt item={item} kind="background" className="background-card-nsfw"><div className="background-card-picture">
+      <img src={poster || backgroundMedia(item.id, 'poster.jpg')} alt="" loading="lazy"/>
       <video ref={video} muted loop playsInline preload="none"/>
-    </div>
+    </div></SensitiveArt>
     <div className="background-card-info"><div><h3 title={item.title}>{item.title}</h3><p>{item.author || 'Без подписи'}</p></div>{children}</div>
-    <div className="background-card-meta"><span>{item.aspect} · {seconds(item.seconds)}</span><span>{item.tags.join(', ')}</span></div>
+    <div className="background-card-meta"><span>{item.aspect}{item.seconds ? ` · ${seconds(item.seconds)}` : ''}</span><span>{item.tags.join(', ')}</span></div>
+    {footer}
   </article>;
 }

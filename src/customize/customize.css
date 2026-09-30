@@ -24,7 +24,7 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .custom-screen { container-type:inline-size; position:relative; width:min(100cqw, calc(100cqh * var(--ratio))); height:min(100cqh, calc(100cqw / var(--ratio))); background:#000; border-radius:10px; overflow:hidden; box-shadow:0 0 0 1px var(--cat-line), 0 24px 60px #0007; transition:--ratio 460ms var(--ease), box-shadow 200ms ease; }
 .custom-screen > img, .custom-screen > video { position:absolute; inset:0; width:100%; height:100%; display:block; }
 /* A video plays through two elements (Trim.jsx LoopPreview) to show the crossfaded loop. */
-.custom-loop { position:absolute; inset:0; filter:blur(calc(var(--blur, 0) * 100cqw / var(--ratio))); transition:transform 460ms var(--ease), filter 200ms ease; animation:custom-media-in 420ms var(--ease) both; }
+.custom-loop { position:absolute; inset:0; filter:blur(calc(var(--blur, 0) * 100cqw / var(--ratio))); transition:left 460ms var(--ease), top 460ms var(--ease), width 460ms var(--ease), height 460ms var(--ease), filter 200ms ease; animation:custom-media-in 420ms var(--ease) both; }
 .custom-loop > video { position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:contain; }
 /* The piece of the video and its loop, under the preview. */
 .custom-trim { display:grid; gap:8px; padding:0 2px; animation:custom-enter 280ms var(--ease) both; }
@@ -43,7 +43,14 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .custom-trim-handle::after { content:''; position:absolute; left:50%; top:12px; bottom:12px; width:2px; margin-left:-1px; border-radius:1px; background:#231b35; }
 .custom-trim-playhead { position:absolute; top:3px; bottom:3px; width:2px; margin-left:-1px; border-radius:1px; background:var(--cat-accent); opacity:.55; pointer-events:none; }
 /* A new file fades in; the fit (contain ↔ cover) is a scale, so it glides. */
-.custom-media { object-fit:contain; filter:blur(calc(var(--blur, 0) * 100cqw / var(--ratio))); transition:transform 460ms var(--ease), filter 200ms ease; animation:custom-media-in 420ms var(--ease) both; }
+.custom-media { object-fit:contain; filter:blur(calc(var(--blur, 0) * 100cqw / var(--ratio))); transition:left 460ms var(--ease), top 460ms var(--ease), width 460ms var(--ease), height 460ms var(--ease), filter 200ms ease; animation:custom-media-in 420ms var(--ease) both; }
+.custom-frame { display:grid; gap:6px; margin-top:12px; }
+.custom-frame .custom-hint { margin:0; }
+/* Framing: the picture is dragged in the preview (MenuBackground: frameDown), without easing then. */
+.custom-screen.can-frame { cursor:grab; touch-action:none; user-select:none; }
+.custom-screen.can-frame :is(img, video) { -webkit-user-drag:none; user-select:none; }
+.custom-screen.is-framing { cursor:grabbing; }
+.custom-screen.is-framing :is(.custom-media, .custom-loop) { transition:filter 200ms ease; }
 @keyframes custom-media-in { from { opacity:0; filter:blur(6px); } }
 .custom-caption { margin:0; max-width:none!important; color:var(--cat-muted); font-size:13px; text-align:center; }
 .custom-caption b { color:var(--cat-ink); font-weight:500; }
@@ -76,6 +83,46 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .custom-panel-body { flex:1; min-height:0; overflow:auto; padding:26px 28px 20px; display:grid; align-content:start; gap:20px; }
 .custom-panel-head h1 { font-size:24px!important; letter-spacing:-.02em!important; margin:0 0 6px!important; }
 .custom-panel-head p { margin:0; color:var(--cat-muted); font-size:13px; line-height:1.45; }
+.custom-panel-head .workshop-switch { margin:0 0 14px; }
+/* «Как в Dota» behind the hero: Valve's picture stays; a dark stand-in in the event's tones. */
+/* Behind the hero (DotaHeroPage.jsx): the game's dim and Valve's radial vignette. */
+.dota-hero { position:absolute; inset:-2px; overflow:hidden; pointer-events:none; animation:custom-media-in 420ms 80ms var(--ease) both; }
+.dota-hero-dim { position:absolute; inset:0; background:#000; }
+.dota-hero-edges { position:absolute; inset:0; background:radial-gradient(ellipse 80% 100% at 50% 50%, transparent 20%, #000 100%); }
+/* The hero (DotaHeroModel.jsx) between the background and the page; it alone takes the pointer. */
+.dota-hero-model { position:absolute; inset:0; width:100%; height:100%; display:block; pointer-events:auto; opacity:0; transition:opacity 500ms var(--ease); touch-action:pan-y; }
+.dota-hero-model.is-ready { opacity:1; }
+.dota-hero-model.is-locked { pointer-events:none; cursor:default; }
+/* On the hero page the «+» that adds a background (and where to get one) stands in front of the hero. */
+.custom-screen.is-hero .dota-hero { z-index:1; }
+.custom-screen.is-hero .custom-drop-pick, .custom-screen.is-hero .custom-drop-sources { z-index:2; text-shadow:0 1px 10px #000; }
+.custom-screen.is-hero .custom-drop-pick::before { content:""; position:absolute; left:50%; top:50%; z-index:-1; width:min(440px, 92%); height:128px; transform:translate(-50%, calc(-50% - 20px)); border-radius:16px; background:#0f0e13c4; backdrop-filter:blur(6px); }
+.custom-screen.is-hero .custom-drop svg { opacity:1; }
+.dh-layer { position:absolute; left:0; top:0; width:1920px; height:1080px; transform-origin:0 0; --dh-margin:90px; --dh-shard:750px; }
+.dh-layer[data-aspect="16x10"] { --dh-margin:60px; --dh-shard:700px; }
+.dh-layer[data-aspect="21x9"] { --dh-margin:0px; }
+.dh-layer img { position:absolute; display:block; }
+.dh-bar-left, .dh-bar-mid, .dh-bar-right { position:absolute; top:0; height:61px; background-repeat:no-repeat; }
+.dh-bar-left { left:0; width:1490px; background-size:1920px 61px; }
+.dh-bar-mid { left:1488px; right:428px; background-size:4px 61px; background-repeat:repeat-x; }
+.dh-bar-right { right:0; width:432px; background-size:1920px 61px; background-position:-1488px 0; }
+/* The sub-tabs' strip: the page seen through it at about 40%, darker under the bar. */
+.dh-band { position:absolute; left:0; right:0; top:61px; height:50px; background:linear-gradient(#000d, #0009 12%, #0009); }
+.dh-prev { left:56px; top:72px; width:170px; height:28px; }
+.dh-tabs { left:50%; top:64px; width:1220px; height:44px; margin-left:-610px; }
+.dh-next { right:54px; top:72px; width:186px; height:28px; }
+.dh-armory { right:60px; top:137px; width:229px; height:34px; }
+.dh-content { position:absolute; top:0; bottom:0; left:50%; width:min(100%, 1920px); transform:translateX(-50%); }
+.dh-left { left:calc(var(--dh-margin) - 10px); top:200px; width:580px; height:460px; }
+.dh-right { right:calc(var(--dh-margin) - 10px); top:196px; width:540px; height:470px; }
+/* Over the set's fifth slot (the taunt icon in hero-right.webp at 444, 224). */
+.dh-taunt { position:absolute; right:calc(var(--dh-margin) + 10px); top:420px; width:76px; height:76px; padding:0; border:0; border-radius:2px; background:transparent; cursor:pointer; pointer-events:auto; transition:background 160ms ease; }
+.dh-taunt:hover { background:#ffffff1a; }
+/* Valve's .EquippedBackgroundShard: 800×300, skewX(-16deg), a white edge and fill fading from the
+   top left corner (their gradient vectors as CSS angles); its strength matched to the screenshot. */
+.dh-shard { position:absolute; left:50%; top:0; width:800px; height:300px; margin-left:-400px; box-sizing:border-box; transform:translate(var(--dh-shard), 314px) skewX(-16deg); border:1px solid transparent; border-image:linear-gradient(156deg, #fff 0%, #fff0 33%) 1; background:linear-gradient(144.6deg, #ffffff27 0%, #fff0 31%); opacity:.26; }
+.dh-friends { left:406px; bottom:24px; width:60px; height:60px; }
+.custom-hero-default { position:absolute; inset:0; background:radial-gradient(ellipse 60% 55% at 50% 45%, #5a1d12 0%, #2a0d0a 55%, #0b0404 100%); }
 .custom-panel-foot { display:grid; gap:10px; padding:16px 28px 20px; border-top:1px solid var(--cat-line); }
 .custom-panel-foot > .catalog-button { width:100%; }
 .custom-foot-row { display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:13px; }

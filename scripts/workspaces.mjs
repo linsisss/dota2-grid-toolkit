@@ -211,7 +211,11 @@ export async function openWorkspace(meta, registry, api, user, onStatus = () => 
       if (!meta.account && current.account) { meta = current; cloudRevision = current.cloudRevision || 0; }
       latestDocument = snapshot;
       generation++;
-      await registry.update(meta.id, { dirty: !!meta.account, updated: Date.now(), ...describe(doc) });
+      const updated = Date.now();
+      await registry.update(meta.id, { dirty: !!meta.account, updated, ...describe(doc) });
+      // The Studio's pictures of this file (workspace-thumbnails.mjs), drawn once edits pause.
+      if (typeof document !== 'undefined')
+        import('./workspace-thumbnails.mjs').then(({ scheduleThumbnails }) => scheduleThumbnails(meta.id, snapshot, updated)).catch(() => {});
       scheduleCloud(snapshot, generation);
     }
     return result;

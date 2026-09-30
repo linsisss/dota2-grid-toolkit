@@ -59,6 +59,8 @@ html:has(#catalog-root) { overflow:auto; height:auto; }
 .catalog-background-switch button { border:0; background:none; color:var(--cat-muted); border-radius:6px; min-height:28px; padding:4px 10px; font-size:12px; cursor:pointer; }
 .catalog-background-switch button[aria-pressed=true] { color:var(--cat-ink); background:#2c2935; }
 .catalog-background-switch button:hover { color:var(--cat-ink); }
+button.catalog-hide-adult { margin-left:auto; display:inline-flex; align-items:center; gap:6px; min-height:34px; padding:4px 12px; border:1px solid var(--cat-line); border-radius:8px; background:none; color:var(--cat-muted); font:inherit; font-size:12px; cursor:pointer; }
+button.catalog-hide-adult:hover { color:var(--cat-ink); }
 :root[data-grid-background=gradient] .art-submit-preview, :root[data-grid-background=gradient] .art-review-preview { background:linear-gradient(#261e12,#140f0a); }
 .catalog-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:34px 24px; }
 .catalog-card { min-width:0; }
@@ -69,7 +71,8 @@ html:has(#catalog-root) { overflow:auto; height:auto; }
 .catalog-card-art:hover { outline:1px solid #77678f; outline-offset:4px; }
 /* 18+ previews stay blurred until the viewer confirms their age once. */
 .catalog-nsfw { position:relative; border-radius:12px; overflow:hidden; }
-.catalog-nsfw-art canvas { filter:blur(20px) saturate(.6); transform:scale(1.1); }
+.catalog-nsfw-art canvas, .catalog-nsfw-art img, .catalog-nsfw-art video { filter:blur(20px) saturate(.6); transform:scale(1.1); }
+.background-card-nsfw { border-radius:10px; }
 .catalog-nsfw-reveal { position:absolute; inset:0; display:grid; place-content:center; justify-items:center; gap:4px; border:0; border-radius:inherit; background:#15141a80; color:var(--cat-ink); font:inherit; cursor:pointer; transition:background 140ms ease; }
 .catalog-nsfw-reveal svg { width:30px; height:30px; margin-bottom:4px; }
 .catalog-nsfw-reveal span { font-size:17px; font-weight:600; letter-spacing:.06em; }
@@ -218,6 +221,10 @@ dialog.catalog-dialog:focus { outline:none; }
 .catalog-like:hover { background:#2c2935; color:#efeaf5; }
 .catalog-like.is-liked { color:#d5b6f2; }
 .catalog-like.is-liked svg * { fill:#755383; }
+/* The viewer's own work: the count stays readable (no disabled fade), the heart is dimmed, nothing reacts to the pointer. */
+.catalog-like.is-own:disabled { opacity:1; cursor:default; }
+.catalog-like.is-own:hover { background:none; color:var(--cat-muted); }
+.catalog-like.is-own svg { opacity:.45; }
 .catalog-like-error { position:absolute; bottom:100%; right:0; width:210px; background:#35242c; color:#ffc3c7; padding:12px; border-radius:8px; font-size:12px; z-index:5; }
 .catalog-nav nav { flex-wrap:wrap; }
 
@@ -342,6 +349,9 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 @media(max-width:760px) { .workshop-switch button { min-width:76px; min-height:32px; font-size:14px; } }
 @media (prefers-reduced-motion: reduce) { .workshop-switch-thumb, .workshop-switch-view { transition:none; animation:none; } }
 .background-card-actions { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+/* «Мои публикации»: the moderation status under the card, the reason of a refusal below it. */
+.background-card-status { display:grid; gap:6px; font-size:12px; }
+.background-card-status .publication-reason { margin:0; }
 .background-card-actions .catalog-icon { width:36px; height:36px; color:var(--cat-muted); }
 .background-card-actions .catalog-icon:hover { color:var(--cat-ink); }
 .background-card-actions .catalog-icon svg { width:17px; height:17px; }

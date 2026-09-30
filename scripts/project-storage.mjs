@@ -6,6 +6,7 @@ const META = '_studioSave';
 const uuid = () => globalThis.crypto.randomUUID();
 const info = (raw) => { try { return JSON.parse(raw)?.[META] || {}; } catch { return {}; } };
 const conflict = () => Object.assign(new Error('Проект изменён в другой вкладке.'), { code: 'CONFLICT' });
+export const KEEP_UPDATES = 3, KEEP_DAYS = 30;
 
 export function openProjectDatabase(indexedDB = globalThis.indexedDB, scope = '') {
   return new Promise((resolve, reject) => {
@@ -37,6 +38,9 @@ export function openProjectDatabase(indexedDB = globalThis.indexedDB, scope = ''
           };
         }),
         archive: (record) => transaction('readwrite', (store) => { store.put({ ...record, key: scope + record.key }); }),
+        // One record, without reading the file's backups (Studio previews).
+        get: (key) => transaction('readonly', (store, done) => { store.get(scope + key).onsuccess = (event) => done(event.target.result || null); }),
+        remove: (keys) => transaction('readwrite', (store) => { for (const key of keys) store.delete(scope + key); }),
         commit: (record, expected, reason) => transaction('readwrite', (store, done, abort) => {
           store.get(scope + 'current').onsuccess = (event) => {
             const previous = event.target.result;
@@ -108,8 +112,39 @@ export class ProjectStorage {
     const records = await this.records();
     if (records.some((record) => record.raw === raw && record.key !== 'current' && record.key !== PROJECT_KEY && !record.key.startsWith(JOURNAL_PREFIX))) return true;
     const record = { key: `protected:${uuid()}`, raw, savedAt: this.now(), reason };
-    try { if (this.database) { await this.database.archive(record); return true; } } catch { /* Try the other store without deleting anything. */ }
+    try {
+      if (this.database) {
+        await this.database.archive(record);
+        if (reason === 'Перед обновлением') await this.prune([...records, record]).catch(() => {});
+        return true;
+      }
+    } catch { /* Try the other store without deleting anything. */ }
     return this.localSet(BACKUP_PREFIX + record.key, raw);
+  }
+  // «Перед обновлением» copies used to pile up, one per release per opened file. The user's
+  // decision (1.6.1): keep the newest KEEP_UPDATES, and every copy younger than KEEP_DAYS.
+  // Only these copies in IndexedDB are pruned — never «Перед восстановлением», rolling
+  // autosaves, other tabs' copies, or anything in localStorage.
+  async prune(records) {
+    const copies = records.filter((record) => record.key.startsWith('protected:') && record.reason === 'Перед обновлением')
+      .sort((a, b) => b.savedAt - a.savedAt);
+    const recent = this.now() - KEEP_DAYS * 86_400_000;
+    const old = copies.slice(KEEP_UPDATES).filter((record) => record.savedAt < recent).map((record) => record.key);
+    if (old.length) await this.database.remove(old);
+    return old.length;
+  }
+  // The latest save for a preview: IndexedDB «current» or this browser's copy, whichever is
+  // newer, decoded once. Unlike load() it lists no backups and writes no copies; null when the
+  // file has no readable save (the Studio then shows no picture).
+  async peek() {
+    const local = this.localGet(PROJECT_KEY);
+    let saved = null;
+    try { saved = await this.database?.get?.('current'); } catch { /* The browser copy remains. */ }
+    const candidates = [saved?.raw, local].filter(Boolean);
+    const raw = candidates.length > 1 && candidates[0] !== candidates[1]
+      ? candidates.sort((a, b) => (info(b).savedAt || 0) - (info(a).savedAt || 0))[0] : candidates[0];
+    if (!raw) return null;
+    try { return this.decode(raw); } catch { return null; }
   }
   async load() {
     this.localRaw = this.localGet(PROJECT_KEY);

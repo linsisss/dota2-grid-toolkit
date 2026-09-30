@@ -55,7 +55,10 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     [path, setPath] = useState([]),
     [size, setSize] = useState({ w: 800, h: 398 }),
     [error, setError] = useState(''),
-    [revision, setRevision] = useState(0);
+    [revision, setRevision] = useState(0),
+    // The opacity slider while it moves, drawn only: its release commits one history step.
+    // It belongs to that reference object, so a commit or undo leaves it behind.
+    [referencePreview, setReferencePreview] = useState(null);
   const selectionRef = useRef(selected);
   selectionRef.current = selected;
   // Eraser ring lives on its own overlay canvas: hovering never repaints the drawing or re-renders React.
@@ -119,10 +122,11 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     node.addEventListener('wheel', wheel, { passive: false });
     return () => { node.removeEventListener('wheel', wheel); clearTimeout(eraserLabelTimer.current); };
   }, []);
+  // «Распыление» works on the editor's canvas only (scripts/app.mjs scatterAt).
   const tools = [
     ['select', '↖', 'Выделение'],
     ['reference', '▧', 'Переместить фон'],
-    ...DRAWING_TOOLS
+    ...DRAWING_TOOLS.filter(([id]) => id !== 'scatter')
   ];
   const bounds = overflow(doc);
   const matchingSymbols = searchSymbols(D.symbols, query, category);
@@ -180,7 +184,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     const r = doc.reference;
     if (r?.visible && image.current) {
       ctx.save();
-      ctx.globalAlpha = r.opacity;
+      ctx.globalAlpha = referencePreview?.reference === r ? referencePreview.opacity : r.opacity;
       ctx.drawImage(image.current, r.x, r.y, r.w, r.h);
       ctx.restore();
     }
@@ -216,7 +220,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
       ctx.setLineDash([5, 5]);
       ctx.stroke();
     }
-  }, [doc, preview, path, selected, size, revision, tool]);
+  }, [doc, preview, path, selected, size, revision, tool, referencePreview]);
   function update(next) {
     latest.current = next;
     setDoc(next);
@@ -795,6 +799,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
               if (reference && reference.src !== doc.reference?.src) setTool('reference');
               if (!reference) setTool('pencil');
             }}
+            onPreview={(opacity) => setReferencePreview(opacity == null || !doc.reference ? null : { reference: doc.reference, opacity })}
           /></div>
         </aside>
       </div>

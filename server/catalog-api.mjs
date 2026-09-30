@@ -13,7 +13,8 @@ import { CatalogArts } from './catalog-arts.mjs';
 import { ART_CATEGORIES, ART_LIMITS, artSubmission } from '../scripts/art-document.mjs';
 import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
 import { StudioBackgrounds } from './studio-backgrounds.mjs';
-import { pickSafeGrid } from './catalog-preview.mjs';
+import { pickSafeGrid, renderSpaceThumbnail } from './catalog-preview.mjs';
+import { PREVIEW_TEXT, backgroundPreviewImage, gridPreviewImage, previewTitle, sitePage, withPreview } from './link-preview.mjs';
 import { BACKGROUND_TAGS, BACKGROUND_LIMITS, backgroundMeta, unpackBackgroundUpload } from '../scripts/background-document.mjs';
 
 const cookies = (request) => Object.fromEntries((request.headers.cookie || '').split(';').map(pair => {
@@ -49,7 +50,9 @@ export function catalogConfig(env = process.env) {
     moderationUrl: `https://t.me/c/${moderationChat.slice(4)}/${moderationTopic}`,
     trustProxy: env.CATALOG_TRUST_PROXY === 'loopback', database: env.CATALOG_DB || '.catalog-data/catalog.sqlite',
     // Shared menu backgrounds' files, next to the database unless set.
-    media: env.CATALOG_MEDIA || join(dirname(env.CATALOG_DB || '.catalog-data/catalog.sqlite'), 'backgrounds') };
+    media: env.CATALOG_MEDIA || join(dirname(env.CATALOG_DB || '.catalog-data/catalog.sqlite'), 'backgrounds'),
+    // The built site (its pages get link previews for shared works): the release's dist unless set.
+    site: env.CATALOG_SITE || fileURLToPath(new URL('../dist/', import.meta.url)) };
 }
 async function readJSON(request, limit = CATALOG_LIMITS.bytes) {
   if (!(request.headers['content-type'] || '').startsWith('application/json')) fail(415, 'Нужен Content-Type application/json.');
@@ -107,6 +110,12 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       if (landingImages.size > 24) landingImages.delete(landingImages.keys().next().value);
     }
     return landingImages.get(key);
+  };
+  // Link-preview pictures of shared works by revision (server/link-preview.mjs), the last 32.
+  const previews = new Map();
+  const previewImage = (key, render) => {
+    if (!previews.has(key)) { const made = render(); made.catch(() => previews.delete(key)); previews.set(key, made); if (previews.size > 32) previews.delete(previews.keys().next().value); }
+    return previews.get(key);
   };
   const captcha = new CatalogCaptcha(store, config.salt);
   const signature = (value) => createHmac('sha256', config.salt).update(value).digest('base64url');
@@ -181,6 +190,15 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       if (path === '/auth/logout' && method === 'POST') { accounts.logout(session); setCookie(cookie('gs_account', '', 0)); return send(200, { user: null }); }
       if (path === '/mine' && method === 'GET') return send(200, { items: accounts.publications(requireUser()) });
       if (path === '/spaces' && method === 'GET') return send(200, { items: accounts.listSpaces(requireUser(), url.searchParams.get('archived') === '1') });
+      // A grid of an account file as a picture, for «Студия» on another device (src/WorkspacePreview.jsx).
+      const thumbnailMatch = /^\/spaces\/([a-f0-9-]{36})\/thumbnail\.webp$/.exec(path);
+      if (thumbnailMatch && method === 'GET') {
+        const member = requireUser();
+        store.rate(`space-thumbnail:${member.id}`, 240, 60_000);
+        const image = await accounts.spaceThumbnail(thumbnailMatch[1], member, Number(url.searchParams.get('grid') || 0), renderSpaceThumbnail);
+        response.writeHead(200, { 'Content-Type': 'image/webp', 'Content-Length': image.length, 'Cache-Control': 'private, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' });
+        return response.end(image);
+      }
       const spaceMatch = /^\/spaces\/([a-f0-9-]{36})$/.exec(path);
       if (spaceMatch) {
         const member = requireUser(), id = spaceMatch[1];
@@ -231,6 +249,8 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         await captcha.verify(upload.meta.captcha, identity, 'background');
         return send(201, await gallery().submit(upload.meta, upload.poster, upload.video, identity, user?.id));
       }
+      // The signed-in author's own backgrounds with their statuses (the workshop's «Мои публикации»).
+      if (path === '/backgrounds/mine' && method === 'GET') { response.setHeader('Cache-Control', 'no-store'); return send(200, { items: gallery().mine(requireUser().id) }); }
       // One background, for a link that opens it in the builder (the workshop's «Использовать»).
       const backgroundItem = /^\/backgrounds\/([1-9]\d{0,12})$/.exec(path);
       if (backgroundItem && method === 'GET') return send(200, gallery().item(Number(backgroundItem[1]), user?.id || null));
@@ -251,12 +271,47 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       const backgroundFile = /^\/backgrounds\/([1-9]\d{0,12})\/(poster\.jpg|video\.webm)$/.exec(path);
       if (backgroundFile && ['GET', 'HEAD'].includes(method)) {
         const kind = backgroundFile[2] === 'poster.jpg' ? 'poster' : 'video';
-        const file = gallery().media(Number(backgroundFile[1]), kind, isAdmin(user));
+        const file = gallery().media(Number(backgroundFile[1]), kind, isAdmin(user), user?.id || null);
         // A background's files never change; pending ones stay private to admins.
         return sendFile(request, response, file, kind === 'poster' ? 'image/jpeg' : 'video/webm', file.public ? 'public, max-age=31536000, immutable' : 'private, no-store');
       }
       // The landing page's random well-liked grid. Never cached, so every visit draws again. The
       // picture is rendered only for grids that may be on the landing, once per revision.
+      // A shared work's page with its link preview (nginx sends /workshop?id= and /customize?background= here).
+      const page = /^\/page\/(workshop|customize)$/.exec(path);
+      if (page && ['GET', 'HEAD'].includes(method)) {
+        const html = sitePage(config.site, page[1] === 'workshop' ? 'catalog' : 'customize');
+        if (!html) fail(503, 'Страница временно недоступна.');
+        let meta = null;
+        try {
+          if (page[1] === 'workshop' && /^[0-9a-f-]{36}$/.test(url.searchParams.get('id') || '')) {
+            const item = store.publicItem(url.searchParams.get('id'));
+            meta = { title: previewTitle(item), description: PREVIEW_TEXT.grid, url: `${config.origin}/workshop?id=${item.id}`,
+              image: `${config.origin}/api/catalog/preview/work/${item.id}.jpg?revision=${item.revision}`, alt: `Сетка «${item.title}»` };
+          }
+          const backgroundId = url.searchParams.get('background') || '';
+          if (page[1] === 'customize' && /^[1-9]\d{0,12}$/.test(backgroundId)) {
+            const row = gallery().get(Number(backgroundId));
+            if (row?.status === 'approved') meta = { title: previewTitle(row), description: PREVIEW_TEXT.background, url: `${config.origin}/customize?background=${row.id}`,
+              image: `${config.origin}/api/catalog/preview/background/${row.id}.jpg?updated=${row.updated}`, alt: `Фон «${row.title}»` };
+          }
+        } catch (error) { if (!(error instanceof CatalogError)) throw error; }
+        response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' });
+        return response.end(method === 'HEAD' ? undefined : meta ? withPreview(html, meta) : html);
+      }
+      const preview = /^\/preview\/(?:work\/([0-9a-f-]{36})|background\/([1-9]\d{0,12}))\.jpg$/.exec(path);
+      if (preview && method === 'GET') {
+        let key, render;
+        if (preview[1]) { const item = store.publicItem(preview[1]); key = `work:${item.id}:${item.revision}:${item.tags.join()}`; render = () => gridPreviewImage(item); }
+        else {
+          const row = gallery().get(Number(preview[2])); if (row?.status !== 'approved') fail(404, 'Фон не найден.');
+          key = `background:${row.id}:${row.updated}:${row.tags}`; render = () => backgroundPreviewImage(row, { video: gallery().file(row.id, 'video'), poster: gallery().file(row.id, 'poster') });
+        }
+        if (!previews.has(key)) store.rate(`preview:${ipHash}`, 30, 60_000);
+        const image = await previewImage(key, render);
+        response.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400', 'Cross-Origin-Resource-Policy': 'cross-origin' });
+        return response.end(image);
+      }
       if (path === '/landing' && method === 'GET') {
         const item = store.landingWork(url.searchParams.get('except') || '');
         response.setHeader('Cache-Control', 'no-store');
@@ -332,14 +387,15 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         // Recorded in the audit log and shown on the Telegram moderation card.
         const actor = JSON.stringify({ id: String(member.id), name: `${member.username ? `@${member.username}` : member.name} · сайт`.slice(0, 100) });
         if (path === '/admin/session' && method === 'GET') return send(200, { admin: true });
-        if (path === '/admin/works' && method === 'GET') return send(200, { ...store.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0),
+        const search = (url.searchParams.get('q') || '').trim().slice(0, 80);
+        if (path === '/admin/works' && method === 'GET') return send(200, { ...store.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search),
           artsPending: store.get("SELECT count(*) n FROM arts WHERE status='pending'").n,
           backgroundsPending: (store.get("SELECT count(*) n FROM sqlite_master WHERE name='backgrounds'").n ? store.get("SELECT count(*) n FROM backgrounds WHERE status='pending'").n : 0)
             // Open reports on published backgrounds need a look too.
             + (store.get("SELECT count(*) n FROM sqlite_master WHERE name='background_reports'").n ? store.get("SELECT count(DISTINCT p.background) n FROM background_reports p JOIN backgrounds b ON b.id=p.background WHERE p.resolved=0 AND b.status='approved'").n : 0) });
         if (path === '/admin/settings' && method === 'PATCH') { const body = await readJSON(request); if (typeof body.paused !== 'boolean') fail(400, 'Неверная настройка.'); store.setPaused(body.paused, actor); return send(200, { paused: store.paused() }); }
         if (path === '/admin/arts' && method === 'GET') return send(200, arts.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0));
-        if (path === '/admin/backgrounds' && method === 'GET') return send(200, gallery().moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0));
+        if (path === '/admin/backgrounds' && method === 'GET') return send(200, gallery().moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search));
         const backgroundReview = /^\/admin\/backgrounds\/([1-9]\d{0,12})$/.exec(path);
         if (backgroundReview && method === 'POST') { const body = await readJSON(request); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = gallery().moderate(Number(backgroundReview[1]), body, { actor }); return send(200, { reviewed: true, ...result }); }
         const artReview = /^\/admin\/arts\/([1-9]\d{0,12})$/.exec(path);

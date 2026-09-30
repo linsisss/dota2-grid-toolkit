@@ -25,16 +25,18 @@ function AdminPanel({ auth }) {
   const { config } = useCatalogConfig();
   const [error, setError] = useState(''), [busy, setBusy] = useState(false), [filter, setFilter] = useState('pending');
   const [data, setData] = useState(null), [selected, setSelected] = useState(''), [page, setPage] = useState(0), [refresh, setRefresh] = useState(0);
-  const [reason, setReason] = useState(''), [blockIP, setBlockIP] = useState(false);
+  const [reason, setReason] = useState(''), [blockIP, setBlockIP] = useState(false), [search, setSearch] = useState(''), [query, setQuery] = useState('');
+  // Searching by title or author waits for a pause in typing, then starts from the first page.
+  useEffect(() => { const timer = setTimeout(() => { setQuery(search.trim()); setPage(0); }, 250); return () => clearTimeout(timer); }, [search]);
   const [kind, setKind] = useState(() => { const value = new URLSearchParams(location.search).get('moderate'); return ['arts', 'backgrounds'].includes(value) ? value : 'works'; });
   const showKind = value => { const url = new URL(location.href); url.searchParams.set('moderate', value === 'works' ? '' : value); history.replaceState(history.state, '', url); setKind(value); };
   const denied = error => { if (error.status === 401 || error.status === 403) auth.refresh().catch(() => {}); };
   useEffect(() => {
     const c = new AbortController(); setError('');
-    catalogAPI(`/admin/works?filter=${filter}&page=${page}`, { signal: c.signal }).then(next => { setData(next); setSelected(current => next.items.some(item => item.id === current) ? current : next.items[0]?.id || ''); })
+    catalogAPI(`/admin/works?${new URLSearchParams({ filter, page: String(page), q: query })}`, { signal: c.signal }).then(next => { setData(next); setSelected(current => next.items.some(item => item.id === current) ? current : next.items[0]?.id || ''); })
       .catch(error => { if (c.signal.aborted) return; denied(error); setError(error.message); });
     return () => c.abort();
-  }, [filter, page, refresh]);
+  }, [filter, page, refresh, query]);
   const item = data?.items.find(item => item.id === selected);
   useEffect(() => { setReason(''); setBlockIP(false); }, [item?.id, item?.revision]);
   async function run(request) {
@@ -51,9 +53,10 @@ function AdminPanel({ auth }) {
       <button key={value} role="tab" aria-selected={kind === value} onClick={() => showKind(value)}>{label}{count ? <span className="catalog-count">{count}</span> : null}</button>)}</div>
     {kind === 'arts' ? <ArtModeration denied={denied}/> : kind === 'backgrounds' ? <BackgroundModeration denied={denied}/> : <>
     <div className="catalog-toolbar"><div className="catalog-tabs">{TABS.map(([value, label]) => <button key={value} aria-pressed={filter === value} onClick={() => { setFilter(value); setPage(0); setData(null); }}>
-      {label}{data?.counts?.[value] ? <span className="catalog-count">{data.counts[value]}</span> : null}</button>)}</div></div>
+      {label}{data?.counts?.[value] ? <span className="catalog-count">{data.counts[value]}</span> : null}</button>)}</div>
+      <label className="catalog-search"><Icon name="search"/><input aria-label="Поиск сеток в админке" placeholder="Название или автор" value={search} maxLength={80} onChange={e => setSearch(e.target.value)}/></label></div>
     {error && <Notice error>{error}</Notice>}
-    {!data ? <p role="status">Загружаем очередь…</p> : !data.items.length ? <section className="catalog-empty"><h2>Здесь всё разобрано</h2><p>В этой подборке пусто.</p>{page > 0 && <button className="catalog-button" onClick={() => setPage(x => x - 1)}>Предыдущая страница</button>}</section> : <>
+    {!data ? <p role="status">Загружаем очередь…</p> : !data.items.length ? <section className="catalog-empty">{query ? <><h2>Ничего не нашлось</h2><p>В этой подборке нет сеток с «{query}» в названии или авторе.</p></> : <><h2>Здесь всё разобрано</h2><p>В этой подборке пусто.</p></>}{page > 0 && <button className="catalog-button" onClick={() => setPage(x => x - 1)}>Предыдущая страница</button>}</section> : <>
       <div className="catalog-moderation"><nav className="catalog-queue" aria-label="Работы">{data.items.map(work => <button key={work.id} aria-current={selected === work.id ? 'true' : undefined} onClick={() => setSelected(work.id)}>
         <strong>{work.title}</strong><span>{work.author || 'Без подписи'}</span><small>{work.stats.categories} категорий{work.reports.length ? ` · жалоб: ${work.reports.length}` : ''}{work.featured ? ' · в подборке' : ''}</small></button>)}</nav>
         {item && <section className="catalog-review"><div className="catalog-review-title"><h2>{item.title}</h2><AdminEditButton item={item} compact onSaved={() => setRefresh(x => x + 1)}/></div><GridPreview grid={item.grid} title={item.title} large/><Stats stats={item.stats}/>

@@ -11,14 +11,16 @@ export default function BackgroundModeration({ denied }) {
   // ?filter=reports: the Telegram report card's «Посмотреть видео» opens the reports.
   const [filter, setFilter] = useState(() => TABS.some(([id]) => id === new URLSearchParams(location.search).get('filter')) ? new URLSearchParams(location.search).get('filter') : 'pending'), [page, setPage] = useState(0), [refresh, setRefresh] = useState(0);
   const [data, setData] = useState(null), [selected, setSelected] = useState(0), [error, setError] = useState(''), [busy, setBusy] = useState(false);
-  const [reason, setReason] = useState(''), [meta, setMeta] = useState(null);
+  const [reason, setReason] = useState(''), [meta, setMeta] = useState(null), [search, setSearch] = useState(''), [query, setQuery] = useState('');
+  // Searching by title or author waits for a pause in typing, then starts from the first page.
+  useEffect(() => { const timer = setTimeout(() => { setQuery(search.trim()); setPage(0); }, 250); return () => clearTimeout(timer); }, [search]);
   useEffect(() => {
     const c = new AbortController(); setError('');
-    catalogAPI(`/admin/backgrounds?filter=${filter}&page=${page}`, { signal: c.signal })
+    catalogAPI(`/admin/backgrounds?${new URLSearchParams({ filter, page: String(page), q: query })}`, { signal: c.signal })
       .then(next => { setData(next); setSelected(current => next.items.some(item => item.id === current) ? current : next.items[0]?.id || 0); })
       .catch(problem => { if (c.signal.aborted) return; denied(problem); setError(problem.message); });
     return () => c.abort();
-  }, [filter, page, refresh]);
+  }, [filter, page, refresh, query]);
   const item = data?.items.find(background => background.id === selected);
   useEffect(() => { setReason(''); setMeta(item ? { title: item.title, tags: item.tags, author: item.author } : null); }, [item?.id, item?.title, item?.tags?.join(), item?.author]);
   async function act(action, extra = {}) {
@@ -29,9 +31,10 @@ export default function BackgroundModeration({ denied }) {
   const changed = item && meta && (meta.title !== item.title || meta.author !== item.author || [...meta.tags].sort().join() !== item.tags.join());
   return <>
     <div className="catalog-toolbar"><div className="catalog-tabs">{TABS.map(([value, label]) => <button key={value} aria-pressed={filter === value} onClick={() => { setFilter(value); setPage(0); setData(null); }}>
-      {label}{data?.counts?.[value] ? <span className="catalog-count">{data.counts[value]}</span> : null}</button>)}</div></div>
+      {label}{data?.counts?.[value] ? <span className="catalog-count">{data.counts[value]}</span> : null}</button>)}</div>
+      <label className="catalog-search"><Icon name="search"/><input aria-label="Поиск фонов в админке" placeholder="Название или автор" value={search} maxLength={80} onChange={e => setSearch(e.target.value)}/></label></div>
     {error && <Notice error>{error}</Notice>}
-    {!data ? <p role="status">Загружаем фоны…</p> : !data.items.length ? <section className="catalog-empty"><h2>Здесь всё разобрано</h2><p>В этой подборке пусто.</p>{page > 0 && <button className="catalog-button" onClick={() => setPage(x => x - 1)}>Предыдущая страница</button>}</section> : <>
+    {!data ? <p role="status">Загружаем фоны…</p> : !data.items.length ? <section className="catalog-empty">{query ? <><h2>Ничего не нашлось</h2><p>В этой подборке нет фонов с «{query}» в названии или авторе.</p></> : <><h2>Здесь всё разобрано</h2><p>В этой подборке пусто.</p></>}{page > 0 && <button className="catalog-button" onClick={() => setPage(x => x - 1)}>Предыдущая страница</button>}</section> : <>
       <div className="catalog-moderation"><nav className="catalog-queue" aria-label="Фоны">{data.items.map(background => <button key={background.id} aria-current={selected === background.id ? 'true' : undefined} onClick={() => setSelected(background.id)}>
         <strong>{background.title}</strong><span>{background.author || 'Без подписи'}</span><small>{background.tags.join(', ') || 'Без тегов'} · {background.aspect} · {String(background.seconds).replace('.', ',')} с{background.reports?.length ? ` · жалоб: ${background.reports.length}` : ''}</small></button>)}</nav>
         {item && <section className="catalog-review">

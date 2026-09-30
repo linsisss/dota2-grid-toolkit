@@ -1,5 +1,5 @@
-// Watches Valve's main-menu layouts that the menu-background pack is built from
-// (assets/dota-menu/*.xml). The client is decompiled daily into
+// Watches Valve's layouts that the menu-background pack is built from (assets/dota-menu/*.xml):
+// the main menu, its home page and, since 1.6.1, the hero page (the background behind the hero). The client is decompiled daily into
 // github.com/spirit-bear-productions/dota_vpk_updates; this compares its files with ours:
 //   same            nothing changed
 //   override-only   only dashboard.xml's override-background changed (the pack replaces it anyway)
@@ -13,7 +13,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
 const SOURCE = 'https://raw.githubusercontent.com/spirit-bear-productions/dota_vpk_updates/main/panorama/layout/';
-const FILES = ['dashboard.xml', 'dashboard_page_home.xml'];
+const FILES = ['dashboard.xml', 'dashboard_page_home.xml', 'dashboard_page_hero_new_v2.xml'];
 const assets = new URL('../assets/dota-menu/', import.meta.url);
 const args = process.argv.slice(2), flag = (name) => args.includes(name), option = (name) => args[args.indexOf(name) + 1];
 // Our copies drop Source 2 Viewer's first comment line; the override is ours to set.

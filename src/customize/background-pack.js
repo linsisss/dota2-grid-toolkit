@@ -4,6 +4,7 @@ import { backgroundInstaller } from '../../scripts/installer.mjs';
 import { buildZip } from '../../scripts/zip.mjs';
 import dashboard from '../../assets/dota-menu/dashboard.xml?raw';
 import home from '../../assets/dota-menu/dashboard_page_home.xml?raw';
+import heroPage from '../../assets/dota-menu/dashboard_page_hero_new_v2.xml?raw';
 
 // From a built WebM to the file the user saves: the pack (scripts/menu-background.mjs) for the
 // chosen Dota folder, alone or zipped with «Установить фон.bat». Shared by the builder and «Студия»
@@ -17,7 +18,10 @@ export function saveFile(blob, name) {
   const url = URL.createObjectURL(blob), link = document.createElement('a');
   link.href = url; link.download = name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-export const packBackground = (video, { clean }) => new Blob([menuBackgroundPack({ video, dashboard, home: clean ? home : null, md5 })], { type: 'application/octet-stream' });
+// recipe.hero: the menu video behind the hero (default), `heroVideo` (mode 'own'; without it, the
+// menu video again), or Valve's picture ('off').
+export const packBackground = (video, { clean, hero = { mode: 'menu' } }, heroVideo = null) => new Blob([menuBackgroundPack({ video, dashboard, home: clean ? home : null,
+  hero: hero?.mode === 'off' ? null : { page: heroPage, video: hero?.mode === 'own' ? heroVideo : null }, md5 })], { type: 'application/octet-stream' });
 export async function downloadPack(pack, { folder, delivery }) {
   const target = FOLDERS[folder];
   if (delivery !== 'installer') return saveFile(pack, target.file);

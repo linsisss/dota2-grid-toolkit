@@ -100,7 +100,7 @@ test('HTTP login cookies, anonymous publication, claims and edit/like/workspace 
   assert.equal((await call(`/manage/${id}/claim`,'POST',{}, {Authorization:'Bearer '+token})).status,200);
   assert.equal((await call(`/manage/${id}`,'PATCH',{...input(11),revision:saved.body.revision,captcha:await proof(call)})).status,200);
   assert.equal((await call('/mine')).body.items.length,1);
-  assert.equal((await call(`/works/${id}/like`,'PUT',{liked:true})).body.likes,1);
+  assert.deepEqual(await call(`/works/${id}/like`,'PUT',{liked:true}).then(r=>[r.status,r.body.error]),[403,'Свою работу лайкнуть нельзя.'],'the claimed grid is now their own');
   const space=randomUUID();assert.equal((await call(`/spaces/${space}`,'PUT',{name:'File',account:'7',revision:0,document:C.default.demoDocument('blank')})).status,200);
   assert.equal((await call('/spaces')).body.items.length,1);
   assert.equal((await call('/auth/logout','POST',{}, {Origin:'https://evil.test'})).status,403);
@@ -115,4 +115,19 @@ test('bot login buttons only confirm the same private chat and latest prompt', a
   const q={id:'cb',data:'login:yes:'+r.id,from:from(7),message:{message_id:10,chat:{id:7,type:'private'},from:{id:42}}};
   await worker.loginCallback({...q,from:from(8)});assert.equal(f.accounts.poll(r.id,r.verifier).state,'pending');
   await worker.loginCallback(q);assert.equal(f.accounts.poll(r.id,r.verifier).state,'approved');
+});
+
+test('«Студия» on another device: the list names the grids, and each grid is a picture of the account copy', async t => {
+  const f = await fixture(t), a = f.login(1), b = f.login(2), id = randomUUID();
+  const { renderSpaceThumbnail } = await import('../server/catalog-preview.mjs');
+  const doc = f.C.importDota({ version: 3, configs: [{ config_name: 'Первая', categories: [{ category_name: 'A', x_position: 10, y_position: 30, width: 30, height: 30, hero_ids: [] }] },
+    { config_name: 'Вторая', categories: [{ category_name: 'Керри', x_position: 10, y_position: 40, width: 120, height: 110, hero_ids: [1] }] }] }, 1);
+  f.accounts.saveSpace(id, a.user, { name: 'Файл', account: a.user.id, revision: 0, document: doc });
+  const [row] = f.accounts.listSpaces(a.user);
+  assert.deepEqual(row.gridNames, ['Первая', 'Вторая']); assert.equal(row.configIndex, 1);
+  const image = await f.accounts.spaceThumbnail(id, a.user, 1, renderSpaceThumbnail);
+  assert.equal(image.subarray(0, 4).toString(), 'RIFF'); assert.equal(image.subarray(8, 12).toString(), 'WEBP');
+  assert.equal(await f.accounts.spaceThumbnail(id, a.user, 1, () => { throw new Error('drawn twice'); }), image, 'one drawing per revision');
+  await assert.rejects(async () => f.accounts.spaceThumbnail(id, b.user, 0, renderSpaceThumbnail), (e) => e.status === 404, 'another account');
+  await assert.rejects(async () => f.accounts.spaceThumbnail(id, a.user, 2, renderSpaceThumbnail), (e) => e.status === 404, 'no such grid');
 });

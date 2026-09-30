@@ -1,5 +1,5 @@
 import { ALL_FORMATS, BlobSource, BufferTarget, CanvasSource, Input, Output, VideoSampleSink, WebMOutputFormat, canEncodeVideo } from 'mediabunny';
-import { MENU_LIMITS, mediaKind, menuBitrate, menuLook } from '../../scripts/menu-background.mjs';
+import { MENU_LIMITS, framePlacement, mediaKind, menuBitrate, menuLook } from '../../scripts/menu-background.mjs';
 
 // The upload becomes the menu's WebM right in the browser (WebCodecs through Mediabunny): VP9, or
 // VP8 where the browser has no VP9 encoder, no sound (Dota has no Opus decoder), 30 fps, at most
@@ -8,15 +8,15 @@ import { MENU_LIMITS, mediaKind, menuBitrate, menuLook } from '../../scripts/men
 // clip at 1 fps, a GIF or animated WebP keeps its frame timing. A video gives the chosen piece
 // (Trim.jsx), resampled to 30 fps; with a crossfade of f seconds the clip starts f seconds into the
 // piece and its last f seconds fade into the piece's first f, so the loop has no seam. Blur and dim
-// (menuLook) are drawn into every frame.
+// (menuLook) are drawn into every frame, and so is the framing (framePlacement: zoom and place).
 export class MenuVideoError extends Error {}
 const STILL_SECONDS = 10, FPS = 30;
 
 function paint(context, source, sourceWidth, sourceHeight, fit, look, ground = true) {
   const { width, height } = context.canvas;
   if (ground) { context.fillStyle = '#000'; context.fillRect(0, 0, width, height); }
-  const scale = (fit === 'cover' ? Math.max : Math.min)(width / sourceWidth, height / sourceHeight) * look.zoom;
-  const w = sourceWidth * scale, h = sourceHeight * scale, x = (width - w) / 2, y = (height - h) / 2;
+  const place = framePlacement(width / height, sourceWidth / sourceHeight, fit, look.zoom, look.frame);
+  const w = place.w * width, h = place.h * height, x = place.x * width, y = place.y * height;
   context.imageSmoothingQuality = 'high';
   if (!look.sigma) return context.drawImage(source, x, y, w, h);
   // The blur runs on a copy k times smaller (σ/k ≥ 4 pixels there), which looks the same once
@@ -146,14 +146,15 @@ async function encodeVideo(file, kind, canvas, fit, look, onProgress, signal, { 
   } finally { input.dispose?.(); }
 }
 
-// file: File; size: [width, height]; fit: 'cover' | 'contain'; effects: { blur, dim } from 0 to 1.
-export async function encodeMenuVideo(file, { size: [width, height], fit, effects = {}, piece = null, crossfade = 0, onProgress = () => {}, signal } = {}) {
+// file: File; size: [width, height]; fit: 'cover' | 'contain'; effects: { blur, dim } from 0 to 1;
+// frame: { zoom, x, y } (menuFrame).
+export async function encodeMenuVideo(file, { size: [width, height], fit, effects = {}, frame = null, piece = null, crossfade = 0, onProgress = () => {}, signal } = {}) {
   if (file.size > MENU_LIMITS.bytes) throw new MenuVideoError(`Файл больше ${MENU_LIMITS.bytes / 1_000_000} МБ.`);
   const kind = mediaKind(new Uint8Array(await file.slice(0, 16).arrayBuffer()));
   if (!kind) throw new MenuVideoError('Нужна картинка (PNG, JPEG, WebP), GIF или видео (MP4, WebM).');
   if (typeof OffscreenCanvas === 'undefined') throw new MenuVideoError('Этот браузер устарел для сборки видео. Открой страницу в Chrome, Edge, Яндекс Браузере или Firefox.');
   const canvas = new OffscreenCanvas(width, height);
-  const look = menuLook(effects, height);
+  const look = { ...menuLook(effects, height), frame };
   const result = kind.type === 'video' ? await encodeVideo(file, kind, canvas, fit, look, onProgress, signal, { piece, crossfade }) : await encodePicture(file, kind, canvas, fit, look, onProgress, signal);
   onProgress(1);
   return { ...result, kind };

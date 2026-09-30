@@ -15,7 +15,7 @@ import { editLayout } from './hero-chrome.mjs';
 import { numberButtons, stepNumber } from './form-controls.mjs';
 import { gamePreviewLayout } from './game-preview.mjs';
 import { layoutAsciiArt, placeAsciiArt } from './ascii-library.mjs';
-import { DRAWING_TOOLS, GRADIENT_CHARS, drawingPoints, lassoContains, setDrawingShift, advanceDrawingStroke } from './drawing.mjs';
+import { BRUSH_TOOLS, DRAWING_TOOLS, GRADIENT_CHARS, bentLine, constrainAxis, drawingPoints, lassoContains, setDrawingShift, advanceDrawingStroke } from './drawing.mjs';
 import { clampEraser, readEraserSize, stepEraserSize, storeEraserSize, wheelEraserSize } from './eraser-size.mjs';
 import { guideLines, snapMove } from './smart-guides.mjs';
 import { ALIGN_ACTIONS, DISTRIBUTE_ACTIONS, alignIconSVG } from './align-icons.mjs';
@@ -34,6 +34,8 @@ import {
   overflow,
   cropSymbols,
   eraseSymbols,
+  scatterSymbols,
+  SCATTER_DEFAULTS,
   replaceGlyphs,
   glyphCounts,
   selectionUnits,
@@ -55,7 +57,7 @@ import { IMAGE_STYLES,
   TRACE_SELECTS,
   TRACE_RECIPES
 } from './image-settings.mjs';
-import { ROW_DEFAULTS, ROW_FONT, ROW_GLYPH_SETS, rowAtlas, rowBandTop, rowGlyphs } from './ascii-rows.mjs';
+import { ROW_DEFAULTS, ROW_FONT, ROW_GLYPH_SETS, rowAtlas, rowBandTop, rowDraftScale, rowGlyphs } from './ascii-rows.mjs';
 import { TRACE_DEFAULTS, TRACE_MAX_DOTS } from './dot-trace.mjs';
 import { packGlyphs, packSymbols } from './dot-packing.mjs';
 import { gridBackground, onGridBackground, setGridBackground } from './grid-background.mjs';
@@ -161,11 +163,23 @@ export function createStudio(projectStorage, initial) {
     clipboardArtwork = [],
     imagePixels = null,
     conversionPoints = [],
-    convertTimer,
+    // The preview's conversion (requestConversion): the pending frame, the newest request,
+    // the newest full-quality request, the result on screen and whether it is final.
+    convertFrame = 0,
     convertRevision = 0,
+    fullRevision = 0,
+    shownRevision = 0,
+    conversionFinal = false,
+    // A slider is moving (drafts), by a held key; the drag's first frame is still to measure.
+    sliding = false,
+    slidingKey = false,
+    liveProbe = false,
+    pointsDraftPixels = null,
     imageMethod = readImageMethod(),
     rowsJobs = { worker: null, busy: false },
     traceJobs = { worker: null, busy: false },
+    rowDrafts = { worker: null, busy: false, waiting: null },
+    traceDrafts = { worker: null, busy: false, waiting: null },
     rowAtlases = new Map(),
     imageRequest = 0,
     sourceFilename = '',
@@ -188,6 +202,12 @@ export function createStudio(projectStorage, initial) {
   let referenceEditing = false;
   let heroMotion = null;
   let eraserSize = readEraserSize(), eraserHover = null, eraserLabelUntil = 0, eraserLabelTimer;
+  // «Изогнутая линия»: the line just drawn keeps a handle in its middle; dragging it bends the line
+  // through that point (drawing.mjs bentLine), a step of its own in the history. The handle stays
+  // while those glyphs are untouched and the line tool is on.
+  let bendable = null, bendHints = (() => { try { return Number(localStorage.getItem('gridstudio.bendHints')) || 0; } catch { return 0; } })();
+  const bendSignature = (ids) => JSON.stringify(ids.map((id) => { const e = doc.entities.find((item) => item.id === id); return e ? [e.id, e.x, e.y, e.text] : null; }));
+  const bendableNow = () => (tool === 'line' && bendable && !preview && bendable.ids.length && bendSignature(bendable.ids) === bendable.signature ? bendable : null);
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let frameStyle = { ...D.frames.simple },
     framePending = false;
@@ -204,7 +224,10 @@ export function createStudio(projectStorage, initial) {
   let referenceImage = null,
     referenceSource = '',
     uiReferenceSource = '',
-    referenceRevision = 0;
+    referenceRevision = 0,
+    // The opacity slider while it moves: drawn only, committed on release (setReference). It
+    // belongs to that reference object, so any commit, undo or redo leaves it behind.
+    referencePreview = null;
   let inspectorSelection = '',
     inspectorDocument = null,
     liveEdit = null;
@@ -400,8 +423,11 @@ export function createStudio(projectStorage, initial) {
       b.setAttribute('aria-pressed', active);
     });
     viewport.classList.toggle('drawing', !['select', 'hand'].includes(tool));
-    $('eraserSizeField').hidden = tool !== 'eraser';
-    if (tool !== 'eraser') eraserHover = null;
+    $('eraserSizeField').hidden = !BRUSH_TOOLS.has(tool);
+    $('eraserSizeName').textContent = tool === 'scatter' ? 'Размер кисти' : 'Размер ластика';
+    $('scatterField').hidden = tool !== 'scatter';
+    if (!BRUSH_TOOLS.has(tool)) eraserHover = null;
+    if (tool !== 'line') bendable = null;
     viewport.classList.toggle('panning', tool === 'hand');
     draw();
   }
@@ -528,7 +554,7 @@ export function createStudio(projectStorage, initial) {
     ) {
       const r = doc.reference;
       ctx.save();
-      ctx.globalAlpha = r.opacity;
+      ctx.globalAlpha = referencePreview?.reference === r ? referencePreview.opacity : r.opacity;
       ctx.drawImage(referenceImage, r.x, r.y, r.w, r.h);
       ctx.restore();
     }
@@ -634,10 +660,50 @@ export function createStudio(projectStorage, initial) {
         ctx.stroke();
         ctx.setLineDash([]);
       }
-      if (tool === 'eraser' && eraserHover) drawEraserRing(eraserHover);
+      if (BRUSH_TOOLS.has(tool) && eraserHover) drawEraserRing(eraserHover);
+      if (!gesture || gesture.type === 'bend') drawBendHandle();
       if (guideFades.size || (gesture?.type === 'move' && gesture.guides?.length)) drawGuides(gesture?.type === 'move' ? gesture.guides || [] : []);
     }
     if (heroesMoving) requestPaint();
+  }
+  // The handle in the middle of the line just drawn: pull it to bend the line.
+  function drawBendHandle() {
+    const line = bendableNow();
+    if (!line) return;
+    const { x, y } = line.through;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x, y, 6 / zoom, 0, Math.PI * 2);
+    ctx.fillStyle = '#c4b5ed'; ctx.fill();
+    ctx.lineWidth = 2 / zoom; ctx.strokeStyle = '#15141a'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, 9 / zoom, 0, Math.PI * 2);
+    ctx.lineWidth = 1 / zoom; ctx.strokeStyle = '#efeaf5aa'; ctx.stroke();
+    ctx.restore();
+  }
+  const onBendHandle = (p) => { const line = bendableNow(); return !!line && Math.hypot(p.x - line.through.x, p.y - line.through.y) <= 11 / zoom; };
+  function bendTo(p) {
+    const line = bendable;
+    const points = centerBrushPoints(drawingPoints('pencil', bentLine(line.a, line.b, p), line.settings, line.seed, false, frameStyle, workspace()), ink);
+    doc.entities = doc.entities.filter((e) => !line.ids.includes(e.id));
+    const made = points.map((q) => C.entity(doc, { type: 'symbol', text: q.ch, name: q.ch, x: q.x, y: q.y, w: 30, h: 30, layer: line.layer }));
+    doc.entities.push(...made);
+    line.ids = made.map((e) => e.id); line.through = { ...p }; line.signature = bendSignature(line.ids);
+  }
+  // «Распыление»: the brush throws what it touches along the stroke, a point every half radius.
+  function scatterSettings() {
+    return { distance: Number($('scatterDistance').value) / 10, spread: Number($('scatterSpread').value) };
+  }
+  function scatterAt(p, direction = null) {
+    const radius = eraserSize / 2, from = gesture.last, dx = p.x - from.x, dy = p.y - from.y, length = Math.hypot(dx, dy);
+    if (!direction) {
+      if (length < 2 / zoom) return;
+      const step = { x: dx / length, y: dy / length }, previous = gesture.direction;
+      const mixed = previous ? { x: previous.x * 0.6 + step.x * 0.4, y: previous.y * 0.6 + step.y * 0.4 } : step, norm = Math.hypot(mixed.x, mixed.y) || 1;
+      gesture.direction = { x: mixed.x / norm, y: mixed.y / norm };
+    }
+    const heading = direction || gesture.direction, settings = scatterSettings(), steps = Math.max(1, Math.ceil(length / Math.max(2, radius / 2)));
+    for (let i = 1; i <= steps; i++)
+      scatterSymbols(doc, { x: from.x + (dx * i) / steps, y: from.y + (dy * i) / steps }, radius, heading, { ...settings, seed: gesture.seed, thrown: gesture.thrown });
+    gesture.last = { ...p }; gesture.moved = true;
   }
   // Photoshop-style brush outline: the ring is exactly the area eraseSymbols clears.
   function drawEraserRing(p) {
@@ -1472,12 +1538,18 @@ export function createStudio(projectStorage, initial) {
       draw();
     } else {
       const layer = doc.layers.find((l) => l.id === $('drawLayer').value);
-      if (tool !== 'eraser' && (layer.locked || !layer.visible)) {
+      if (tool === 'line' && onBendHandle(p)) {
+        gesture = { type: 'bend', before: C.clone(doc), bendBefore: structuredClone(bendable) };
+        canvas.style.cursor = 'grabbing';
+        gesture.pointerId = event.pointerId; canvas.setPointerCapture(event.pointerId);
+        return;
+      }
+      if (!BRUSH_TOOLS.has(tool) && (layer.locked || !layer.visible)) {
         toast('Выбранный слой скрыт или заблокирован.', true);
         return;
       }
       gesture = {
-        type: tool === 'eraser' ? 'erase' : 'draw',
+        type: tool === 'eraser' ? 'erase' : tool === 'scatter' ? 'scatter' : 'draw',
         tool,
         path: [snapped(p)],
         settings: brushSettings(),
@@ -1486,8 +1558,10 @@ export function createStudio(projectStorage, initial) {
         last: snapped(p),
         current: snapped(p),
         before: C.clone(doc),
-        seen: new Set()
+        seen: new Set(),
+        thrown: new Set()
       };
+      if (gesture.type === 'scatter') gesture.last = { ...p };
       selected.clear();
       if (gesture.type === 'draw') updateStroke(event.shiftKey);
       if (gesture.type === 'erase') eraseAt(p);
@@ -1527,7 +1601,7 @@ export function createStudio(projectStorage, initial) {
     if (gesture && gesture.pointerId !== event.pointerId) return;
     const p = point(event);
     lastPoint = p;
-    if (tool === 'eraser') {
+    if (BRUSH_TOOLS.has(tool)) {
       eraserHover = p;
       requestPaint();
     }
@@ -1555,7 +1629,7 @@ export function createStudio(projectStorage, initial) {
                 const reorder = group?.type === 'heroes' && (selected.size <= 1 || !selected.has(group.id)) &&
                   (!inside || selected.has(group.id)) && heroAt(group, p, heroLayoutFor(group)) >= 0;
                 return reorder ? 'grab' : inside ? 'move' : '';
-              })() : tool === 'eraser' && !preview ? 'none' : '';
+              })() : BRUSH_TOOLS.has(tool) && !preview ? 'none' : onBendHandle(p) ? 'grab' : '';
       return;
     }
     if (gesture.type === 'pan') {
@@ -1598,6 +1672,8 @@ export function createStudio(projectStorage, initial) {
     }
     if (gesture.type === 'lasso') gesture.path.push(p);
     if (gesture.type === 'erase') eraseAt(p);
+    if (gesture.type === 'scatter') scatterAt(p);
+    if (gesture.type === 'bend') bendTo(p);
     draw();
   });
   function finishGesture(event, cancel = false) {
@@ -1616,21 +1692,30 @@ export function createStudio(projectStorage, initial) {
         heroMotion.active = false;
       }
     }
-    if (cancel && gesture.before) doc = gesture.before;
-    else if (!cancel && gesture.type === 'draw')
-      for (const p of drawFrame || [])
-        doc.entities.push(
-          C.entity(doc, {
-            type: 'symbol',
-            text: p.ch,
-            name: p.ch,
-            x: p.x,
-            y: p.y,
-            w: 30,
-            h: 30,
-            layer: $('drawLayer').value
-          })
-        );
+    // A click without moving melts what is under the brush: it falls down.
+    if (!cancel && gesture.type === 'scatter' && !gesture.moved) scatterAt(gesture.last, { x: 0, y: 1 });
+    if (cancel && gesture.before) { doc = gesture.before; if (gesture.type === 'bend') bendable = gesture.bendBefore; }
+    else if (!cancel && gesture.type === 'draw') {
+      const made = (drawFrame || []).map((p) =>
+        C.entity(doc, {
+          type: 'symbol',
+          text: p.ch,
+          name: p.ch,
+          x: p.x,
+          y: p.y,
+          w: 30,
+          h: 30,
+          layer: $('drawLayer').value
+        }));
+      doc.entities.push(...made);
+      // A straight line can be bent afterwards by its middle.
+      if (gesture.tool === 'line' && made.length > 1) {
+        const a = gesture.path[0], last = gesture.path.at(-1), b = gesture.shift && !gesture.repositioning ? constrainAxis(a, last) : last;
+        bendable = { ids: made.map((e) => e.id), a: { ...a }, b: { ...b }, through: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, settings: gesture.settings, seed: gesture.seed, layer: $('drawLayer').value };
+        bendable.signature = bendSignature(bendable.ids);
+        if (bendHints < 3) { bendHints++; try { localStorage.setItem('gridstudio.bendHints', String(bendHints)); } catch {} toast('Потяни за точку посередине, чтобы выгнуть линию дугой.'); }
+      }
+    }
     else if (!cancel && gesture.type === 'lasso')
       selected = new Set([
         ...gesture.previous,
@@ -1686,7 +1771,7 @@ export function createStudio(projectStorage, initial) {
       if (event.ctrlKey || event.metaKey) {
         event.preventDefault();
         setZoom(wheelZoom(zoom, event.deltaY, event.deltaMode, viewport.clientHeight), event);
-      } else if (tool === 'eraser' && !preview) {
+      } else if (BRUSH_TOOLS.has(tool) && !preview) {
         // Plain wheel resizes the eraser; Ctrl/Cmd + wheel still zooms.
         event.preventDefault();
         eraserHover = point(event);
@@ -2076,10 +2161,15 @@ export function createStudio(projectStorage, initial) {
   }
   function clearImageDraft() {
     imageRequest++;
-    convertRevision++;
+    shownRevision = fullRevision = ++convertRevision;
     styleRevision++;
-    clearTimeout(convertTimer);
+    cancelAnimationFrame(convertFrame);
+    dropDraft(rowDrafts);
+    dropDraft(traceDrafts);
+    sliding = false;
+    conversionFinal = false;
     imagePixels = null;
+    pointsDraftPixels = null;
     conversionPoints = [];
     sourceFilename = '';
     $('applyImage').disabled = true;
@@ -2322,8 +2412,43 @@ export function createStudio(projectStorage, initial) {
       worker.postMessage(message, [message.luma.buffer]);
     });
   }
-  const rowsJob = (message) => workerJob(rowsJobs, () => new Worker(new URL('./ascii-rows.worker.mjs', import.meta.url), { type: 'module' }), message);
-  const traceJob = (message) => workerJob(traceJobs, () => new Worker(new URL('./dot-trace.worker.mjs', import.meta.url), { type: 'module' }), message);
+  // A full-quality job that a newer request made stale only takes a core: stop it.
+  function stopJob(jobs) {
+    if (jobs.worker && jobs.busy) { jobs.worker.terminate(); jobs.worker = null; jobs.busy = false; }
+  }
+  // Drafts while a slider moves are never cut short: replacing the running one every frame
+  // would show nothing until the slider stopped. A busy draft worker keeps only the newest
+  // request (an older waiting one resolves with null) and takes it when it is done; build()
+  // makes the message then, so skipped requests cost nothing.
+  function draftJob(jobs, create, build) {
+    return new Promise((resolve, reject) => {
+      jobs.waiting?.resolve(null);
+      jobs.waiting = { build, resolve, reject };
+      if (!jobs.busy) nextDraft(jobs, create);
+    });
+  }
+  function dropDraft(jobs) {
+    jobs.waiting?.resolve(null);
+    jobs.waiting = null;
+  }
+  function nextDraft(jobs, create) {
+    const job = jobs.waiting;
+    jobs.waiting = null;
+    if (!job || disposed) return;
+    let message;
+    try { message = job.build(); } catch (error) { job.reject(error); nextDraft(jobs, create); return; }
+    const worker = (jobs.worker ||= create());
+    jobs.busy = true;
+    const settle = (finish) => { jobs.busy = false; finish(); nextDraft(jobs, create); };
+    worker.onmessage = ({ data }) => settle(() => (data.error ? job.reject(new Error(data.error)) : job.resolve(data)));
+    worker.onerror = (event) => {
+      event.preventDefault(); worker.terminate(); jobs.worker = null;
+      settle(() => job.reject(new Error('Image worker failed')));
+    };
+    worker.postMessage(message, [message.luma.buffer]);
+  }
+  const rowsWorker = () => new Worker(new URL('./ascii-rows.worker.mjs', import.meta.url), { type: 'module' });
+  const traceWorker = () => new Worker(new URL('./dot-trace.worker.mjs', import.meta.url), { type: 'module' });
   function rowAtlasFor(glyphs, bandTop) {
     const key = `${bandTop}:${glyphs}`;
     if (!rowAtlases.has(key))
@@ -2331,7 +2456,59 @@ export function createStudio(projectStorage, initial) {
         rowAtlas(glyphs, (width, height) => Object.assign(document.createElement('canvas'), { width, height }), ROW_FONT, bandTop)));
     return rowAtlases.get(key);
   }
-  function scheduleRows() {
+  // Live sliders, like the menu background's. While a slider moves the preview is converted
+  // once a frame with the newest value. A method whose last full conversion took longer than
+  // LIVE_MS is drafted from a smaller picture meanwhile, and the full result follows on
+  // release. The draft's scale follows its timings: the cost grows about as scale^2.5 in all
+  // three methods. Apply stays disabled until the preview shows a full result of the current
+  // settings.
+  const LIVE_MS = 50, DRAFT_MS = { points: 25, rows: 40, trace: 40 };
+  const DRAFT_STATUS = 'Черновой предпросмотр — точный результат, когда отпустишь ползунок.';
+  const liveCost = { points: 0, rows: 0, trace: 0 }, liveScale = { points: 1, rows: 1, trace: 1 };
+  function noteCost(method, scale, spent) {
+    if (!(spent > 0)) return;
+    if (scale === 1) liveCost[method] = spent;
+    liveScale[method] = scale * (DRAFT_MS[method] / spent) ** 0.4;
+  }
+  function draftScale(method) {
+    // A drag's first frame measures the full conversion again when the last one was close:
+    // the first conversion of a picture runs cold and slower.
+    const probe = liveProbe && liveCost[method] <= LIVE_MS * 2;
+    liveProbe = false;
+    if (probe || liveCost[method] <= LIVE_MS) return 1;
+    // Steps of 0.05 keep a scaled picture cached through a drag.
+    return Math.round(Math.max(0.25, Math.min(0.9, liveScale[method])) * 20) / 20;
+  }
+  // What the preview shows: a newer result replaces an older one, and once a full result is
+  // asked for, a draft asked for before it is not shown any more.
+  const fresh = (revision) => !disposed && !!imagePixels && imageDialog.open && revision > shownRevision && revision >= fullRevision;
+  function showDraft(revision, points) {
+    shownRevision = revision;
+    conversionPoints = points;
+    $('conversionStatus').textContent = DRAFT_STATUS;
+    renderImagePreview();
+  }
+  // A full result; Apply only if nothing newer was asked for since.
+  function showFinal(revision, points) {
+    shownRevision = revision;
+    conversionPoints = points;
+    conversionFinal = revision === convertRevision;
+    $('applyImage').disabled = !points.length || !conversionFinal;
+  }
+  function showFailure(revision) {
+    shownRevision = revision;
+    conversionPoints = [];
+    $('imageCategoryWarning').replaceChildren();
+    $('conversionStatus').textContent = 'Не удалось обработать изображение. Попробуй другой файл.';
+    renderImagePreview();
+  }
+  // The art box on the canvas: the picture fitted at `fill` percent.
+  function artSize(percent) {
+    const area = workspace(), fill = percent / 100;
+    const scale = Math.min(((area.w - 30) * fill) / imagePixels.width, ((area.h - 30) * fill) / imagePixels.height);
+    return { area, width: Math.max(8, Math.round(imagePixels.width * scale)), height: Math.max(8, Math.round(imagePixels.height * scale)) };
+  }
+  function prepareRows(draft) {
     const settings = readRowSettings();
     for (const { id } of ROW_RANGES) $(id + 'Number').value = $(id).value;
     const custom = settings.glyphs === 'custom';
@@ -2343,134 +2520,208 @@ export function createStudio(projectStorage, initial) {
     $('rowGlyphsHint').textContent = skipped
       ? `Нет в шрифте Dota, пропущены: ${skipped}`
       : 'Пробел добавляется сам. Строчные буквы игра показывает заглавными.';
-    clearTimeout(convertTimer);
-    const revision = ++convertRevision;
-    if (!imagePixels || !imageDialog.open) return;
+    if (!imagePixels || !imageDialog.open) return null;
     $('imageCategoryWarning').replaceChildren();
     $('applyImage').disabled = true;
     if (Array.from(glyphs).length < 2) {
+      shownRevision = convertRevision;
       conversionPoints = [];
       $('conversionStatus').textContent = 'Добавь в набор хотя бы один символ, кроме пробела.';
       renderImagePreview();
-      return;
+      return null;
     }
-    $('conversionStatus').textContent = 'Подбираем символы…';
-    convertTimer = setTimeout(async () => {
-      if (disposed || revision !== convertRevision || !imagePixels || !imageDialog.open) return;
-      try {
-        const area = workspace(), fill = settings.fill / 100;
-        const scale = Math.min(((area.w - 30) * fill) / imagePixels.width, ((area.h - 30) * fill) / imagePixels.height);
-        const width = Math.max(8, Math.round(imagePixels.width * scale)), height = Math.max(8, Math.round(imagePixels.height * scale));
-        const luma = rowLuma(imagePixels, width, height), atlas = await rowAtlasFor(glyphs, rowBandTop(settings));
-        if (disposed || revision !== convertRevision) return;
-        const result = await rowsJob({ id: revision, luma, width, height, settings, glyphs: atlas.glyphs, pairs: atlas.pairs });
-        if (disposed || revision !== convertRevision || !imageDialog.open) return;
-        // Row positions are pen positions inside the art; a label draws its text 4px in.
-        const left = (area.w - width) / 2, top = (area.h - height) / 2;
-        conversionPoints = result.rows.map((row) => ({ ch: row.text, x: left + row.x - DOTA.listPadding, y: top + row.y - atlas.bandTop }));
-        const count = conversionPoints.length, chars = result.rows.reduce((sum, row) => sum + Array.from(row.text.replace(/ /g, '')).length, 0);
-        $('conversionStatus').textContent = count
-          ? `${count} ${plural(count, 'строка', 'строки', 'строк')} = ${count} ${plural(count, 'категория', 'категории', 'категорий')} · ${chars.toLocaleString('ru-RU')} ${plural(chars, 'символ', 'символа', 'символов')} · ${width} × ${height} px · символами ${result.ink === 'dark' ? 'тёмные' : 'светлые'} места`
-          : 'Рисунок получился пустым. Попробуй другой режим или «Рисовать символами».';
-        $('applyImage').disabled = !count;
-        renderImagePreview();
-      } catch {
-        if (disposed || revision !== convertRevision) return;
-        conversionPoints = [];
-        $('conversionStatus').textContent = 'Не удалось обработать изображение. Попробуй другой файл.';
-        renderImagePreview();
+    return (revision) => convertRows(revision, settings, glyphs, draft);
+  }
+  async function convertRows(revision, settings, glyphs, draft) {
+    // The row step must stay whole pixels at a draft's size (rowDraftScale).
+    const scale = draft ? rowDraftScale(settings, draftScale('rows')) : 1;
+    // A live full-size conversion keeps the last result's line: no flicker every frame.
+    if (scale < 1 || !draft) $('conversionStatus').textContent = scale < 1 ? DRAFT_STATUS : 'Подбираем символы…';
+    try {
+      const { area, width, height } = artSize(settings.fill);
+      const atlas = await rowAtlasFor(glyphs, rowBandTop(settings));
+      if (!fresh(revision)) return;
+      let result;
+      if (!draft) {
+        dropDraft(rowDrafts);
+        result = await workerJob(rowsJobs, rowsWorker, { id: revision, luma: rowLuma(imagePixels, width, height), width, height, settings, glyphs: atlas.glyphs, pairs: atlas.pairs });
+      } else {
+        stopJob(rowsJobs);
+        result = await draftJob(rowDrafts, rowsWorker, () => {
+          const w = Math.max(4, Math.round(width * scale)), h = Math.max(4, Math.round(height * scale));
+          return { id: revision, luma: rowLuma(imagePixels, w, h), width: w, height: h, settings, glyphs: atlas.glyphs, pairs: atlas.pairs, scale };
+        });
       }
-    }, 200);
+      if (!result || !fresh(revision)) return;
+      noteCost('rows', scale, result.spent);
+      // Row positions are pen positions inside the art; a label draws its text 4px in.
+      const left = (area.w - width) / 2, top = (area.h - height) / 2;
+      const points = result.rows.map((row) => ({ ch: row.text, x: left + row.x / scale - DOTA.listPadding, y: top + row.y / scale - atlas.bandTop }));
+      if (scale < 1) return showDraft(revision, points);
+      showFinal(revision, points);
+      const count = points.length, chars = result.rows.reduce((sum, row) => sum + Array.from(row.text.replace(/ /g, '')).length, 0);
+      $('conversionStatus').textContent = count
+        ? `${count} ${plural(count, 'строка', 'строки', 'строк')} = ${count} ${plural(count, 'категория', 'категории', 'категорий')} · ${chars.toLocaleString('ru-RU')} ${plural(chars, 'символ', 'символа', 'символов')} · ${width} × ${height} px · символами ${result.ink === 'dark' ? 'тёмные' : 'светлые'} места`
+        : 'Рисунок получился пустым. Попробуй другой режим или «Рисовать символами».';
+      renderImagePreview();
+    } catch {
+      if (fresh(revision)) showFailure(revision);
+    }
   }
   function categoryAlert(count) {
     $('imageCategoryWarning').innerHTML = count > 2000
       ? `<div class="category-warning" role="alert"><span>!</span><div><strong>${count.toLocaleString('ru-RU')} категорий в изображении</strong><p>Больше 2000 категорий могут вызывать лаги и вылет Dota 2.</p></div></div>`
       : '';
   }
-  function scheduleTrace() {
+  function prepareTrace(draft) {
     const settings = readTraceSettings();
     for (const { id } of TRACE_RANGES) $(id + 'Number').value = $(id).value;
-    clearTimeout(convertTimer);
-    const revision = ++convertRevision;
-    if (!imagePixels || !imageDialog.open) return;
+    if (!imagePixels || !imageDialog.open) return null;
     $('imageCategoryWarning').replaceChildren();
     $('applyImage').disabled = true;
-    $('conversionStatus').textContent = 'Ищем линии…';
-    convertTimer = setTimeout(async () => {
-      if (disposed || revision !== convertRevision || !imagePixels || !imageDialog.open) return;
-      try {
-        const area = workspace(), fill = settings.fill / 100;
-        const scale = Math.min(((area.w - 30) * fill) / imagePixels.width, ((area.h - 30) * fill) / imagePixels.height);
-        const width = Math.max(8, Math.round(imagePixels.width * scale)), height = Math.max(8, Math.round(imagePixels.height * scale));
-        const result = await traceJob({ id: revision, luma: rowLuma(imagePixels, width, height), width, height, settings });
-        if (disposed || revision !== convertRevision || !imageDialog.open) return;
-        await document.fonts.load(ROW_FONT);
-        if (disposed || revision !== convertRevision || !imageDialog.open) return;
-        // Dot centres in the picture → category positions: a label draws its dot this far in.
-        const ink = measureCategoryInk(ctx, '.'), left = (area.w - width) / 2 - ink.x - ink.w / 2, top = (area.h - height) / 2 - ink.y - ink.h / 2;
-        const dots = result.dots.map(([x, y]) => ({ ch: '.', x: +(left + x).toFixed(2), y: +(top + y).toFixed(2) }));
-        conversionPoints = settings.pack
-          ? packGlyphs(dots, (text) => measureCategoryWidth(ctx, text)).map((row) => ({ ch: row.text, x: +row.x.toFixed(2), y: +row.y.toFixed(2) }))
-          : dots;
-        const count = conversionPoints.length, total = dots.length;
-        categoryAlert(count);
-        $('conversionStatus').textContent = count
-          ? `${total.toLocaleString('ru-RU')} ${plural(total, 'точка', 'точки', 'точек')}${settings.pack ? ' →' : ' ='} ${count.toLocaleString('ru-RU')} ${plural(count, 'категория', 'категории', 'категорий')} · ${result.source === 'lines' ? 'линии рисунка' : 'границы, как на фото'} · ${width} × ${height} px${result.limited ? ` · достигнут предел ${TRACE_MAX_DOTS.toLocaleString('ru-RU')} точек` : ''}`
-          : 'Линии не найдены. Увеличь детализацию или уменьши «Линии от».';
-        $('applyImage').disabled = !count;
-        renderImagePreview();
-      } catch {
-        if (disposed || revision !== convertRevision) return;
-        conversionPoints = [];
-        $('conversionStatus').textContent = 'Не удалось обработать изображение. Попробуй другой файл.';
-        renderImagePreview();
+    return (revision) => convertTrace(revision, settings, draft);
+  }
+  async function convertTrace(revision, settings, draft) {
+    const scale = draft ? draftScale('trace') : 1;
+    if (scale < 1 || !draft) $('conversionStatus').textContent = scale < 1 ? DRAFT_STATUS : 'Ищем линии…';
+    try {
+      const { area, width, height } = artSize(settings.fill);
+      let result;
+      if (!draft) {
+        dropDraft(traceDrafts);
+        result = await workerJob(traceJobs, traceWorker, { id: revision, luma: rowLuma(imagePixels, width, height), width, height, settings });
+      } else {
+        stopJob(traceJobs);
+        // A draft traces a smaller picture; its dots come back in its own pixels.
+        result = await draftJob(traceDrafts, traceWorker, () => {
+          const w = scale < 1 ? Math.max(4, Math.round(width * scale)) : width, h = scale < 1 ? Math.max(4, Math.round(height * scale)) : height;
+          return { id: revision, luma: rowLuma(imagePixels, w, h), width: w, height: h, settings: scale < 1 ? { ...settings, scale } : settings };
+        });
       }
-    }, 200);
+      if (!result || !fresh(revision)) return;
+      noteCost('trace', scale, result.spent);
+      await document.fonts.load(ROW_FONT);
+      if (!fresh(revision)) return;
+      // Dot centres in the picture → category positions: a label draws its dot this far in.
+      const ink = measureCategoryInk(ctx, '.'), left = (area.w - width) / 2 - ink.x - ink.w / 2, top = (area.h - height) / 2 - ink.y - ink.h / 2;
+      const dots = result.dots.map(([x, y]) => ({ ch: '.', x: +(left + x / scale).toFixed(2), y: +(top + y / scale).toFixed(2) }));
+      // A draft is not packed: packing moves a dot by 1.5 px at most, invisible in the preview.
+      if (scale < 1) return showDraft(revision, dots);
+      const points = settings.pack
+        ? packGlyphs(dots, (text) => measureCategoryWidth(ctx, text)).map((row) => ({ ch: row.text, x: +row.x.toFixed(2), y: +row.y.toFixed(2) }))
+        : dots;
+      showFinal(revision, points);
+      const count = points.length, total = dots.length;
+      categoryAlert(count);
+      $('conversionStatus').textContent = count
+        ? `${total.toLocaleString('ru-RU')} ${plural(total, 'точка', 'точки', 'точек')}${settings.pack ? ' →' : ' ='} ${count.toLocaleString('ru-RU')} ${plural(count, 'категория', 'категории', 'категорий')} · ${result.source === 'lines' ? 'линии рисунка' : 'границы, как на фото'} · ${width} × ${height} px${result.limited ? ` · достигнут предел ${TRACE_MAX_DOTS.toLocaleString('ru-RU')} точек` : ''}`
+        : 'Линии не найдены. Увеличь детализацию или уменьши «Линии от».';
+      renderImagePreview();
+    } catch {
+      if (fresh(revision)) showFailure(revision);
+    }
   }
   function showImageMethod() {
     imageDialog.dataset.method = imageMethod;
     document.querySelectorAll('[data-image-method]').forEach((button) =>
       button.setAttribute('aria-pressed', String(button.dataset.imageMethod === imageMethod)));
   }
-  function scheduleConversion() {
-    if (imageMethod === 'rows') return scheduleRows();
-    if (imageMethod === 'trace') return scheduleTrace();
+  // «Контуры и точки» runs on the main thread (a picture of 500 px at most, usually 15–45 ms).
+  // A draft converts the picture at a smaller size; blur and grid step are picture pixels,
+  // so they shrink with it and the symbols keep their spacing on the canvas.
+  function scaledPixels(scale) {
+    if (pointsDraftPixels?.source === imagePixels && pointsDraftPixels.scale === scale) return pointsDraftPixels.pixels;
+    const source = document.createElement('canvas'), canvas = document.createElement('canvas');
+    source.width = imagePixels.width; source.height = imagePixels.height;
+    source.getContext('2d').putImageData(imagePixels, 0, 0);
+    canvas.width = Math.max(8, Math.round(imagePixels.width * scale)); canvas.height = Math.max(8, Math.round(imagePixels.height * scale));
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.imageSmoothingQuality = 'high';
+    context.drawImage(source, 0, 0, canvas.width, canvas.height);
+    pointsDraftPixels = { source: imagePixels, scale, pixels: context.getImageData(0, 0, canvas.width, canvas.height) };
+    return pointsDraftPixels.pixels;
+  }
+  function draftPointSettings(settings, scale) {
+    const step = (settings.gridStep / (settings.density / 100)) * scale, gridStep = Math.min(20, Math.max(2, step));
+    return { ...settings, blur: settings.blur * scale, gridStep, density: Math.min(200, (100 * gridStep) / step) };
+  }
+  function preparePoints(draft) {
     imageSettings = readImageSettings();
     for (const { id } of IMAGE_RANGES) $(id + 'Number').value = $(id).value;
     $('imageOrient').disabled = imageSettings.onlyDots;
-    clearTimeout(convertTimer);
-    const revision = ++convertRevision;
-    if (!imagePixels || !imageDialog.open) return;
-    if (!$('imageLimit').value || !$('imageLimit').checkValidity()) {
-      $('applyImage').disabled = true;
-      $('conversionStatus').textContent = 'Лимит: от 100 до 10 000 символов, с шагом 100.';
-      return;
-    }
-    $('conversionStatus').textContent = 'Ищем контуры…';
+    if (!imagePixels || !imageDialog.open) return null;
     $('applyImage').disabled = true;
-    convertTimer = setTimeout(() => {
-      if (disposed || revision !== convertRevision || !imagePixels || !imageDialog.open) return;
-      try {
-        const result = convertWithStats(imagePixels, imageSettings, workspace());
-        conversionPoints = result.points;
-        categoryAlert(conversionPoints.length);
-        const { contours, shading, limit, width, height } = result.stats;
-        // A saved or imported style may still carry glyphs the game does not show.
-        const hidden = invisibleWarning(imageSettings.charset + (imageSettings.shading ? imageSettings.shadeCharset : ''));
-        $('conversionStatus').textContent = (hidden ? hidden + ' ' : '') + (conversionPoints.length
-          ? `${conversionPoints.length} / ${limit} символов · контуры ${contours} · заливка ${shading} · ${width} × ${height} px`
-          : 'Контуры не найдены. Попробуй другой стиль или более контрастный арт.');
-        $('applyImage').disabled = !conversionPoints.length;
-        renderImagePreview();
-      } catch {
-        conversionPoints = [];
-        $('imageCategoryWarning').replaceChildren();
-        $('conversionStatus').textContent =
-          'Не удалось обработать изображение. Попробуй другой файл.';
-        renderImagePreview();
-      }
-    }, 160);
+    if (!$('imageLimit').value || !$('imageLimit').checkValidity()) {
+      $('conversionStatus').textContent = 'Лимит: от 100 до 10 000 символов, с шагом 100.';
+      return null;
+    }
+    const settings = imageSettings;
+    $('conversionStatus').textContent = 'Ищем контуры…';
+    return (revision) => convertPoints(revision, settings, draft);
   }
+  function convertPoints(revision, settings, draft) {
+    const scale = draft ? draftScale('points') : 1;
+    try {
+      const started = performance.now();
+      const result = scale < 1
+        ? convertWithStats(scaledPixels(scale), draftPointSettings(settings, scale), workspace())
+        : convertWithStats(imagePixels, settings, workspace());
+      noteCost('points', scale, performance.now() - started);
+      if (scale < 1) return showDraft(revision, result.points);
+      showFinal(revision, result.points);
+      categoryAlert(result.points.length);
+      const { contours, shading, limit, width, height } = result.stats;
+      // A saved or imported style may still carry glyphs the game does not show.
+      const hidden = invisibleWarning(settings.charset + (settings.shading ? settings.shadeCharset : ''));
+      $('conversionStatus').textContent = (hidden ? hidden + ' ' : '') + (result.points.length
+        ? `${result.points.length} / ${limit} символов · контуры ${contours} · заливка ${shading} · ${width} × ${height} px`
+        : 'Контуры не найдены. Попробуй другой стиль или более контрастный арт.');
+      renderImagePreview();
+    } catch {
+      showFailure(revision);
+    }
+  }
+  // Every change converts on the next frame; changes between two frames are one conversion.
+  // draft: a slider is still moving (see LIVE_MS).
+  function requestConversion(draft) {
+    const revision = ++convertRevision;
+    if (!draft) { fullRevision = revision; sliding = false; }
+    conversionFinal = false;
+    cancelAnimationFrame(convertFrame);
+    const run = imageMethod === 'rows' ? prepareRows(draft) : imageMethod === 'trace' ? prepareTrace(draft) : preparePoints(draft);
+    if (!run) return;
+    convertFrame = requestAnimationFrame(() => {
+      convertFrame = 0;
+      if (!disposed && revision === convertRevision && imagePixels && imageDialog.open) run(revision);
+    });
+  }
+  function scheduleConversion() {
+    requestConversion(false);
+  }
+  // A slider's input is a draft frame; letting it go (change, pointerup, key up, blur) asks
+  // for the full result once. A held arrow key repeats input and change: its release waits
+  // for keyup. A drag back to the start value fires no change, hence pointerup.
+  function slide() {
+    if (!sliding) liveProbe = true;
+    sliding = true;
+    requestConversion(true);
+  }
+  function slideEnd() {
+    if (sliding && !slidingKey) scheduleConversion();
+  }
+  function bindSlider(input, onInput) {
+    // A new worker loads its modules before its first draft: start it as the slider is taken.
+    listen(input, 'pointerdown', () => {
+      if (imageMethod === 'rows') rowDrafts.worker ||= rowsWorker();
+      if (imageMethod === 'trace') traceDrafts.worker ||= traceWorker();
+    });
+    listen(input, 'input', onInput);
+    listen(input, 'change', slideEnd);
+    listen(input, 'keydown', (event) => { if (/^(Arrow|Page|Home|End)/.test(event.key)) slidingKey = true; });
+    for (const type of ['keyup', 'blur']) listen(input, type, () => { slidingKey = false; slideEnd(); });
+  }
+  // Released anywhere, the thumb may no longer be under the pointer.
+  for (const type of ['pointerup', 'pointercancel']) listen(window, type, slideEnd, { capture: true });
   function applyPreset(settings) {
     imageSettings = { ...IMAGE_DEFAULTS, ...settings };
     for (const { id, key } of [...IMAGE_RANGES, ...IMAGE_TEXT_FIELDS])
@@ -2885,7 +3136,11 @@ export function createStudio(projectStorage, initial) {
     scheduleConversion();
   };
   for (const { id } of IMAGE_RANGES) {
-    listen($(id), 'input', customizeImage);
+    bindSlider($(id), () => {
+      $('imagePreset').value = '';
+      slide();
+    });
+    // A typed value applies at full quality.
     listen($(id + 'Number'), 'input', () => {
       const field = $(id + 'Number');
       if (field.value === '' || !Number.isFinite(field.valueAsNumber)) return;
@@ -2913,7 +3168,7 @@ export function createStudio(projectStorage, initial) {
     };
   });
   for (const { id } of [...ROW_RANGES, ...TRACE_RANGES]) {
-    listen($(id), 'input', scheduleConversion);
+    bindSlider($(id), slide);
     listen($(id + 'Number'), 'input', () => {
       const field = $(id + 'Number');
       if (field.value === '' || !Number.isFinite(field.valueAsNumber)) return;
@@ -2956,7 +3211,8 @@ export function createStudio(projectStorage, initial) {
     if (preset) applyPreset(preset);
   };
   $('applyImage').onclick = () => {
-    if (!imageDialog.open || $('applyImage').disabled || !conversionPoints.length) return;
+    // Never a draft: Apply waits for the full result of the current settings.
+    if (!imageDialog.open || $('applyImage').disabled || !conversionFinal || !conversionPoints.length) return;
     let artwork;
     // Rows and packed dots are text lines; a dot that joined no row stays a symbol.
     const rows = imageMethod !== 'points';
@@ -3199,7 +3455,7 @@ export function createStudio(projectStorage, initial) {
       }
     }
     if (event.key === '?') openHelp();
-    if (tool === 'eraser' && (event.code === 'BracketLeft' || event.code === 'BracketRight')) {
+    if (BRUSH_TOOLS.has(tool) && (event.code === 'BracketLeft' || event.code === 'BracketRight')) {
       event.preventDefault();
       setEraserSize(stepEraserSize(eraserSize, event.code === 'BracketRight' ? 1 : -1));
     }
@@ -3511,6 +3767,10 @@ export function createStudio(projectStorage, initial) {
       const next = !referenceEditing;
       setTool('select'); selected.clear(); referenceEditing = next; draw();
     },
+    previewReference: (opacity) => {
+      referencePreview = opacity == null || !doc.reference ? null : { reference: doc.reference, opacity };
+      requestPaint();
+    },
     setReference: (reference) => {
       const added = reference && reference.src !== doc.reference?.src;
       commit(() => { if (reference) doc.reference = reference; else delete doc.reference; });
@@ -3648,9 +3908,8 @@ export function createStudio(projectStorage, initial) {
       clearTimeout(saveTimer);
       clearTimeout(saveDeadline);
       clearTimeout(toastTimer);
-      clearTimeout(convertTimer);
-      rowsJobs.worker?.terminate();
-      traceJobs.worker?.terminate();
+      cancelAnimationFrame(convertFrame);
+      for (const jobs of [rowsJobs, traceJobs, rowDrafts, traceDrafts]) jobs.worker?.terminate();
       clearTimeout(modalCloseTimer);
       exportGuideCleanup?.();
       clearTimeout(imageCloseTimer);

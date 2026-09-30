@@ -51,6 +51,17 @@ test('arts wait for moderation, reject duplicates and built-in arts, and reach t
   assert.throws(() => arts.submit(art({ text: '%%%' }), identity(4)), /приостановлен/);
 });
 
+test('trusted authors (CATALOG_UNLIMITED_TELEGRAM_IDS) have no account limit for arts; others keep it', async t => {
+  const [{ CatalogStore }, { CatalogArts }, { ART_LIMITS }] = await modules;
+  const store = new CatalogStore(':memory:', 'test-arts-trusted'); t.after(() => store.close());
+  store.unlimited = new Set(['424242424']);
+  const arts = new CatalogArts(store), unique = n => art({ text: `${'#'.repeat(n % 50 + 1)}\n${'@'.repeat(Math.floor(n / 50) + 1)}` });
+  let n = 0;
+  for (let i = 0; i <= ART_LIMITS.accountDaily; i++) arts.submit(unique(n++), { browser: `trusted-${i}`, ip: 'trusted-network' }, '424242424');
+  for (let i = 0; i < ART_LIMITS.accountDaily; i++) arts.submit(unique(n++), { browser: `other-${i}`, ip: 'other-network' }, 'account-a');
+  assert.throws(() => arts.submit(unique(n++), { browser: 'other-new', ip: 'other-network' }, 'account-a'), error => error.extra?.code === 'art_account_limit');
+});
+
 test('HTTP: players submit arts with a captcha, the library revalidates cheaply, only Telegram admins moderate', async t => {
   const [{ CatalogStore }, , , { createCatalogAPI }] = await modules;
   const store = new CatalogStore(':memory:', 'test-arts-http');

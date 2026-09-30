@@ -3,7 +3,8 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { readReferenceImage } from '../scripts/reference-image.mjs';
 
 // Shared by the main canvas and the separate drawing draft.
-export function ReferencePanel({ value, onChange, onEdit, editing = false, canvasSize }) {
+// onPreview(opacity | null): the opacity to draw while the slider moves, without a history step.
+export function ReferencePanel({ value, onChange, onPreview, onEdit, editing = false, canvasSize }) {
   const input = useRef(null),
     id = useId();
   const [busy, setBusy] = useState(false),
@@ -30,9 +31,11 @@ export function ReferencePanel({ value, onChange, onEdit, editing = false, canva
       if (alive.current) setBusy(false);
     }
   }
+  // Letting the slider go commits once, so one undo takes the whole drag back.
   function applyOpacity() {
     if (value && opacity !== Math.round(value.opacity * 100))
       onChange({ ...value, opacity: opacity / 100 });
+    onPreview?.(null);
   }
   return (
     <section className="reference-panel" aria-label="Фон для обводки">
@@ -82,7 +85,10 @@ export function ReferencePanel({ value, onChange, onEdit, editing = false, canva
             max="100"
             step="1"
             value={opacity}
-            onChange={(e) => setOpacity(Number(e.target.value))}
+            onChange={(e) => {
+              setOpacity(Number(e.target.value));
+              onPreview?.(Number(e.target.value) / 100);
+            }}
             onPointerUp={applyOpacity}
             onKeyUp={applyOpacity}
             onBlur={applyOpacity}

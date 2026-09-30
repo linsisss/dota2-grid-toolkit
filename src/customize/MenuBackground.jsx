@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Icon, Modal, Notice } from '../catalog/Common.jsx';
-import { MENU_LIMITS, MENU_SIZES, fitPiece, mediaKind, menuLook } from '../../scripts/menu-background.mjs';
+import { Icon, Modal, Notice, SegmentSwitch } from '../catalog/Common.jsx';
+import { HERO_OPACITY, MENU_FRAME, MENU_FRAME_ZOOM, MENU_LIMITS, MENU_SIZES, fitPiece, framePlacement, mediaKind, menuFrame, menuLook } from '../../scripts/menu-background.mjs';
 import menuMeta from '../../assets/dota-menu/meta.json';
 import { FOLDERS, downloadPack, packBackground } from './background-pack.js';
 import { getBackground } from '../../scripts/background-library.mjs';
 import { markPublished, pullRecipes, rememberDownload, saveBuiltBackground } from '../studio-backgrounds.js';
 import { CopyField, Field, InstallWindow, Segmented } from './CustomizeApp.jsx';
 import DotaMenu from './DotaMenu.jsx';
+import DotaHeroPage from './DotaHeroPage.jsx';
 import { LoopPreview, TrimBar } from './Trim.jsx';
 import { ShareBackground } from './ShareBackground.jsx';
 import { backgroundMedia } from '../catalog/BackgroundGallery.jsx';
@@ -26,6 +27,12 @@ const SOURCES = [
   { name: 'Tenor', url: 'https://tenor.com/', note: 'Гифки на любую тему.' },
   { name: 'Pixabay', url: 'https://pixabay.com/videos/', note: 'Бесплатные видео без ограничений: космос, природа, абстракция.' }
 ];
+// Which background the panel edits and the preview shows: the main menu, or the one behind the hero
+// on the hero page («За героем»; scripts/menu-background.mjs HERO_PAGE). Behind the hero goes the menu
+// video (default), a video of its own, or Valve's picture stays.
+const PAGES = [['menu', 'Главное меню'], ['hero', 'За героем']];
+const HERO_MODES = [['menu', 'Как в меню'], ['own', 'Свой фон'], ['off', 'Как в Dota']];
+const HERO_HINTS = { menu: 'За героем крутится тот же фон, что в главном меню.', own: 'За героем — свой фон, с теми же настройками, что у меню.', off: 'Страница героя не меняется: за героем картинка Dota.' };
 // How the result is handed over: the bare pack, or a zip with a Windows installer next to it.
 export const DELIVERY = [['file', 'Только файл'], ['installer', 'С установщиком']];
 const megabytes = (bytes) => (bytes / 1_000_000).toLocaleString('ru-RU', { maximumFractionDigits: 1 });
@@ -72,6 +79,17 @@ function Install({ folder, delivery, onClose }) {
 }
 
 // A 0–100 % slider in the panel; 0 reads «нет».
+// Framing (menuFrame): the zoom from 100 to MENU_FRAME_ZOOM × 100 % and, since the place is set by
+// dragging the picture in the preview, a hint and a way back to the middle.
+function FrameControls({ frame, onChange }) {
+  const value = Math.round(frame.zoom * 100), max = MENU_FRAME_ZOOM * 100, moved = frame.zoom !== 1 || frame.x !== 0.5 || frame.y !== 0.5;
+  return <div className="custom-frame">
+    <label className="custom-slider"><span>Масштаб</span>
+      <input type="range" min="100" max={max} step="5" value={value} onChange={(event) => onChange(menuFrame({ ...frame, zoom: Number(event.target.value) / 100 }))} style={{ '--fill': `${((value - 100) / (max - 100)) * 100}%` }}/>
+      <output>{value}%</output></label>
+    <p className="custom-hint">Перетащи картинку в превью, чтобы выбрать, какая её часть попадёт в кадр.{moved && <> <button type="button" className="catalog-link" onClick={() => onChange(MENU_FRAME)}>Сбросить кадр</button></>}</p>
+  </div>;
+}
 function Slider({ label, value, onChange }) {
   return <label className="custom-slider"><span>{label}</span>
     <input type="range" min="0" max="100" step="1" value={value} onChange={(event) => onChange(Number(event.target.value))} style={{ '--fill': `${value}%` }}/>
@@ -83,7 +101,7 @@ function Slider({ label, value, onChange }) {
 // downloaded, the user's own file is asked for), and the next build updates it.
 export default function MenuBackground({ preset = null, studioItem = null, onRemove }) {
   const [file, setFile] = useState(null), [kind, setKind] = useState(null), [source, setSource] = useState(''), [aspect, setAspect] = useState('16:9'), [fit, setFit] = useState('cover');
-  const [blur, setBlur] = useState(0), [dim, setDim] = useState(0);
+  const [blur, setBlur] = useState(0), [dim, setDim] = useState(0), [frame, setFrame] = useState(MENU_FRAME), [heroFrame, setHeroFrame] = useState(MENU_FRAME), [framing, setFraming] = useState(null);
   const [clean, setClean] = useState(false), [folder, setFolder] = useState('russian'), [delivery, setDelivery] = useState('file');
   const [duration, setDuration] = useState(0), [piece, setPiece] = useState({ start: 0, end: 0 }), [crossfade, setCrossfade] = useState(0);
   const [mediaRatio, setMediaRatio] = useState(0), [progress, setProgress] = useState(null), [result, setResult] = useState(null), [error, setError] = useState(''), [install, setInstall] = useState(false), [sources, setSources] = useState(false), [share, setShare] = useState(false), [dragging, setDragging] = useState(false), [fetching, setFetching] = useState(null);
@@ -91,12 +109,20 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
   // What the file is (for the studio recipe), the studio background being changed, the recipe whose
   // piece and crossfade wait for the video's length, and an own file the user is asked to choose.
   const [origin, setOrigin] = useState(null), [pick, setPick] = useState(preset), [studio, setStudio] = useState(null), [wanted, setWanted] = useState(null), [note, setNote] = useState('');
+  // Behind the hero: the mode and, for 'own', a second file with the same settings as the menu's.
+  const [page, setPage] = useState('menu'), [heroMode, setHeroMode] = useState('menu');
+  const [heroFile, setHeroFile] = useState(null), [heroKind, setHeroKind] = useState(null), [heroSource, setHeroSource] = useState(''), [heroFit, setHeroFit] = useState('cover');
+  const [heroBlur, setHeroBlur] = useState(0), [heroDim, setHeroDim] = useState(0), [heroRatio, setHeroRatio] = useState(0), [heroOrigin, setHeroOrigin] = useState(null), [heroWanted, setHeroWanted] = useState(null);
+  const [heroDuration, setHeroDuration] = useState(0), [heroPiece, setHeroPiece] = useState({ start: 0, end: 0 }), [heroCrossfade, setHeroCrossfade] = useState(0);
+  const heroInput = useRef(null), heroPlayhead = useRef(null), heroPending = useRef(null);
   const studioId = useRef(null), pending = useRef(null), saving = useRef(null);
   useEffect(() => { setPick(preset); }, [preset]);
   useEffect(() => () => source && URL.revokeObjectURL(source), [source]);
-  useEffect(() => () => result && URL.revokeObjectURL(result.url), [result]);
-  // Changing anything that is baked into the video or the pack makes the result stale.
-  useEffect(() => { setResult(null); }, [file, aspect, fit, blur, dim, clean, piece.start, piece.end, crossfade]);
+  useEffect(() => () => heroSource && URL.revokeObjectURL(heroSource), [heroSource]);
+  useEffect(() => () => { if (result) { URL.revokeObjectURL(result.url); if (result.heroUrl) URL.revokeObjectURL(result.heroUrl); } }, [result]);
+  // Changing anything that is baked into the videos or the pack makes the result stale.
+  useEffect(() => { setResult(null); }, [file, aspect, fit, blur, dim, clean, piece.start, piece.end, crossfade, frame,
+    heroMode, heroFile, heroFit, heroBlur, heroDim, heroPiece.start, heroPiece.end, heroCrossfade, heroFrame]);
   useEffect(() => () => running.current?.abort(), []);
   // A background from the studio: settings now, the source next (see `pending`).
   useEffect(() => {
@@ -107,8 +133,11 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
       if (stopped) return;
       if (!record) return setError('Этого фона нет в студии: возможно, его удалили.');
       const recipe = record.recipe;
-      setAspect(recipe.aspect); setFit(recipe.fit); setBlur(recipe.blur); setDim(recipe.dim); setClean(recipe.clean); setFolder(recipe.folder); setDelivery(recipe.delivery);
+      setAspect(recipe.aspect); setFit(recipe.fit); setBlur(recipe.blur); setDim(recipe.dim); setClean(recipe.clean); setFolder(recipe.folder); setDelivery(recipe.delivery); setFrame(menuFrame(recipe.frame));
       pending.current = recipe; studioId.current = record.id; setStudio({ id: record.id, name: record.name, saved: false });
+      const hero = recipe.hero || { mode: 'menu' };
+      setHeroMode(hero.mode);
+      if (hero.mode === 'own') { setHeroFit(hero.fit); setHeroBlur(hero.blur); setHeroDim(hero.dim); setHeroFrame(menuFrame(hero.frame)); heroPending.current = hero; setHeroWanted(hero.source); }
       if (recipe.source.kind === 'workshop') setPick({ id: recipe.source.id }); else setWanted(recipe.source);
     })();
     return () => { stopped = true; };
@@ -147,13 +176,28 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
     const detected = mediaKind(new Uint8Array(await next.slice(0, 16).arrayBuffer()));
     if (!detected) return setError('Подойдёт картинка (PNG, JPEG, WebP), GIF или видео (MP4, WebM).');
     running.current?.abort(); setProgress(null);
-    if (!pending.current) { studioId.current = null; setStudio(null); }
+    if (!pending.current) { studioId.current = null; setStudio(null); setFrame(MENU_FRAME); }
     else if (wanted && (next.name !== wanted.name || next.size !== wanted.size)) setNote('Это не тот файл, из которого собран фон: настройки применены, но отрезок может не совпасть.');
     if (detected.type !== 'video') pending.current = null;
     setWanted(null);
     setOrigin(from || { kind: 'file', name: next.name, size: next.size, type: detected.type, label: detected.label });
     setFile(next); setKind(detected); setMediaRatio(0); setDuration(0); setSource(URL.createObjectURL(next));
   }
+  // The file behind the hero (mode 'own'): the same checks as the menu's; its trim comes back from
+  // the studio recipe when the file is the one it was built from.
+  async function chooseHero(next) {
+    setError('');
+    if (!next) return;
+    if (next.size > MENU_LIMITS.bytes) return setError(`Файл ${megabytes(next.size)} МБ, а можно до ${megabytes(MENU_LIMITS.bytes)} МБ.`);
+    const detected = mediaKind(new Uint8Array(await next.slice(0, 16).arrayBuffer()));
+    if (!detected) return setError('Подойдёт картинка (PNG, JPEG, WebP), GIF или видео (MP4, WebM).');
+    if (!heroPending.current) setHeroFrame(MENU_FRAME);
+    if (detected.type !== 'video') heroPending.current = null;
+    setHeroWanted(null);
+    setHeroOrigin({ kind: 'file', name: next.name, size: next.size, type: detected.type, label: detected.label });
+    setHeroFile(next); setHeroKind(detected); setHeroRatio(0); setHeroDuration(0); setHeroSource(URL.createObjectURL(next));
+  }
+  function removeHero() { setHeroFile(null); setHeroKind(null); setHeroSource(''); setHeroRatio(0); setHeroDuration(0); setHeroOrigin(null); heroPending.current = null; }
   // The cross on the file card: back to the empty screen (and the gallery pick is forgotten).
   function remove() {
     running.current?.abort(); setProgress(null); setError('');
@@ -174,14 +218,21 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
     setError(''); setResult(null); setProgress(0);
     try {
       const { encodeMenuVideo } = await import('./menu-video.js');
-      const encoded = await encodeMenuVideo(file, { size: MENU_SIZES[aspect], fit, effects: { blur: blur / 100, dim: dim / 100 }, piece: duration ? piece : null, crossfade, signal: controller.signal, onProgress: (value) => setProgress(Math.min(0.99, value)) });
-      const blob = packBackground(encoded.video, { clean });
-      // Kept in the studio: this browser gets the WebM, a signed-in account the recipe.
-      const recipe = { aspect, fit, blur, dim, clean, folder, delivery, piece: duration ? piece : null, crossfade: duration ? crossfade : 0, source: origin };
-      saving.current = saveBuiltBackground({ id: studioId.current, recipe, video: encoded.video, codec: encoded.codec, seconds: encoded.seconds });
+      // Behind the hero: a video of its own only when a file is chosen; otherwise the menu's.
+      const ownHero = heroMode === 'own' && !!heroFile, share = ownHero ? 0.5 : 1;
+      const encoded = await encodeMenuVideo(file, { size: MENU_SIZES[aspect], fit, effects: { blur: blur / 100, dim: dim / 100 }, frame, piece: duration ? piece : null, crossfade, signal: controller.signal, onProgress: (value) => setProgress(Math.min(0.99, value * share)) });
+      const heroEncoded = ownHero ? await encodeMenuVideo(heroFile, { size: MENU_SIZES[aspect], fit: heroFit, effects: { blur: heroBlur / 100, dim: heroDim / 100 }, frame: heroFrame, piece: heroDuration ? heroPiece : null,
+        crossfade: heroCrossfade, signal: controller.signal, onProgress: (value) => setProgress(Math.min(0.99, 0.5 + value / 2)) }) : null;
+      const hero = ownHero ? { mode: 'own', fit: heroFit, blur: heroBlur, dim: heroDim, frame: heroFrame, piece: heroDuration ? heroPiece : null, crossfade: heroDuration ? heroCrossfade : 0, source: heroOrigin }
+        : { mode: heroMode === 'off' ? 'off' : 'menu' };
+      const blob = packBackground(encoded.video, { clean, hero }, heroEncoded?.video);
+      // Kept in the studio: this browser gets the WebMs, a signed-in account the recipe.
+      const recipe = { aspect, fit, blur, dim, frame, clean, folder, delivery, piece: duration ? piece : null, crossfade: duration ? crossfade : 0, source: origin, hero };
+      saving.current = saveBuiltBackground({ id: studioId.current, recipe, video: encoded.video, heroVideo: heroEncoded?.video, codec: encoded.codec, seconds: encoded.seconds });
       saving.current.then((record) => { studioId.current = record.id; setStudio({ id: record.id, name: record.name, saved: true }); })
         .catch(() => setStudio((current) => ({ ...current, failed: true })));
-      setResult({ blob, webm: encoded.video, aspect, url: URL.createObjectURL(new Blob([encoded.video], { type: 'video/webm' })), seconds: encoded.seconds, trimmed: encoded.trimmed, codec: encoded.codec, video: encoded.video.length });
+      setResult({ blob, webm: encoded.video, aspect, url: URL.createObjectURL(new Blob([encoded.video], { type: 'video/webm' })), seconds: encoded.seconds, trimmed: encoded.trimmed, codec: encoded.codec, video: encoded.video.length,
+        heroUrl: heroEncoded ? URL.createObjectURL(new Blob([heroEncoded.video], { type: 'video/webm' })) : null });
       if (publish) return setShare(true);
       await download(blob);
       if (!shownGuide.current) { shownGuide.current = true; setInstall(true); }
@@ -190,21 +241,53 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
     } finally { if (running.current === controller) running.current = null; setProgress(null); }
   }
   const video = kind?.type === 'video', shown = result?.url || source;
+  const heroVideo = heroKind?.type === 'video', heroShown = result?.heroUrl || heroSource, heroPage = page === 'hero';
   // The media is always contained; «Заполнить» scales it up by the cover/contain ratio, so switching
   // the fit or the screen shape animates instead of jumping.
   const [screenWidth, screenHeight] = MENU_SIZES[aspect], screenRatio = screenWidth / screenHeight;
   // Blur and dim as the video will have them: σ as a share of the screen's height (--blur, used with
   // cq units in customize.css), the veil a black layer; the built video has them baked in.
   const look = menuLook({ blur: blur / 100, dim: dim / 100 });
-  const zoom = !result ? (fit === 'cover' && mediaRatio ? Math.max(screenRatio / mediaRatio, mediaRatio / screenRatio) : 1) * look.zoom : 1;
+  // The picture where the video will have it (framePlacement, as menu-video.js draws it); until its
+  // size is known, or once the video is built (it is the screen itself), over the whole screen.
+  const placed = (place) => ({ left: `${place.x * 100}%`, top: `${place.y * 100}%`, width: `${place.w * 100}%`, height: `${place.h * 100}%` });
+  const WHOLE = { x: 0, y: 0, w: 1, h: 1 };
+  const mediaFrame = mediaRatio ? framePlacement(screenRatio, mediaRatio, fit, look.zoom, frame) : WHOLE, mediaPlace = result ? WHOLE : mediaFrame;
   const measured = (width, height) => width && height && setMediaRatio(width / height);
-  const mediaStyle = { transform: `scale(${zoom})`, '--blur': result ? 0 : look.sigma / 1080 };
+  const mediaStyle = { ...placed(mediaPlace), '--blur': result ? 0 : look.sigma / 1080 };
+  const heroLook = menuLook({ blur: heroBlur / 100, dim: heroDim / 100 });
+  const heroFramed = heroRatio ? framePlacement(screenRatio, heroRatio, heroFit, heroLook.zoom, heroFrame) : WHOLE, heroPlace = result?.heroUrl ? WHOLE : heroFramed;
+  const heroStyle = { ...placed(heroPlace), '--blur': result?.heroUrl ? 0 : heroLook.sigma / 1080 };
+  const heroMeasured = (width, height) => width && height && setHeroRatio(width / height);
+  // Framing by dragging the picture in the preview: the tab's own background (the menu's on «Главное
+  // меню», the own file behind the hero), once it is there. The hero on the hero page takes the drags
+  // that start on him (hero3d/scene.js stops them).
+  const frameTarget = !heroPage ? (shown && mediaRatio ? { place: mediaFrame, frame, set: setFrame } : null)
+    : heroMode === 'own' && heroShown && heroRatio ? { place: heroFramed, frame: heroFrame, set: setHeroFrame } : null;
+  const frameDown = (event) => {
+    if (!frameTarget || event.button !== 0 || progress !== null) return;
+    event.preventDefault();  // no text selection, no dragging of the picture itself
+    const box = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setFraming({ x: event.clientX, y: event.clientY, box, ...frameTarget });
+  };
+  const frameMove = (event) => {
+    if (!framing) return;
+    // The picture follows the pointer: a shift of d screens moves the place by d / (1 − size).
+    const shift = (d, size, value) => (Math.abs(1 - size) < 1e-3 ? value : value + d / (1 - size));
+    const { place, frame: from, box } = framing;
+    framing.set(menuFrame({ ...from, x: shift((event.clientX - framing.x) / box.width, place.w, from.x), y: shift((event.clientY - framing.y) / box.height, place.h, from.y) }));
+  };
+  const frameUp = () => setFraming(null);
   const drop = { onDragOver: (event) => { event.preventDefault(); setDragging(true); }, onDragLeave: () => setDragging(false),
-    onDrop: (event) => { event.preventDefault(); setDragging(false); choose(event.dataTransfer.files[0]); } };
+    onDrop: (event) => { event.preventDefault(); setDragging(false); (heroPage && heroMode === 'own' ? chooseHero : choose)(event.dataTransfer.files[0]); } };
   return <main className="custom-work">
     <section className={`custom-stage${dragging ? ' is-over' : ''}`} {...drop} aria-label="Превью фона">
       <div className="custom-stage-area">
-        <div className="custom-screen" style={{ '--ratio': screenRatio }}>
+        <div className={`custom-screen${heroPage ? ' is-hero' : ''}${frameTarget ? ' can-frame' : ''}${framing ? ' is-framing' : ''}`} style={{ '--ratio': screenRatio }}
+          onPointerDown={frameDown} onPointerMove={frameMove} onPointerUp={frameUp} onPointerCancel={frameUp} onDragStart={(event) => event.preventDefault()}>
+          {/* The hero page shows the menu's background, a video of its own, or Valve's picture, under a copy of the page. */}
+          {(!heroPage || heroMode === 'menu') && <>
           {shown ? result ? <video key={shown} className="custom-media" src={shown} autoPlay loop muted playsInline/>
             : video ? <LoopPreview key={source} src={source} piece={duration ? piece : { start: 0, end: 1e9 }} crossfade={duration ? crossfade : 0} style={mediaStyle}
               onMeta={(element) => { measured(element.videoWidth, element.videoHeight); if (Number.isFinite(element.duration)) {
@@ -213,21 +296,57 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
                 if (restored) { setCrossfade(restored.crossfade); pending.current = null; }
               } }}
               onTime={(t) => { if (playhead.current && duration) playhead.current.style.left = `${(t / duration) * 100}%`; }}/>
-            : <img key={shown} className="custom-media" src={shown} alt="" style={mediaStyle} onLoad={(event) => measured(event.target.naturalWidth, event.target.naturalHeight)}/>
+            : <img key={shown} className="custom-media" src={shown} alt="" draggable={false} style={mediaStyle} onLoad={(event) => measured(event.target.naturalWidth, event.target.naturalHeight)}/>
             : !fetching && <div className="custom-drop"><button type="button" className="custom-drop-pick" onClick={() => input.current?.click()}><Icon name="plus"/><strong>Перетащи сюда картинку, GIF или видео</strong><span>или нажми, чтобы выбрать файл</span></button>
               <p className="custom-drop-sources"><span>Где взять:</span><a className="is-workshop" href={`${CATALOG_PATH}?backgrounds`}>Готовые в мастерской</a>{SOURCES.map((source) => <a key={source.name} href={source.url} target="_blank" rel="noreferrer">{source.name}</a>)}</p></div>}
           {shown && <div className="custom-veil" style={{ opacity: result ? 0 : look.veil }}/>}
-          <DotaMenu clean={clean}/>
+          </>}
+          {heroPage && heroMode === 'own' && (heroShown ? result?.heroUrl ? <video key={heroShown} className="custom-media" src={heroShown} autoPlay loop muted playsInline/>
+            : heroVideo ? <LoopPreview key={heroSource} src={heroSource} piece={heroDuration ? heroPiece : { start: 0, end: 1e9 }} crossfade={heroDuration ? heroCrossfade : 0} style={heroStyle}
+              onMeta={(element) => { heroMeasured(element.videoWidth, element.videoHeight); if (Number.isFinite(element.duration)) {
+                const length = element.duration, restored = heroPending.current;
+                setHeroDuration(length); setHeroPiece(fitPiece(restored?.piece || { start: 0, end: length }, length, 'start'));
+                if (restored) { setHeroCrossfade(restored.crossfade); heroPending.current = null; }
+              } }}
+              onTime={(t) => { if (heroPlayhead.current && heroDuration) heroPlayhead.current.style.left = `${(t / heroDuration) * 100}%`; }}/>
+            : <img key={heroShown} className="custom-media" src={heroShown} alt="" draggable={false} style={heroStyle} onLoad={(event) => heroMeasured(event.target.naturalWidth, event.target.naturalHeight)}/>
+            : <div className="custom-drop"><button type="button" className="custom-drop-pick" onClick={() => heroInput.current?.click()}><Icon name="plus"/><strong>Фон за героем</strong><span>Перетащи картинку, GIF или видео или нажми, чтобы выбрать</span></button></div>)}
+          {heroPage && heroMode === 'own' && heroShown && <div className="custom-veil" style={{ opacity: result?.heroUrl ? 0 : heroLook.veil }}/>}
+          {heroPage && heroMode === 'off' && <div className="custom-hero-default"/>}
+          {/* The hero can be turned once there is a background behind it; until then it stands behind the «+». */}
+          {heroPage ? <DotaHeroPage interactive={heroMode === 'off' || Boolean(heroMode === 'own' ? heroShown : shown)}/> : <DotaMenu clean={clean}/>}
           {fetching && <div className="custom-fetching" role="status"><b>{fetching.title ? `Загружаем «${fetching.title}»` : 'Загружаем фон…'}</b><span><i style={{ width: `${Math.round(fetching.progress * 100)}%` }}/></span></div>}
         </div>
       </div>
-      {video && duration > 0 && !result ? <TrimBar duration={duration} piece={piece} crossfade={crossfade} playhead={playhead} onChange={setPiece} onCrossfade={setCrossfade}/>
+      {heroPage && heroMode === 'own' && heroVideo && heroDuration > 0 && !result ? <TrimBar duration={heroDuration} piece={heroPiece} crossfade={heroCrossfade} playhead={heroPlayhead} onChange={setHeroPiece} onCrossfade={setHeroCrossfade}/>
+      : heroPage ? <p className="custom-caption">{heroMode === 'off' ? 'За героем останется картинка Dota — меняется только главное меню.' : result ? <><b>Готовый фон</b> — так он будет за героем.</> : 'Так фон будет за героем на странице «Герои» → «Снаряжение».'}</p>
+      : video && duration > 0 && !result ? <TrimBar duration={duration} piece={piece} crossfade={crossfade} playhead={playhead} onChange={setPiece} onCrossfade={setCrossfade}/>
       : <p className="custom-caption">{result ? <><b>Готовый фон</b> — ровно то видео, что внутри файла.{studio?.saved ? <> <a href={`${STUDIO_PATH}&show=backgrounds`}>Сохранён в студии</a>.</> : studio?.failed ? ' Сохранить в студии не получилось.' : ''}</> : shown ? 'Так фон будет выглядеть в главном меню Dota.' : 'Главное меню Dota с выбранными пропорциями экрана.'}</p>}
     </section>
     <aside className="custom-panel">
       <div className="custom-panel-body">
-        <header className="custom-panel-head"><h1>Фон главного меню</h1><p>Картинка, GIF или видео — готовый файл для Dota. Всё собирается в браузере, файл никуда не загружается.</p></header>
+        <header className="custom-panel-head"><SegmentSwitch label="Какой фон" value={page} options={PAGES} onChange={setPage}/>
+          <h1>{heroPage ? 'Фон за героем' : 'Фон главного меню'}</h1>
+          <p>{heroPage ? 'На странице героя — «Герои» → «Снаряжение», за моделью героя. Собирается в тот же файл, что и главное меню.' : 'Картинка, GIF или видео — готовый файл для Dota. Всё собирается в браузере, файл никуда не загружается.'}</p></header>
         <input ref={input} type="file" accept={ACCEPT} className="catalog-file" onChange={(event) => { choose(event.target.files[0]); event.target.value = ''; }}/>
+        <input ref={heroInput} type="file" accept={ACCEPT} className="catalog-file" onChange={(event) => { chooseHero(event.target.files[0]); event.target.value = ''; }}/>
+        {heroPage ? <>
+          <Field label="Фон" hint={HERO_HINTS[heroMode]}><Segmented label="Фон за героем" value={heroMode} onChange={setHeroMode} options={HERO_MODES}/></Field>
+          {heroMode === 'own' && <>
+            {heroWanted && <Notice>Чтобы собрать фон за героем как раньше, выбери его файл: <b>{heroWanted.name}</b>, {fileSize(heroWanted.size)}. Настройки уже стоят.</Notice>}
+            <Field label="Файл" hint={<>PNG, JPEG, WebP, GIF, MP4, WebM до {megabytes(MENU_LIMITS.bytes)} МБ. Пропорции экрана — как у главного меню ({aspect}).</>}>
+              {heroFile ? <div className="custom-file-card"><span className="custom-file-kind">{heroKind.label}</span><span className="custom-file-name"><b title={heroFile.name}>{heroFile.name}</b><small>{fileSize(heroFile.size)}</small></span>
+                <button type="button" className="catalog-icon custom-file-remove" onClick={removeHero} aria-label="Убрать фон за героем" title="Убрать фон"><Icon name="close"/></button></div>
+                : <button type="button" className="custom-file-empty" onClick={() => heroInput.current?.click()}><Icon name="plus"/>Выбрать файл</button>}
+            </Field>
+            {heroFile ? <Field label="Картинка"><Segmented label="Как вписать фон за героем" value={heroFit} onChange={setHeroFit} options={[['cover', 'Заполнить'], ['contain', 'Целиком']]}/>
+              <p className="custom-hint">{FITS[heroFit]}</p>
+              <div className="custom-effects"><Slider label="Размытие" value={heroBlur} onChange={setHeroBlur}/><Slider label="Затемнение" value={heroDim} onChange={setHeroDim}/></div>
+              <FrameControls frame={heroFrame} onChange={setHeroFrame}/></Field>
+              : <p className="custom-hint">Пока файл не выбран, за героем будет фон главного меню.</p>}
+          </>}
+          {!file && heroMode !== 'off' && <Notice>Фон за героем собирается вместе с главным меню: сначала выбери фон на вкладке «Главное меню».</Notice>}
+        </> : <>
         {wanted && <Notice>Чтобы изменить «{studio?.name}», выбери исходный файл: <b>{wanted.name}</b>, {fileSize(wanted.size)}. Настройки фона уже стоят.</Notice>}
         {note && <Notice>{note}</Notice>}
         <Field label="Файл" hint={<>PNG, JPEG, WebP, GIF, MP4, WebM до {megabytes(MENU_LIMITS.bytes)} МБ. Из видео выбираешь отрезок до {MENU_LIMITS.seconds} с на шкале под превью, звук убирается. <button type="button" className="catalog-link" onClick={() => setSources(true)}>Где взять фон?</button></>}>
@@ -238,9 +357,11 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
         <Field label="Экран" hint={ASPECTS[aspect]}><Segmented label="Экран" value={aspect} onChange={setAspect} options={Object.keys(ASPECTS).map((value) => [value, value])}/></Field>
         <Field label="Картинка"><Segmented label="Как вписать" value={fit} onChange={setFit} options={[['cover', 'Заполнить'], ['contain', 'Целиком']]}/>
           <p className="custom-hint">{FITS[fit]}</p>
-          <div className="custom-effects"><Slider label="Размытие" value={blur} onChange={setBlur}/><Slider label="Затемнение" value={dim} onChange={setDim}/></div></Field>
+          <div className="custom-effects"><Slider label="Размытие" value={blur} onChange={setBlur}/><Slider label="Затемнение" value={dim} onChange={setDim}/></div>
+          {file && <FrameControls frame={frame} onChange={setFrame}/>}</Field>
         <label className="custom-toggle"><input type="checkbox" role="switch" checked={clean} onChange={(event) => setClean(event.target.checked)}/><span><b>Скрыть новости на главной</b><small>Колонка справа не будет закрывать фон</small></span></label>
         <Field label="Папка в Dota" hint={target.hint}><Segmented label="Папка" value={folder} onChange={setFolder} options={[['russian', 'dota_russian'], ['custom', 'dota_123']]}/></Field>
+        </>}
       </div>
       <footer className="custom-panel-foot">
         {error && <Notice error>{error}</Notice>}

@@ -123,10 +123,18 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
             <div id="drawingTools" className="drawing-tools"></div>
             <div id="eraserSizeField" hidden>
               <label className="range-label" htmlFor="eraserSize">
-                Размер ластика <output id="eraserSizeValue">44 px</output>
+                <span id="eraserSizeName">Размер ластика</span> <output id="eraserSizeValue">44 px</output>
               </label>
               <input id="eraserSize" type="range" min="6" max="400" defaultValue="44" />
               <p className="hint">Колесо мыши над холстом или [ и ] — меньше и больше. Ctrl + колесо — масштаб.</p>
+            </div>
+            {/* «Распыление»: how far the glyphs under the brush fly and how widely they fan out. */}
+            <div id="scatterField" hidden>
+              <label className="range-label" htmlFor="scatterDistance">Дальность <output id="scatterDistanceValue">×2,5</output></label>
+              <input id="scatterDistance" type="range" min="5" max="60" defaultValue="25" onInput={(event) => { document.getElementById('scatterDistanceValue').textContent = `×${(Number(event.currentTarget.value) / 10).toLocaleString('ru-RU')}`; }} />
+              <label className="range-label" htmlFor="scatterSpread">Разброс <output id="scatterSpreadValue">35°</output></label>
+              <input id="scatterSpread" type="range" min="0" max="90" defaultValue="35" onInput={(event) => { document.getElementById('scatterSpreadValue').textContent = `${event.currentTarget.value}°`; }} />
+              <p className="hint">Веди кистью по рисунку: точки под ней разлетятся в сторону движения, будто рисунок крошится. Клик без движения — тает вниз.</p>
             </div>
             <div className="section-heading">
               <span>СИМВОЛЫ КИСТИ</span>

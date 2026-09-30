@@ -48,28 +48,54 @@ const BASELINE = DOTA.fontSize * 0.857;
 export const ZERO_WIDTH_SPACE = '\u2006';
 const ZERO_WIDTH = /[\u2002-\u2004\u2006]/u;
 export const advanceAt = (width, scale = DOTA.screenScale) => Math.max(0, Math.round(width * scale) / scale + DOTA.letterSpacing);
-// Cached per context once fonts have loaded: { widths (raw, grid units), advances (1080p page) }.
-const lineCaches = new WeakMap();
+// Hangul needs Dota's Korean fallback (1.2 MB), so it is requested the first time a line with
+// Hangul is measured, not by every page; when it has loaded, `gridstudio:fonts` tells canvases
+// to measure and draw again (until then the line is measured without caching).
+const HANGUL = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/u;
+let korean = null;
+function requestKorean() {
+  if (korean || typeof document === 'undefined' || !document.fonts?.load) return;
+  korean = document.fonts.load('600 16px StudioDotaKorean', '멈추지')
+    .then(() => typeof dispatchEvent === 'function' && dispatchEvent(new Event('gridstudio:fonts')))
+    .catch(() => {});
+}
+const settled = () => typeof document === 'undefined' || document.fonts?.status !== 'loading';
+// A glyph's kerned width after the one before it: measured once per pair for the whole page.
+// Measuring every prefix of a line cost O(length²) — 2.3 s of the workshop's first paint with
+// 178-glyph rows — and gives the same widths (checked on the workshop grids: ≤ 0.00005 px).
+// The font is always FONT, so the caches are shared by every canvas.
+const pairs = new Map(), lines = new Map();
+function pairWidth(ctx, before, char) {
+  const key = before + '\u0000' + char;
+  let width = pairs.get(key);
+  if (width === undefined) {
+    width = before ? ctx.measureText(before + char).width - ctx.measureText(before).width : ctx.measureText(char).width;
+    if (settled()) {
+      if (pairs.size > 50000) pairs.clear();
+      pairs.set(key, width);
+    }
+  }
+  return width;
+}
+// { widths (raw, grid units), advances (1080p page) } of one line.
 function lineMetrics(ctx, line) {
-  const settled = typeof document === 'undefined' || document.fonts?.status !== 'loading';
-  let cache = lineCaches.get(ctx);
-  if (!cache) lineCaches.set(ctx, (cache = new Map()));
-  if (settled && cache.has(line)) return cache.get(line);
+  if (HANGUL.test(line)) requestKorean();
+  const cached = lines.get(line);
+  if (cached) return cached;
   ctx.save();
   ctx.font = FONT;
   ctx.letterSpacing = '0px';
-  let prefix = '', width = 0;
+  let before = '';
   const widths = Array.from(line, (char) => {
-    prefix += char;
-    const next = ctx.measureText(prefix).width, advance = next - width;
-    width = next;
-    return ZERO_WIDTH.test(char) ? 0 : advance;
+    const width = ZERO_WIDTH.test(char) ? 0 : pairWidth(ctx, before, char);
+    before = char;
+    return width;
   });
   ctx.restore();
   const metrics = { widths, advances: widths.map((value) => advanceAt(value)) };
-  if (settled) {
-    if (cache.size > 4000) cache.clear();
-    cache.set(line, metrics);
+  if (settled()) {
+    if (lines.size > 4000) lines.clear();
+    lines.set(line, metrics);
   }
   return metrics;
 }

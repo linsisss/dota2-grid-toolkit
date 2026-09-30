@@ -66,6 +66,8 @@ export class CatalogStore {
     this.db.exec('CREATE INDEX IF NOT EXISTS works_account ON works(account); CREATE INDEX IF NOT EXISTS audit_work_action_at ON audit(work,action,at);');
     // Who took an admin decision: {"id","name"} JSON, null for automatic and author actions.
     if (!this.all('PRAGMA table_info(audit)').some(c => c.name === 'actor')) this.run('ALTER TABLE audit ADD COLUMN actor TEXT');
+    // Before 1.6.1 authors could like their own grids; like() refuses that now and the old ones go.
+    this.removeSelfLikes('likes', 'work', 'works');
   }
   close() { this.db.close(); }
   get(sql, ...args) { return this.db.prepare(sql).get(...args); }
@@ -76,6 +78,20 @@ export class CatalogStore {
   paused() { return this.get("SELECT value FROM settings WHERE key='paused'")?.value === '1'; }
   setPaused(value, actor = null) { this.run("INSERT OR REPLACE INTO settings VALUES('paused',?)", value ? '1' : '0'); this.audit(null, value ? 'pause' : 'resume', actor); }
   audit(id, action, actor = null) { this.run('INSERT INTO audit(work,action,at,actor) VALUES(?,?,?,?)', id, action, this.now(), actor); }
+  // Deletes likes given by the item's own Telegram account (a guest item's NULL account equals
+  // nothing); a start that removed some writes one audit row 'likes:self-removed:<count>' with key
+  // NULL for grids or 'bg:*' for backgrounds, which match no work (the account budget) and no card
+  // (catalog-telegram-store.mjs). The API and the bot may start together: the delete runs under the
+  // write lock, so the later start finds nothing to record.
+  removeSelfLikes(likes, column, items, key = null) {
+    const self = `FROM ${likes} WHERE EXISTS(SELECT 1 FROM ${items} i WHERE i.id=${likes}.${column} AND i.account=${likes}.account)`;
+    if (!this.get(`SELECT EXISTS(SELECT 1 ${self}) x`).x) return 0;
+    return this.tx(() => {
+      const removed = Number(this.run(`DELETE ${self}`).changes);
+      if (removed) this.audit(key, `likes:self-removed:${removed}`);
+      return removed;
+    });
+  }
   rate(key, max, duration, { message = 'Слишком много запросов.', code = 'rate_limited' } = {}) {
     const now = this.now();
     // Rows older than a day never affect a window; a full-table prune per call costs more than it saves.
@@ -98,11 +114,13 @@ export class CatalogStore {
       for (const [name, { duration: window, hits }] of bursts) if (!hits.length || hits.at(-1) <= now - window) bursts.delete(name);
     }
   }
+  // Trusted authors (CATALOG_UNLIMITED_TELEGRAM_IDS) have no account budget for grids, backgrounds or arts.
+  trusted(account) { return !!account && !!this.unlimited?.has(String(account)); }
   submitting(identity, account = null) {
     if (this.paused()) fail(503, 'Приём сеток временно приостановлен. Мастерская и редактор доступны.');
     for (const key of [identity.browser, identity.ip]) if (this.get('SELECT key FROM blocks WHERE key=? AND until_at>?', key, this.now())) fail(403, 'Отправка с этого источника временно ограничена.');
-    if (account && this.unlimited?.has(String(account))) {
-      // Trusted authors (CATALOG_UNLIMITED_TELEGRAM_IDS) have no account budget.
+    if (this.trusted(account)) {
+      // No account budget; the network cap below still applies.
     } else if (account) {
       // The existing audit includes updates and deleted/claimed works. Using it
       // preserves the budget across this change, restarts and browser switches.
@@ -231,7 +249,9 @@ export class CatalogStore {
   like(id, account, liked) {
     if (!account) fail(401, 'Войди через Telegram, чтобы поставить лайк.');
     return this.tx(() => {
-      this.publicItem(id);
+      // A like on your own grid would only lift it in «Популярные» and onto the landing. Taking a
+      // like back always works.
+      if (this.publicItem(id, account).mine && liked) fail(403, 'Свою работу лайкнуть нельзя.');
       if (liked) this.run('INSERT OR IGNORE INTO likes VALUES(?,?,?)', id, account, this.now());
       else this.run('DELETE FROM likes WHERE work=? AND account=?', id, account);
       return { likes: this.get('SELECT count(*) n FROM likes WHERE work=?', id).n, liked };
@@ -244,14 +264,17 @@ export class CatalogStore {
       this.run('INSERT OR IGNORE INTO reports(work,browser,reason,created) VALUES(?,?,?,?)', id, identity.browser, reason, this.now());
     });
   }
-  moderation(filter = 'pending', page = 0) {
+  // The admin queue; `search` finds a title or an author in it, as list() does (tab counts stay whole).
+  moderation(filter = 'pending', page = 0, search = '') {
     const filters = { pending: "w.state='active' AND r.status='pending'", reports: "w.state='active' AND EXISTS(SELECT 1 FROM reports WHERE work=w.id AND resolved=0)",
       published: "w.state='active' AND w.public_revision IS NOT NULL", blocked: "w.state='blocked'" };
     const query = where => `FROM works w JOIN revisions r ON r.id=COALESCE(w.draft_revision,w.public_revision) WHERE ${where}`;
-    const from = query(filters[filter] || filters.pending);
+    const match = search ? " AND (unicode_lower(r.title) LIKE ? ESCAPE '!' OR unicode_lower(r.author) LIKE ? ESCAPE '!')" : '';
+    const args = search ? Array(2).fill(`%${search.toLowerCase().replace(/[!%_]/g, c => `!${c}`)}%`) : [];
+    const from = query((filters[filter] || filters.pending) + match);
     const counts = Object.fromEntries(Object.entries(filters).map(([name, where]) => [name, this.get(`SELECT count(*) n ${query(where)}`).n]));
-    return { paused: this.paused(), counts, total: this.get(`SELECT count(*) n ${from}`).n,
-      items: this.all(`SELECT w.id ${from} ORDER BY r.created ASC LIMIT 20 OFFSET ?`, page * 20).map(({ id }) => {
+    return { paused: this.paused(), counts, total: this.get(`SELECT count(*) n ${from}`, ...args).n,
+      items: this.all(`SELECT w.id ${from} ORDER BY r.created ASC LIMIT 20 OFFSET ?`, ...args, page * 20).map(({ id }) => {
         const work = this.get('SELECT * FROM works WHERE id=?', id), rev = this.revision(work.draft_revision || work.public_revision);
         return { ...this.view(work, rev), blocked: work.state === 'blocked', linked: !!work.account,
           published: work.public_revision ? this.view(work, this.revision(work.public_revision)) : null,

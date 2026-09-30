@@ -109,7 +109,7 @@ test('smart brush uses upright directional characters in all eight directions', 
 });
 test('every drawing shape supports sequential symbols and finite mirrored coordinates', () => {
   for (const [tool] of D.DRAWING_TOOLS.filter(
-    ([t]) => !['smart', 'eyedropper', 'lasso', 'eraser'].includes(t)
+    ([t]) => !['smart', 'eyedropper', 'lasso', 'eraser', 'scatter'].includes(t)
   )) {
     const points = D.drawingPoints(
       tool,
@@ -451,4 +451,41 @@ test('replacing a symbol in a selection keeps positions, spaces, heroes and othe
   assert.deepEqual(doc.entities.slice(0, 4).map((e) => e.text), ['★', '★', '★', '★ ★ ★']);
   assert.equal(E.replaceGlyphs(doc.entities, '', '★'), 0);
   assert.throws(() => E.replaceGlyphs(doc.entities, '', ' '), /Укажи/);
+});
+
+test('«Изогнутая линия»: the bent line keeps its ends and passes through the dragged middle', async () => {
+  const { bentLine } = await import('../scripts/drawing.mjs');
+  const a = { x: 100, y: 300 }, b = { x: 500, y: 300 }, through = { x: 300, y: 180 };
+  const curve = bentLine(a, b, through, 64);
+  assert.deepEqual(curve[0], a); assert.deepEqual(curve.at(-1), b);
+  assert.ok(Math.hypot(curve[32].x - through.x, curve[32].y - through.y) < 1e-9, 'halfway it is at the handle');
+  assert.ok(curve.every((p) => p.y <= 300 + 1e-9), 'one smooth bow, no overshoot below the ends');
+  const straight = bentLine(a, b, { x: 300, y: 300 }, 8);
+  assert.ok(straight.every((p) => Math.abs(p.y - 300) < 1e-9), 'the middle left in place is the straight line');
+});
+
+test('«Распыление»: glyphs under the brush fly along the stroke, the rest stay, each glyph once', async () => {
+  const C = require('../scripts/core.mjs').default;
+  const { scatterSymbols } = await import('../scripts/edit-operations.mjs');
+  const doc = C.createDocument();
+  const art = C.addArtwork(doc, [{ type: 'text', text: '. . . . . . . . . .', name: 'row', x: 100, y: 200, w: 300, h: 30,
+    textMetrics: { text: '. . . . . . . . . .', advances: Array(19).fill(10), model: 2 } }], 'art');
+  const locked = C.entity(doc, { type: 'symbol', text: '.', x: 150, y: 200, w: 30, h: 30, layer: 'decor' });
+  doc.entities.push(locked); doc.layers.find((l) => l.id === 'decor').locked = true;
+  const thrown = new Set(), before = C.clone(doc);
+  // The brush over the first three dots (x 100, 120, 140 + the glyph centre), moving right.
+  assert.equal(scatterSymbols(doc, { x: 129, y: 208 }, 25, { x: 1, y: 0 }, { distance: 3, spread: 30, seed: 7, thrown }), true);
+  const dots = doc.entities.filter((e) => e.layer === art.layer.id);
+  assert.equal(dots.length, 10, 'the row became single dots, none lost');
+  const moved = dots.filter((e) => thrown.has(e.id)), still = dots.filter((e) => !thrown.has(e.id));
+  assert.equal(moved.length, 3);
+  assert.ok(moved.every((e) => e.x > 100 && Math.abs(e.y - 200) <= Math.tan(Math.PI / 6) * (e.x - 100) + 1), 'thrown to the right, within the spread');
+  assert.deepEqual(still.map((e) => e.x).sort((x, y) => x - y), [160, 180, 200, 220, 240, 260, 280], 'the others stay where they were');
+  assert.deepEqual(doc.entities.find((e) => e.id === locked.id), locked, 'locked layers are not touched');
+  const again = C.clone(doc);
+  scatterSymbols(doc, { x: 129, y: 208 }, 25, { x: 1, y: 0 }, { distance: 3, spread: 30, seed: 7, thrown });
+  assert.deepEqual(doc.entities.filter((e) => thrown.has(e.id)).map((e) => [e.x, e.y]).sort(), again.entities.filter((e) => thrown.has(e.id)).map((e) => [e.x, e.y]).sort(), 'a thrown dot does not fly twice in one stroke');
+  const replay = C.clone(before);
+  scatterSymbols(replay, { x: 129, y: 208 }, 25, { x: 1, y: 0 }, { distance: 3, spread: 30, seed: 7 });
+  assert.deepEqual(replay.entities.map((e) => [e.x, e.y]).sort(), again.entities.map((e) => [e.x, e.y]).sort(), 'the same stroke gives the same result');
 });

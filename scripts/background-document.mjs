@@ -5,7 +5,8 @@ import { MENU_SIZES } from './menu-background.mjs';
 // built (so it is already at a MENU_SIZES resolution and within the size Dota handles) plus a
 // poster frame; the server checks both and keeps them for moderation.
 // Tags work as the grids' ones (CATALOG_TAGS): up to three, none is fine.
-export const BACKGROUND_TAGS = ['Аниме', 'Dota 2', 'Игры', 'Милота', 'Мемы', 'Dead inside', 'Природа', 'Космос', 'Абстракция'];
+// «18+» blurs the background in the workshop until the viewer confirms their age, as for grids.
+export const BACKGROUND_TAGS = ['Аниме', 'Dota 2', 'Игры', 'Милота', '18+', 'Мемы', 'Dead inside', 'Природа', 'Космос', 'Абстракция'];
 export const BACKGROUND_LIMITS = Object.freeze({ video: 16_000_000, poster: 800_000, seconds: 31, daily: 3, accountDaily: 10, networkDaily: 20, pending: 300, storage: 10_000_000_000 });
 
 class ValidationError extends Error { constructor(message) { super(message); this.status = 400; } }

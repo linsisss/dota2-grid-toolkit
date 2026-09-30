@@ -84,6 +84,7 @@ export default function Workspaces({ registry, onOpen }) {
   async function loadBackgrounds() {
     const mine = (record) => !record.account || record.account === auth.user?.id;
     let local = (await listBackgrounds().catch(() => [])).filter(mine), cloud = [];
+    setBackgrounds(local);
     if (auth.user) {
       try {
         const remote = await pullRecipes();
@@ -108,23 +109,30 @@ export default function Workspaces({ registry, onOpen }) {
     const results = await Promise.allSettled(published.map((item) => publicationStatus(item.published)));
     setStatuses(Object.fromEntries(published.map((item, index) => [item.id, results[index].status === 'fulfilled' ? results[index].value : null])));
   }
+  // The list shows this browser's files at once; the account's list and backgrounds join after.
+  // A row is written only when the account copy changed something, so cards keep their pictures.
   async function refresh() {
     setError('');
+    setItems(await registry.list());
+    setLoading(false);
     if (auth.user) {
       try {
         const result = await catalogAPI(`/spaces?archived=${archive ? '1' : '0'}`);
         const local = await registry.list();
+        let changed = false;
         for (const row of result.items) {
           const old = local.find(item => cloudWorkspaceId(item) === row.id && item.account === row.account);
-          await registry.put({ ...row, ...(old || {}), id: old?.id || row.id, cloudId: row.id, account: row.account,
+          const next = { ...row, ...(old || {}), id: old?.id || row.id, cloudId: row.id, account: row.account,
             name: old?.dirty ? old.name : row.name, preview: old?.dirty ? old.preview : row.preview,
-            updated: Math.max(row.updated, old?.updated || 0), archived: !!row.archived, cloudRevision: old?.cloudRevision || 0, remoteRevision: row.revision });
+            gridNames: row.gridNames ?? old?.gridNames, configIndex: row.configIndex ?? old?.configIndex,
+            updated: Math.max(row.updated, old?.updated || 0), archived: !!row.archived, cloudRevision: old?.cloudRevision || 0, remoteRevision: row.revision };
+          if (old && ['name', 'updated', 'archived', 'remoteRevision', 'configIndex'].every((key) => old[key] === next[key]) && JSON.stringify(old.gridNames) === JSON.stringify(next.gridNames)) continue;
+          await registry.put(next); changed = true;
         }
+        if (changed) setItems(await registry.list());
       } catch (e) { setError(`${e.message} Локальные файлы доступны.`); }
     }
-    setItems(await registry.list());
     await loadBackgrounds();
-    setLoading(false);
   }
   useEffect(() => { if (!auth.loading) refresh().catch(e => { setError(e.message); setLoading(false); }); }, [auth.user?.id, auth.loading, auth.fileSync.revision, archive]);
   async function run(action) { setBusy(true); setError(''); try { await action(); if (auth.user) await auth.syncFiles(); await refresh(); } catch (e) { setError(e.message); } finally { setBusy(false); } }
@@ -161,7 +169,10 @@ export default function Workspaces({ registry, onOpen }) {
       setRename(null);
     });
   }
-  const working = busy || auth.fileSync.busy;
+  // Account sync runs in the background (the sidebar says so); only a file being uploaded right
+  // now keeps its buttons until the upload ends.
+  const working = busy;
+  const uploading = (item) => auth.fileSync.busy && !!item.pendingUpload;
   const matches = (value) => value.toLocaleLowerCase().includes(query.toLocaleLowerCase());
   const visible = items.filter(item => (!item.account || item.account === auth.user?.id) && !!item.archived === archive && matches(item.name));
   const incoming = new URLSearchParams(location.search).has('catalog');
@@ -173,22 +184,23 @@ export default function Workspaces({ registry, onOpen }) {
   const choose = (value) => { const url = new URL(location.href); if (value === 'all') url.searchParams.delete('show'); else url.searchParams.set('show', value); history.replaceState(history.state, '', url); setShow(value); };
   async function download(item) {
     const { downloadPack, packBackground } = await import('./customize/background-pack.js');
-    await downloadPack(packBackground(new Uint8Array(await item.video.arrayBuffer()), item.recipe), item.recipe);
+    const hero = item.heroVideo instanceof Blob ? new Uint8Array(await item.heroVideo.arrayBuffer()) : null;
+    await downloadPack(packBackground(new Uint8Array(await item.video.arrayBuffer()), item.recipe, hero), item.recipe);
   }
   const lead = archive ? 'Файлы, убранные из студии. Их можно вернуть.'
     : show === 'grids' ? 'Сетки героев. В одном файле их может быть несколько.'
     : show === 'backgrounds' ? (auth.user ? 'Готовое видео хранится в этом браузере, настройки — в аккаунте: на другом устройстве фон собирается заново.' : 'Фоны хранятся в этом браузере. Войди через Telegram, чтобы настройки фонов были и на других устройствах.')
     : 'Сетки героев и фоны главного меню.';
-  const gridCard = (item) => <article className="workspace-file" key={item.id}>
-        <WorkspacePreview item={item} disabled={archive || working} onOpen={index => onOpen({ ...item, openConfigIndex: index })}/>
-        <div className="workspace-file-info"><button disabled={archive || working} onClick={() => onOpen(item)}><h2>{item.name}</h2></button><time dateTime={new Date(item.updated).toISOString()}>{new Date(item.updated).toLocaleDateString('ru-RU')}</time></div>
-        <div className="workspace-file-actions">{!archive && <><button className="catalog-icon" aria-label={`Переименовать ${item.name}`} disabled={working} onClick={() => { setRename(item); setName(item.name); }}><Icon name="edit"/></button><button className="catalog-icon" aria-label={`Создать копию ${item.name}`} disabled={working} onClick={() => run(() => copy(item))}><Icon name="copy"/></button></>}
-        <button className="catalog-icon" aria-label={`${archive ? 'Восстановить' : 'В архив'} ${item.name}`} disabled={working} onClick={() => run(async () => {
+  const gridCard = (item) => { const locked = working || uploading(item); return <article className="workspace-file" key={item.id}>
+        <WorkspacePreview item={item} disabled={archive || locked} onOpen={index => onOpen({ ...item, openConfigIndex: index })}/>
+        <div className="workspace-file-info"><button disabled={archive || locked} onClick={() => onOpen(item)}><h2>{item.name}</h2></button><time dateTime={new Date(item.updated).toISOString()}>{new Date(item.updated).toLocaleDateString('ru-RU')}</time></div>
+        <div className="workspace-file-actions">{!archive && <><button className="catalog-icon" aria-label={`Переименовать ${item.name}`} disabled={locked} onClick={() => { setRename(item); setName(item.name); }}><Icon name="edit"/></button><button className="catalog-icon" aria-label={`Создать копию ${item.name}`} disabled={locked} onClick={() => run(() => copy(item))}><Icon name="copy"/></button></>}
+        <button className="catalog-icon" aria-label={`${archive ? 'Восстановить' : 'В архив'} ${item.name}`} disabled={locked} onClick={() => run(async () => {
           let revision = item.cloudRevision;
           if (item.account) { if (item.dirty) throw new Error('Сначала открой файл для синхронизации или создай его копию.'); const base = item.remoteRevision || item.cloudRevision; const result = await catalogAPI(`/spaces/${cloudWorkspaceId(item)}`, { method: 'PATCH', body: { revision: base, archived: !archive } }); if (item.cloudRevision === base) revision = result.revision; }
           await registry.update(item.id, { archived: !archive, cloudRevision: revision });
         })}><Icon name={archive ? 'back' : 'archive'}/></button></div>
-      </article>;
+      </article>; };
   const empty = query ? ['Ничего не найдено', 'Попробуй другое название.'] : archive ? ['В архиве пока пусто', 'Здесь можно восстановить файлы, убранные из рабочего списка.']
     : show === 'backgrounds' ? ['Здесь будут твои фоны', 'Собери фон главного меню — после сборки он сохранится здесь, и скачать его снова можно будет в один клик.']
     : show === 'grids' ? ['Создай первую сетку', 'Начни с пустой сетки или импортируй свой JSON. Вход не обязателен.']

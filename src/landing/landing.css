@@ -107,6 +107,10 @@ svg { flex-shrink: 0; display: block; }
 .landing-author-links a { display: inline-flex; align-items: center; gap: 7px; background: var(--lp-panel); padding: 4px 11px 4px 4px; border-radius: 24px; color: var(--lp-ink); transition: background 160ms, transform 160ms; }
 .landing-author-links a:hover { background: #383340; transform: translateY(-2px); }
 .landing-author-links img { width: 25px; height: 25px; border-radius: 50%; object-fit: cover; }
+.landing-support { display: inline-flex; align-items: center; gap: 7px; margin-top: 12px; padding: 6px 13px 6px 11px; border-radius: 24px; background: var(--lp-panel); color: var(--lp-ink); font-size: 12px; white-space: nowrap; transition: background 160ms, transform 160ms, color 160ms; }
+.landing-support svg { width: 15px; height: 15px; color: #f07a92; transition: transform 200ms; }
+.landing-support:hover { background: #383340; transform: translateY(-2px); }
+.landing-support:hover svg { transform: scale(1.15); }
 .landing-footer { display: flex; align-items: center; justify-content: space-between; gap: 24px; width: 100%; max-width: 1680px; margin: 0 auto; padding: 15px 5% 24px; color: var(--lp-muted); font-size: 12px; z-index: 2; }
 .landing-footer > a { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; transition: color 160ms; }
 .landing-footer > a:hover { color: var(--lp-ink); }
@@ -199,7 +203,9 @@ svg { flex-shrink: 0; display: block; }
   border: 1px solid var(--lp-line); border-radius: 999px; background: #1b1922cc; color: var(--lp-ink); font-size: 13px; text-decoration: none; position: relative; z-index: 1;
   transition: border-color 160ms ease, background 160ms ease; }
 .stage-caption:hover { border-color: #c4b5ed66; background: #211e29; }
-.stage-caption-likes { color: var(--lp-accent); font-weight: 600; }
+/* The workshop's like: Lucide heart outline, its muted colour, tabular count. */
+.stage-caption-likes { display: inline-flex; align-items: center; gap: 5px; align-self: center; color: #afa7bf; font-variant-numeric: tabular-nums; }
+.stage-caption-likes svg { flex: none; }
 .stage-caption-title { font-weight: 500; }
 .stage-caption-note { color: var(--lp-muted); font-size: 12px; }
 .landing-stage .landing-footer { padding-top: 30px; }
@@ -241,6 +247,9 @@ svg { flex-shrink: 0; display: block; }
 .landing-surface .landing-catalog:hover { color: #231b35; }
 .landing-surface .landing-author-links a { background: #b29edc; color: #231b35; }
 .landing-surface .landing-author-links a:hover { background: #a88bd6; }
+.landing-surface .landing-support { background: #b29edc; color: #231b35; }
+.landing-surface .landing-support:hover { background: #a88bd6; }
+.landing-surface .landing-support svg { color: #8a2442; }
 .landing-surface .catalog-status { background: #b29edc; }
 .landing-surface .landing-copy :focus-visible { outline-color: #231b35; }
 .landing-surface .landing-authors { margin-top: 30px; }

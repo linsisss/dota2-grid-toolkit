@@ -97,6 +97,20 @@ test('shared backgrounds: captcha, ffprobe-checked upload, moderation, gallery, 
   assert.equal((await call('/backgrounds')).body.total, 0);
 });
 
+test('trusted authors (CATALOG_UNLIMITED_TELEGRAM_IDS) have no account limit for backgrounds; others keep it', { skip: !hasFFmpeg && 'ffmpeg is not installed' }, async t => {
+  const [{ CatalogStore }, { CatalogBackgrounds }, { BACKGROUND_LIMITS }, { createCanvas }] = await Promise.all([
+    import('../server/catalog-store.mjs'), import('../server/catalog-backgrounds.mjs'), import('../scripts/background-document.mjs'), import('@napi-rs/canvas')]);
+  const dir = mkdtempSync(join(tmpdir(), 'gridstudio-backgrounds-')), store = new CatalogStore(':memory:', 'test-trusted');
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  store.unlimited = new Set(['424242424']);
+  const gallery = new CatalogBackgrounds(store, { dir }), poster = new Uint8Array(await createCanvas(320, 180).encode('jpeg', 80));
+  // Both accounts already used today's budget.
+  for (const account of ['424242424', 'account-a']) for (let i = 0; i < BACKGROUND_LIMITS.accountDaily; i++) store.run('INSERT INTO limits VALUES(?,?)', `bg-account:${account}`, store.now());
+  const send = (account, color) => gallery.submit({ title: 'Фон', author: '', tags: [], aspect: '16:9' }, poster, webm('1920x1080', 1, color), { browser: account, ip: `ip-${account}` }, account);
+  assert.equal((await send('424242424', '0x205080')).status, 'pending');
+  await assert.rejects(send('account-a', '0x802050'), error => error.extra?.code === 'background_account_limit');
+});
+
 test('backgrounds from before tags: the category becomes the only tag, «Другое» none', async t => {
   const [{ CatalogStore }, { CatalogBackgrounds }] = await Promise.all([import('../server/catalog-store.mjs'), import('../server/catalog-backgrounds.mjs')]);
   const dir = mkdtempSync(join(tmpdir(), 'gridstudio-backgrounds-')), store = new CatalogStore(':memory:', 'test-migration');
@@ -163,4 +177,32 @@ test('background likes, the popular order and reports, moderated in Telegram and
   as(signIn(1253427)); assert.equal((await call(`/admin/backgrounds/${newer}`, 'POST', { action: 'hide', reason: 'Жалоба подтвердилась' })).body.status, 'hidden');
   queue.sync(); assert.equal(queue.get(second.id).outcome, 'hide');
   assert.equal((await call(`/backgrounds/${newer}`)).status, 404);
+});
+
+test('«Мои публикации» of backgrounds, the author seeing their pending files, and the admin search', async t => {
+  const [{ CatalogStore }, { createCatalogAPI }] = await Promise.all([import('../server/catalog-store.mjs'), import('../server/catalog-api.mjs')]);
+  const media = mkdtempSync(join(tmpdir(), 'gridstudio-backgrounds-')), store = new CatalogStore(':memory:', 'test-background-mine');
+  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-background-mine', admins: new Set(['1253427']), database: ':memory:', media };
+  const { server, accounts } = createCatalogAPI(config, { store }); await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { await new Promise(resolve => server.close(resolve)); store.close(); rmSync(media, { recursive: true, force: true }); });
+  const base = `http://127.0.0.1:${server.address().port}/api/catalog`;
+  let cookie = '';
+  const call = async (path) => { const response = await fetch(base + path, { headers: { Origin: config.origin, Cookie: cookie } }); return { status: response.status, body: response.headers.get('content-type')?.includes('json') ? await response.json() : null }; };
+  const signIn = (telegram) => { const login = accounts.begin(`ip${telegram}`, `b${telegram}`); accounts.candidate(login.id, { id: telegram, first_name: 'A', is_bot: false }); accounts.approve(login.id, telegram, true); cookie = `gs_account=${accounts.finish(login.id, login.verifier, String(telegram)).session}`; };
+  await call('/backgrounds');  // creates the table
+  const add = (title, status, account, reason = '') => Number(store.run("INSERT INTO backgrounds(title,author,tags,aspect,seconds,bytes,hash,status,reason,account,browser,ip,created,updated) VALUES(?,'','[]','16:9',10,1,?,?,?,?,'b','i',1,1)", title, title, status, reason, account).lastInsertRowid);
+  const mine = add('Мой на проверке', 'pending', '3001'), refused = add('Мой отклонённый', 'rejected', '3001', 'Не фон'), other = add('Чужой', 'pending', '3002');
+  const { writeFileSync } = require('node:fs'); writeFileSync(join(media, `${mine}.jpg`), 'poster');
+
+  assert.equal((await call('/backgrounds/mine')).status, 401, 'needs Telegram');
+  signIn(3001);
+  assert.deepEqual((await call('/backgrounds/mine')).body.items.map(item => [item.title, item.status, item.reason]).sort(), [['Мой на проверке', 'pending', ''], ['Мой отклонённый', 'rejected', 'Не фон']]);
+  assert.equal((await call(`/backgrounds/${mine}/poster.jpg`)).status, 200, 'the author sees their pending poster');
+  signIn(3002); assert.equal((await call(`/backgrounds/${mine}/poster.jpg`)).status, 404, 'others do not');
+  assert.deepEqual((await call('/backgrounds/mine')).body.items.map(item => item.id), [other]);
+
+  signIn(1253427);
+  const found = (await call(`/admin/backgrounds?${new URLSearchParams({ filter: 'pending', q: 'мой' })}`)).body;
+  assert.deepEqual(found.items.map(item => item.title), ['Мой на проверке']); assert.equal(found.total, 1); assert.equal(found.counts.pending, 2);
+  assert.equal((await call(`/admin/backgrounds?${new URLSearchParams({ filter: 'hidden', q: 'ОТКЛОН' })}`)).body.items[0].id, refused);
 });

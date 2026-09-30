@@ -28,14 +28,19 @@ function Brand() {
   </a>;
 }
 
+// The authors and, under them, where to support the project (DonationAlerts).
+const SUPPORT_URL = 'https://www.donationalerts.com/r/linsiss';
 function Authors() {
-  return <div className="landing-authors">
-    <span className="author-credit">Авторы</span>
-    <div className="landing-author-links">
-      <a href="tg://resolve?domain=linsissya"><img src={linsissya} alt="" width="25" height="25" />@linsissya</a>
-      <span>&amp;</span>
-      <a href="tg://resolve?domain=dissonance"><img src={dissonance} alt="" width="25" height="25" />@dissonance</a>
+  return <div className="landing-credits">
+    <div className="landing-authors">
+      <span className="author-credit">Авторы</span>
+      <div className="landing-author-links">
+        <a href="tg://resolve?domain=linsissya"><img src={linsissya} alt="" width="25" height="25" />@linsissya</a>
+        <span>&amp;</span>
+        <a href="https://rin.ms/" target="_blank" rel="noreferrer"><img src={dissonance} alt="" width="25" height="25" />@dissonance</a>
+      </div>
     </div>
+    <a className="landing-support" href={SUPPORT_URL} target="_blank" rel="noreferrer"><Icon name="heart" />Поддержать разработку</a>
   </div>;
 }
 

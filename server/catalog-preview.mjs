@@ -6,6 +6,7 @@ import D from '../scripts/data.mjs';
 import { layoutAsciiArt } from '../scripts/ascii-library.mjs';
 import { drawCategoryLabel, glyphWidths, measureCategoryText } from '../scripts/dota-rendering.mjs';
 import C from '../scripts/core.mjs';
+import { workspaceGridPreview } from '../scripts/workspace-preview.mjs';
 
 let ready = false, background = null;
 // Telegram cards always use the Dota 2 backdrop, the site's default.
@@ -34,6 +35,16 @@ export function pickSafeGrid(grid) {
   measuring ||= createCanvas(8, 8).getContext('2d');
   const widths = (line) => glyphWidths(measuring, line);
   return { ...grid, configs: grid.configs.map((config) => ({ ...config, categories: C.pickSafeCategories(config.categories, widths, { singles: false }) })) };
+}
+// A grid of a «Студия» file saved in the account, as the Studio shows it on a device whose own
+// copy is older (src/WorkspacePreview.jsx): transparent, 716 px wide like the browser's pictures
+// (scripts/workspace-thumbnails.mjs), with the ground painted by the page underneath.
+export async function renderSpaceThumbnail(document, index) {
+  const grid = workspaceGridPreview(document, index);
+  loadFonts();
+  const canvas = createCanvas(716, Math.round(593 * 716 / 1193));
+  drawCatalogGrid(canvas.getContext('2d'), grid, await heroImages(grid), 716, false);
+  return canvas.encode('webp', 82);
 }
 export async function renderCatalogPreview(source) {
   const { grid } = normalizeCatalogGrid(source);

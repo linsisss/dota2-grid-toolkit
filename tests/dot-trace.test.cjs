@@ -123,3 +123,17 @@ test('the Kuwahara filter flattens texture but keeps an edge sharp', async () =>
     assert.ok(out[y * w + 28] < 0.4 && out[y * w + 31] > 0.6, `row ${y}: the edge stays a step, not a ramp`);
   }
 });
+
+test('a slider draft traces a half-size picture: its dots, scaled back, lie on the same circle at the same step', async () => {
+  const { traceDots } = await trace;
+  const full = traceDots(drawing(200, 120, circle), 200, 120, { spacing: 5, length: 10 });
+  const half = drawing(100, 60, (ctx) => { ctx.scale(0.5, 0.5); circle(ctx); });
+  const draft = traceDots(half, 100, 60, { spacing: 5, length: 10, scale: 0.5 });
+  assert.equal(draft.source, 'lines');
+  const dots = draft.dots.map(([x, y]) => [x / 0.5, y / 0.5]);
+  assert.ok(Math.abs(dots.length - full.dots.length) <= 4, `${dots.length} draft dots, ${full.dots.length} full`);
+  for (const [x, y] of dots) assert.ok(Math.abs(Math.hypot(x - 100, y - 60) - 40) < 2.5, `dot ${x},${y} lies on the circle`);
+  const gaps = dots.map(([x, y]) => Math.min(...dots.filter((d) => d[0] !== x || d[1] !== y).map((d) => Math.hypot(d[0] - x, d[1] - y))));
+  assert.ok(Math.min(...gaps) > 3.5 && Math.max(...gaps) < 6.5, `neighbour distance ${Math.min(...gaps).toFixed(1)}–${Math.max(...gaps).toFixed(1)} for a 5 px step`);
+  assert.deepEqual(traceDots(drawing(200, 120, circle), 200, 120, { spacing: 5, length: 10, scale: 1 }), full, 'scale 1 is the full result');
+});

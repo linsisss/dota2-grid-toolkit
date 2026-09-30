@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { MENU_LIMITS, pieceLength } from '../../scripts/menu-background.mjs';
+import { fitPiece, MENU_LIMITS, pieceLength } from '../../scripts/menu-background.mjs';
 
 // Choosing the piece of a video that becomes the background, and how it loops.
 // The loop joins the end back to the start: with a crossfade of f seconds the last f seconds fade

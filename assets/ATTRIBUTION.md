@@ -18,11 +18,41 @@ The customization page converts menu backgrounds in the browser with [Mediabunny
 
 Main-menu pieces in `assets/dota-menu/ui/` (top bar, ИГРАТЬ button, the chat line, the Dark Carnival event card, the friends rail's search row, category headers, empty slot, watch button, star, leader crown and party bar) are cut by `scripts/make-menu-sprites.mjs` from a 1920 × 1080 screenshot of the Russian Dota 2 main menu supplied by the user on 2026-09-29; the shards count is painted over, and the user's own avatar and chat picture in the party bar are replaced. They are Valve's interface and artwork and are not covered by this repository's MIT license.
 
+Hero-page pieces in `assets/dota-menu/ui/hero-*.webp` (the preview of the background behind the hero) are made by `scripts/make-hero-page-sprites.mjs` from a 1920 × 1080 screenshot of the Russian Dota 2 hero page (Shadow Fiend, «Снаряжение») supplied by the user on 2026-09-30 and from the same user's export of `pak01_dir.vpk` (`panorama/images/…`: attribute, complexity, role, stat and Aghanim's icons, `control_icons/24px` SVG icons). Only opaque pieces of the screenshot are cut (top bar with the shards count painted over, abilities, item slots, health and mana bars, buttons, the level badge and notes button lifted off by colour); the text is rendered with Valve's Radiance and Reaver fonts, matched to the screenshot. `hero-friends.webp` is the round friends button from that screenshot. `assets/fonts/reaver-{regular,semibold,bold}.otf` come from the user's `game/dota/panorama/fonts/` (Copyright Valve Corporation) and are used by that script only; the site does not serve them. All of it is Valve's interface and artwork, not covered by this repository's MIT license.
+
+The hero in the hero-page preview, `assets/dota-hero/sf-arcana/`, is made by `scripts/make-hero-3d.mjs` from the user's Dota 2 installation (files exported from `pak01` on 2026-09-30): Shadow Fiend's Demon Eater arcana with its head, the Souls Tyrant shoulders, the Arms of Desolation and the arcana pedestal (models with two loadout animations and the «Fiendish Swag!» taunt, material parameters and textures, the fresnel warp texture), the set's particle systems as JSON with their textures, particle snapshots and model attachments, and the hero page's light for Shadow Fiend from `scripts/npc/portraits_full_body_loadout.txt`. Conversion is done by the [Source 2 Viewer](https://github.com/ValveResourceFormat/ValveResourceFormat) command line (release 20.0, MIT). The material follows the formulas of the game's compiled hero shader (`shaders_pc_000.vpk`, `hero_pc_50_ps.vcs`), read with `vkd3d-compiler` and `spirv-cross` (Ubuntu packages); no shader code is shipped. All of it is Valve's game content and is not covered by this repository's MIT license.
+
+`assets/dota-hero/sounds/taunt-fiendish-swag.mp3` is the sound of Shadow Fiend's taunt «Fiendish Swag!» from Dota 2, downloaded on 2026-09-30 at the user's request from the Dota 2 Wiki (`https://static.wikia.nocookie.net/dota2_gamepedia/images/4/46/Taunt_Shadow_Fiend_Fiendish_Swag.mp3`), unmodified; the page plays it at 12 % volume. It is Valve's game audio and is not covered by this repository's MIT license.
+
+`src/customize/hero3d/fx.js` is a JavaScript port of parts of Source 2 Viewer's particle simulation and renderers (`ValveResourceFormat/Particles`, `Renderer/Particles`), with additions of our own for model-bound functions; that code is used under the MIT License:
+
+> The MIT License (MIT)
+>
+> Copyright (c) 2015 ValveResourceFormat Contributors
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy
+> of this software and associated documentation files (the "Software"), to deal
+> in the Software without restriction, including without limitation the rights
+> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+> copies of the Software, and to permit persons to whom the Software is
+> furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all
+> copies or substantial portions of the Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+> IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+> FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+> LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+> SOFTWARE.
+
 `assets/dota-menu/ui/miniprofile-rock.webp` and `assets/dota-menu/ui/rank-medal.webp` are Dota 2's `panorama/images/textures/miniprofile_rock_psd` and `panorama/images/rank_tier_icons/rank8inactive_psd` (the «Титан» medal without a leaderboard plate) textures, exported by the user with Source 2 Viewer on 2026-09-29. `assets/fonts/radiance-{light,regular,bold}.otf` come from the same user's `game/dota/panorama/fonts/` (Copyright Valve Corporation); `scripts/make-menu-rail.mjs` and `scripts/make-menu-notice.mjs` use them to render the menu preview's friends rail and notifications popup, the site does not serve them. Both are Valve's property and not covered by this repository's MIT license.
 
 `assets/dota-menu/ui/avatar.webp` and `avatar-linsissya.webp` are the avatars of GridStudio's authors dissonance and linsissya, and `avatar-etokrov.webp` the friends-rail entry «Etokrovь», all supplied by the user for the menu preview.
 
-Main-menu layouts in `assets/dota-menu/` (`dashboard.xml`, `dashboard_page_home.xml`) are Valve's Panorama layouts from the Dota 2 client, as decompiled by Source 2 Viewer in [spirit-bear-productions/dota_vpk_updates](https://github.com/spirit-bear-productions/dota_vpk_updates) (client 6928, 2026-09-09). They belong to Valve Corporation and are not covered by this repository's MIT license. `tests/fixtures/valve/` holds two compiled Panorama files from the [Source 2 Viewer](https://github.com/ValveResourceFormat/ValveResourceFormat) test suite, used to check that `scripts/vpk.mjs` writes resources exactly like Valve's compiler; they are Valve's files as well.
+Main-menu and hero-page layouts in `assets/dota-menu/` (`dashboard.xml`, `dashboard_page_home.xml`, `dashboard_page_hero_new_v2.xml`) are Valve's Panorama layouts from the Dota 2 client, as decompiled by Source 2 Viewer in [spirit-bear-productions/dota_vpk_updates](https://github.com/spirit-bear-productions/dota_vpk_updates) (client 6942, 2026-09-29). They belong to Valve Corporation and are not covered by this repository's MIT license. `tests/fixtures/valve/` holds two compiled Panorama files from the [Source 2 Viewer](https://github.com/ValveResourceFormat/ValveResourceFormat) test suite, used to check that `scripts/vpk.mjs` writes resources exactly like Valve's compiler; they are Valve's files as well.
 
 The symbol library, frame presets, Canny edge detection, and Zhang–Suen thinning algorithms are adapted from the original MIT-licensed [Dota 2 Grid Toolkit](https://github.com/linsisss/dota2-grid-toolkit). `scripts/build-data.cjs` extracts them from the preserved standalone tools.
 

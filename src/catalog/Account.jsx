@@ -93,9 +93,12 @@ export function AccountButton() {
   </>;
 }
 // `path`: the like endpoint — a grid's by default, `/backgrounds/:id/like` for a menu background.
+// `item.mine` (the viewer's own grid or background): the server refuses the like, so the button
+// stays in place with the count but is switched off.
 export function LikeButton({ item, onChange, path = `/works/${item.id}/like` }) {
   const auth = useAccount(); const [busy, setBusy] = useState(false), [error, setError] = useState('');
-  return <span className="catalog-like-wrap"><button className={`catalog-like${item.liked ? ' is-liked' : ''}`} aria-label={item.liked ? 'Убрать лайк' : 'Поставить лайк'} aria-pressed={!!item.liked} disabled={busy} onClick={async () => {
+  const own = item.mine ? 'Свою работу лайкнуть нельзя' : '';
+  return <span className="catalog-like-wrap"><button className={`catalog-like${item.liked ? ' is-liked' : ''}${own ? ' is-own' : ''}`} aria-label={own || (item.liked ? 'Убрать лайк' : 'Поставить лайк')} title={own || undefined} aria-pressed={!!item.liked} disabled={busy || !!own} onClick={async () => {
     if (!auth.user) return auth.requestLogin('Войди через Telegram, чтобы поставить лайк.');
     setBusy(true); setError(''); try { const result = await catalogAPI(path, { method: 'PUT', body: { liked: !item.liked } }); onChange(result); }
     catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }

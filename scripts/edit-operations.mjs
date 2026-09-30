@@ -242,6 +242,46 @@ export function eraseSymbols(doc, point, radius = 22) {
   });
 }
 
+// «Распыление»: the glyphs under a round brush fly off along the stroke's direction, each its own
+// random way (within `spread` degrees of it) and distance (up to `distance` × the brush's radius,
+// most of them short), so the drawing crumbles or melts away there. Rows the brush touches become
+// single glyphs, as with the eraser; `thrown` (ids) keeps a glyph from flying twice in one stroke.
+// The randomness is a hash of the stroke's seed and the glyph's place: the same stroke gives the
+// same result.
+export const SCATTER_DEFAULTS = Object.freeze({ distance: 2.5, spread: 35 });
+function scatterNoise(seed, x, y, salt) {
+  let h = Math.imul(seed ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(Math.round(x * 16) + salt * 7919, 0xc2b2ae35) ^ Math.imul(Math.round(y * 16) + 1, 0x27d4eb2f);
+  h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; h = Math.imul(h, 0x297a2d39); h ^= h >>> 15;
+  return (h >>> 0) / 4294967296;
+}
+export function scatterSymbols(doc, point, radius, direction, { distance = SCATTER_DEFAULTS.distance, spread = SCATTER_DEFAULTS.spread, seed = 1, thrown = new Set() } = {}) {
+  const heading = Math.atan2(direction.y, direction.x), cone = (spread * Math.PI) / 180;
+  let changed = false;
+  doc.entities = doc.entities.flatMap((item) => {
+    const layer = doc.layers.find((l) => l.id === item.layer);
+    if (item.type === 'heroes' || !layer?.visible || layer.locked || thrown.has(item.id)) return [item];
+    const glyphs = C.textGlyphs(item, true);
+    const under = glyphs.map((g) => Math.hypot(g.x + GLYPH_CENTER.x - point.x, g.y + GLYPH_CENTER.y - point.y) <= radius);
+    if (!under.some(Boolean)) return [item];
+    changed = true;
+    return glyphs.map((g, i) => {
+      const clean = { ...g, rotation: 0 };
+      delete clean.id; delete clean.rowGlyphs; delete clean.rowText; delete clean.textMetrics;
+      if (under[i]) {
+        // Most glyphs land near, a few far: the trail thins out like dust.
+        const angle = heading + (scatterNoise(seed, g.x, g.y, 1) * 2 - 1) * cone;
+        const far = radius * distance * (0.15 + 0.85 * scatterNoise(seed, g.x, g.y, 2) ** 1.6);
+        clean.x = g.x + Math.cos(angle) * far;
+        clean.y = g.y + Math.sin(angle) * far;
+      }
+      const made = C.entity(doc, clean);
+      if (under[i]) thrown.add(made.id);
+      return made;
+    });
+  });
+  return changed;
+}
+
 // Replaces characters inside the selected symbol and text objects, keeping every position,
 // e.g. a dotted artwork becomes hearts. `from` is one character, or '' for every visible one;
 // whitespace is never touched. Returns how many characters changed.

@@ -1,4 +1,4 @@
-import { MENU_SIZES } from './menu-background.mjs';
+import { MENU_FRAME, MENU_FRAME_ZOOM, MENU_SIZES } from './menu-background.mjs';
 
 // A menu background kept in «Студия» (docs/customize.md «Фоны в студии»). The browser keeps the
 // built WebM with it (scripts/background-library.mjs), so it downloads again at once; an account
@@ -7,6 +7,8 @@ import { MENU_SIZES } from './menu-background.mjs';
 export const STUDIO_BACKGROUND_LIMITS = Object.freeze({ name: 100, poster: 60_000, perAccount: 200, fileName: 200 });
 export const STUDIO_CROSSFADES = Object.freeze([0, 0.5, 1, 2]);
 export const STUDIO_FOLDERS = Object.freeze(['russian', 'custom']);
+// Behind the hero on the hero page (1.6.1): the menu's video, a video of its own, or Valve's picture.
+export const STUDIO_HERO_MODES = Object.freeze(['menu', 'own', 'off']);
 
 class ValidationError extends Error { constructor(message) { super(message); this.status = 400; } }
 const broken = () => { throw new ValidationError('Настройки фона не читаются.'); };
@@ -26,17 +28,33 @@ function studioSource(source) {
   return broken();
 }
 
+// The framing (1.6.1; recipes before it have none: the middle, not enlarged).
+function studioFrame(value) {
+  if (value == null) return { ...MENU_FRAME };
+  const number = (v, low, high) => (Number.isFinite(v) && v >= low && v <= high ? Math.round(v * 1000) / 1000 : broken());
+  return { zoom: number(value.zoom, 1, MENU_FRAME_ZOOM), x: number(value.x, 0, 1), y: number(value.y, 0, 1) };
+}
+function studioPiece(value) {
+  if (value == null) return null;
+  const piece = { start: seconds(value.start), end: seconds(value.end) };
+  if (piece.end <= piece.start) broken();
+  return piece;
+}
+// Recipes saved before 1.6.1 have no `hero`: the hero page shows the menu video, the new default.
+function studioHero(input) {
+  if (input == null) return { mode: 'menu' };
+  if (!STUDIO_HERO_MODES.includes(input.mode)) broken();
+  if (input.mode !== 'own') return { mode: input.mode };
+  if (!['cover', 'contain'].includes(input.fit) || !STUDIO_CROSSFADES.includes(input.crossfade)) broken();
+  return { mode: 'own', fit: input.fit, blur: percent(input.blur), dim: percent(input.dim), frame: studioFrame(input.frame), piece: studioPiece(input.piece), crossfade: input.crossfade, source: studioSource(input.source) };
+}
+
 export function studioRecipe(input) {
   if (!input || typeof input !== 'object') broken();
   if (!MENU_SIZES[input.aspect] || !['cover', 'contain'].includes(input.fit) || !STUDIO_FOLDERS.includes(input.folder)
     || !['file', 'installer'].includes(input.delivery) || typeof input.clean !== 'boolean' || !STUDIO_CROSSFADES.includes(input.crossfade)) broken();
-  let piece = null;
-  if (input.piece != null) {
-    piece = { start: seconds(input.piece.start), end: seconds(input.piece.end) };
-    if (piece.end <= piece.start) broken();
-  }
-  return { aspect: input.aspect, fit: input.fit, blur: percent(input.blur), dim: percent(input.dim), clean: input.clean, folder: input.folder,
-    delivery: input.delivery, piece, crossfade: input.crossfade, source: studioSource(input.source) };
+  return { aspect: input.aspect, fit: input.fit, blur: percent(input.blur), dim: percent(input.dim), frame: studioFrame(input.frame), clean: input.clean, folder: input.folder,
+    delivery: input.delivery, piece: studioPiece(input.piece), crossfade: input.crossfade, source: studioSource(input.source), hero: studioHero(input.hero) };
 }
 
 // A workshop submission of the background: its gallery id and the status token.

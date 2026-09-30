@@ -25,11 +25,50 @@ export const ROW_GLYPH_SETS = Object.freeze({
 // misses passes to the next one (diffuse, as in Floyd–Steinberg); and a fixed dot-sized noise
 // (jitter) keeps flat areas from turning into a regular grid. Outlines skip the noise.
 export const rowBandTop = (settings = {}) => (settings.glyphs === 'dots' ? 10 : ROW_BAND_TOP);
-export function rowTypesetOptions(settings = {}) {
-  if (settings.glyphs !== 'dots') return { pitch: Number(settings.pitch) || ROW_DEFAULTS.pitch };
-  return settings.mode === 'lines'
-    ? { pitch: 4, sigma: 1.2, mark: 0.02, diffuse: 0.5, level: 0.45 }
-    : { pitch: 4, sigma: 1, mark: 0.02, diffuse: 0.85, level: 0.35, jitter: 0.6 };
+// scale < 1: a draft typeset at that fraction of the size (rowDraftScale, rowDraftAtlas):
+// row step and blur shrink with it.
+export function rowTypesetOptions(settings = {}, scale = 1) {
+  const options = settings.glyphs !== 'dots'
+    ? { pitch: Number(settings.pitch) || ROW_DEFAULTS.pitch }
+    : settings.mode === 'lines'
+      ? { pitch: 4, sigma: 1.2, mark: 0.02, diffuse: 0.5, level: 0.45 }
+      : { pitch: 4, sigma: 1, mark: 0.02, diffuse: 0.85, level: 0.35, jitter: 0.6 };
+  if (scale === 1) return options;
+  return { ...options, pitch: Math.round(options.pitch * scale), sigma: (options.sigma ?? ROW_TYPESET.sigma) * scale, scale };
+}
+// A draft while a slider moves: the whole typesetting at about `want` of the size, which
+// costs roughly want³ of the time (a full canvas: up to ~1 s → a few dozen ms). The scale is
+// snapped so the row step stays whole pixels: rows keep their count and positions.
+export function rowDraftScale(settings, want) {
+  const pitch = rowTypesetOptions(settings).pitch;
+  return Math.min(1, Math.max(1, Math.round(pitch * want)) / pitch);
+}
+// The atlas at a draft's scale. Each glyph is blurred at full size, then area-averaged with
+// its pen on a whole pixel; its fixed cost stays the full-size glyph's (× scale²). Averaging
+// alone lowers a thin stroke's self-energy, and the draft then filled the picture with
+// busier glyphs than the final result.
+export function rowDraftAtlas(glyphs, pairs, settings, scale) {
+  const options = { ...ROW_TYPESET, ...rowTypesetOptions(settings) }, kern = atlasKern(glyphs, pairs);
+  return {
+    glyphs: glyphs.map((g) => {
+      const soft = blur(g.ink, g.bw, g.bh, options.sigma);
+      const ox = Math.round(g.ox * scale), bw = Math.ceil((g.bw - g.ox) * scale) + ox + 1, bh = Math.ceil(g.bh * scale), ink = new Float32Array(bw * bh);
+      for (let j = 0; j < g.bh; j++) {
+        const y0 = j * scale, y1 = y0 + scale, ty = Math.floor(y0), ys = Math.min(y1, ty + 1);
+        for (let i = 0; i < g.bw; i++) {
+          const v = soft[j * g.bw + i];
+          if (!v) continue;
+          const x0 = (i - g.ox) * scale + ox, x1 = x0 + scale, tx = Math.floor(x0), xs = Math.min(x1, tx + 1);
+          // A source pixel covers at most 2 × 2 target pixels.
+          for (const [y, hy] of [[ty, ys - y0], [ty + 1, y1 - ys]])
+            for (const [x, wx] of [[tx, xs - x0], [tx + 1, x1 - xs]])
+              if (hy > 0 && wx > 0 && x >= 0 && x < bw && y < bh) ink[y * bw + x] += v * wx * hy;
+        }
+      }
+      return { ch: g.ch, adv: g.adv * scale, bw, bh, ox, ink, soft: true, constant: glyphConstant(g.ch, soft, g.bw, g.bh, options) * scale * scale };
+    }),
+    kern: (a, b) => kern(a, b) * scale
+  };
 }
 export const ROW_FONT = `${DOTA.fontWeight} ${DOTA.fontSize}px StudioRadiance`;
 // A player's own set: uppercase (the game shows labels uppercase), only glyphs of the game
@@ -74,6 +113,24 @@ export function atlasKern(glyphs, pairs) {
   return (a, b) => pairs[index.get(a) * n + index.get(b)] || 0;
 }
 
+// typesetRows' defaults: matching blur, cost of ink in the next row, of ink, of a mark.
+export const ROW_TYPESET = Object.freeze({ sigma: 0.8, spill: 0.7, ink: 0.02, mark: 0.3 });
+// The part of a glyph's cost that does not depend on the picture: its mark, its ink and
+// self-energy, and what it spills into the next row. Ink spilling into a neighbouring row is
+// only a cost: that row is matched on its own, and rewarding the overlap turned dark areas
+// into walls of tall bars.
+function glyphConstant(ch, soft, bw, bh, { pitch, ink, mark, spill }) {
+  let constant = ch === ' ' ? 0 : mark;
+  for (let j = 0; j < bh; j++)
+    for (let i = 0; i < bw; i++) {
+      const v = soft[j * bw + i];
+      if (v < 0.004) continue;
+      constant += ink * v;
+      constant += j >= pitch ? spill * v * v : v * v;
+    }
+  return constant;
+}
+
 export function blur(src, w, h, sigma) {
   if (!(sigma > 0)) return Float32Array.from(src);
   const r = Math.ceil(sigma * 2.5), kernel = new Float32Array(r * 2 + 1);
@@ -99,7 +156,8 @@ export function blur(src, w, h, sigma) {
 // Luminance 0..1 → how much ink each pixel wants, 0..1.
 // ink: 'auto' decides from the border, which is usually background; 'dark' draws the dark
 // parts of the picture with glyphs (line art on white), 'light' the light ones (photos).
-export function rowTarget(luma, w, h, settings = {}) {
+// scale < 1: a draft's smaller picture, so the fixed blurs shrink with it.
+export function rowTarget(luma, w, h, settings = {}, scale = 1) {
   const s = { ...ROW_DEFAULTS, ...settings };
   const sorted = Float32Array.from(luma).sort();
   const lo = sorted[Math.floor((luma.length - 1) * 0.01)], hi = sorted[Math.floor((luma.length - 1) * 0.99)];
@@ -116,7 +174,7 @@ export function rowTarget(luma, w, h, settings = {}) {
   // Local contrast: a wide unsharp mask lifts detail out of flat photos.
   const detail = s.detail / 100;
   if (detail) {
-    const wide = blur(tone, w, h, Math.max(3, Math.min(w, h) / 40));
+    const wide = blur(tone, w, h, Math.max(3 * scale, Math.min(w, h) / 40));
     tone = tone.map((v, i) => clamp01(v + detail * 1.5 * (v - wide[i])));
   }
   let target = tone;
@@ -124,7 +182,7 @@ export function rowTarget(luma, w, h, settings = {}) {
     // XDoG: a soft threshold of a sharpened difference of Gaussians gives clean ink lines
     // on the dark side of every edge.
     const src = ink === 'dark' ? level : level.map((v) => 1 - v);
-    const g1 = blur(src, w, h, 0.9), g2 = blur(src, w, h, 1.44);
+    const g1 = blur(src, w, h, 0.9 * scale), g2 = blur(src, w, h, 1.44 * scale);
     const lines = new Float32Array(w * h);
     for (let y = 2; y < h - 2; y++)
       for (let x = 2; x < w - 2; x++) {
@@ -140,20 +198,21 @@ export function rowTarget(luma, w, h, settings = {}) {
 // atlas.glyphs: [{ ch, adv, bw, bh, ox, ink: Float32Array(bw*bh) }] — a glyph drawn with its
 // pen at (ox, baseline − band top) in a bw×bh bitmap. atlas.kern(a, b): pair adjustment.
 // Returns rows of { text, x, y } in target pixels: x is the pen position of the first
-// visible glyph, y the top of the row's band.
-export function typesetRows(target, W, H, atlas, { pitch = 12, sigma = 0.8, spill = 0.7, ink = 0.02, mark = 0.3, quant = 4, diffuse = 0, level = 1, jitter = 0 } = {}) {
+// visible glyph, y the top of the row's band. scale: a draft's size (rowTypesetOptions).
+export function typesetRows(target, W, H, atlas, { pitch = 12, sigma = ROW_TYPESET.sigma, spill = ROW_TYPESET.spill, ink = ROW_TYPESET.ink, mark = ROW_TYPESET.mark, quant = 4, diffuse = 0, level = 1, jitter = 0, scale = 1 } = {}) {
   // level rescales the wanted ink to what the glyph set can reach: dots cover far less than @.
   // jitter adds a fixed, dot-sized noise so flat areas stipple irregularly instead of in a grid.
+  const cellSize = 4 * scale;
   const T = blur(target, W, H, sigma).map((v, i) => {
     if (!jitter || !v) return v * level;
-    const cell = Math.imul((i % W) >> 2, 73856093) ^ Math.imul(((i / W) | 0) >> 2, 19349663);
+    const cell = Math.imul(Math.floor((i % W) / cellSize), 73856093) ^ Math.imul(Math.floor(((i / W) | 0) / cellSize), 19349663);
     return clamp01(v * level * (1 + jitter * (((cell >>> 0) % 1000) / 500 - 1)));
   });
   // Identical bitmaps (Latin A and Cyrillic А) are one candidate. Glyphs that barely show
   // (the underscore at 16px) would act as free wide spaces.
   const seen = new Set();
   const glyphs = atlas.glyphs.filter((g) => {
-    if (g.ch !== ' ' && g.ink.reduce((a, b) => a + b, 0) < 3) return false;
+    if (g.ch !== ' ' && g.ink.reduce((a, b) => a + b, 0) < 3 * scale * scale) return false;
     const key = `${g.adv.toFixed(3)}:${Array.from(g.ink, (v) => Math.round(v * 8)).join('')}`;
     if (seen.has(key)) return false;
     seen.add(key); return true;
@@ -163,19 +222,14 @@ export function typesetRows(target, W, H, atlas, { pitch = 12, sigma = 0.8, spil
   const bh = Math.max(...glyphs.map((g) => g.bh)), pad = Math.max(...glyphs.map((g) => g.bw)) + 2;
   const Wp = W + pad * 2, band = new Float32Array(Wp * bh);
   const prepared = glyphs.map((g) => {
-    const soft = blur(g.ink, g.bw, g.bh, sigma), offsets = [], weights = [];
-    let constant = g.ch === ' ' ? 0 : mark;
-    for (let j = 0; j < g.bh; j++)
+    // A draft's glyphs arrive blurred, with their fixed cost (rowDraftAtlas).
+    const soft = g.soft ? g.ink : blur(g.ink, g.bw, g.bh, sigma), offsets = [], weights = [];
+    for (let j = 0; j < Math.min(g.bh, pitch); j++)
       for (let i = 0; i < g.bw; i++) {
         const v = soft[j * g.bw + i];
-        if (v < 0.004) continue;
-        constant += ink * v;
-        // Ink spilling into a neighbouring row is only a cost: that row is matched on its
-        // own, and rewarding the overlap turned dark areas into walls of tall bars.
-        if (j >= pitch) { constant += spill * v * v; continue; }
-        constant += v * v;
-        offsets.push(j * Wp + i - g.ox + pad); weights.push(-2 * v);
+        if (v >= 0.004) { offsets.push(j * Wp + i - g.ox + pad); weights.push(-2 * v); }
       }
+    const constant = g.soft ? g.constant : glyphConstant(g.ch, soft, g.bw, g.bh, { pitch, ink, mark, spill });
     return { ch: g.ch, adv: g.adv, own: Math.max(1, Math.round(g.adv)), constant, offsets: Int32Array.from(offsets), weights: Float32Array.from(weights) };
   });
   const K = prepared.length, kern = new Float32Array(K * K);
@@ -231,7 +285,7 @@ export function typesetRows(target, W, H, atlas, { pitch = 12, sigma = 0.8, spil
         for (let j = 0; j < pitch && top + j < H; j++) { const i = j * Wp + x + pad; e += band[i] - Math.min(1, drawn[i]); }
         spread[x] = e / pitch;
       }
-      const smooth = blur(spread, W, 1, 2);
+      const smooth = blur(spread, W, 1, 2 * scale);
       for (let j = 0; j < pitch && top + pitch + j < H; j++) {
         const row = (top + pitch + j) * W;
         for (let x = 0; x < W; x++) T[row + x] = clamp01(T[row + x] + diffuse * smooth[x]);

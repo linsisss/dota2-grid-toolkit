@@ -31,6 +31,23 @@ export function menuLook({ blur = 0, dim = 0 } = {}, height = 1080) {
   const sigma = clamp(blur) * MENU_EFFECTS.blur * height / 1080;
   return { sigma, veil: clamp(dim) * MENU_EFFECTS.dim, zoom: 1 + 5 * sigma / height };
 }
+// Framing (1.6.1): which part of the picture shows. `zoom` (1 to MENU_FRAME_ZOOM) enlarges it after
+// it is fitted, `x` and `y` (0 to 1, 0.5 the middle) place it: 0 puts its left (top) edge at the
+// screen's, 1 its right (bottom) edge; a picture smaller than the screen moves inside it.
+export const MENU_FRAME = Object.freeze({ zoom: 1, x: 0.5, y: 0.5 });
+export const MENU_FRAME_ZOOM = 3;
+export function menuFrame(frame) {
+  const value = (v, low, high, fallback) => (Number.isFinite(v) ? Math.min(high, Math.max(low, Math.round(v * 1000) / 1000)) : fallback);
+  return { zoom: value(frame?.zoom, 1, MENU_FRAME_ZOOM, 1), x: value(frame?.x, 0, 1, 0.5), y: value(frame?.y, 0, 1, 0.5) };
+}
+// Where the picture lies on the screen, in fractions of the screen's width and height: filling it
+// (cover) or whole in it (contain), enlarged by the look's zoom (menuLook) and the frame's, placed by
+// the frame. The builder draws the video's frames and shows its preview with the same numbers.
+export function framePlacement(screenRatio, pictureRatio, fit, zoom = 1, frame = MENU_FRAME) {
+  const { zoom: enlarge, x, y } = menuFrame(frame), r = pictureRatio / screenRatio, pick = fit === 'cover' ? Math.max : Math.min;
+  const w = pick(1, r) * zoom * enlarge, h = pick(1, 1 / r) * zoom * enlarge;
+  return { x: (1 - w) * x, y: (1 - h) * y, w, h };
+}
 export const menuBitrate = (seconds) => Math.min(MENU_LIMITS.bitrate, Math.floor(MENU_LIMITS.videoBytes * 8 / Math.max(1, seconds)));
 
 // What an upload is, from its first bytes.
@@ -85,8 +102,59 @@ export function cleanHomePage(home) {
   return cleaned;
 }
 
-// video: WebM bytes (VP8/VP9, no Opus audio); dashboard/home: Valve's current layouts as text.
-export function menuBackgroundPack({ video, dashboard, home = null, md5 }) {
+// The background behind the hero on the hero page («За героем» in the builder; tested in game
+// 30.09.2026, docs/customize.md). It is not a 3D scene: Valve draws a flat seasonal picture
+// (#HeroLoadoutBackgroundImage, hero_loadout_background_images.css) at 0.3 opacity with a vignette
+// and the hero model transparently over it. Our copy of the page plays a video there instead:
+// the menu's own WebM, or one of its own.
+export const HERO_PAGE = 'panorama/layout/dashboard_page_hero_new_v2.vxml_c';
+export const HERO_STYLE = 'panorama/styles/gridstudio_hero_background.vcss_c';
+export const HERO_VIDEO = 'panorama/videos/gridstudio_hero_background.webm';
+// How bright the video is behind the hero (Valve's picture: 0.3); the builder's preview matches it.
+export const HERO_OPACITY = 0.6;
+const HERO_STYLE_TEXT = `/* GridStudio: a video behind the hero instead of Valve's seasonal picture. */
+.DashboardPage #HeroLoadoutBackgroundImageContainer
+{
+	background-color: black;
+	blur: gaussian(0px);
+	saturation: 1;
+}
+
+.DashboardPage #HeroLoadoutBackgroundImageContainer #HeroLoadoutBackgroundImage
+{
+	visibility: collapse;
+}
+
+#GridStudioHeroMovie
+{
+	width: 100%;
+	height: 100%;
+	opacity: ${HERO_OPACITY};
+	transition-property: opacity, transform;
+	transition-duration: 1s;
+	transition-timing-function: cubic-bezier(0, 1, 0, 1);
+}
+
+.EnableHeroCustomize #GridStudioHeroMovie
+{
+	opacity: 0.1;
+	transform: translateX( -60px );
+}
+`;
+const HERO_INCLUDE = '<include src="s2r://panorama/styles/hero_loadout_background_images.vcss_c" />';
+const HERO_CONTAINER = /(<Panel id="HeroLoadoutBackgroundImageContainer" hittest="false">\n)/;
+// Valve's hero page with our style after theirs and the movie first in the picture's container
+// (so Valve's vignette stays on top).
+export function heroPage(page, video) {
+  if (page.split(HERO_INCLUDE).length !== 2 || !HERO_CONTAINER.test(page)) throw new Error('В dashboard_page_hero_new_v2.xml не найден фон за героем.');
+  return page.replace(HERO_INCLUDE, `${HERO_INCLUDE}\n\t\t<include src="s2r://${HERO_STYLE}" />`)
+    .replace(HERO_CONTAINER, `$1\t\t\t<MoviePanel id="GridStudioHeroMovie" src="s2r://${video}" repeat="true" autoplay="onload" hittest="false" />\n`);
+}
+
+// video: WebM bytes (VP8/VP9, no Opus audio); dashboard/home/hero.page: Valve's current layouts as
+// text. hero: null keeps Valve's picture behind the hero; { page } shows the menu video there;
+// { page, video } a video of its own.
+export function menuBackgroundPack({ video, dashboard, home = null, hero = null, md5 }) {
   const files = [
     { path: 'panorama/layout/dashboard.vxml_c', data: panoramaResource('panorama/layout/dashboard.vxml_c', menuDashboard(dashboard)) },
     { path: MENU_LAYOUT, data: panoramaResource(MENU_LAYOUT, LAYOUT) },
@@ -94,5 +162,10 @@ export function menuBackgroundPack({ video, dashboard, home = null, md5 }) {
     { path: MENU_VIDEO, data: video }
   ];
   if (home) files.splice(1, 0, { path: 'panorama/layout/dashboard_page_home.vxml_c', data: panoramaResource('panorama/layout/dashboard_page_home.vxml_c', cleanHomePage(home)) });
+  if (hero) {
+    files.push({ path: HERO_PAGE, data: panoramaResource(HERO_PAGE, heroPage(hero.page, hero.video ? HERO_VIDEO : MENU_VIDEO)) },
+      { path: HERO_STYLE, data: panoramaResource(HERO_STYLE, HERO_STYLE_TEXT) });
+    if (hero.video) files.push({ path: HERO_VIDEO, data: hero.video });
+  }
   return buildVPK(files, { version: 2, md5 });
 }

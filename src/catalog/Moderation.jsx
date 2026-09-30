@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { CATALOG_TAGS } from '../../scripts/catalog-document.mjs';
 import { catalogAPI, CATALOG_PATH } from './api.js';
 import { Icon, Notice, Stats, useCatalogConfig } from './Common.jsx';
 import { useAccount } from './Account.jsx';
 import GridPreview from './GridPreview.jsx';
-import { AdminEditButton } from './AdminEdit.jsx';
 import ArtModeration from './ArtModeration.jsx';
 import BackgroundModeration from './BackgroundModeration.jsx';
+import { Queue, RejectReason, reasonNote, useQueue } from './ModerationQueue.jsx';
 
-const TABS = [['pending', 'На проверке'], ['reports', 'Жалобы'], ['published', 'Опубликованы'], ['blocked', 'Заблокированы']];
+const TABS = [['pending', 'На проверке'], ['reports', 'Жалобы'], ['published', 'В мастерской'], ['blocked', 'Заблокированы']];
+const STATUS = { pending: 'На проверке', approved: 'В мастерской', rejected: 'Отклонена' };
 
 // The admin panel. The server checks the Telegram account on every /admin request;
 // these screens only spare everyone else from an empty page.
@@ -23,27 +25,11 @@ export default function Moderation() {
 
 function AdminPanel({ auth }) {
   const { config } = useCatalogConfig();
-  const [error, setError] = useState(''), [busy, setBusy] = useState(false), [filter, setFilter] = useState('pending');
-  const [data, setData] = useState(null), [selected, setSelected] = useState(''), [page, setPage] = useState(0), [refresh, setRefresh] = useState(0);
-  const [reason, setReason] = useState(''), [blockIP, setBlockIP] = useState(false), [search, setSearch] = useState(''), [query, setQuery] = useState('');
-  // Searching by title or author waits for a pause in typing, then starts from the first page.
-  useEffect(() => { const timer = setTimeout(() => { setQuery(search.trim()); setPage(0); }, 250); return () => clearTimeout(timer); }, [search]);
   const [kind, setKind] = useState(() => { const value = new URLSearchParams(location.search).get('moderate'); return ['arts', 'backgrounds'].includes(value) ? value : 'works'; });
   const showKind = value => { const url = new URL(location.href); url.searchParams.set('moderate', value === 'works' ? '' : value); history.replaceState(history.state, '', url); setKind(value); };
   const denied = error => { if (error.status === 401 || error.status === 403) auth.refresh().catch(() => {}); };
-  useEffect(() => {
-    const c = new AbortController(); setError('');
-    catalogAPI(`/admin/works?${new URLSearchParams({ filter, page: String(page), q: query })}`, { signal: c.signal }).then(next => { setData(next); setSelected(current => next.items.some(item => item.id === current) ? current : next.items[0]?.id || ''); })
-      .catch(error => { if (c.signal.aborted) return; denied(error); setError(error.message); });
-    return () => c.abort();
-  }, [filter, page, refresh, query]);
-  const item = data?.items.find(item => item.id === selected);
-  useEffect(() => { setReason(''); setBlockIP(false); }, [item?.id, item?.revision]);
-  async function run(request) {
-    setBusy(true); setError('');
-    try { await request(); setRefresh(x => x + 1); } catch (e) { denied(e); setError(e.message); } finally { setBusy(false); }
-  }
-  const review = action => run(() => catalogAPI(`/admin/works/${item.id}`, { method: 'POST', body: { action, revision: item.revision, reason, blockIP } }));
+  // The grid queue also brings the pause switch and the other queues' counts, so it loads on every tab.
+  const queue = useQueue('works', 'pending', denied), { data, item, busy, run } = queue;
   return <><header className="catalog-heading"><div><h1>Админка</h1><p>Проверяй именно ту версию, которая будет опубликована. Решения отражаются и на карточках в Telegram.</p></div>
     <div className="catalog-actions"><button className="catalog-button" disabled={busy || !data} onClick={() => run(() => catalogAPI('/admin/settings', { method: 'PATCH', body: { paused: !data.paused } }))}>
       {data?.paused ? 'Возобновить приём' : 'Приостановить приём'}</button>
@@ -51,33 +37,48 @@ function AdminPanel({ auth }) {
     {data?.paused && <Notice>Новые заявки, обновления и арты временно не принимаются. Просмотр и скачивание доступны.</Notice>}
     <div className="catalog-kind" role="tablist" aria-label="Что проверять">{[['works', 'Сетки', data?.counts?.pending], ['arts', 'Готовые арты', data?.artsPending], ['backgrounds', 'Фоны', data?.backgroundsPending]].map(([value, label, count]) =>
       <button key={value} role="tab" aria-selected={kind === value} onClick={() => showKind(value)}>{label}{count ? <span className="catalog-count">{count}</span> : null}</button>)}</div>
-    {kind === 'arts' ? <ArtModeration denied={denied}/> : kind === 'backgrounds' ? <BackgroundModeration denied={denied}/> : <>
-    <div className="catalog-toolbar"><div className="catalog-tabs">{TABS.map(([value, label]) => <button key={value} aria-pressed={filter === value} onClick={() => { setFilter(value); setPage(0); setData(null); }}>
-      {label}{data?.counts?.[value] ? <span className="catalog-count">{data.counts[value]}</span> : null}</button>)}</div>
-      <label className="catalog-search"><Icon name="search"/><input aria-label="Поиск сеток в админке" placeholder="Название или автор" value={search} maxLength={80} onChange={e => setSearch(e.target.value)}/></label></div>
-    {error && <Notice error>{error}</Notice>}
-    {!data ? <p role="status">Загружаем очередь…</p> : !data.items.length ? <section className="catalog-empty">{query ? <><h2>Ничего не нашлось</h2><p>В этой подборке нет сеток с «{query}» в названии или авторе.</p></> : <><h2>Здесь всё разобрано</h2><p>В этой подборке пусто.</p></>}{page > 0 && <button className="catalog-button" onClick={() => setPage(x => x - 1)}>Предыдущая страница</button>}</section> : <>
-      <div className="catalog-moderation"><nav className="catalog-queue" aria-label="Работы">{data.items.map(work => <button key={work.id} aria-current={selected === work.id ? 'true' : undefined} onClick={() => setSelected(work.id)}>
-        <strong>{work.title}</strong><span>{work.author || 'Без подписи'}</span><small>{work.stats.categories} категорий{work.reports.length ? ` · жалоб: ${work.reports.length}` : ''}{work.featured ? ' · в подборке' : ''}</small></button>)}</nav>
-        {item && <section className="catalog-review"><div className="catalog-review-title"><h2>{item.title}</h2><AdminEditButton item={item} compact onSaved={() => setRefresh(x => x + 1)}/></div><GridPreview grid={item.grid} title={item.title} large/><Stats stats={item.stats}/>
-          <p className="catalog-muted">Автор: {item.author || 'не указан'}. Работ от этого браузера: {item.related}. {item.linked ? 'Привязана к Telegram. ' : ''}{item.published && item.status !== 'pending' ? <a href={`${CATALOG_PATH}?id=${item.id}`} target="_blank" rel="noreferrer">Открыть в мастерской</a> : null}</p>
-          {item.published && item.status === 'pending' && <details><summary>Сравнить с опубликованной версией</summary><GridPreview grid={item.published.grid} title="Опубликованная версия" large/></details>}
-          {!!item.reports.length && <div className="catalog-reports"><h3>Жалобы</h3>{item.reports.map(report => <p key={report.id}>{report.reason}</p>)}</div>}
-          {item.blocked ? <><Notice>Работа скрыта из мастерской.{item.reason ? ` Причина: ${item.reason}` : ''}</Notice>
-            <div className="catalog-actions"><button className="catalog-button primary" disabled={busy} onClick={() => review('unblock')}>Разблокировать</button></div>
-            <p className="catalog-muted">Работа вернётся в мастерскую, а браузер и IP автора снова смогут отправлять сетки.</p></> : <>
-          <label>Причина отказа или ограничения<textarea rows={3} value={reason} onChange={e => setReason(e.target.value)} maxLength={500}/></label>
-          <div className="catalog-actions">{item.status === 'pending' ? <><button className="catalog-button primary" disabled={busy} onClick={() => review('approve')}><Icon name="check"/>Одобрить</button>
-            <button className="catalog-button" disabled={busy || !reason.trim()} onClick={() => review('reject')}>Вернуть на доработку</button></> : null}
-            {!!item.reports.length && <button className="catalog-button" disabled={busy} onClick={() => review('resolve')}>Жалобы проверены</button>}
-            {item.published && <button className="catalog-button" disabled={busy} onClick={() => run(() => catalogAPI(`/admin/works/${item.id}`, { method: 'POST', body: { action: 'feature', revision: item.revision, featured: !item.featured } }))}>{item.featured ? 'Убрать из подборки' : 'В подборку'}</button>}</div>
-          <details className="catalog-block"><summary>Скрыть работу и ограничить источник спама</summary><p>Работа исчезнет из мастерской. Браузер автора не сможет отправлять сетки 7 дней. Вернуть можно во вкладке «Заблокированы».</p>
-            <label className="catalog-check"><input type="checkbox" checked={blockIP} onChange={e => setBlockIP(e.target.checked)}/>Также ограничить IP на 7 дней</label>
-            <p className="catalog-muted">Одним IP могут пользоваться разные люди. Включай только при массовом спаме.</p>
-            <button className="catalog-button danger" disabled={busy || !reason.trim()} onClick={() => review('block')}>Скрыть работу и ограничить отправку</button></details></>}
-        </section>}</div>
-      {data.total > 20 && <nav className="catalog-pagination"><button className="catalog-button" disabled={!page} onClick={() => setPage(x => x - 1)}>Назад</button><span>{page + 1} / {Math.ceil(data.total / 20)}</span><button className="catalog-button" disabled={(page + 1) * 20 >= data.total} onClick={() => setPage(x => x + 1)}>Дальше</button></nav>}
-    </>}
-    </>}
+    {kind === 'arts' ? <ArtModeration denied={denied}/> : kind === 'backgrounds' ? <BackgroundModeration denied={denied}/> :
+      <Queue queue={queue} tabs={TABS} label="Сетки" entry={work => <><strong>{work.title}</strong><span>{work.author || 'Без подписи'}</span>
+        <small>{[work.tags.join(', ') || 'Без тегов', `${work.stats.categories} категорий`, work.reports.length && `жалоб: ${work.reports.length}`, work.featured && 'в подборке'].filter(Boolean).join(' · ')}</small></>}>
+        {/* A fresh form per version and after its title, author or tags were saved. */}
+        {item && <WorkReview key={[item.id, item.revision, item.title, item.author, item.tags.join()].join('\n')} item={item} queue={queue}/>}
+      </Queue>}
   </>;
+}
+
+// A grid laid out as a background's review, plus what only grids have: statistics, the published
+// version to compare an update with, the selection on the main page and the spam block.
+function WorkReview({ item, queue: { busy, run } }) {
+  const tags = item.tags.filter(tag => CATALOG_TAGS.includes(tag));
+  const [reason, setReason] = useState(''), [blockIP, setBlockIP] = useState(false), [meta, setMeta] = useState({ title: item.title, author: item.author || '', tags });
+  const review = (action, extra = {}) => run(() => catalogAPI(`/admin/works/${item.id}`, { method: 'POST', body: { action, revision: item.revision, reason, blockIP, ...extra } }));
+  const changed = meta.title !== item.title || meta.author !== (item.author || '') || [...meta.tags].sort().join() !== [...tags].sort().join();
+  const pending = item.status === 'pending';
+  return <section className="catalog-review">
+    <GridPreview grid={item.grid} title={item.title} large/><Stats stats={item.stats}/>
+    <p className="catalog-muted">{item.blocked ? 'Скрыта из мастерской' : STATUS[item.status] || 'В мастерской'}{reasonNote(item.reason)}. Работ из этого браузера: {item.related}.{item.linked ? ' Автор вошёл через Telegram — бот сообщит ему о решении.' : ''}
+      {item.published && !pending && !item.blocked ? <> <a href={`${CATALOG_PATH}?id=${item.id}`} target="_blank" rel="noreferrer">Открыть в мастерской</a></> : null}</p>
+    {item.published && pending && <details><summary>Сравнить с опубликованной версией</summary><GridPreview grid={item.published.grid} title="Опубликованная версия" large/></details>}
+    {item.blocked ? <><div className="catalog-actions"><button className="catalog-button primary" disabled={busy} onClick={() => review('unblock')}>Разблокировать</button></div>
+      <p className="catalog-muted">Работа вернётся в мастерскую, а браузер и IP автора снова смогут отправлять сетки.</p></> : <>
+      <form className="art-review-meta" onSubmit={event => { event.preventDefault(); review('edit', meta); }}>
+        <label>Название<input value={meta.title} maxLength={80} required onChange={event => setMeta({ ...meta, title: event.target.value })}/></label>
+        <label>Автор<input value={meta.author} maxLength={40} onChange={event => setMeta({ ...meta, author: event.target.value })}/></label>
+        <fieldset><legend>Теги <span className="catalog-muted">до трёх</span></legend><div className="catalog-tags">{CATALOG_TAGS.map(tag =>
+          <button type="button" key={tag} aria-pressed={meta.tags.includes(tag)} disabled={!meta.tags.includes(tag) && meta.tags.length >= 3}
+            onClick={() => setMeta({ ...meta, tags: meta.tags.includes(tag) ? meta.tags.filter(value => value !== tag) : [...meta.tags, tag] })}>{tag}</button>)}</div></fieldset>
+        <button className="catalog-button" disabled={busy || !changed || !meta.title.trim()}>Сохранить</button></form>
+      {pending ? <><RejectReason kind="works" value={reason} onChange={setReason}/>
+        <div className="catalog-actions"><button className="catalog-button primary" disabled={busy || changed} onClick={() => review('approve')}><Icon name="check"/>Одобрить</button>
+          <button className="catalog-button" disabled={busy || !reason.trim()} onClick={() => review('reject')}>Отклонить</button></div>
+        {changed && <p className="catalog-muted">Сначала сохрани изменения названия, тегов или автора.</p>}</>
+        : <label>Причина <span className="catalog-muted">для скрытия</span><textarea rows={2} value={reason} onChange={e => setReason(e.target.value)} maxLength={500}/></label>}
+      {!!item.reports.length && <div className="catalog-reports"><h3>Жалобы</h3>{item.reports.map(report => <p key={report.id}>{report.reason}</p>)}</div>}
+      {(!!item.reports.length || item.published) && <div className="catalog-actions">{!!item.reports.length && <button className="catalog-button" disabled={busy} onClick={() => review('resolve')}>Жалобы проверены</button>}
+        {item.published && <button className="catalog-button" disabled={busy} onClick={() => review('feature', { featured: !item.featured })}>{item.featured ? 'Убрать из подборки' : 'В подборку'}</button>}</div>}
+      <details className="catalog-block"><summary>Скрыть работу и ограничить источник спама</summary><p>Работа исчезнет из мастерской. Браузер автора не сможет отправлять сетки 7 дней. Вернуть можно во вкладке «Заблокированы». Причина — из поля выше.</p>
+        <label className="catalog-check"><input type="checkbox" checked={blockIP} onChange={e => setBlockIP(e.target.checked)}/>Также ограничить IP на 7 дней</label>
+        <p className="catalog-muted">Одним IP могут пользоваться разные люди. Включай только при массовом спаме.</p>
+        <button className="catalog-button danger" disabled={busy || !reason.trim()} onClick={() => review('block')}>Скрыть работу и ограничить отправку</button></details></>}
+  </section>;
 }

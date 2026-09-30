@@ -61,6 +61,9 @@ export class CatalogStore {
         state TEXT NOT NULL DEFAULT 'queued', attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL DEFAULT 0);
       CREATE TABLE IF NOT EXISTS author_notices(revision INTEGER PRIMARY KEY, account TEXT NOT NULL, work TEXT NOT NULL, first INTEGER NOT NULL, created INTEGER NOT NULL,
         state TEXT NOT NULL DEFAULT 'queued', attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL DEFAULT 0);
+      -- A rejected grid version ('work', revision id), background or art: the bot sends its author the reason.
+      CREATE TABLE IF NOT EXISTS reject_notices(id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, item TEXT NOT NULL, account TEXT NOT NULL, created INTEGER NOT NULL,
+        state TEXT NOT NULL DEFAULT 'queued', attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL DEFAULT 0, UNIQUE(kind, item));
       PRAGMA user_version=1;`);
     if (!this.all('PRAGMA table_info(works)').some(c => c.name === 'account')) this.run('ALTER TABLE works ADD COLUMN account TEXT');
     this.db.exec('CREATE INDEX IF NOT EXISTS works_account ON works(account); CREATE INDEX IF NOT EXISTS audit_work_action_at ON audit(work,action,at);');
@@ -70,6 +73,10 @@ export class CatalogStore {
     this.removeSelfLikes('likes', 'work', 'works');
   }
   close() { this.db.close(); }
+  // An author signed in with Telegram hears from the bot why a submission was rejected, once.
+  rejectNotice(kind, item, account) {
+    if (account) this.run('INSERT OR IGNORE INTO reject_notices(kind,item,account,created) VALUES(?,?,?,?)', kind, String(item), account, this.now());
+  }
   get(sql, ...args) { return this.db.prepare(sql).get(...args); }
   all(sql, ...args) { return this.db.prepare(sql).all(...args); }
   run(sql, ...args) { return this.db.prepare(sql).run(...args); }
@@ -313,6 +320,7 @@ export class CatalogStore {
       } else if (action === 'reject') {
         if (!reason) fail(400, 'Укажи причину отказа.');
         this.run("UPDATE revisions SET status='rejected',reason=? WHERE id=?", reason, revision);
+        this.rejectNotice('work', revision, work.account);
       } else if (action === 'block') {
         this.run("UPDATE works SET state='blocked',featured=0 WHERE id=?", id);
         this.run('UPDATE revisions SET reason=? WHERE id=?', reason, revision);

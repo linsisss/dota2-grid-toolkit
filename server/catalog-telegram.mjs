@@ -206,6 +206,27 @@ export class CatalogTelegram {
         reply_markup: { inline_keyboard: [[{ text: 'Открыть редактор', url }]] } })) return;
     }
   }
+  // A grid version, background or art was rejected, on the site or in the moderation topic: the author
+  // gets the reason word for word, as «Мои публикации» show it. Approved or changed since: nothing.
+  async deliverRejectNotices(limit = 20) {
+    const due = this.store.all("SELECT * FROM reject_notices WHERE state='queued' AND next_at<=? ORDER BY created, id LIMIT ?", this.store.now(), limit);
+    for (const note of due) {
+      const message = this.rejectMessage(note);
+      if (!message) { this.store.run("UPDATE reject_notices SET state='dropped' WHERE id=?", note.id); continue; }
+      if (!await this.direct('reject_notices', 'id', note, message)) return;
+    }
+  }
+  rejectMessage(note) {
+    const origin = this.config.origin;
+    const [row, what, page] = note.kind === 'work'
+      ? [this.store.get("SELECT r.title, r.reason, r.status, w.account FROM revisions r JOIN works w ON w.id=r.work WHERE r.id=? AND w.state='active'", Number(note.item)), 'Сетка', `${origin}/workshop?mine=1`]
+      : note.kind === 'background' ? [this.queue.backgrounds?.get(Number(note.item)), 'Фон', `${origin}/workshop?backgrounds&mine=1`]
+      : note.kind === 'art' ? [this.queue.arts.get(Number(note.item)), 'Арт', null] : [];
+    if (!row || row.status !== 'rejected' || row.account !== note.account || !row.reason) return null;
+    const verb = what === 'Сетка' ? 'не прошла' : 'не прошёл';
+    return { text: `${reviewEmoji('reject')} ${what} <b>«${escape(row.title ?? row.name)}»</b> ${verb} проверку.\n\nПричина: ${escape(row.reason)}`,
+      ...(page && !this.config.local ? { reply_markup: { inline_keyboard: [[{ text: 'Мои публикации', url: page }]] } } : {}) };
+  }
   async subscriptionCallback(query) {
     const answer = text => this.api.answerCallbackQuery({ callback_query_id: query.id, text, show_alert: false }).catch(() => {});
     const match = /^sub:off:([0-9a-f-]{36})$/.exec(query.data || ''), m = query.message;
@@ -289,7 +310,7 @@ export class CatalogTelegram {
     try {
       while (!signal.aborted) {
         if (leaseLost || !this.queue.lease(this.owner)) throw new Error('Процесс потерял право обрабатывать очередь.');
-        await this.deliverOne(); await this.refreshCards(); await this.deliverAuthorNotices(); await this.deliverArtNotices(); await this.deliverNotifications();
+        await this.deliverOne(); await this.refreshCards(); await this.deliverAuthorNotices(); await this.deliverArtNotices(); await this.deliverRejectNotices(); await this.deliverNotifications();
         let updates;
         try { updates = await this.api.getUpdates({ offset: Number(this.queue.setting('offset') || 0), timeout: 10, limit: 20, allowed_updates: ['callback_query', 'message'] }); }
         catch (error) {

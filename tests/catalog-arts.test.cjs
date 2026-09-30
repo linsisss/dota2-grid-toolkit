@@ -41,6 +41,9 @@ test('arts wait for moderation, reject duplicates and built-in arts, and reach t
   arts.moderate(first.id, { action: 'hide', reason: 'Повтор' }, { actor });
   assert.equal(arts.library().load().length, 0);
   assert.deepEqual([arts.moderation('hidden').total, arts.moderation('pending').counts], [1, { pending: 0, approved: 0, hidden: 1 }]);
+  // The admin search finds a name or an author, in any case, and keeps the tab counts whole.
+  assert.deepEqual([arts.moderation('hidden', 0, 'сердце').items.map(row => row.name), arts.moderation('hidden', 0, 'нет такого').total, arts.moderation('hidden', 0, '50%').total,
+    arts.moderation('hidden', 0, 'нет такого').counts.hidden], [['Сердце'], 0, 0, 1]);
   arts.moderate(first.id, { action: 'restore' }, { actor });
   assert.equal(arts.library().load()[0].name, 'Сердце');
   assert.ok(store.all("SELECT actor FROM audit WHERE work='art:1' AND action IN ('approve','edit','hide','restore')").every(row => JSON.parse(row.actor).id === '1253427'));

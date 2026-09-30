@@ -186,8 +186,15 @@ dialog.catalog-dialog:focus { outline:none; }
 .catalog-login { max-width:400px; margin:50px auto; }
 .catalog-login>.catalog-button { width:100%; margin-top:24px; }
 .catalog-moderation { display:grid; grid-template-columns:260px minmax(0,1fr); gap:36px; margin-top:26px; align-items:start; }
-.catalog-queue { display:flex; flex-direction:column; gap:6px; }
-.catalog-queue button { display:flex; flex-direction:column; align-items:start; gap:4px; padding:16px; border:0; border-radius:8px; background:none; color:var(--cat-ink); text-align:left; }
+/* The list scrolls by itself and stays in view while the review scrolls with the page; its pages sit under it. */
+.catalog-queue-side { position:sticky; top:20px; display:flex; flex-direction:column; min-height:0; max-height:calc(100dvh - 40px); }
+.catalog-queue { display:flex; flex-direction:column; gap:6px; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#4a4459 transparent; padding-right:6px; }
+.catalog-queue button { flex-shrink:0; display:flex; flex-direction:column; align-items:start; gap:4px; padding:16px; border:0; border-radius:8px; background:none; color:var(--cat-ink); text-align:left; }
+.catalog-queue-side .catalog-pagination { flex-shrink:0; gap:12px; margin-top:14px; padding-top:14px; border-top:1px solid var(--cat-line); }
+.catalog-queue-side .catalog-pagination .catalog-button { min-height:38px; padding:8px 14px; }
+.catalog-reason { margin:18px 0; }
+.catalog-reason legend { font-weight:500; }
+.catalog-reason textarea { margin-top:12px; }
 .catalog-queue button[aria-current=true] { background:#2c2935; }
 .catalog-queue span,.catalog-queue small { color:var(--cat-muted); font-size:13px; }
 .catalog-review>.catalog-preview { border-radius:12px; }
@@ -204,7 +211,7 @@ dialog.catalog-dialog:focus { outline:none; }
 @keyframes catalog-open { from { opacity:.5; transform:translateY(8px) scale(.99); } to { opacity:1; transform:none; } }
 @media(min-width:1600px) { .catalog-grid { gap:40px 28px; } }
 @media(max-width:1050px) { .catalog-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .catalog-detail { grid-template-columns:minmax(0,1fr) 290px; gap:24px; } .catalog-nav,.catalog-main { padding-left:28px; padding-right:28px; } .catalog-heading { align-items:start; } }
-@media(max-width:760px) { .catalog-nav { padding:22px 20px; } .catalog-nav nav { gap:16px; } .catalog-nav nav a { font-size:13px; } .catalog-brand { font-size:16px; } .catalog-brand>svg { width:27px; } .catalog-main { padding:0 20px; margin:22px auto 50px; } .catalog-heading { flex-direction:column; gap:18px; margin-bottom:30px; } .catalog-heading h1 { font-size:34px; } .catalog-heading p { font-size:15px; } .catalog-toolbar { align-items:stretch; flex-direction:column; gap:14px; } .catalog-search { width:100%; } .catalog-tabs { gap:2px; } .catalog-tabs button { padding:8px 10px; font-size:13px; } .catalog-grid { grid-template-columns:1fr; gap:28px; } .catalog-detail { grid-template-columns:1fr; gap:12px; } .catalog-detail-info h1 { font-size:30px; } .catalog-submit { grid-template-columns:1fr; padding:20px; gap:20px; } .catalog-dialog { width:calc(100vw - 24px); max-height:calc(100dvh - 24px); } .catalog-dialog-header { padding:16px 20px; } .catalog-dialog-header h2 { font-size:20px; } .catalog-submit-preview .catalog-muted { margin:0; } .catalog-stats { margin:16px 0; } .catalog-footer { margin:0 20px; flex-wrap:wrap; gap:14px; } .catalog-footer span:nth-child(2) { flex-basis:100%; order:2; } .catalog-footer a { margin-left:auto; } .catalog-receipt,.catalog-report { padding:22px; } .catalog-receipt .catalog-actions>* { width:100%; } .catalog-moderation { grid-template-columns:1fr; } .catalog-queue { max-height:240px; overflow:auto; } .catalog-replace { padding:20px 20px 0; } .catalog-login { margin:24px 0; } }
+@media(max-width:760px) { .catalog-nav { padding:22px 20px; } .catalog-nav nav { gap:16px; } .catalog-nav nav a { font-size:13px; } .catalog-brand { font-size:16px; } .catalog-brand>svg { width:27px; } .catalog-main { padding:0 20px; margin:22px auto 50px; } .catalog-heading { flex-direction:column; gap:18px; margin-bottom:30px; } .catalog-heading h1 { font-size:34px; } .catalog-heading p { font-size:15px; } .catalog-toolbar { align-items:stretch; flex-direction:column; gap:14px; } .catalog-search { width:100%; } .catalog-tabs { gap:2px; } .catalog-tabs button { padding:8px 10px; font-size:13px; } .catalog-grid { grid-template-columns:1fr; gap:28px; } .catalog-detail { grid-template-columns:1fr; gap:12px; } .catalog-detail-info h1 { font-size:30px; } .catalog-submit { grid-template-columns:1fr; padding:20px; gap:20px; } .catalog-dialog { width:calc(100vw - 24px); max-height:calc(100dvh - 24px); } .catalog-dialog-header { padding:16px 20px; } .catalog-dialog-header h2 { font-size:20px; } .catalog-submit-preview .catalog-muted { margin:0; } .catalog-stats { margin:16px 0; } .catalog-footer { margin:0 20px; flex-wrap:wrap; gap:14px; } .catalog-footer span:nth-child(2) { flex-basis:100%; order:2; } .catalog-footer a { margin-left:auto; } .catalog-receipt,.catalog-report { padding:22px; } .catalog-receipt .catalog-actions>* { width:100%; } .catalog-moderation { grid-template-columns:1fr; } .catalog-queue-side { position:static; max-height:none; } .catalog-queue { max-height:240px; } .catalog-replace { padding:20px 20px 0; } .catalog-login { margin:24px 0; } }
 @media(prefers-reduced-motion:reduce) { .catalog-dialog,.catalog-dialog[open]::backdrop { animation:none; } .catalog-button { transition:none; } }
 
 .catalog-login-flow { padding:28px; display:grid; gap:18px; }
@@ -316,7 +323,11 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 .art-review-preview canvas { position:absolute; inset:0; width:100%; height:100%; }
 .art-review-meta { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) auto; gap:12px; align-items:end; margin:18px 0; }
 .catalog-review .art-review-meta label { margin:0; }
-@media(max-width:760px) { .art-review-meta { grid-template-columns:1fr; } }
+/* With tags (grids, backgrounds): title and author on the first row, the tags and «Сохранить» under them. */
+.art-review-meta:has(> fieldset) { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto; }
+.art-review-meta:has(> fieldset) > label:nth-of-type(2) { grid-column:2 / 4; }
+.art-review-meta > fieldset { grid-column:1 / 3; }
+@media(max-width:760px) { .art-review-meta, .art-review-meta:has(> fieldset) { grid-template-columns:1fr; } .art-review-meta > * { grid-column:auto!important; } }
 
 
 .background-review-video { display:block; width:100%; aspect-ratio:16/9; border-radius:10px; background:#000; object-fit:contain; }

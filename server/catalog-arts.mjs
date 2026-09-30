@@ -42,13 +42,17 @@ export class CatalogArts {
     const { n, updated } = this.store.get("SELECT count(*) n, coalesce(max(updated),0) updated FROM arts WHERE status='approved'");
     return { version: `${n}-${updated}`, load: () => this.store.all("SELECT id,name,category,author,text FROM arts WHERE status='approved' ORDER BY updated DESC, id DESC") };
   }
-  moderation(filter = 'pending', page = 0) {
-    const where = FILTERS[filter] || FILTERS.pending, store = this.store;
+  // The admin queue; `search` finds a name or an author in it, as for grids and backgrounds (tab counts stay whole).
+  moderation(filter = 'pending', page = 0, search = '') {
+    const store = this.store, match = search ? " AND (unicode_lower(name) LIKE ? ESCAPE '!' OR unicode_lower(author) LIKE ? ESCAPE '!')" : '';
+    const args = search ? Array(2).fill(`%${search.toLowerCase().replace(/[!%_]/g, (c) => `!${c}`)}%`) : [];
+    const where = (FILTERS[filter] || FILTERS.pending) + match;
     const counts = Object.fromEntries(Object.entries(FILTERS).map(([key, sql]) => [key, store.get(`SELECT count(*) n FROM arts WHERE ${sql}`).n]));
-    const items = store.all(`SELECT * FROM arts WHERE ${where} ORDER BY ${filter === 'pending' ? 'id' : 'updated DESC, id DESC'} LIMIT 20 OFFSET ?`, page * 20)
+    const total = search ? store.get(`SELECT count(*) n FROM arts WHERE ${where}`, ...args).n : counts[filter in FILTERS ? filter : 'pending'];
+    const items = store.all(`SELECT * FROM arts WHERE ${where} ORDER BY ${filter === 'pending' ? 'id' : 'updated DESC, id DESC'} LIMIT 20 OFFSET ?`, ...args, page * 20)
       .map(art => ({ id: art.id, name: art.name, category: art.category, author: art.author, text: art.text, status: art.status, reason: art.reason,
         created: art.created, linked: !!art.account, related: store.get('SELECT count(*) n FROM arts WHERE browser=?', art.browser).n }));
-    return { items, total: counts[filter in FILTERS ? filter : 'pending'], counts, paused: store.paused() };
+    return { items, total, counts, paused: store.paused() };
   }
   moderate(id, { action, reason = '', name, category, author }, { transaction = true, actor = null } = {}) {
     const store = this.store;
@@ -61,7 +65,7 @@ export class CatalogArts {
         need('pending'); set('approved');
         // A player who signed in with Telegram hears from the bot once.
         if (art.account) store.run('INSERT OR IGNORE INTO art_notices(art,account,created) VALUES(?,?,?)', id, art.account, store.now());
-      } else if (action === 'reject') { need('pending'); if (!reason) fail(400, 'Укажи причину отказа.'); set('rejected', reason); }
+      } else if (action === 'reject') { need('pending'); if (!reason) fail(400, 'Укажи причину отказа.'); set('rejected', reason); store.rejectNotice('art', id, art.account); }
       else if (action === 'hide') { need('approved'); set('hidden', reason); }
       else if (action === 'restore') {
         need('hidden', 'rejected');

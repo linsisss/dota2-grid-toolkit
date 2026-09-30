@@ -284,6 +284,49 @@ test('a Telegram-linked author hears once per approved version, from the site or
   await f.worker.deliverAuthorNotices(); await f.worker.deliverAuthorNotices();
   assert.equal(f.store.get("SELECT state FROM author_notices WHERE work=?", third.id).state, 'failed');
 });
+test('a Telegram-linked author gets the rejection reason once, from the site or the topic; guests and replaced versions get nothing', async t => {
+  const direct = [];
+  const f = await fixture(t, { sendMessage: async params => { direct.push(params); return { message_id: 900 + direct.length }; } });
+  const { CatalogBackgrounds } = await import('../server/catalog-backgrounds.mjs');
+  const dir = mkdtempSync(join(tmpdir(), 'gs-reject-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const backgrounds = new CatalogBackgrounds(f.store, { dir }); f.worker.queue.backgrounds = backgrounds;
+  f.store.run("INSERT INTO accounts VALUES('501','Автор','author_nick',0)");
+  const reject = '<tg-emoji emoji-id="5985346521103604145">❌</tg-emoji>';
+  const first = f.store.save(input(40), identity, null, null, null, '501');
+  f.store.moderate(first.id, { action: 'reject', revision: first.revision, reason: 'В вашей сетке <мало> деталей.' });
+  f.store.moderate(f.saved.id, { action: 'reject', revision: f.saved.revision, reason: 'Гостю не пишем' });
+  await f.worker.deliverRejectNotices(); await f.worker.deliverRejectNotices();
+  assert.equal(direct.length, 1, 'the guest work sends nothing, a second round repeats nothing');
+  assert.equal(direct[0].chat_id, '501');
+  assert.equal(direct[0].text, `${reject} Сетка <b>«&lt;Сетка&gt;»</b> не прошла проверку.\n\nПричина: В вашей сетке &lt;мало&gt; деталей.`);
+  assert.deepEqual(direct[0].reply_markup.inline_keyboard, [[{ text: 'Мои публикации', url: 'https://gridstudio.me/workshop?mine=1' }]]);
+  // Rejected with the card in the moderation topic: the topic's reason.
+  const update = f.store.save(input(41), identity, first.id, '', first.revision, '501');
+  await f.worker.deliverOne(); await f.worker.callback(callback(jobOf(f), 'reject'));
+  await f.worker.deliverRejectNotices();
+  assert.equal(direct.length, 2);
+  assert.match(direct[1].text, /Причина: Отклонено участником команды в Telegram\.$/);
+  // A version the author replaced before the message went out is not announced.
+  const again = f.store.save(input(42), identity, first.id, '', update.revision, '501');
+  f.store.moderate(first.id, { action: 'reject', revision: again.revision, reason: 'Старая причина' });
+  f.store.save(input(43), identity, first.id, '', again.revision, '501');
+  await f.worker.deliverRejectNotices();
+  assert.equal(direct.length, 2);
+  assert.equal(f.store.get("SELECT state FROM reject_notices WHERE item=?", String(again.revision)).state, 'dropped');
+  // Backgrounds and arts: their own words; an art has no page to link.
+  const now = f.store.now();
+  const { id: background } = f.store.get(`INSERT INTO backgrounds(title,author,aspect,seconds,bytes,hash,account,browser,ip,created,updated)
+    VALUES('Лес','','16:9',10,1000,'h','501','b','i',?,?) RETURNING id`, now, now);
+  backgrounds.moderate(background, { action: 'reject', reason: 'Ваш фон слишком низкого качества.' });
+  const art = f.worker.queue.arts.submit({ name: 'Сердце', category: 'Другое', author: '', text: '@@ @@\n@@@@@' }, identity, '501');
+  f.worker.queue.arts.moderate(art.id, { action: 'reject', reason: 'Нарушение правил' });
+  await f.worker.deliverRejectNotices();
+  assert.equal(direct.length, 4);
+  assert.equal(direct[2].text, `${reject} Фон <b>«Лес»</b> не прошёл проверку.\n\nПричина: Ваш фон слишком низкого качества.`);
+  assert.deepEqual(direct[2].reply_markup.inline_keyboard, [[{ text: 'Мои публикации', url: 'https://gridstudio.me/workshop?backgrounds&mine=1' }]]);
+  assert.equal(direct[3].text, `${reject} Арт <b>«Сердце»</b> не прошёл проверку.\n\nПричина: Нарушение правил`);
+  assert.equal(direct[3].reply_markup, undefined);
+});
 test('admins correct the title, author and tags of the public version or a pending update, with the same rules as players', async t => {
   const f = await fixture(t), actor = JSON.stringify({ id: '1253427', name: '@admin · сайт' });
   f.store.moderate(f.saved.id, { action: 'approve', revision: f.saved.revision });

@@ -196,7 +196,7 @@ export class CatalogBackgrounds {
       const need = (...states) => { if (!states.includes(row.status)) fail(409, 'Фон уже проверен или изменён. Обнови список.'); };
       const set = (status, why = '') => store.run('UPDATE backgrounds SET status=?,reason=?,updated=? WHERE id=?', status, why, store.now(), id);
       if (action === 'approve') { need('pending'); set('approved'); }
-      else if (action === 'reject') { need('pending'); if (!reason) fail(400, 'Укажи причину отказа.'); set('rejected', reason); }
+      else if (action === 'reject') { need('pending'); if (!reason) fail(400, 'Укажи причину отказа.'); set('rejected', reason); store.rejectNotice('background', id, row.account); }
       else if (action === 'hide') { need('approved'); set('hidden', reason); store.run('UPDATE background_reports SET resolved=1 WHERE background=?', id); }
       else if (action === 'resolve') { need('approved'); store.run('UPDATE background_reports SET resolved=1 WHERE background=?', id); }
       else if (action === 'restore') {

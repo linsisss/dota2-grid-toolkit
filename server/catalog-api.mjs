@@ -394,7 +394,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
             // Open reports on published backgrounds need a look too.
             + (store.get("SELECT count(*) n FROM sqlite_master WHERE name='background_reports'").n ? store.get("SELECT count(DISTINCT p.background) n FROM background_reports p JOIN backgrounds b ON b.id=p.background WHERE p.resolved=0 AND b.status='approved'").n : 0) });
         if (path === '/admin/settings' && method === 'PATCH') { const body = await readJSON(request); if (typeof body.paused !== 'boolean') fail(400, 'Неверная настройка.'); store.setPaused(body.paused, actor); return send(200, { paused: store.paused() }); }
-        if (path === '/admin/arts' && method === 'GET') return send(200, arts.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0));
+        if (path === '/admin/arts' && method === 'GET') return send(200, arts.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search));
         if (path === '/admin/backgrounds' && method === 'GET') return send(200, gallery().moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search));
         const backgroundReview = /^\/admin\/backgrounds\/([1-9]\d{0,12})$/.exec(path);
         if (backgroundReview && method === 'POST') { const body = await readJSON(request); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = gallery().moderate(Number(backgroundReview[1]), body, { actor }); return send(200, { reviewed: true, ...result }); }

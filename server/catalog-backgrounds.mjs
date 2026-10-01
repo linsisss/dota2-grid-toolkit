@@ -152,15 +152,19 @@ export class CatalogBackgrounds {
       return { reported: true };
     });
   }
-  // The public gallery: approved only, newest or most liked first; search and tags as for grids (CatalogStore.list).
-  list({ query = '', tag = '', page = 0, popular = false, account = null } = {}) {
+  // The public gallery: approved only, newest or most liked first; search and tags as for grids
+  // (CatalogStore.list), and the screen a background is made for (MENU_SIZES). `aspects`: how many
+  // there are for every screen with this search and tag, for the filter.
+  list({ query = '', tag = '', aspect = '', page = 0, popular = false, account = null } = {}) {
     const clauses = ["status='approved'"], args = [];
     if (query) { clauses.push("(unicode_lower(title) LIKE ? ESCAPE '!' OR unicode_lower(author) LIKE ? ESCAPE '!')"); const q = `%${query.toLowerCase().replace(/[!%_]/g, (c) => `!${c}`)}%`; args.push(q, q); }
     if (tag) { clauses.push('EXISTS (SELECT 1 FROM json_each(tags) WHERE value=?)'); args.push(tag); }
+    const aspects = Object.fromEntries(this.store.all(`SELECT aspect, count(*) n FROM backgrounds WHERE ${clauses.join(' AND ')} GROUP BY aspect`, ...args).map((row) => [row.aspect, row.n]));
+    if (aspect) { clauses.push('aspect=?'); args.push(aspect); }
     const where = clauses.join(' AND ');
     const total = this.store.get(`SELECT count(*) n FROM backgrounds WHERE ${where}`, ...args).n;
     const items = this.store.all(`SELECT * FROM backgrounds WHERE ${where} ORDER BY ${popular ? `${LIKES} DESC, ` : ''}updated DESC, id DESC LIMIT 24 OFFSET ?`, ...args, page * 24).map((row) => this.view(row, account));
-    return { items, total };
+    return { items, total, aspects };
   }
   // A file may be read when it is approved, or by an admin.
   // Approved files are public; the others only for admins and the author's Telegram account.

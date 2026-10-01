@@ -68,8 +68,17 @@ export const gridForeignGlyphs = (grid) => foreignGlyphs((grid?.configs || []).f
 export const foreignSample = ({ chars }, size = 6) => chars.slice(0, size).map(([char]) => char).join(' ') + (chars.length > size ? ' …' : '');
 
 // Stored with measured advances, so metrics taken with an older model are measured again.
-export const TEXT_MODEL = 2;
+// 3 (1.7.1): widths measured at MEASURE_SCALE, see below.
+export const TEXT_MODEL = 3;
 const FONT = `${DOTA.fontWeight} ${DOTA.fontSize}px ${DOTA.fontFamily}`;
+// Glyph widths are measured at MEASURE_SCALE × the label size and scaled back. At 15 px some
+// browsers return advances rounded to whole pixels (font hinting; Chrome on Windows with some
+// font-smoothing settings): Radiance's space came out 3 px instead of 3.47, so it snapped to 3
+// screen pixels instead of 4, and a user's dot art packed with it looked right only on that
+// computer — spread apart for everyone else and in the game (01.10.2026). At ×64 that rounding is
+// under 0.01 px, and the widths are the font's own on every machine.
+const MEASURE_SCALE = 64;
+const MEASURE_FONT = `${DOTA.fontWeight} ${DOTA.fontSize * MEASURE_SCALE}px ${DOTA.fontFamily}`;
 const BASELINE = DOTA.fontSize * 0.857;
 
 // The game's advance of every glyph in a line: its kerned width snapped to whole screen pixels
@@ -98,16 +107,17 @@ function requestKorean() {
     .catch(() => {});
 }
 const settled = () => typeof document === 'undefined' || document.fonts?.status !== 'loading';
-// A glyph's kerned width after the one before it: measured once per pair for the whole page.
+// A glyph's kerned width after the one before it (at the label size, measured at MEASURE_FONT):
+// measured once per pair for the whole page.
 // Measuring every prefix of a line cost O(length²) — 2.3 s of the workshop's first paint with
 // 178-glyph rows — and gives the same widths (checked on the workshop grids: ≤ 0.00005 px).
-// The font is always FONT, so the caches are shared by every canvas.
+// The font is always MEASURE_FONT, so the caches are shared by every canvas.
 const pairs = new Map(), lines = new Map();
 function pairWidth(ctx, before, char) {
   const key = before + '\u0000' + char;
   let width = pairs.get(key);
   if (width === undefined) {
-    width = before ? ctx.measureText(before + char).width - ctx.measureText(before).width : ctx.measureText(char).width;
+    width = (before ? ctx.measureText(before + char).width - ctx.measureText(before).width : ctx.measureText(char).width) / MEASURE_SCALE;
     if (settled()) {
       if (pairs.size > 50000) pairs.clear();
       pairs.set(key, width);
@@ -121,7 +131,7 @@ function lineMetrics(ctx, line) {
   const cached = lines.get(line);
   if (cached) return cached;
   ctx.save();
-  ctx.font = FONT;
+  ctx.font = MEASURE_FONT;
   ctx.letterSpacing = '0px';
   let before = '';
   const widths = Array.from(line, (char) => {

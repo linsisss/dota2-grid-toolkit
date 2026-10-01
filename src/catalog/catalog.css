@@ -337,6 +337,16 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 
 /* Shared menu backgrounds (BackgroundGallery.jsx): the workshop's «Фоны» and the builder's «Готовые фоны». */
 @keyframes background-card-in { from { opacity:0; transform:translateY(6px); } }
+/* Tags on the left, the screen on the right (BackgroundScreenFilter); one under the other when narrow. */
+.background-filters { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px 28px; margin:22px 0; }
+.background-filters > .catalog-filters { margin:0; }
+.background-screens { align-items:center; }
+.background-screens-label { padding:0 2px 0 0 !important; border:0 !important; min-height:0 !important; color:var(--cat-muted); font-size:12px !important; letter-spacing:.06em; text-transform:uppercase; }
+.background-screens button { display:inline-flex; align-items:center; gap:6px; font-variant-numeric:tabular-nums; }
+.background-screens button small { color:var(--cat-muted); font-size:11px; opacity:.75; }
+.background-screens button[aria-pressed=true] small { color:inherit; }
+.background-screens button:disabled { opacity:.4; cursor:default; }
+.background-screen-mine { width:6px; height:6px; border-radius:50%; background:var(--cat-accent); }
 .background-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:22px; }
 .background-card { display:grid; gap:10px; animation:background-card-in 280ms cubic-bezier(.2,.8,.2,1) both; }
 .background-card-picture { position:relative; aspect-ratio:16/9; overflow:hidden; border-radius:10px; background:#000; box-shadow:0 0 0 1px var(--cat-line); }

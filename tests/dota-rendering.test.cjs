@@ -151,3 +151,27 @@ test('characters missing from Radiance are counted, and named once they are a no
   for (let i = 0; i < 30; i++) doc.entities.push(C.entity(doc, { type: 'symbol', text: '⁜', x: 10 + i, y: 10, w: 30, h: 30, layer: 'decor' }));
   assert.ok(C.warnings(doc).some((line) => line.startsWith('30 символов нет в шрифте Dota (⁜)')), C.warnings(doc).join(' | '));
 });
+
+test('advances do not depend on a browser that rounds small text to whole pixels', () => {
+  // A user's Chrome measured Radiance's space (0.2289 em) at 15.15 px as 3 px, not 3.47: it snapped
+  // to 3 screen pixels instead of 4, and their dot art spread apart for everyone else (01.10.2026).
+  // Widths are measured at 64× and scaled back, so such rounding no longer reaches the model.
+  // Rare characters stand for the space and the dot — a pair of them for each browser, since widths
+  // are cached by characters for the whole page.
+  const { glyphWidths, advanceAt } = require('../scripts/dota-rendering.mjs');
+  const EM = { '\u2E3A': 0.2289, '\u2E3B': 0.2738, '\u2E3C': 0.2289, '\u2E3D': 0.2738 };
+  const context = (round) => ({
+    font: '', letterSpacing: '0px', save() {}, restore() {},
+    measureText(text) {
+      const size = Number(/(\d+(?:\.\d+)?)px/.exec(this.font)[1]);
+      return { width: Array.from(text).reduce((sum, char) => sum + (round ? Math.round(EM[char] * size) : EM[char] * size), 0) };
+    }
+  });
+  const exact = glyphWidths(context(false), '\u2E3A\u2E3B\u2E3A\u2E3A\u2E3B');
+  const rounded = glyphWidths(context(true), '\u2E3C\u2E3D\u2E3C\u2E3C\u2E3D');
+  near(exact[0], 0.2289 * 15.15, 1e-9);
+  rounded.forEach((width, i) => near(width, exact[i], 0.01));
+  // Rounded at the label size, the space would have been 3 px and snapped a pixel short.
+  assert.notEqual(advanceAt(Math.round(0.2289 * 15.15)), advanceAt(exact[0]));
+  assert.deepEqual(rounded.map((width) => advanceAt(width)), exact.map((width) => advanceAt(width)));
+});

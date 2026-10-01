@@ -14,6 +14,7 @@ const messages = {
   'Неверная настройка архива.': 'Invalid archive setting.',
   'Проверка доступна только на GridStudio.': 'The check only works on GridStudio.',
   'Неизвестный тег.': 'Unknown tag.',
+  'Неизвестный формат экрана.': 'Unknown screen format.',
   'Неверное значение лайка.': 'Invalid like value.',
   'Неверное значение подписки.': 'Invalid subscription value.',
   'Страница временно недоступна.': 'The page is temporarily unavailable.',

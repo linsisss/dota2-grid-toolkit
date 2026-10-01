@@ -1,0 +1,55 @@
+{
+  "version": "1.7.1",
+  "date": "2026-10-01",
+  "githubUrl": "https://github.com/justkiddingxd/dota2-grid-toolkit/releases/tag/v1.7.1",
+  "sections": [
+    {
+      "title": "Мастерская",
+      "changes": [
+        {
+          "text": "Фильтр фонов по экрану: 16:9, 16:10, 21:9 и 4:3",
+          "children": [
+            "У каждого видно, сколько фонов; твой экран отмечен точкой"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Редактор",
+      "changes": [
+        {
+          "text": "Исправлено: на части компьютеров точечные арты выглядели ровно только у автора, а у остальных и в игре разъезжались",
+          "children": [
+            "Такую сетку скачай или опубликуй заново"
+          ]
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Workshop",
+        "changes": [
+          {
+            "text": "A screen filter for backgrounds: 16:9, 16:10, 21:9 and 4:3",
+            "children": [
+              "Each shows how many backgrounds it has; your screen is marked with a dot"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Editor",
+        "changes": [
+          {
+            "text": "Fixed: on some computers dot art looked even only to its author and fell apart for everyone else and in the game",
+            "children": [
+              "Download or publish such a grid again"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

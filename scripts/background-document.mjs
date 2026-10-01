@@ -7,6 +7,18 @@ import { MENU_SIZES } from './menu-background.mjs';
 // Tags work as the grids' ones (CATALOG_TAGS): up to three, none is fine.
 // «18+» blurs the background in the workshop until the viewer confirms their age, as for grids.
 export const BACKGROUND_TAGS = ['Аниме', 'Dota 2', 'Игры', 'Милота', '18+', 'Мемы', 'Dead inside', 'Природа', 'Космос', 'Абстракция'];
+
+// The screens a background is made for: the builder's MENU_SIZES (scripts/menu-background.mjs, not
+// imported here — the workshop would load the menu's layouts; tests/backgrounds.test.cjs keeps the two the same).
+export const BACKGROUND_SCREENS = Object.freeze(['16:9', '16:10', '21:9', '4:3']);
+const SCREEN_RATIOS = { '16:9': 16 / 9, '16:10': 16 / 10, '21:9': 64 / 27, '4:3': 4 / 3 };
+// The screen of this device, if it is one of them (within 4 %: 1366 × 768 is 16:9, 3440 × 1440 is 21:9).
+export function deviceScreen(width = globalThis.screen?.width, height = globalThis.screen?.height) {
+  if (!width || !height) return '';
+  const ratio = Math.max(width, height) / Math.min(width, height);
+  const [best, off] = BACKGROUND_SCREENS.map((aspect) => [aspect, Math.abs(Math.log(ratio / SCREEN_RATIOS[aspect]))]).sort((a, b) => a[1] - b[1])[0];
+  return off < 0.04 ? best : '';
+}
 export const BACKGROUND_LIMITS = Object.freeze({ video: 16_000_000, poster: 800_000, seconds: 31, daily: 3, accountDaily: 10, networkDaily: 20, pending: 300, storage: 10_000_000_000 });
 
 class ValidationError extends Error { constructor(message) { super(message); this.status = 400; } }

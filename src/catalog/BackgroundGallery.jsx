@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { BACKGROUND_TAGS } from '../../scripts/background-document.mjs';
+import { BACKGROUND_SCREENS, BACKGROUND_TAGS, deviceScreen } from '../../scripts/background-document.mjs';
 import { isAdultWork, SensitiveArt, useAdultConfirmed } from './Sensitive.jsx';
 import { catalogAPI } from './api.js';
 import { locale, t } from '../../scripts/i18n.mjs';
@@ -10,20 +10,37 @@ import { locale, t } from '../../scripts/i18n.mjs';
 export const backgroundMedia = (id, file) => `/api/catalog/backgrounds/${id}/${file}`;
 const seconds = (value) => t('{seconds} с', { seconds: (Math.round(value * 10) / 10).toLocaleString(locale) });
 
-// Approved backgrounds with a tag and a search (title or author), 24 a page; `more` appends the
-// next page. Typing waits a moment, like the grids' search.
-export function useBackgrounds({ tag = '', query = '', sort = 'new' } = {}) {
-  const [items, setItems] = useState(null), [total, setTotal] = useState(0), [page, setPage] = useState(0), [error, setError] = useState('');
-  useEffect(() => { setItems(null); setPage(0); }, [tag, query, sort]);
+// Approved backgrounds with a tag, a screen and a search (title or author), 24 a page; `more` appends
+// the next page; `aspects`: how many there are for every screen (the filter). Typing waits a
+// moment, like the grids' search.
+export function useBackgrounds({ tag = '', query = '', sort = 'new', aspect = '' } = {}) {
+  const [items, setItems] = useState(null), [total, setTotal] = useState(0), [aspects, setAspects] = useState({}), [page, setPage] = useState(0), [error, setError] = useState('');
+  useEffect(() => { setItems(null); setPage(0); }, [tag, query, sort, aspect]);
   useEffect(() => {
     const controller = new AbortController();
-    const timer = setTimeout(() => catalogAPI(`/backgrounds?${new URLSearchParams({ tag, q: query, sort, page: String(page) })}`, { signal: controller.signal })
-      .then((data) => { setItems((current) => page ? [...(current || []), ...data.items] : data.items); setTotal(data.total); setError(''); })
+    const timer = setTimeout(() => catalogAPI(`/backgrounds?${new URLSearchParams({ tag, aspect, q: query, sort, page: String(page) })}`, { signal: controller.signal })
+      .then((data) => { setItems((current) => page ? [...(current || []), ...data.items] : data.items); setTotal(data.total); setAspects(data.aspects || {}); setError(''); })
       .catch((problem) => { if (!controller.signal.aborted) setError(problem.message); }), query && !page ? 220 : 0);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [tag, query, sort, page]);
+  }, [tag, query, sort, aspect, page]);
   const update = (id, patch) => setItems((current) => current?.map((item) => item.id === id ? { ...item, ...patch } : item));
-  return { items, total, error, more: () => setPage((value) => value + 1), update };
+  return { items, total, aspects, error, more: () => setPage((value) => value + 1), update };
+}
+
+// «Любой» and the screens, each with how many backgrounds it has (none: greyed out); this device's
+// screen is marked.
+export function BackgroundScreenFilter({ value, onChange, counts = {} }) {
+  const mine = deviceScreen();
+  return <div className="catalog-tags background-screens" role="group" aria-label={t('Экран')}>
+    <span className="background-screens-label">{t('Экран')}</span>
+    <button aria-pressed={!value} onClick={() => onChange('')}>{t('Любой')}</button>
+    {BACKGROUND_SCREENS.map((aspect) => {
+      const count = counts[aspect] || 0, own = aspect === mine;
+      return <button key={aspect} aria-pressed={value === aspect} disabled={!count && value !== aspect} title={own ? t('Твой экран') : undefined}
+        aria-label={`${aspect}${own ? `, ${t('твой экран')}` : ''}: ${t('фонов: {count}', { count })}`} onClick={() => onChange(value === aspect ? '' : aspect)}>
+        {aspect}{own && <i className="background-screen-mine" aria-hidden="true"/>}<small aria-hidden="true">{count}</small></button>;
+    })}
+  </div>;
 }
 
 // «Все теги» and the tags, as above the grids.

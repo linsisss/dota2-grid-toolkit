@@ -17,7 +17,7 @@ import { useLanguage } from '../useLanguage.js';
 import { useAppMotion } from '../useAppMotion.js';
 import { VersionButton } from '../ChangelogButton.jsx';
 import { GridBackgroundSwitch } from './GridBackgroundSwitch.jsx';
-import { BackgroundCard, BackgroundTagFilter, useBackgrounds } from './BackgroundGallery.jsx';
+import { BackgroundCard, BackgroundScreenFilter, BackgroundTagFilter, useBackgrounds } from './BackgroundGallery.jsx';
 import LanguageSwitch from '../LanguageSwitch.jsx';
 import { locale, t, translateMessage } from '../../scripts/i18n.mjs';
 
@@ -93,14 +93,14 @@ const KINDS = () => [['grids', t('Сетки')], ['backgrounds', t('Фоны')]]
 // Menu backgrounds users shared (server/catalog-backgrounds.mjs); «Использовать» opens one in the builder.
 // «Мои публикации» (?backgrounds&mine=1) are the author's own, with statuses, as for grids.
 function Backgrounds({ mine, onMine, auth }) {
-  const [tag, setTag] = useState(''), [query, setQuery] = useState(''), [sort, setSort] = useState('popular'), [report, setReport] = useState(null);
-  const { items, total, error, more, update } = useBackgrounds({ tag, query, sort });
+  const [tag, setTag] = useState(''), [aspect, setAspect] = useState(''), [query, setQuery] = useState(''), [sort, setSort] = useState('popular'), [report, setReport] = useState(null);
+  const { items, total, aspects, error, more, update } = useBackgrounds({ tag, query, sort, aspect });
   const pick = (value) => { setSort(value); onMine(false); };
   return <>
     <div className="catalog-toolbar"><div className="catalog-tabs" aria-label={t('Подборка')}><button aria-pressed={!mine && sort === 'popular'} onClick={() => pick('popular')}>{t('Популярные')}</button><button aria-pressed={!mine && sort === 'new'} onClick={() => pick('new')}>{t('Новые')}</button><button aria-pressed={mine} onClick={() => onMine(true)}>{t('Мои публикации')}</button></div>
       {!mine && <label className="catalog-search"><Icon name="search"/><input aria-label={t('Поиск фонов')} placeholder={t('Название или автор')} value={query} maxLength={80} onChange={e => setQuery(e.target.value)}/></label>}</div>
     {mine ? <OwnedBackgrounds auth={auth}/> : <>
-    <BackgroundTagFilter value={tag} onChange={setTag}/>
+    <div className="background-filters"><BackgroundTagFilter value={tag} onChange={setTag}/><BackgroundScreenFilter value={aspect} onChange={setAspect} counts={aspects}/></div>
     {error && <Notice error>{error}</Notice>}
     {!items ? !error && <p role="status">{t('Загружаем фоны…')}</p> : items.length ? <>
       <div className="catalog-results"><span>{t('Фонов: {count}', { count: total })}{sort === 'popular' && ` · ${t('По числу лайков')}`}</span><HideAdultButton/></div>
@@ -109,7 +109,7 @@ function Backgrounds({ mine, onMine, auth }) {
         <button className="catalog-icon" aria-label={t('Пожаловаться на фон {title}', { title: item.title })} title={t('Пожаловаться')} onClick={() => setReport(item)}><Icon name="flag"/></button>
         <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`}>{t('Использовать')}</a></div></BackgroundCard>)}</section>
       {items.length < total && <button className="catalog-button background-more" onClick={more}>{t('Показать ещё')}</button>}
-    </> : <section className="catalog-empty"><h2>{query || tag ? t('Таких фонов пока нет') : t('Здесь появятся фоны пользователей')}</h2><p>{query || tag ? `${t('Попробуй другой запрос.')} ` : ''}{t('Собери фон из картинки, GIF или видео и нажми «Опубликовать в мастерскую».')}</p><a className="catalog-button" href={CUSTOMIZE_PATH}>{t('Собрать фон')}</a></section>}
+    </> : <section className="catalog-empty"><h2>{query || tag || aspect ? t('Таких фонов пока нет') : t('Здесь появятся фоны пользователей')}</h2><p>{query || tag || aspect ? `${t('Попробуй другой запрос.')} ` : ''}{t('Собери фон из картинки, GIF или видео и нажми «Опубликовать в мастерскую».')}</p><a className="catalog-button" href={CUSTOMIZE_PATH}>{t('Собрать фон')}</a></section>}
     </>}
     {report && <Report kind="background" item={report} onClose={() => setReport(null)}/>}
   </>;

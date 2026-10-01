@@ -16,6 +16,7 @@ import { StudioBackgrounds } from './studio-backgrounds.mjs';
 import { pickSafeGrid, renderSpaceThumbnail } from './catalog-preview.mjs';
 import { PREVIEW_TEXT, backgroundPreviewImage, gridPreviewImage, previewTitle, sitePage, withPreview } from './link-preview.mjs';
 import { BACKGROUND_TAGS, BACKGROUND_LIMITS, backgroundMeta, unpackBackgroundUpload } from '../scripts/background-document.mjs';
+import { MENU_SIZES } from '../scripts/menu-background.mjs';
 
 const cookies = (request) => Object.fromEntries((request.headers.cookie || '').split(';').map(pair => {
   const at = pair.indexOf('='); return at < 0 ? ['', ''] : [pair.slice(0, at).trim(), pair.slice(at + 1)];
@@ -239,9 +240,10 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       }
       // Shared menu backgrounds (the workshop's «Фоны», docs/customize.md).
       if (path === '/backgrounds' && method === 'GET') {
-        const tag = url.searchParams.get('tag') || '', query = (url.searchParams.get('q') || '').trim().slice(0, 80);
+        const tag = url.searchParams.get('tag') || '', aspect = url.searchParams.get('aspect') || '', query = (url.searchParams.get('q') || '').trim().slice(0, 80);
         if (tag && !BACKGROUND_TAGS.includes(tag)) fail(400, 'Неизвестный тег.');
-        return send(200, gallery().list({ query, tag, popular: url.searchParams.get('sort') === 'popular', account: user?.id || null, page: Math.min(1000, Math.max(0, Number(url.searchParams.get('page')) || 0)) | 0 }));
+        if (aspect && !Object.hasOwn(MENU_SIZES, aspect)) fail(400, 'Неизвестный формат экрана.');
+        return send(200, gallery().list({ query, tag, aspect, popular: url.searchParams.get('sort') === 'popular', account: user?.id || null, page: Math.min(1000, Math.max(0, Number(url.searchParams.get('page')) || 0)) | 0 }));
       }
       if (path === '/backgrounds' && method === 'POST') {
         const upload = unpackBackgroundUpload(await readBytes(request, BACKGROUND_LIMITS.video + BACKGROUND_LIMITS.poster + 8_000));

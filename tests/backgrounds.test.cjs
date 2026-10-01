@@ -76,6 +76,13 @@ test('shared backgrounds: captcha, ffprobe-checked upload, moderation, gallery, 
   assert.equal((await call(`/backgrounds?q=${encodeURIComponent('лЕс')}`)).body.total, 1, 'search ignores case');
   assert.equal((await call('/backgrounds?q=тест')).body.total, 1, 'and finds the author');
   assert.equal((await call('/backgrounds?q=100%')).body.total, 0);
+  // The screen filter: its own list, and how many there are for every screen (for the filter's counts).
+  assert.deepEqual(list.aspects, { '16:9': 1 });
+  assert.equal((await call(`/backgrounds?aspect=${encodeURIComponent('16:9')}`)).body.total, 1);
+  const wide = (await call(`/backgrounds?aspect=${encodeURIComponent('21:9')}&tag=${encodeURIComponent('Космос')}`)).body;
+  assert.equal(wide.total, 0); assert.deepEqual(wide.aspects, { '16:9': 1 }, 'the counts leave the chosen screen out');
+  assert.deepEqual((await call(`/backgrounds?aspect=${encodeURIComponent('16:9')}&tag=${encodeURIComponent('Аниме')}`)).body.aspects, {}, '…but not the tag');
+  assert.equal((await call('/backgrounds?aspect=5:4')).status, 400);
 
   // Guests: three a day (the rejected upload above did not count).
   assert.equal((await upload(meta({ title: 'Два' }), webm('1920x1080', 2, '0x204060'))).status, 201);
@@ -205,4 +212,12 @@ test('«Мои публикации» of backgrounds, the author seeing their pe
   const found = (await call(`/admin/backgrounds?${new URLSearchParams({ filter: 'pending', q: 'мой' })}`)).body;
   assert.deepEqual(found.items.map(item => item.title), ['Мой на проверке']); assert.equal(found.total, 1); assert.equal(found.counts.pending, 2);
   assert.equal((await call(`/admin/backgrounds?${new URLSearchParams({ filter: 'hidden', q: 'ОТКЛОН' })}`)).body.items[0].id, refused);
+});
+
+test('the workshop\'s screen filter knows the builder\'s screens and this device\'s', async () => {
+  const { MENU_SIZES } = await import('../scripts/menu-background.mjs');
+  const { BACKGROUND_SCREENS, deviceScreen } = await import('../scripts/background-document.mjs');
+  assert.deepEqual(BACKGROUND_SCREENS, Object.keys(MENU_SIZES));
+  assert.deepEqual([[1920, 1080], [1366, 768], [2560, 1600], [1440, 900], [3440, 1440], [2560, 1080], [1024, 768], [1080, 1920], [1280, 1024], [0, 0]].map(([w, h]) => deviceScreen(w, h)),
+    ['16:9', '16:9', '16:10', '16:10', '21:9', '21:9', '4:3', '16:9', '', '']);
 });

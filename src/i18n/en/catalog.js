@@ -298,5 +298,12 @@ export default {
   'Мастерская работает как есть и не гарантирует, что сетка останется опубликованной. Оригинал храни в своих файлах редактора.': 'The Workshop is provided as is and doesn’t guarantee a grid stays published. Keep the original in your editor files.',
   'Правила могут меняться. Действует версия на этой странице.': 'The rules may change. The version on this page applies.',
   'Жалобы': 'Reports',
-  'Увидел нарушение — нажми «Пожаловаться» на странице сетки. Операторы проверят её и решат, что делать.': 'Spotted a violation? Press “Report” on the grid’s page. Operators will check it and decide what to do.'
+  'Увидел нарушение — нажми «Пожаловаться» на странице сетки. Операторы проверят её и решат, что делать.': 'Spotted a violation? Press “Report” on the grid’s page. Operators will check it and decide what to do.',
+
+  // BackgroundGallery.jsx: the screen filter of the workshop's backgrounds.
+  'Экран': 'Screen',
+  'Любой': 'Any',
+  'Твой экран': 'Your screen',
+  'твой экран': 'your screen',
+  'фонов: {count}': 'backgrounds: {count}',
 };

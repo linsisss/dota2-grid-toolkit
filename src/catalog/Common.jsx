@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { Fragment, useEffect, useId, useRef, useState } from 'react';
 import { catalogAPI, CATALOG_PATH } from './api.js';
+import { locale, t } from '../../scripts/i18n.mjs';
 // The shared Lucide icons (src/Icon.jsx); catalog pages import them from here, and this file uses
 // them too (so an import, not only a re-export).
 import { Icon } from '../Icon.jsx';
@@ -10,8 +11,8 @@ export function SegmentSwitch({ label, value, options, onChange }) {
   return <div className="workshop-switch" role="tablist" aria-label={label} style={{ '--index': index, '--count': options.length }}>
     <span className="workshop-switch-thumb" aria-hidden="true"/>{options.map(([id, text]) => <button key={id} role="tab" aria-selected={value === id} onClick={() => onChange(id)}>{text}</button>)}</div>;
 }
-export function Brand() { return <a className="catalog-brand" href="./" aria-label="GridStudio, главная"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m5 4 23 24M5 18v10h10M18 4h10v10"/></svg><span>GRID<span>STUDIO</span></span></a>; }
-export function Stats({ stats }) { return <dl className="catalog-stats"><div><dt>Герои</dt><dd>{stats.heroes}</dd></div><div><dt>Символы</dt><dd>{(stats.symbols || 0).toLocaleString('ru-RU')}</dd></div><div><dt>Категории</dt><dd>{stats.categories.toLocaleString('ru-RU')}</dd></div></dl>; }
+export function Brand() { return <a className="catalog-brand" href="./" aria-label={t('GridStudio, главная')}><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m5 4 23 24M5 18v10h10M18 4h10v10"/></svg><span>GRID<span>STUDIO</span></span></a>; }
+export function Stats({ stats }) { return <dl className="catalog-stats"><div><dt>{t('Герои')}</dt><dd>{stats.heroes}</dd></div><div><dt>{t('Символы')}</dt><dd>{(stats.symbols || 0).toLocaleString(locale)}</dd></div><div><dt>{t('Категории')}</dt><dd>{stats.categories.toLocaleString(locale)}</dd></div></dl>; }
 export function Notice({ children, error = false }) { return <p className={`catalog-notice${error ? ' is-error' : ''}`} role={error ? 'alert' : 'status'}>{children}</p>; }
 // Windows are sized to their content: sm for forms and confirmations, md for a grid preview,
 // lg for the publication form. Closing through the window (×, Escape, backdrop) animates out;
@@ -42,7 +43,7 @@ export function Modal({ title, onClose, children, size = 'sm' }) {
       const box = ref.current.getBoundingClientRect();
       if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) close();
     }}>
-    <header className="catalog-dialog-header"><h2 id={heading}>{title}</h2><button className="catalog-icon catalog-dialog-close" onClick={close} aria-label="Закрыть"><Icon name="close"/></button></header>{children}
+    <header className="catalog-dialog-header"><h2 id={heading}>{title}</h2><button className="catalog-icon catalog-dialog-close" onClick={close} aria-label={t('Закрыть')}><Icon name="close"/></button></header>{children}
   </dialog>;
 }
 export function Captcha({ config, onToken, action = 'submit', reset = 0, hideSuccess = false }) {
@@ -81,8 +82,8 @@ export function Captcha({ config, onToken, action = 'submit', reset = 0, hideSuc
     return () => { cancelled = true; widget?.remove(); };
   }, [config?.captcha, action, reset, attempt]);
   return <div className="catalog-captcha" hidden={hideSuccess && status === 'verified'}><div ref={host}/>
-    <span className={'captcha-status captcha-' + status} role="status"><i aria-hidden="true"/>{status === 'verified' ? 'Проверка пройдена' : status === 'error' ? 'Проверка не завершена' : 'Проверяем отправку…'}</span>
-    {status === 'error' && <button type="button" className="catalog-link" onClick={() => setAttempt(value => value + 1)}>Повторить проверку</button>}
+    <span className={'captcha-status captcha-' + status} role="status"><i aria-hidden="true"/>{status === 'verified' ? t('Проверка пройдена') : status === 'error' ? t('Проверка не завершена') : t('Проверяем отправку…')}</span>
+    {status === 'error' && <button type="button" className="catalog-link" onClick={() => setAttempt(value => value + 1)}>{t('Повторить проверку')}</button>}
   </div>;
 }
 export function useCatalogConfig() {
@@ -91,3 +92,6 @@ export function useCatalogConfig() {
   return { config, error };
 }
 export function PublicLink({ id, children }) { return <a href={`${CATALOG_PATH}?id=${id}`}>{children}</a>; }
+// A translated sentence with markup in it, «Скопируй {file} в эту папку.»: rich(t(sentence), { file: <code>…</code> }).
+// The whole sentence is one dictionary entry, and each language puts the markup where it reads.
+export const rich = (text, parts) => text.split(/\{(\w+)\}/).map((piece, i) => (i % 2 ? <Fragment key={i}>{parts[piece]}</Fragment> : piece));

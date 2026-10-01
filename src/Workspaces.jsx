@@ -10,12 +10,15 @@ import { APP_VERSION } from '../scripts/version.mjs';
 import { cloudWorkspaceId } from '../scripts/workspaces.mjs';
 import { deleteBackground, listBackgrounds, updateBackground } from '../scripts/background-library.mjs';
 import { dropRecipe, publicationStatus, pullRecipes, pushRecipe, remotePoster } from './studio-backgrounds.js';
+import LanguageSwitch from './LanguageSwitch.jsx';
+import { t, locale, translateMessage } from '../scripts/i18n.mjs';
 
 // What the studio lists: everything, hero grids (files) or menu backgrounds. ?show=backgrounds
 // opens on the backgrounds (the builder links there after saving one).
 const SHOWS = [['all', 'Все'], ['grids', 'Сетки'], ['backgrounds', 'Фоны']];
 const initialShow = () => { const value = new URLSearchParams(location.search).get('show'); return SHOWS.some(([id]) => id === value) ? value : 'all'; };
-const seconds = (value) => `${String(Math.round(value * 10) / 10).replace('.', ',')} с`;
+const seconds = (value) => t('{value} с', { value: (Math.round(value * 10) / 10).toLocaleString(locale) });
+const day = (time) => new Date(time).toLocaleDateString(locale);
 
 // A menu background in the studio (docs/customize.md «Фоны в студии»): its poster, the video
 // while the pointer is on it (when this browser has it), a download in one click. Without the
@@ -23,10 +26,10 @@ const seconds = (value) => `${String(Math.round(value * 10) / 10).replace('.', '
 // The workshop submission's status on the card; a rejection shows its reason.
 const PUBLICATION = { pending: ['На проверке', 'is-pending'], approved: ['В мастерской', 'is-approved'], rejected: ['Отклонён', 'is-rejected'], hidden: ['Скрыт модератором', 'is-rejected'] };
 function Publication({ status }) {
-  const [label, tone] = PUBLICATION[status?.status] || [];
-  if (!label) return null;
-  const text = status.reason ? `${label}: ${status.reason}` : label;
-  return status.status === 'approved' ? <a className={`workspace-publication ${tone}`} href={`${CATALOG_PATH}?backgrounds`} title="Открыть мастерскую">{text}</a>
+  const [key, tone] = PUBLICATION[status?.status] || [];
+  if (!key) return null;
+  const label = t(key), text = status.reason ? `${label}: ${status.reason}` : label;
+  return status.status === 'approved' ? <a className={`workspace-publication ${tone}`} href={`${CATALOG_PATH}?backgrounds`} title={t('Открыть мастерскую')}>{text}</a>
     : <span className={`workspace-publication ${tone}`} title={text}>{text}</span>;
 }
 function BackgroundFile({ item, status, disabled, onDownload, onRename, onDelete }) {
@@ -41,14 +44,14 @@ function BackgroundFile({ item, status, disabled, onDownload, onRename, onDelete
   const stop = () => video.current?.pause();
   const href = `${CUSTOMIZE_PATH}?item=${item.id}`, here = item.video instanceof Blob;
   return <article className="workspace-file workspace-background" onPointerEnter={play} onPointerLeave={stop}>
-    <a className="workspace-background-picture" href={href} aria-label={`Изменить фон ${item.name}`}>{poster ? <img src={poster} alt=""/> : <span className="workspace-file-empty"><Icon name="brush"/></span>}<video ref={video} muted loop playsInline onPlaying={(event) => event.currentTarget.classList.add('is-playing')}/></a>
-    <div className="workspace-background-caption"><Icon name="brush"/><span>Фон меню · {item.recipe.aspect}{item.seconds ? ` · ${seconds(item.seconds)}` : ''}</span><Publication status={status}/>{!here && <span className="workspace-background-away">{item.cloud ? 'в аккаунте' : 'нужно собрать'}</span>}</div>
-    <div className="workspace-file-info"><a href={href}><h2>{item.name}</h2></a><time dateTime={new Date(item.updated).toISOString()}>{new Date(item.updated).toLocaleDateString('ru-RU')}</time></div>
+    <a className="workspace-background-picture" href={href} aria-label={t('Изменить фон {name}', { name: item.name })}>{poster ? <img src={poster} alt=""/> : <span className="workspace-file-empty"><Icon name="brush"/></span>}<video ref={video} muted loop playsInline onPlaying={(event) => event.currentTarget.classList.add('is-playing')}/></a>
+    <div className="workspace-background-caption"><Icon name="brush"/><span>{t('Фон меню')} · {item.recipe.aspect}{item.seconds ? ` · ${seconds(item.seconds)}` : ''}</span><Publication status={status}/>{!here && <span className="workspace-background-away">{item.cloud ? t('в аккаунте') : t('нужно собрать')}</span>}</div>
+    <div className="workspace-file-info"><a href={href}><h2>{item.name}</h2></a><time dateTime={new Date(item.updated).toISOString()}>{day(item.updated)}</time></div>
     <div className="workspace-file-actions">
-      {here ? <button className="catalog-icon" aria-label={`Скачать ${item.name}`} title="Скачать для Dota" disabled={disabled} onClick={onDownload}><Icon name="download"/></button>
-        : <a className="catalog-link" href={href}>{item.recipe.source.kind === 'workshop' ? 'Собрать заново' : 'Выбрать файл и собрать'}</a>}
-      <button className="catalog-icon" aria-label={`Переименовать ${item.name}`} disabled={disabled} onClick={onRename}><Icon name="edit"/></button>
-      <button className="catalog-icon" aria-label={`Удалить ${item.name}`} disabled={disabled} onClick={onDelete}><Icon name="trash"/></button>
+      {here ? <button className="catalog-icon" aria-label={t('Скачать {name}', { name: item.name })} title={t('Скачать для Dota')} disabled={disabled} onClick={onDownload}><Icon name="download"/></button>
+        : <a className="catalog-link" href={href}>{item.recipe.source.kind === 'workshop' ? t('Собрать заново') : t('Выбрать файл и собрать')}</a>}
+      <button className="catalog-icon" aria-label={t('Переименовать {name}', { name: item.name })} disabled={disabled} onClick={onRename}><Icon name="edit"/></button>
+      <button className="catalog-icon" aria-label={t('Удалить {name}', { name: item.name })} disabled={disabled} onClick={onDelete}><Icon name="trash"/></button>
     </div>
   </article>;
 }
@@ -64,10 +67,10 @@ function CreateMenu({ disabled, onGrid }) {
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', escape); };
   }, [open]);
   return <div className="workspace-create" ref={box}>
-    <button className="catalog-button primary" disabled={disabled} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)}><Icon name="plus"/>Создать</button>
+    <button className="catalog-button primary" disabled={disabled} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)}><Icon name="plus"/>{t('Создать')}</button>
     {open && <div className="workspace-create-menu" role="menu">
-      <button role="menuitem" onClick={() => { setOpen(false); onGrid(); }}><Icon name="grid"/><span><b>Сетка героев</b><small>Новый файл в редакторе</small></span></button>
-      <a role="menuitem" href={CUSTOMIZE_PATH}><Icon name="brush"/><span><b>Фон главного меню</b><small>Картинка, GIF или видео — готовый файл для Dota</small></span></a>
+      <button role="menuitem" onClick={() => { setOpen(false); onGrid(); }}><Icon name="grid"/><span><b>{t('Сетка героев')}</b><small>{t('Новый файл в редакторе')}</small></span></button>
+      <a role="menuitem" href={CUSTOMIZE_PATH}><Icon name="brush"/><span><b>{t('Фон главного меню')}</b><small>{t('Картинка, GIF или видео — готовый файл для Dota')}</small></span></a>
     </div>}
   </div>;
 }
@@ -100,7 +103,7 @@ export default function Workspaces({ registry, onOpen }) {
         }
         local = (await listBackgrounds()).filter(mine);
         cloud = remote.filter((row) => !local.some((record) => record.id === row.id)).map((row) => ({ ...row, account: auth.user.id, cloud: true }));
-      } catch (e) { setError(`${e.message} Фоны из этого браузера доступны.`); }
+      } catch (e) { setError(t('{message} Фоны из этого браузера доступны.', { message: translateMessage(e.message) })); }
     }
     const all = [...local, ...cloud];
     setBackgrounds(all);
@@ -130,20 +133,20 @@ export default function Workspaces({ registry, onOpen }) {
           await registry.put(next); changed = true;
         }
         if (changed) setItems(await registry.list());
-      } catch (e) { setError(`${e.message} Локальные файлы доступны.`); }
+      } catch (e) { setError(t('{message} Локальные файлы доступны.', { message: translateMessage(e.message) })); }
     }
     await loadBackgrounds();
   }
-  useEffect(() => { if (!auth.loading) refresh().catch(e => { setError(e.message); setLoading(false); }); }, [auth.user?.id, auth.loading, auth.fileSync.revision, archive]);
-  async function run(action) { setBusy(true); setError(''); try { await action(); if (auth.user) await auth.syncFiles(); await refresh(); } catch (e) { setError(e.message); } finally { setBusy(false); } }
+  useEffect(() => { if (!auth.loading) refresh().catch(e => { setError(translateMessage(e.message)); setLoading(false); }); }, [auth.user?.id, auth.loading, auth.fileSync.revision, archive]);
+  async function run(action) { setBusy(true); setError(''); try { await action(); if (auth.user) await auth.syncFiles(); await refresh(); } catch (e) { setError(translateMessage(e.message)); } finally { setBusy(false); } }
   async function read(meta) {
     const storage = await createProjectStorage(C.importProject, APP_VERSION, meta.id);
-    try { const initial = await storage.load(); if (meta.account && !meta.dirty) return (await catalogAPI(`/spaces/${cloudWorkspaceId(meta)}`)).document; if (initial.doc) return initial.doc; if (meta.account) return (await catalogAPI(`/spaces/${cloudWorkspaceId(meta)}`)).document; throw new Error(initial.issue || 'В файле нет сохранённого проекта.'); }
+    try { const initial = await storage.load(); if (meta.account && !meta.dirty) return (await catalogAPI(`/spaces/${cloudWorkspaceId(meta)}`)).document; if (initial.doc) return initial.doc; if (meta.account) return (await catalogAPI(`/spaces/${cloudWorkspaceId(meta)}`)).document; throw new Error(initial.issue || t('В файле нет сохранённого проекта.')); }
     finally { storage.database?.close(); }
   }
   async function copy(meta) {
     const doc = await read(meta), account = auth.user?.id || null;
-    const created = await registry.create(`${meta.name.slice(0, 88)} — копия`, doc, account);
+    const created = await registry.create(t('{name} — копия', { name: meta.name.slice(0, 88) }), doc, account);
     if (account) {
       const saved = await catalogAPI(`/spaces/${created.id}`, { method: 'PUT', body: { account, name: created.name, revision: 0, document: doc } });
       await registry.update(created.id, { cloudRevision: saved.revision, dirty: false, pendingUpload: false });
@@ -176,7 +179,7 @@ export default function Workspaces({ registry, onOpen }) {
   const matches = (value) => value.toLocaleLowerCase().includes(query.toLocaleLowerCase());
   const visible = items.filter(item => (!item.account || item.account === auth.user?.id) && !!item.archived === archive && matches(item.name));
   const incoming = new URLSearchParams(location.search).has('catalog');
-  const newGrid = () => run(async () => { const item = await registry.create('Без названия', C.demoDocument('blank'), auth.user?.id || null); onOpen(item); });
+  const newGrid = () => run(async () => { const item = await registry.create(t('Без названия'), C.demoDocument('blank'), auth.user?.id || null); onOpen(item); });
   // The archive holds grid files only; the studio mixes both, newest first.
   const entries = [...(archive || show !== 'backgrounds' ? visible : []).map(item => ({ kind: 'grid', item })),
     ...(!archive && show !== 'grids' ? backgrounds.filter(item => matches(item.name)) : []).map(item => ({ kind: 'background', item }))]
@@ -184,46 +187,47 @@ export default function Workspaces({ registry, onOpen }) {
   const choose = (value) => { const url = new URL(location.href); if (value === 'all') url.searchParams.delete('show'); else url.searchParams.set('show', value); history.replaceState(history.state, '', url); setShow(value); };
   async function download(item) {
     const { downloadPack, packBackground } = await import('./customize/background-pack.js');
-    const hero = item.heroVideo instanceof Blob ? new Uint8Array(await item.heroVideo.arrayBuffer()) : null;
-    await downloadPack(packBackground(new Uint8Array(await item.video.arrayBuffer()), item.recipe, hero), item.recipe);
+    const bytes = async (blob) => (blob instanceof Blob ? new Uint8Array(await blob.arrayBuffer()) : null);
+    await downloadPack(packBackground(await bytes(item.video), item.recipe, await bytes(item.heroVideo), await bytes(item.gridVideo)), item.recipe);
   }
-  const lead = archive ? 'Файлы, убранные из студии. Их можно вернуть.'
-    : show === 'grids' ? 'Сетки героев. В одном файле их может быть несколько.'
-    : show === 'backgrounds' ? (auth.user ? 'Готовое видео хранится в этом браузере, настройки — в аккаунте: на другом устройстве фон собирается заново.' : 'Фоны хранятся в этом браузере. Войди через Telegram, чтобы настройки фонов были и на других устройствах.')
-    : 'Сетки героев и фоны главного меню.';
+  const lead = archive ? t('Файлы, убранные из студии. Их можно вернуть.')
+    : show === 'grids' ? t('Сетки героев. В одном файле их может быть несколько.')
+    : show === 'backgrounds' ? (auth.user ? t('Готовое видео хранится в этом браузере, настройки — в аккаунте: на другом устройстве фон собирается заново.') : t('Фоны хранятся в этом браузере. Войди через Telegram, чтобы настройки фонов были и на других устройствах.'))
+    : t('Сетки героев и фоны главного меню.');
   const gridCard = (item) => { const locked = working || uploading(item); return <article className="workspace-file" key={item.id}>
         <WorkspacePreview item={item} disabled={archive || locked} onOpen={index => onOpen({ ...item, openConfigIndex: index })}/>
-        <div className="workspace-file-info"><button disabled={archive || locked} onClick={() => onOpen(item)}><h2>{item.name}</h2></button><time dateTime={new Date(item.updated).toISOString()}>{new Date(item.updated).toLocaleDateString('ru-RU')}</time></div>
-        <div className="workspace-file-actions">{!archive && <><button className="catalog-icon" aria-label={`Переименовать ${item.name}`} disabled={locked} onClick={() => { setRename(item); setName(item.name); }}><Icon name="edit"/></button><button className="catalog-icon" aria-label={`Создать копию ${item.name}`} disabled={locked} onClick={() => run(() => copy(item))}><Icon name="copy"/></button></>}
-        <button className="catalog-icon" aria-label={`${archive ? 'Восстановить' : 'В архив'} ${item.name}`} disabled={locked} onClick={() => run(async () => {
+        <div className="workspace-file-info"><button disabled={archive || locked} onClick={() => onOpen(item)}><h2>{item.name}</h2></button><time dateTime={new Date(item.updated).toISOString()}>{day(item.updated)}</time></div>
+        <div className="workspace-file-actions">{!archive && <><button className="catalog-icon" aria-label={t('Переименовать {name}', { name: item.name })} disabled={locked} onClick={() => { setRename(item); setName(item.name); }}><Icon name="edit"/></button><button className="catalog-icon" aria-label={t('Создать копию {name}', { name: item.name })} disabled={locked} onClick={() => run(() => copy(item))}><Icon name="copy"/></button></>}
+        <button className="catalog-icon" aria-label={t(archive ? 'Восстановить {name}' : 'В архив {name}', { name: item.name })} disabled={locked} onClick={() => run(async () => {
           let revision = item.cloudRevision;
-          if (item.account) { if (item.dirty) throw new Error('Сначала открой файл для синхронизации или создай его копию.'); const base = item.remoteRevision || item.cloudRevision; const result = await catalogAPI(`/spaces/${cloudWorkspaceId(item)}`, { method: 'PATCH', body: { revision: base, archived: !archive } }); if (item.cloudRevision === base) revision = result.revision; }
+          if (item.account) { if (item.dirty) throw new Error(t('Сначала открой файл для синхронизации или создай его копию.')); const base = item.remoteRevision || item.cloudRevision; const result = await catalogAPI(`/spaces/${cloudWorkspaceId(item)}`, { method: 'PATCH', body: { revision: base, archived: !archive } }); if (item.cloudRevision === base) revision = result.revision; }
           await registry.update(item.id, { archived: !archive, cloudRevision: revision });
         })}><Icon name={archive ? 'back' : 'archive'}/></button></div>
       </article>; };
-  const empty = query ? ['Ничего не найдено', 'Попробуй другое название.'] : archive ? ['В архиве пока пусто', 'Здесь можно восстановить файлы, убранные из рабочего списка.']
+  const empty = (query ? ['Ничего не найдено', 'Попробуй другое название.'] : archive ? ['В архиве пока пусто', 'Здесь можно восстановить файлы, убранные из рабочего списка.']
     : show === 'backgrounds' ? ['Здесь будут твои фоны', 'Собери фон главного меню — после сборки он сохранится здесь, и скачать его снова можно будет в один клик.']
     : show === 'grids' ? ['Создай первую сетку', 'Начни с пустой сетки или импортируй свой JSON. Вход не обязателен.']
-    : ['Создай первый файл', 'Начни с пустой сетки, импортируй свой JSON или собери фон главного меню. Вход не обязателен.'];
+    : ['Создай первый файл', 'Начни с пустой сетки, импортируй свой JSON или собери фон главного меню. Вход не обязателен.']).map((text) => t(text));
   return <div className="catalog-page workspace-page"><header className="workspace-topbar"><Brand/><div><AccountButton/></div></header>
-    <div className="workspace-shell"><aside className="workspace-sidebar"><nav aria-label="Студия"><button aria-current={!archive ? 'page' : undefined} onClick={() => setArchive(false)}><Icon name="grid"/>Студия</button><button aria-current={archive ? 'page' : undefined} onClick={() => setArchive(true)}><Icon name="archive"/>Архив</button><a href={CUSTOMIZE_PATH}><Icon name="brush"/>Фон меню</a><button type="button" className="is-soon" disabled title="Шрифты для Dota — скоро"><Icon name="font"/>Шрифты<small>скоро</small></button><a href={CATALOG_PATH}><Icon name="workshop"/>Мастерская</a></nav>
-      <div className="workspace-storage-note"><strong className="account-profile">{auth.user && <AccountAvatar user={auth.user}/>}<span>{auth.user ? accountLabel(auth.user) : 'Без аккаунта'}</span></strong><p>{auth.user ? auth.fileSync.busy ? 'Сохраняем файлы в аккаунте…' : 'Файлы сохраняются в аккаунте автоматически. Локальные копии остаются в браузере.' : 'Файлы хранятся в этом браузере. Очистка данных или освобождение места браузером может удалить прогресс.'}</p>{!auth.user && <button className="catalog-link" onClick={() => auth.requestLogin()}>Привязать Telegram</button>}</div>
-    </aside><main className="workspace-main"><header className="files-heading"><div><div className="files-title"><h1>{archive ? 'Архив' : 'Студия'}</h1>{!archive && <SegmentSwitch label="Что показать" value={show} options={SHOWS} onChange={choose}/>}<span className="workspace-file-count" aria-live="polite">{show === 'backgrounds' && !archive ? 'Фонов' : 'Файлов'}: {entries.length}</span></div><p>{lead}</p></div><div className="workspace-actions"><div className="workspace-import-actions"><label className="catalog-search workspace-search"><Icon name="search"/><input placeholder="Поиск файлов" aria-label="Поиск файлов" value={query} onChange={e => setQuery(e.target.value)}/></label><label className="catalog-button workspace-import"><Icon name="download"/>Импорт файла<input type="file" accept=".json,application/json" multiple className="catalog-file" disabled={working} onChange={event => {
+    <div className="workspace-shell"><aside className="workspace-sidebar"><nav aria-label={t('Студия')}><button aria-current={!archive ? 'page' : undefined} onClick={() => setArchive(false)}><Icon name="grid"/>{t('Студия')}</button><button aria-current={archive ? 'page' : undefined} onClick={() => setArchive(true)}><Icon name="archive"/>{t('Архив')}</button><a href={CUSTOMIZE_PATH}><Icon name="brush"/>{t('Фон меню')}</a><button type="button" className="is-soon" disabled title={t('Шрифты для Dota — скоро')}><Icon name="font"/>{t('Шрифты')}<small>{t('скоро')}</small></button><a href={CATALOG_PATH}><Icon name="workshop"/>{t('Мастерская')}</a></nav>
+      <div className="workspace-storage-note"><strong className="account-profile">{auth.user && <AccountAvatar user={auth.user}/>}<span>{auth.user ? accountLabel(auth.user) : t('Без аккаунта')}</span></strong><p>{auth.user ? auth.fileSync.busy ? t('Сохраняем файлы в аккаунте…') : t('Файлы сохраняются в аккаунте автоматически. Локальные копии остаются в браузере.') : t('Файлы хранятся в этом браузере. Очистка данных или освобождение места браузером может удалить прогресс.')}</p>{!auth.user && <button className="catalog-link" onClick={() => auth.requestLogin()}>{t('Привязать Telegram')}</button>}
+        <div style={{ marginTop: 12 }}><LanguageSwitch className="workspace-language"/></div></div>
+    </aside><main className="workspace-main"><header className="files-heading"><div><div className="files-title"><h1>{archive ? t('Архив') : t('Студия')}</h1>{!archive && <SegmentSwitch label={t('Что показать')} value={show} options={SHOWS.map(([id, label]) => [id, t(label)])} onChange={choose}/>}<span className="workspace-file-count" aria-live="polite">{t(show === 'backgrounds' && !archive ? 'Фонов: {count}' : 'Файлов: {count}', { count: entries.length })}</span></div><p>{lead}</p></div><div className="workspace-actions"><div className="workspace-import-actions"><label className="catalog-search workspace-search"><Icon name="search"/><input placeholder={t('Поиск файлов')} aria-label={t('Поиск файлов')} value={query} onChange={e => setQuery(e.target.value)}/></label><label className="catalog-button workspace-import"><Icon name="download"/>{t('Импорт файла')}<input type="file" accept=".json,application/json" multiple className="catalog-file" disabled={working} onChange={event => {
       const files = Array.from(event.target.files || []); event.target.value = ''; if (!files.length) return;
       run(async () => { const imported = await readGridFiles(files); for (const file of imported) await registry.create(file.name.replace(/\.json$/i, '').slice(0, 100), file.doc, auth.user?.id || null); });
     }}/></label></div><CreateMenu disabled={working} onGrid={newGrid}/></div></header>
-      {incoming && <Notice>Выбери файл, в который добавить сетку из мастерской, или создай новый.</Notice>}
+      {incoming && <Notice>{t('Выбери файл, в который добавить сетку из мастерской, или создай новый.')}</Notice>}
       {error && <Notice error>{error}</Notice>}
-      {auth.fileSync.error && <Notice error>{auth.fileSync.error}<button className="catalog-link" disabled={working} onClick={() => auth.syncFiles()}>Повторить сохранение</button></Notice>}
-      {loading ? <p role="status">Открываем файлы…</p> : entries.length ? <section className="workspace-files" aria-label="Студия">{entries.map(({ kind, item }) => kind === 'grid' ? gridCard(item)
+      {auth.fileSync.error && <Notice error>{auth.fileSync.error}<button className="catalog-link" disabled={working} onClick={() => auth.syncFiles()}>{t('Повторить сохранение')}</button></Notice>}
+      {loading ? <p role="status">{t('Открываем файлы…')}</p> : entries.length ? <section className="workspace-files" aria-label={t('Студия')}>{entries.map(({ kind, item }) => kind === 'grid' ? gridCard(item)
         : <BackgroundFile key={item.id} item={item} status={statuses[item.id]} disabled={working} onDownload={() => run(() => download(item))} onRename={() => { setRename(item); setName(item.name); }} onDelete={() => setRemoving(item)}/>)}</section>
         : <section className="workspace-empty"><Icon name={archive ? 'archive' : show === 'backgrounds' ? 'brush' : 'grid'}/><h2>{empty[0]}</h2><p>{empty[1]}</p>
-        {!query && !archive && <div className="workspace-empty-actions">{show !== 'backgrounds' && <button className="catalog-button primary" disabled={working} onClick={newGrid}><Icon name="grid"/>Пустая сетка</button>}{show !== 'grids' && <a className={`catalog-button${show === 'backgrounds' ? ' primary' : ''}`} href={CUSTOMIZE_PATH}><Icon name="brush"/>Фон меню</a>}</div>}</section>}
-    </main></div>{rename && <Modal title={rename.recipe ? 'Название фона' : 'Имя файла'} onClose={() => setRename(null)}><form className="catalog-login-flow" onSubmit={changeName}><label>Название<input value={name} maxLength={100} autoFocus onChange={e => setName(e.target.value)} required/></label><button className="catalog-button primary" disabled={working || !name.trim()}>Сохранить</button>{error && <Notice error>{error}</Notice>}</form></Modal>}
-    {removing && <Modal title="Удалить фон?" onClose={() => setRemoving(null)}><div className="catalog-confirm"><p>«{removing.name}» исчезнет из студии{removing.account ? ' на всех устройствах' : ''}. Файлы, которые ты уже скачал, останутся.</p>
-      <div className="catalog-actions"><button className="catalog-button" onClick={() => setRemoving(null)}>Оставить</button><button className="catalog-button danger" disabled={working} onClick={() => run(async () => {
+        {!query && !archive && <div className="workspace-empty-actions">{show !== 'backgrounds' && <button className="catalog-button primary" disabled={working} onClick={newGrid}><Icon name="grid"/>{t('Пустая сетка')}</button>}{show !== 'grids' && <a className={`catalog-button${show === 'backgrounds' ? ' primary' : ''}`} href={CUSTOMIZE_PATH}><Icon name="brush"/>{t('Фон меню')}</a>}</div>}</section>}
+    </main></div>{rename && <Modal title={rename.recipe ? t('Название фона') : t('Имя файла')} onClose={() => setRename(null)}><form className="catalog-login-flow" onSubmit={changeName}><label>{t('Название')}<input value={name} maxLength={100} autoFocus onChange={e => setName(e.target.value)} required/></label><button className="catalog-button primary" disabled={working || !name.trim()}>{t('Сохранить')}</button>{error && <Notice error>{error}</Notice>}</form></Modal>}
+    {removing && <Modal title={t('Удалить фон?')} onClose={() => setRemoving(null)}><div className="catalog-confirm"><p>{t(removing.account ? '«{name}» исчезнет из студии на всех устройствах.' : '«{name}» исчезнет из студии.', { name: removing.name })} {t('Файлы, которые ты уже скачал, останутся.')}</p>
+      <div className="catalog-actions"><button className="catalog-button" onClick={() => setRemoving(null)}>{t('Оставить')}</button><button className="catalog-button danger" disabled={working} onClick={() => run(async () => {
         if (!removing.cloud) await deleteBackground(removing.id);
         if (auth.user && removing.account === auth.user.id && (removing.synced || removing.cloud)) await dropRecipe(removing.id);
         setRemoving(null);
-      })}>Удалить</button></div></div></Modal>}</div>
+      })}>{t('Удалить')}</button></div></div></Modal>}</div>
 }

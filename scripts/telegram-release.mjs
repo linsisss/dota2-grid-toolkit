@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { loadEnvFile } from 'node:process';
 import { Telegram } from 'puregram';
-import { releasePayload } from './release-format.mjs';
+import { postEmojiIds, releasePayload } from './release-format.mjs';
 
 // No polling, webhook, build, git operation or server deployment runs here.
 const args = process.argv.slice(2);
@@ -22,6 +22,10 @@ try {
   if (editReleaseId && release.test) throw new Error('Тест редактируется через --edit-test.');
   if (editTestId && editReleaseId) throw new Error('Укажи одно сообщение для правки.');
   let payload = releasePayload(release, config);
+  // A section without its own emoji (releases/telegram.json sectionEmoji, by the exact title) is
+  // posted plain: worth a look before sending.
+  const plain = (release.sections ?? []).map((section) => section.title).filter((title) => title && !config.sectionEmoji?.[title]);
+  if (plain.length) console.warn(`Без эмодзи раздела: ${plain.join(', ')} (releases/telegram.json → sectionEmoji).`);
   if (!args.includes('--send')) {
     console.log(JSON.stringify(payload, null, 2));
   } else {
@@ -43,8 +47,9 @@ try {
     if (editReleaseId && (previous?.status !== 'sent' || previous.messageId !== editReleaseId || previous.version !== release.version))
       throw new Error('Можно изменить только отправленное сообщение этой версии из квитанции.');
     const telegram = Telegram.fromToken(token, { retryOnFloodWait: false });
-    const stickers = await telegram.api.getCustomEmojiStickers({ custom_emoji_ids: [config.emojiId] });
-    payload = releasePayload(release, config, stickers[0]?.emoji || '🔷');
+    // Every custom emoji's own plain emoji (the text Telegram keeps inside the tag).
+    const stickers = await telegram.api.getCustomEmojiStickers({ custom_emoji_ids: [...new Set(postEmojiIds(config))] });
+    payload = releasePayload(release, config, Object.fromEntries(stickers.map((sticker) => [sticker.custom_emoji_id, sticker.emoji]).filter(([, emoji]) => emoji)));
     // Reserve before the request. An uncertain timeout must never blindly duplicate a post.
     if (!editId) writeFileSync(receiptPath, JSON.stringify({ status: 'pending', version: release.version, chatId: config.chatId, topicId: config.topicId, startedAt: new Date().toISOString() }, null, 2), { flag: 'wx' });
     const message = editId

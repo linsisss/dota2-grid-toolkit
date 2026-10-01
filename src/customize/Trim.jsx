@@ -1,14 +1,18 @@
 import { useEffect, useRef } from 'react';
 import { fitPiece, MENU_LIMITS, pieceLength } from '../../scripts/menu-background.mjs';
+import { locale, t } from '../../scripts/i18n.mjs';
 
 // Choosing the piece of a video that becomes the background, and how it loops.
 // The loop joins the end back to the start: with a crossfade of f seconds the last f seconds fade
 // into the first f, and the clip starts f seconds in, so its end flows into its start. The preview
 // plays exactly that with two video elements, before anything is encoded.
-export const CROSSFADES = [[0, 'Нет'], [0.5, '0,5 с'], [1, '1 с'], [2, '2 с']];
+const secondsText = (value) => t('{seconds} с', { seconds: value.toLocaleString(locale, { maximumFractionDigits: 1 }) });
+export const CROSSFADES = () => [[0, t('Нет')], [0.5, secondsText(0.5)], [1, secondsText(1)], [2, secondsText(2)]];
+// The decimal mark of the site's language: 0:12,5 in Russian, 0:12.5 in English.
+const DECIMAL = () => (0.5).toLocaleString(locale).charAt(1);
 const clock = (seconds) => {
   const whole = Math.max(0, seconds), minutes = Math.floor(whole / 60), rest = whole - minutes * 60;
-  return `${minutes}:${rest.toFixed(1).padStart(4, '0').replace('.', ',')}`;
+  return `${minutes}:${rest.toFixed(1).padStart(4, '0').replace('.', DECIMAL())}`;
 };
 export function LoopPreview({ src, piece, crossfade, style, onMeta, onTime }) {
   const first = useRef(null), second = useRef(null), front = useRef(0), time = useRef(onTime);
@@ -76,10 +80,10 @@ export function TrimBar({ duration, piece, crossfade, playhead, onChange, onCros
   return <div className="custom-trim">
     <div className="custom-trim-head">
       <span><b>{clock(piece.start)}</b> — <b>{clock(piece.end)}</b></span>
-      <span className="catalog-muted">{`в фоне ${pieceLength(piece, crossfade).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} с из ${MENU_LIMITS.seconds}`}</span>
-      <span className="custom-trim-loop"><span className="catalog-muted">Склейка</span>
-        <span className="custom-seg has-thumb is-compact" role="radiogroup" aria-label="Плавная склейка" style={{ '--count': CROSSFADES.length, '--index': CROSSFADES.findIndex(([value]) => value === crossfade) }}>
-          <span className="custom-seg-thumb" aria-hidden="true"/>{CROSSFADES.map(([value, label]) =>
+      <span className="catalog-muted">{t('в фоне {length} с из {limit}', { length: pieceLength(piece, crossfade).toLocaleString(locale, { maximumFractionDigits: 1 }), limit: MENU_LIMITS.seconds })}</span>
+      <span className="custom-trim-loop"><span className="catalog-muted">{t('Склейка')}</span>
+        <span className="custom-seg has-thumb is-compact" role="radiogroup" aria-label={t('Плавная склейка')} style={{ '--count': CROSSFADES().length, '--index': CROSSFADES().findIndex(([value]) => value === crossfade) }}>
+          <span className="custom-seg-thumb" aria-hidden="true"/>{CROSSFADES().map(([value, label]) =>
           <button key={value} type="button" role="radio" aria-checked={crossfade === value} onClick={() => onCrossfade(value)}>{label}</button>)}</span></span>
     </div>
     <div className="custom-trim-track" ref={track} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
@@ -87,8 +91,8 @@ export function TrimBar({ duration, piece, crossfade, playhead, onChange, onCros
       <span className="custom-trim-piece" style={{ left: percent(piece.start), width: percent(piece.end - piece.start) }} onPointerDown={down('move')}>
         {fade > 0 && <><i className="custom-trim-fade is-in" style={{ width: `${(fade / (piece.end - piece.start)) * 100}%` }}/><i className="custom-trim-fade is-out" style={{ width: `${(fade / (piece.end - piece.start)) * 100}%` }}/></>}
       </span>
-      <span className="custom-trim-handle" role="slider" tabIndex={0} aria-label="Начало" aria-valuemin={0} aria-valuemax={duration} aria-valuenow={piece.start} style={{ left: percent(piece.start) }} onPointerDown={down('start')} onKeyDown={key('start')}/>
-      <span className="custom-trim-handle" role="slider" tabIndex={0} aria-label="Конец" aria-valuemin={0} aria-valuemax={duration} aria-valuenow={piece.end} style={{ left: percent(piece.end) }} onPointerDown={down('end')} onKeyDown={key('end')}/>
+      <span className="custom-trim-handle" role="slider" tabIndex={0} aria-label={t('Начало')} aria-valuemin={0} aria-valuemax={duration} aria-valuenow={piece.start} style={{ left: percent(piece.start) }} onPointerDown={down('start')} onKeyDown={key('start')}/>
+      <span className="custom-trim-handle" role="slider" tabIndex={0} aria-label={t('Конец')} aria-valuemin={0} aria-valuemax={duration} aria-valuenow={piece.end} style={{ left: percent(piece.end) }} onPointerDown={down('end')} onKeyDown={key('end')}/>
       {/* Moved by the preview itself (LoopPreview onTime), not by React. */}
       <span className="custom-trim-playhead" ref={playhead}/>
     </div>

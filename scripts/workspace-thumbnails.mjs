@@ -3,6 +3,7 @@ import { drawCatalogGrid } from './catalog-rendering.mjs';
 import { createProjectStorage } from './project-storage.mjs';
 import { portrait } from './portraits.mjs';
 import { APP_VERSION } from './version.mjs';
+import { t } from './i18n.mjs';
 import { workspaceGridPreview } from './workspace-preview.mjs';
 
 // «Студия» shows grid files as pictures (1.6.1, docs/accounts-workspaces.md «Превью файлов»): one
@@ -21,7 +22,7 @@ const DATABASE = 'gridstudio-thumbnails', STORE = 'files';
 let opening = null;
 function database() {
   opening ||= new Promise((resolve, reject) => {
-    if (!globalThis.indexedDB) return reject(new Error('IndexedDB недоступна.'));
+    if (!globalThis.indexedDB) return reject(new Error(t('IndexedDB недоступна.')));
     const request = indexedDB.open(DATABASE, 1);
     request.onupgradeneeded = () => request.result.createObjectStore(STORE, { keyPath: 'id' });
     request.onsuccess = () => { const db = request.result; db.onversionchange = () => { db.close(); opening = null; }; resolve(db); };
@@ -35,7 +36,7 @@ async function transaction(mode, run) {
     const tx = db.transaction(STORE, mode); let result;
     run(tx.objectStore(STORE), (value) => { result = value; });
     tx.oncomplete = () => resolve(result);
-    tx.onerror = tx.onabort = () => reject(tx.error || new Error('Запись не завершена.'));
+    tx.onerror = tx.onabort = () => reject(tx.error || new Error(t('Запись не завершена.')));
   });
 }
 // { id, updated, version, configIndex, grids: [{ name, image: Blob }] } or null.
@@ -60,7 +61,7 @@ export async function renderThumbnails(doc, id = '') {
   for (let index = 0; index < doc.source.configs.length; index++) {
     const grid = workspaceGridPreview(doc, index), categories = grid.configs[0].categories;
     const key = JSON.stringify(grid), known = drawn.get(`${id}:${index}`);
-    if (id && known?.key === key) { grids.push({ name: grid.configs[0].config_name || `Сетка ${index + 1}`, image: known.image }); continue; }
+    if (id && known?.key === key) { grids.push({ name: grid.configs[0].config_name || t('Сетка {n}', { n: index + 1 }), image: known.image }); continue; }
     if (categories.some((category) => HANGUL.test(category.category_name))) await document.fonts.load('600 16px StudioDotaKorean', '멈추지').catch(() => {});
     const ids = [...new Set(categories.flatMap((category) => category.hero_ids))];
     const images = new Map(await Promise.all(ids.map(async (id) => [id, await portrait(id)])));
@@ -69,7 +70,7 @@ export async function renderThumbnails(doc, id = '') {
     canvas.width = THUMBNAIL_WIDTH; canvas.height = THUMBNAIL_HEIGHT;
     drawCatalogGrid(canvas.getContext('2d'), grid, images, THUMBNAIL_WIDTH, false);
     const image = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', 0.82));
-    grids.push({ name: grid.configs[0].config_name || `Сетка ${index + 1}`, image });
+    grids.push({ name: grid.configs[0].config_name || t('Сетка {n}', { n: index + 1 }), image });
     if (id) {
       drawn.set(`${id}:${index}`, { key, image });
       if (drawn.size > 64) drawn.delete(drawn.keys().next().value);

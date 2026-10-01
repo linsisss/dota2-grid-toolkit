@@ -2,6 +2,7 @@ import C from './core.mjs';
 import { createProjectStorage, openProjectDatabase } from './project-storage.mjs';
 import { APP_VERSION } from './version.mjs';
 import { selectedCatalogGrid } from './catalog-document.mjs';
+import { t } from './i18n.mjs';
 
 const PREFIX = 'gridstudio.workspace.info.';
 const SESSION_KEY = 'gridstudio.workspace-session.v1';
@@ -37,7 +38,7 @@ export async function enterWorkspace(registry, user, { url = new URL(globalThis.
     return null;
   }
   if (url.searchParams.get('new') !== '1') return resumeWorkspace(registry, user, session);
-  const meta = await registry.create('Без названия', C.demoDocument('blank'), user?.id || null);
+  const meta = await registry.create(t('Без названия'), C.demoDocument('blank'), user?.id || null);
   rememberWorkspace({ id: meta.id, configIndex: 0 }, session);
   // Consume the landing action only after the new document is durably saved.
   url.searchParams.delete('new');
@@ -61,15 +62,15 @@ export class WorkspaceRegistry {
     const value = { ...item, key: item.id, touched: Date.now() }; let saved = false;
     try { await this.database?.archive(value); saved = !!this.database; } catch { /* Mirror fallback. */ }
     try { this.local.setItem(PREFIX + item.id, JSON.stringify(value)); saved = true; } catch { /* IDB fallback. */ }
-    if (!saved) throw new Error('Не удалось сохранить список файлов. Освободи место или скачай проект.');
+    if (!saved) throw new Error(t('Не удалось сохранить список файлов. Освободи место или скачай проект.'));
     return value;
   }
-  async update(id, changes) { const old = await this.get(id); if (!old) throw new Error('Файл не найден.'); return this.put({ ...old, ...changes }); }
+  async update(id, changes) { const old = await this.get(id); if (!old) throw new Error(t('Файл не найден.')); return this.put({ ...old, ...changes }); }
   async create(name, document = C.demoDocument('blank'), account = null) {
     const id = crypto.randomUUID(), storage = await createProjectStorage(C.importProject, APP_VERSION, id);
     try {
       await storage.load(); const result = await storage.save(document);
-      if (!result.saved || result.recoveryOnly) throw new Error('Не удалось сохранить новый файл.');
+      if (!result.saved || result.recoveryOnly) throw new Error(t('Не удалось сохранить новый файл.'));
       return await this.put({ id, name, account, cloudRevision: 0, dirty: !!account, pendingUpload: !!account, updated: Date.now(), ...describe(document) });
     } finally { storage.database?.close(); }
   }
@@ -78,14 +79,14 @@ export class WorkspaceRegistry {
     const storage = await createProjectStorage(C.importProject, APP_VERSION);
     try {
       const initial = await storage.load();
-      if (initial.hasData) await this.put({ id: 'legacy', name: initial.doc?.name || 'Восстановление прежнего проекта', account: null,
+      if (initial.hasData) await this.put({ id: 'legacy', name: initial.doc?.name || t('Восстановление прежнего проекта'), account: null,
         cloudRevision: 0, dirty: false, updated: Date.now(), issue: initial.issue, ...(initial.doc ? describe(initial.doc) : {}) });
     } finally { storage.database?.close(); }
   }
 }
 async function assignAccount(registry, id, user) {
   const current = await registry.get(id);
-  if (current.account && current.account !== user.id) throw new Error('Файл уже привязан к другому аккаунту.');
+  if (current.account && current.account !== user.id) throw new Error(t('Файл уже привязан к другому аккаунту.'));
   if (current.account) return current;
   return registry.update(id, { account: user.id, cloudId: current.cloudId || (id === 'legacy' ? crypto.randomUUID() : id), dirty: true, pendingUpload: true });
 }
@@ -105,7 +106,7 @@ export async function attachGuestWorkspaces(registry, api, user, isCurrent = () 
         if (active) { await active.flush(); if (isCurrent()) await active.attach(user); continue; }
         storage = await createProjectStorage(C.importProject, APP_VERSION, entry.id);
         const initial = await storage.load();
-        if (!initial.doc || storage.blocked || storage.conflicted) throw new Error('Сначала восстанови сохранённый проект.');
+        if (!initial.doc || storage.blocked || storage.conflicted) throw new Error(t('Сначала восстанови сохранённый проект.'));
         if (!isCurrent()) break;
         const meta = await assignAccount(registry, entry.id, user);
         const snapshot = JSON.stringify(initial.doc);
@@ -136,7 +137,7 @@ export async function openWorkspaceRegistry() {
 // Server writes are serialized and compare revisions. Local autosave completes
 // independently; a network failure never discards or rolls back local edits.
 export async function openWorkspace(meta, registry, api, user, onStatus = () => {}, { retryDelay = 2000 } = {}) {
-  if (meta.account && meta.account !== user?.id) throw new Error('Войди в Telegram-аккаунт, к которому привязан файл.');
+  if (meta.account && meta.account !== user?.id) throw new Error(t('Войди в Telegram-аккаунт, к которому привязан файл.'));
   const storage = await createProjectStorage(C.importProject, APP_VERSION, meta.id);
   let initial = await storage.load(), cloudRevision = meta.cloudRevision || 0, generation = 0, cloudQueue = Promise.resolve(), paused = false;
   let latestDocument = initial.doc;
@@ -145,22 +146,24 @@ export async function openWorkspace(meta, registry, api, user, onStatus = () => 
   if (meta.account) {
     try {
       const remote = await api(`/spaces/${cloudWorkspaceId(meta)}`);
-      if (remote.archived) throw new Error('Файл находится в архиве. Восстанови его в списке файлов.');
+      if (remote.archived) throw new Error(t('Файл находится в архиве. Восстанови его в списке файлов.'));
       if (remote.revision !== cloudRevision && meta.dirty) {
-        paused = true; onStatus('Конфликт версий. Твоя работа сохранена локально; создай копию в списке файлов.');
+        paused = true; onStatus(t('Конфликт версий. Твоя работа сохранена локально; создай копию в списке файлов.'));
       } else if (!initial.doc || remote.revision !== cloudRevision) {
         if (initial.doc) await storage.prepareRestore(JSON.stringify(remote.document), initial.doc);
         const result = await saveLocal(remote.document);
-        if (!result.saved || result.recoveryOnly) throw new Error('Не удалось сохранить серверную копию локально.');
+        if (!result.saved || result.recoveryOnly) throw new Error(t('Не удалось сохранить серверную копию локально.'));
         initial = { doc: remote.document, hasData: true, issue: '' }; cloudRevision = remote.revision;
         latestDocument = remote.document;
         meta = await registry.update(meta.id, { cloudRevision, dirty: false, pendingUpload: false, name: remote.name, ...describe(remote.document) });
       }
     } catch (error) {
       if (!initial.doc) { storage.database?.close(); throw error; }
-      if (!(error.status === 404 && cloudRevision === 0)) { paused = true; onStatus(`${error.message} Работа продолжается локально.`); }
+      if (!(error.status === 404 && cloudRevision === 0)) { paused = true; onStatus(t('{message} Работа продолжается локально.', { message: error.message })); }
     }
   }
+  // The progress statuses stay Russian: save-status.mjs knows them by text, and the editor
+  // translates what it shows. Errors are in the page's language.
   function sync(doc, revision) {
     cloudQueue = cloudQueue.then(async () => {
       if (!meta.account || paused) return;
@@ -174,9 +177,9 @@ export async function openWorkspace(meta, registry, api, user, onStatus = () => 
       } catch (error) {
         if ([401, 403, 404, 409].includes(error.status)) paused = true;
         else if (!error.status || error.status >= 500 || error.status === 429) retryLater(doc, revision);
-        onStatus(`${error.message} Локальная копия сохранена.`);
+        onStatus(t('{message} Локальная копия сохранена.', { message: error.message }));
       }
-    }).catch(() => onStatus('Не удалось обновить список файлов. Локальная копия сохранена.'));
+    }).catch(() => onStatus(t('Не удалось обновить список файлов. Локальная копия сохранена.')));
   }
   // An API restart or deploy drops requests for a moment. Resend the last edit
   // without waiting for the next change; after ~2 minutes the next edit or
@@ -223,13 +226,13 @@ export async function openWorkspace(meta, registry, api, user, onStatus = () => 
   storage.syncPending = flushCloud;
   storage.attachAccount = async user => {
     await storage.queue;
-    if (!latestDocument || storage.blocked || storage.conflicted) throw new Error('Сначала восстанови сохранённый проект.');
+    if (!latestDocument || storage.blocked || storage.conflicted) throw new Error(t('Сначала восстанови сохранённый проект.'));
     meta = await assignAccount(registry, meta.id, user);
     cloudRevision = meta.cloudRevision || 0;
     paused = false;
     scheduleCloud(latestDocument, generation);
     await flushCloud();
-    if ((await registry.get(meta.id)).pendingUpload) throw new Error('Не удалось отправить файл. Локальная копия сохранена.');
+    if ((await registry.get(meta.id)).pendingUpload) throw new Error(t('Не удалось отправить файл. Локальная копия сохранена.'));
   };
   if (meta.account && meta.dirty && initial.doc && !paused) scheduleCloud(initial.doc, generation);
   return { storage, initial };

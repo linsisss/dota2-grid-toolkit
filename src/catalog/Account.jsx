@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { catalogAPI, CATALOG_PATH } from './api.js';
 import { Icon, Modal, Notice } from './Common.jsx';
 import { attachGuestWorkspaces, openWorkspaceRegistry } from '../../scripts/workspaces.mjs';
+import { t } from '../../scripts/i18n.mjs';
 
 const Context = createContext(null);
 const AUTH_RECHECK = 5 * 60_000;
@@ -77,19 +78,19 @@ function LoginDialog({ telegramWindow, reason, onClose, onSuccess }) {
     }).catch(e => { if (active) { setError(e.message); try { telegramWindow.current?.close(); } catch { /* Already closed. */ } } });
     return () => { active = false; clearTimeout(timer); controller.abort(); window.removeEventListener('focus', focus); };
   }, [attempt]);
-  return <Modal title="Войти через Telegram" onClose={onClose}><div className="catalog-login-flow">
+  return <Modal title={t('Войти через Telegram')} onClose={onClose}><div className="catalog-login-flow">
     {reason && <p>{reason}</p>}
-    <p className="catalog-muted">После входа файлы этого браузера сохранятся в аккаунте.</p>
-    {request ? <><p>Нажми «Войти» в боте. Сайт подключит аккаунт автоматически.</p><p role="status">{finishing ? 'Входим…' : 'Ждём подтверждение в Telegram…'}</p><a className="catalog-link" href={request.url} target="_blank" rel="noreferrer">Telegram не открылся?<Icon name="arrow"/></a></> : !error && <p role="status">Открываем Telegram…</p>}
-    {error && <><Notice error>{error}</Notice><button className="catalog-button" onClick={() => { telegramWindow.current = openTelegramWindow(); setAttempt(x => x + 1); }}>Начать заново</button></>}
-    <button className="catalog-link" onClick={onClose}>Продолжить без входа</button>
+    <p className="catalog-muted">{t('После входа файлы этого браузера сохранятся в аккаунте.')}</p>
+    {request ? <><p>{t('Нажми «Войти» в боте. Сайт подключит аккаунт автоматически.')}</p><p role="status">{finishing ? t('Входим…') : t('Ждём подтверждение в Telegram…')}</p><a className="catalog-link" href={request.url} target="_blank" rel="noreferrer">{t('Telegram не открылся?')}<Icon name="arrow"/></a></> : !error && <p role="status">{t('Открываем Telegram…')}</p>}
+    {error && <><Notice error>{error}</Notice><button className="catalog-button" onClick={() => { telegramWindow.current = openTelegramWindow(); setAttempt(x => x + 1); }}>{t('Начать заново')}</button></>}
+    <button className="catalog-link" onClick={onClose}>{t('Продолжить без входа')}</button>
   </div></Modal>;
 }
 export function AccountButton() {
   const auth = useAccount(); const [open, setOpen] = useState(false), [error, setError] = useState('');
   return <><button className="catalog-button account-button" disabled={auth.loading} onClick={() => auth.user ? setOpen(true) : auth.requestLogin()}>
-    {auth.user ? <AccountAvatar user={auth.user}/> : <Icon name="telegram"/>}<span className="account-label">{auth.user ? accountLabel(auth.user) : 'Войти через Telegram'}</span></button>
-    {open && <Modal title="Аккаунт" onClose={() => setOpen(false)}><div className="catalog-login-flow"><div className="account-profile"><AccountAvatar user={auth.user}/><h3>{accountLabel(auth.user)}</h3></div>{!auth.user?.username && <p className="catalog-muted">В Telegram не задан @username.</p>}<p>Файлы автоматически сохраняются в аккаунте и доступны на других устройствах.</p>{auth.admin && <a className="catalog-button" href={`${CATALOG_PATH}?moderate`}>Админка<Icon name="arrow"/></a>}{auth.fileSync.busy && <p role="status">Сохраняем файлы…</p>}{auth.fileSync.error && <Notice error>{auth.fileSync.error}<button className="catalog-link" onClick={() => auth.syncFiles()}>Повторить сохранение</button></Notice>}<button className="catalog-button" onClick={async () => { try { await auth.logout(); setOpen(false); } catch (e) { setError(e.message); } }}>Выйти</button>{error && <Notice error>{error}</Notice>}</div></Modal>}
+    {auth.user ? <AccountAvatar user={auth.user}/> : <Icon name="telegram"/>}<span className="account-label">{auth.user ? accountLabel(auth.user) : t('Войти через Telegram')}</span></button>
+    {open && <Modal title={t('Аккаунт')} onClose={() => setOpen(false)}><div className="catalog-login-flow"><div className="account-profile"><AccountAvatar user={auth.user}/><h3>{accountLabel(auth.user)}</h3></div>{!auth.user?.username && <p className="catalog-muted">{t('В Telegram не задан @username.')}</p>}<p>{t('Файлы автоматически сохраняются в аккаунте и доступны на других устройствах.')}</p>{auth.admin && <a className="catalog-button" href={`${CATALOG_PATH}?moderate`}>Админка<Icon name="arrow"/></a>}{auth.fileSync.busy && <p role="status">{t('Сохраняем файлы…')}</p>}{auth.fileSync.error && <Notice error>{auth.fileSync.error}<button className="catalog-link" onClick={() => auth.syncFiles()}>{t('Повторить сохранение')}</button></Notice>}<button className="catalog-button" onClick={async () => { try { await auth.logout(); setOpen(false); } catch (e) { setError(e.message); } }}>{t('Выйти')}</button>{error && <Notice error>{error}</Notice>}</div></Modal>}
   </>;
 }
 // `path`: the like endpoint — a grid's by default, `/backgrounds/:id/like` for a menu background.
@@ -97,9 +98,9 @@ export function AccountButton() {
 // stays in place with the count but is switched off.
 export function LikeButton({ item, onChange, path = `/works/${item.id}/like` }) {
   const auth = useAccount(); const [busy, setBusy] = useState(false), [error, setError] = useState('');
-  const own = item.mine ? 'Свою работу лайкнуть нельзя' : '';
-  return <span className="catalog-like-wrap"><button className={`catalog-like${item.liked ? ' is-liked' : ''}${own ? ' is-own' : ''}`} aria-label={own || (item.liked ? 'Убрать лайк' : 'Поставить лайк')} title={own || undefined} aria-pressed={!!item.liked} disabled={busy || !!own} onClick={async () => {
-    if (!auth.user) return auth.requestLogin('Войди через Telegram, чтобы поставить лайк.');
+  const own = item.mine ? t('Свою работу лайкнуть нельзя') : '';
+  return <span className="catalog-like-wrap"><button className={`catalog-like${item.liked ? ' is-liked' : ''}${own ? ' is-own' : ''}`} aria-label={own || (item.liked ? t('Убрать лайк') : t('Поставить лайк'))} title={own || undefined} aria-pressed={!!item.liked} disabled={busy || !!own} onClick={async () => {
+    if (!auth.user) return auth.requestLogin(t('Войди через Telegram, чтобы поставить лайк.'));
     setBusy(true); setError(''); try { const result = await catalogAPI(path, { method: 'PUT', body: { liked: !item.liked } }); onChange(result); }
     catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }
   }}><Icon name="heart"/>{item.likes || 0}</button>{error && <span className="catalog-like-error" role="alert">{error}</span>}</span>;
@@ -110,12 +111,12 @@ export function SubscribeButton({ item, onChange }) {
   if (!item.followable) return null;
   return <div className="catalog-subscribe">
     <button className={`catalog-button${item.subscribed ? ' is-subscribed' : ''}`} aria-pressed={!!item.subscribed} disabled={busy} onClick={async () => {
-      if (!auth.user) return auth.requestLogin('Войди через Telegram, чтобы подписаться на автора. О новых сетках напишет бот.');
+      if (!auth.user) return auth.requestLogin(t('Войди через Telegram, чтобы подписаться на автора. О новых сетках напишет бот.'));
       setBusy(true); setError('');
       try { onChange(await catalogAPI(`/works/${item.id}/subscribe`, { method: 'PUT', body: { subscribed: !item.subscribed } })); }
       catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }
-    }}><Icon name={item.subscribed ? 'check' : 'bell'}/>{item.subscribed ? 'Вы подписаны на автора' : 'Подписаться на автора'}</button>
-    <p className="catalog-muted">{item.subscribed ? 'Бот пришлёт ссылку, когда автор выложит новую сетку.' : 'Новые сетки автора — сообщением от бота в Telegram.'}</p>
+    }}><Icon name={item.subscribed ? 'check' : 'bell'}/>{item.subscribed ? t('Вы подписаны на автора') : t('Подписаться на автора')}</button>
+    <p className="catalog-muted">{item.subscribed ? t('Бот пришлёт ссылку, когда автор выложит новую сетку.') : t('Новые сетки автора — сообщением от бота в Telegram.')}</p>
     {error && <Notice error>{error}</Notice>}
   </div>;
 }

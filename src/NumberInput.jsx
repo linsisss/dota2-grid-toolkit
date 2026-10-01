@@ -1,10 +1,11 @@
 import { useRef } from 'react';
 import { Icon } from './Icon.jsx';
 import { stepNumber } from '../scripts/form-controls.mjs';
+import { t } from '../scripts/i18n.mjs';
 
 export function NumberInput({ onStep, ...props }) {
   const ref = useRef(null);
-  const label = props['aria-label'] || 'значение';
+  const label = props['aria-label'] || t('значение');
   return (
     <span className="number-field">
       <input {...props} ref={ref} type="number" />
@@ -14,7 +15,7 @@ export function NumberInput({ onStep, ...props }) {
             key={direction}
             type="button"
             disabled={props.disabled || props.readOnly}
-            aria-label={`${direction > 0 ? 'Увеличить' : 'Уменьшить'} ${label}`}
+            aria-label={t(direction > 0 ? 'Увеличить {label}' : 'Уменьшить {label}', { label })}
             onPointerDown={(e) => e.preventDefault()}
             onClick={(e) => {
               const input = ref.current;

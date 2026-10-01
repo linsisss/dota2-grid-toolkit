@@ -11,5 +11,45 @@
     "ALTCHA без внешней CAPTCHA, проверка файлов и понятные лимиты публикации",
     "Обновлённый README с превью и самостоятельным запуском; подготовлена страница переезда GitHub Pages на gridstudio.me",
     "Исправления и доработки: лайки без мигания, единые размеры карточек, удобнее импорт и экспорт, поля и фокус, статус сохранения, плавные спойлеры и анимации"
-  ]
+  ],
+  "en": {
+    "changes": [
+      {
+        "text": "Grid catalog",
+        "children": [
+          "Publish without signing up, search and tags, download or open in the editor",
+          "Moderation in Telegram, updates to works and reports",
+          "Popular grids by likes and the “My publications” page"
+        ]
+      },
+      {
+        "text": "Telegram account and “My files”",
+        "children": [
+          "Sign in through the bot without comparing codes, with your avatar and @username",
+          "Workspaces, a view of every grid in a file, and sync with your account",
+          "Guest files attach to your account automatically, and local copies are kept"
+        ]
+      },
+      {
+        "text": "Saving and recovery",
+        "children": [
+          "Backup versions and protection against tabs overwriting each other",
+          "After a page reload, the open grid carries on"
+        ]
+      },
+      {
+        "text": "Canvas controls",
+        "children": [
+          "Rearrange heroes by dragging, with animation",
+          "A selection moves when you grab anywhere inside its frame",
+          "Shift moves a shape while you’re still drawing it",
+          "Pinnable panels and the in-game Target Dummy portrait in “Agility”"
+        ]
+      },
+      "In the export guide, a Steam link or friend code finds your Dota 2 folder",
+      "ALTCHA instead of a third-party CAPTCHA, file checks and clear publishing limits",
+      "Updated README with previews and self-hosting steps; a page for the move from GitHub Pages to gridstudio.me is ready",
+      "Fixes and polish: likes without flicker, uniform card sizes, easier import and export, fields and focus, save status, smooth spoilers and animations"
+    ]
+  }
 }

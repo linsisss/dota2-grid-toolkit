@@ -93,6 +93,11 @@
 .category-warning-close { flex-shrink: 0; width: 28px; height: 28px; margin-left: auto; border: 0; border-radius: 6px; background: none; color: #f5c1ad; font-size: 20px; line-height: 1; cursor: pointer; }
 .category-warning > .button + .category-warning-close { margin-left: 0; }
 .category-warning-close:hover { background: #ffffff14; color: #ffe5d8; }
+/* FontWarning: a calmer note than the load warning — the grid works, it only looks different in the game. */
+.font-warning { background: #2f2a1f; border-bottom-color: #8a7344; color: #f3e7cc; }
+.font-warning > span { border-color: #c9a96a; font-size: 11px; letter-spacing: -.02em; }
+.font-warning p { color: #d6c7a6; }
+.font-warning .category-warning-close { color: #d6c7a6; }
 @media (max-width: 700px) {
   .canvas-controls { grid-template-columns: 1fr auto; }
   .canvas-controls #symbolCounter { grid-column: 1 / -1; grid-row: 1; padding-inline-start: 54px; }

@@ -4,15 +4,17 @@
 //   { id, name, account (Telegram account id or null), recipe, poster: Blob, video: Blob | null,
 //     codec, seconds, created, updated, synced (the recipe is on the account's server copy) }
 // `video` is null when the recipe came from another device and was never built here.
+import { t } from './i18n.mjs';
+
 const DATABASE = 'gridstudio-backgrounds', STORE = 'items';
 
 function open() {
-  if (typeof indexedDB === 'undefined') return Promise.reject(new Error('Этот браузер не умеет хранить фоны.'));
+  if (typeof indexedDB === 'undefined') return Promise.reject(new Error(t('Этот браузер не умеет хранить фоны.')));
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DATABASE, 1);
     request.onupgradeneeded = () => request.result.createObjectStore(STORE, { keyPath: 'id' });
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('Хранилище фонов недоступно.'));
+    request.onerror = () => reject(request.error || new Error(t('Хранилище фонов недоступно.')));
   });
 }
 async function run(mode, action) {
@@ -21,7 +23,7 @@ async function run(mode, action) {
     return await new Promise((resolve, reject) => {
       const transaction = database.transaction(STORE, mode), request = action(transaction.objectStore(STORE));
       transaction.oncomplete = () => resolve(request?.result);
-      transaction.onerror = transaction.onabort = () => reject(transaction.error || new Error('Не удалось сохранить фон в браузере.'));
+      transaction.onerror = transaction.onabort = () => reject(transaction.error || new Error(t('Не удалось сохранить фон в браузере.')));
     });
   } finally { database.close(); }
 }

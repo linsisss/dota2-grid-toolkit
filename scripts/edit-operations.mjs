@@ -1,4 +1,5 @@
 import C from './core.mjs';
+import { t } from './i18n.mjs';
 
 // Mirror locations, never the glyph or hero image itself. Expanded rows retain
 // their measured spacing; the caller can merge horizontal rows afterwards.
@@ -272,7 +273,7 @@ export function scatterSymbols(doc, point, radius, direction, { distance = SCATT
 // whitespace is never touched. Returns how many characters changed.
 export function replaceGlyphs(items, from, to) {
   const target = Array.from(String(to ?? '').trim())[0];
-  if (!target) throw new Error('Укажи символ, на который заменить.');
+  if (!target) throw new Error(t('Укажи символ, на который заменить.'));
   const source = from ? Array.from(String(from))[0] : null;
   let count = 0;
   for (const item of items) {

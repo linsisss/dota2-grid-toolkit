@@ -1,3 +1,4 @@
+
 export const IMAGE_DEFAULTS = Object.freeze({
   bright: 0,
   contrast: 15,

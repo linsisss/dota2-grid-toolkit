@@ -6,9 +6,14 @@ import { MENU_FRAME, MENU_FRAME_ZOOM, MENU_SIZES } from './menu-background.mjs';
 // background builds again by itself and a user's own file asks to be chosen again.
 export const STUDIO_BACKGROUND_LIMITS = Object.freeze({ name: 100, poster: 60_000, perAccount: 200, fileName: 200 });
 export const STUDIO_CROSSFADES = Object.freeze([0, 0.5, 1, 2]);
-export const STUDIO_FOLDERS = Object.freeze(['russian', 'custom']);
+// The language of the user's Dota (src/customize/background-pack.js FOLDERS); 'custom' (dota_123,
+// before 1.7; Dota no longer reads it) reads as 'russian'.
+export const STUDIO_FOLDERS = Object.freeze(['russian', 'english']);
 // Behind the hero on the hero page (1.6.1): the menu's video, a video of its own, or Valve's picture.
 export const STUDIO_HERO_MODES = Object.freeze(['menu', 'own', 'off']);
+// Under the hero grid on the «Герои» page (1.6.4): the menu's background, darker (dim, a percent of
+// GRID_DIM.max), or a video of its own.
+export const STUDIO_GRID_MODES = Object.freeze(['menu', 'dim', 'own']);
 
 class ValidationError extends Error { constructor(message) { super(message); this.status = 400; } }
 const broken = () => { throw new ValidationError('Настройки фона не читаются.'); };
@@ -49,12 +54,30 @@ function studioHero(input) {
   return { mode: 'own', fit: input.fit, blur: percent(input.blur), dim: percent(input.dim), frame: studioFrame(input.frame), piece: studioPiece(input.piece), crossfade: input.crossfade, source: studioSource(input.source) };
 }
 
+// The button to the season event and the profile buttons (1.6.4); recipes before them get them,
+// like new ones by default.
+function studioSwitch(value) {
+  if (value == null) return true;
+  return typeof value === 'boolean' ? value : broken();
+}
+
+// Recipes saved before 1.6.4 have no `grid`: the «Герои» page shows the menu's background.
+function studioGrid(input) {
+  if (input == null) return { mode: 'menu' };
+  if (!STUDIO_GRID_MODES.includes(input.mode)) broken();
+  if (input.mode === 'menu') return { mode: 'menu' };
+  if (input.mode === 'dim') return { mode: 'dim', dim: percent(input.dim) };
+  const own = studioHero({ ...input, mode: 'own' });
+  return { ...own, mode: 'own' };
+}
+
 export function studioRecipe(input) {
   if (!input || typeof input !== 'object') broken();
+  if (input.folder === 'custom') input = { ...input, folder: 'russian' };
   if (!MENU_SIZES[input.aspect] || !['cover', 'contain'].includes(input.fit) || !STUDIO_FOLDERS.includes(input.folder)
     || !['file', 'installer'].includes(input.delivery) || typeof input.clean !== 'boolean' || !STUDIO_CROSSFADES.includes(input.crossfade)) broken();
   return { aspect: input.aspect, fit: input.fit, blur: percent(input.blur), dim: percent(input.dim), frame: studioFrame(input.frame), clean: input.clean, folder: input.folder,
-    delivery: input.delivery, piece: studioPiece(input.piece), crossfade: input.crossfade, source: studioSource(input.source), hero: studioHero(input.hero) };
+    delivery: input.delivery, piece: studioPiece(input.piece), crossfade: input.crossfade, source: studioSource(input.source), hero: studioHero(input.hero), event: studioSwitch(input.event), profile: studioSwitch(input.profile), grid: studioGrid(input.grid) };
 }
 
 // A workshop submission of the background: its gallery id and the status token.

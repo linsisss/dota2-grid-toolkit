@@ -5,6 +5,7 @@ import { packPlan } from '../scripts/dot-packing.mjs';
 import { drawCategoryLabel, glyphWidths, measureCategoryWidth } from '../scripts/dota-rendering.mjs';
 import { NumberInput } from './NumberInput.jsx';
 import { Icon } from './Icon.jsx';
+import { t, locale } from '../scripts/i18n.mjs';
 
 function ArtPreview({ doc, label }) {
   const ref = useRef(null);
@@ -71,26 +72,26 @@ export function ArtworkOptimizer({ editor, source, onClose }) {
   }, []);
   return <dialog className="artwork-optimizer" ref={dialog} aria-labelledby="optimizeTitle"
     onCancel={(e) => { e.preventDefault(); onClose(); }}>
-    <header className="modal-header"><h2 id="optimizeTitle">Оптимизация категорий</h2>
-      <button className="icon-button" aria-label="Закрыть оптимизацию" onClick={onClose}><Icon name="close" /></button></header>
+    <header className="modal-header"><h2 id="optimizeTitle">{t('Оптимизация категорий')}</h2>
+      <button className="icon-button" aria-label={t('Закрыть оптимизацию')} onClick={onClose}><Icon name="close" /></button></header>
     <div className="optimizer-body">
-      <p>При скачивании символы одной линии и так объединяются в строки — со сдвигом меньше полпикселя экрана, в игре это не видно. Если категорий всё ещё много, упакуй точки или сократи детали.</p>
+      <p>{t('При скачивании символы одной линии и так объединяются в строки — со сдвигом меньше полпикселя экрана, в игре это не видно. Если категорий всё ещё много, упакуй точки или сократи детали.')}</p>
       <div className="optimizer-stats" role="status" aria-live="polite">
-        <span>На холсте<strong>{plan.rawCount.toLocaleString('ru-RU')}</strong></span>
-        <span>{packed ? 'После упаковки' : 'После объединения'}<strong>{plan.losslessCount.toLocaleString('ru-RU')}</strong></span>
-        <span>В итоговом JSON<strong>{result.count.toLocaleString('ru-RU')}</strong></span>
+        <span>{t('На холсте')}<strong>{plan.rawCount.toLocaleString(locale)}</strong></span>
+        <span>{packed ? t('После упаковки') : t('После объединения')}<strong>{plan.losslessCount.toLocaleString(locale)}</strong></span>
+        <span>{t('В итоговом JSON')}<strong>{result.count.toLocaleString(locale)}</strong></span>
       </div>
       <label className="check-row optimizer-reduce"><input type="checkbox" checked={packed} disabled={!canPack}
-        onChange={(e) => setPack(e.target.checked)} />Упаковать точки в строки</label>
+        onChange={(e) => setPack(e.target.checked)} />{t('Упаковать точки в строки')}</label>
       <p className="hint">{canPack
-        ? 'Отдельные символы почти на одной высоте становятся одной строкой-категорией. Каждый сдвигается не больше чем на 1,5 px, на глаз не видно. На точечных артах категорий в 2–3 раза меньше.'
-        : 'Упаковывать нечего: нет отдельных символов, стоящих рядом на одной высоте.'}</p>
+        ? t('Отдельные символы почти на одной высоте становятся одной строкой-категорией. Каждый сдвигается не больше чем на 1,5 px, на глаз не видно. На точечных артах категорий в 2–3 раза меньше.')
+        : t('Упаковывать нечего: нет отдельных символов, стоящих рядом на одной высоте.')}</p>
       <label className="check-row optimizer-reduce"><input type="checkbox" checked={reduce} disabled={!canReduce}
-        onChange={(e) => setReduce(e.target.checked)} />Сократить детали рисунка</label>
-      <p className="hint">Строка — это одна категория, поэтому убираются строки целиком, начиная с самых незаметных: сначала символы друг на друге и вплотную, потом плотные заливки теряют каждую вторую строку, а линии — каждую вторую точку, равномерно, без дыр. Редкие символы (глаза, блики) держатся дольше. Герои, текст и заблокированные слои не трогаются.</p>
+        onChange={(e) => setReduce(e.target.checked)} />{t('Сократить детали рисунка')}</label>
+      <p className="hint">{t('Строка — это одна категория, поэтому убираются строки целиком, начиная с самых незаметных: сначала символы друг на друге и вплотную, потом плотные заливки теряют каждую вторую строку, а линии — каждую вторую точку, равномерно, без дыр. Редкие символы (глаза, блики) держатся дольше. Герои, текст и заблокированные слои не трогаются.')}</p>
       {reduce && <div className="optimizer-budget">
-        <label htmlFor="optimizeBudget">Целевое число категорий</label>
-        <NumberInput id="optimizeBudget" aria-label="Целевое число категорий" min={plan.minimum} max={plan.losslessCount} step="1"
+        <label htmlFor="optimizeBudget">{t('Целевое число категорий')}</label>
+        <NumberInput id="optimizeBudget" aria-label={t('Целевое число категорий')} min={plan.minimum} max={plan.losslessCount} step="1"
           value={targetText} onChange={(e) => {
             setTargetText(e.target.value);
             if (e.target.value !== '' && Number.isFinite(e.target.valueAsNumber))
@@ -98,24 +99,24 @@ export function ArtworkOptimizer({ editor, source, onClose }) {
           }} onStep={(value) => setBudget(Number(value))}
           onBlur={() => setBudget(Number(targetText) || target)}
           onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} />
-        <input id="optimizeRange" type="range" aria-label="Бюджет категорий" min={plan.minimum} max={plan.losslessCount} step="1"
+        <input id="optimizeRange" type="range" aria-label={t('Бюджет категорий')} min={plan.minimum} max={plan.losslessCount} step="1"
           value={target} onChange={(e) => setBudget(Number(e.target.value))} />
       </div>}
-      {!canReduce && <p className="hint">Отдельных символов для сокращения нет. При скачивании символы одной линии всё равно объединятся в строки.</p>}
-      {reduce && plan.minimum > 2000 && <p className="export-warning">Защищённые объекты и слои не позволяют уменьшить эту сетку до 2000 категорий.</p>}
+      {!canReduce && <p className="hint">{t('Отдельных символов для сокращения нет. При скачивании символы одной линии всё равно объединятся в строки.')}</p>}
+      {reduce && plan.minimum > 2000 && <p className="export-warning">{t('Защищённые объекты и слои не позволяют уменьшить эту сетку до 2000 категорий.')}</p>}
       <div className="optimizer-comparison">
-        <ArtPreview doc={source} label="Исходный рисунок" />
-        <ArtPreview doc={result.doc} label={pending ? 'Пересчитываем…' : 'Результат'} />
+        <ArtPreview doc={source} label={t('Исходный рисунок')} />
+        <ArtPreview doc={result.doc} label={pending ? t('Пересчитываем…') : t('Результат')} />
       </div>
       <p role="status">{[
-        packed && result.packed && `В строки упаковано символов: ${result.packed.toLocaleString('ru-RU')}, каждый сдвинут не больше чем на 1,5 px.`,
-        result.removed ? `Будет убрано символов: ${result.removed.toLocaleString('ru-RU')}.${packed ? '' : ' Оставшиеся не перемещаются.'}` : !packed && 'Все символы и их расположение сохраняются.'
+        packed && result.packed && t('В строки упаковано символов: {count}, каждый сдвинут не больше чем на 1,5 px.', { count: result.packed.toLocaleString(locale) }),
+        result.removed ? `${t('Будет убрано символов: {count}.', { count: result.removed.toLocaleString(locale) })}${packed ? '' : ` ${t('Оставшиеся не перемещаются.')}`}` : !packed && t('Все символы и их расположение сохраняются.')
       ].filter(Boolean).join(' ')}</p>
-      {result.count > 2000 && <p className="export-warning">Больше 2000 категорий: возможны лаги и вылет Dota 2.</p>}
-      <p className="hint">Сравни детали перед применением. Герои в этом превью показаны рамками. Оптимизируется выбранная сетка; остальные сохранятся в файле.</p>
+      {result.count > 2000 && <p className="export-warning">{t('Больше 2000 категорий: возможны лаги и вылет Dota 2.')}</p>}
+      <p className="hint">{t('Сравни детали перед применением. Герои в этом превью показаны рамками. Оптимизируется выбранная сетка; остальные сохранятся в файле.')}</p>
     </div>
-    <footer className="modal-footer"><button className="button secondary" onClick={onClose}>Отмена</button>
-      <button className="button secondary" disabled={!(result.removed || result.packed) || pending} onClick={() => { if (editor.optimizeArt(result.budget, packed)) onClose(); }}>Применить к холсту</button>
-      <button className="button primary" disabled={pending} onClick={() => { if (editor.downloadOptimized(reduce ? result.budget : null, packed)) onClose(); }}>Скачать JSON</button></footer>
+    <footer className="modal-footer"><button className="button secondary" onClick={onClose}>{t('Отмена')}</button>
+      <button className="button secondary" disabled={!(result.removed || result.packed) || pending} onClick={() => { if (editor.optimizeArt(result.budget, packed)) onClose(); }}>{t('Применить к холсту')}</button>
+      <button className="button primary" disabled={pending} onClick={() => { if (editor.downloadOptimized(reduce ? result.budget : null, packed)) onClose(); }}>{t('Скачать JSON')}</button></footer>
   </dialog>;
 }

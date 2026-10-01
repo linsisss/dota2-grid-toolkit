@@ -1,0 +1,14 @@
+/* LanguageSwitch.jsx: RU / EN; the marker under the chosen one slides between them. */
+.language-switch { position:relative; isolation:isolate; display:inline-grid; grid-template-columns:1fr 1fr; gap:2px; padding:2px; border:1px solid #ffffff1f; border-radius:7px; vertical-align:middle; }
+.language-switch::before { content:""; position:absolute; z-index:-1; top:2px; bottom:2px; left:2px; width:calc((100% - 6px) / 2); border-radius:5px; background:#ffffff1a; transition:transform .34s cubic-bezier(.3,.7,.2,1); }
+.language-switch[data-lang=en]::before { transform:translateX(calc(100% + 2px)); }
+.language-switch button { min-width:30px; padding:2px 6px; border:0; border-radius:5px; background:none; color:inherit; font:inherit; font-size:12px; letter-spacing:.04em; opacity:.6; cursor:pointer; transition:opacity .2s; }
+.language-switch button:hover { opacity:1; }
+.language-switch button[aria-pressed=true] { opacity:1; }
+
+/* The page's crossfade between languages (View Transitions): longer than the default, and steep in the
+   middle so the two languages overlap only briefly. Both halves share the timing: what did not change
+   stays exactly still (the old and new pictures add up to one). */
+html.language-switching::view-transition-old(root),
+html.language-switching::view-transition-new(root) { animation-duration:.45s; animation-timing-function:cubic-bezier(.65,0,.35,1); }
+@media (prefers-reduced-motion: reduce) { .language-switch::before, .language-switch button { transition:none; } }

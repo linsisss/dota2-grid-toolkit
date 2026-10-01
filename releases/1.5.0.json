@@ -121,5 +121,127 @@
         "Контекстное меню и меню сеток стали компактнее"
       ]
     }
-  ]
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Workshop",
+        "changes": [
+          "The catalog is now the Workshop — gridstudio.me/workshop, old links still work",
+          {
+            "text": "Your own “Ready-made art”: once reviewed, everyone gets it",
+            "children": [
+              "The “Suggest your art” button is in the ASCII library"
+            ]
+          },
+          "Follow an author — the bot sends you their new grids",
+          "The bot messages you when your grid or art is approved",
+          "You can fix a submission under review — no new one is created",
+          "The 20,000-symbol limit is gone",
+          "18+ grids stay blurred until you confirm your age",
+          "Workshop rules — at the bottom of the page"
+        ]
+      },
+      {
+        "title": "Installing a grid",
+        "changes": [
+          "A “How to install” guide in the Workshop and when you download in the editor",
+          "Your Dota folder is found from a Steam link or friend code",
+          {
+            "text": "A tip about the file name",
+            "children": [
+              "Exactly hero_grid_config.json — no “(1)” and no “.json.json”"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Previews like in Dota",
+        "changes": [
+          {
+            "text": "The Heroes screen background from the game, with the same dimming",
+            "children": [
+              "You can switch back to the gradient — in the Workshop and in the editor preview"
+            ]
+          },
+          "The editor preview matches the game in grid position and size",
+          {
+            "text": "New portraits from hero selection, twice as sharp",
+            "children": [
+              "Dawnbreaker, Marci and Primal Beast are no longer blurry"
+            ]
+          },
+          "Hero images load many times faster"
+        ]
+      },
+      {
+        "title": "Image to ASCII",
+        "changes": [
+          {
+            "text": "“Symbol rows”: a full-canvas portrait in about 40 categories instead of a thousand",
+            "children": [
+              "One row of the drawing is one category"
+            ]
+          },
+          {
+            "text": "“Dot drawing”: dots right along the lines, like hand-made dot art",
+            "children": [
+              "Photos are smoothed — fur and grass don’t turn into lines"
+            ]
+          },
+          "“Dots” style: a dotted outline or an engraving"
+        ]
+      },
+      {
+        "title": "Fewer categories",
+        "changes": [
+          "On download, symbols on one line are merged — art is 1.35–2.6 times lighter and looks the same in the game",
+          {
+            "text": "“Pack dots into rows” in “Optimization” — dot art is 2–3.5 times lighter",
+            "children": [
+              "Turned on with a checkbox; dots move by 1.5 px at most"
+            ]
+          },
+          {
+            "text": "“Reduce details” removes the least noticeable first, without holes",
+            "children": [
+              "Eyes, mouths and fine details last longer"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Editor",
+        "changes": [
+          "Text and symbols sit on the canvas as in the game — checked by measuring in Dota",
+          "Hero categories look like in the game: the “+” card inside the frame",
+          "A click hits the symbol itself, not the square around it",
+          "Alignment and snapping to objects, like in Figma",
+          {
+            "text": "Groups: Ctrl+G and Ctrl+Shift+G",
+            "children": [
+              "A click picks the whole group, Alt + click a single symbol"
+            ]
+          },
+          "Right-click: quick rotation and symbol replacement, e.g. dots to hearts",
+          "Eraser size — with the mouse wheel or the [ and ] keys",
+          "You can delete a grid from a file; Ctrl+Z brings it back"
+        ]
+      },
+      {
+        "title": "Symbols",
+        "changes": [
+          "930 symbols, all visible in the game: stars, cards, chess, emoji and more",
+          "A warning if a symbol is invisible in Dota: Braille, box drawing, blocks"
+        ]
+      },
+      {
+        "title": "Windows and menus",
+        "changes": [
+          "Windows fit their content and open smoothly",
+          "The context menu and the grid menu are more compact"
+        ]
+      }
+    ]
+  }
 }

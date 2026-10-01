@@ -1,5 +1,6 @@
 import C from './core.mjs';
 import { DOTA } from './dota-rendering.mjs';
+import { t } from './i18n.mjs';
 
 export const MAX_BRUSH_CHARS = 1000;
 const names = [
@@ -21,9 +22,10 @@ export function searchSymbols(library, query = '', category = Object.keys(librar
   const q = query.trim().toLowerCase();
   if (!q) return Array.from(library[category] || '');
   const code = /^(?:u\+|0x)([0-9a-f]{2,6})$/i.exec(q);
+  // A category is found by its name (a Russian key of data.mjs) and by its name on the page.
   return [...new Set(Object.entries(library).flatMap(([name, chars]) =>
     Array.from(chars).filter((ch) => code ? ch.codePointAt(0) === parseInt(code[1], 16) :
-      ch.toLowerCase() === q || name.toLowerCase().includes(q) ||
+      ch.toLowerCase() === q || name.toLowerCase().includes(q) || t(name).toLowerCase().includes(q) ||
       names.some(([glyphs, label]) => glyphs.includes(ch) && label.includes(q)))))];
 }
 export const symbols = (value) => [

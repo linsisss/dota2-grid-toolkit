@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { BACKGROUND_TAGS } from '../../scripts/background-document.mjs';
 import { isAdultWork, SensitiveArt, useAdultConfirmed } from './Sensitive.jsx';
 import { catalogAPI } from './api.js';
+import { locale, t } from '../../scripts/i18n.mjs';
 
 // Shared menu backgrounds (server/catalog-backgrounds.mjs): the workshop's «Фоны» lists them with
 // these cards, the builder's publish window picks tags here. Kept apart from the builder, so the
 // workshop does not load its video encoder.
 export const backgroundMedia = (id, file) => `/api/catalog/backgrounds/${id}/${file}`;
-const seconds = (value) => `${String(Math.round(value * 10) / 10).replace('.', ',')} с`;
+const seconds = (value) => t('{seconds} с', { seconds: (Math.round(value * 10) / 10).toLocaleString(locale) });
 
 // Approved backgrounds with a tag and a search (title or author), 24 a page; `more` appends the
 // next page. Typing waits a moment, like the grids' search.
@@ -27,13 +28,13 @@ export function useBackgrounds({ tag = '', query = '', sort = 'new' } = {}) {
 
 // «Все теги» and the tags, as above the grids.
 export function BackgroundTagFilter({ value, onChange }) {
-  return <div className="catalog-tags catalog-filters"><button aria-pressed={!value} onClick={() => onChange('')}>Все теги</button>{BACKGROUND_TAGS.map((tag) =>
-    <button key={tag} aria-pressed={value === tag} onClick={() => onChange(value === tag ? '' : tag)}>{tag}</button>)}</div>;
+  return <div className="catalog-tags catalog-filters"><button aria-pressed={!value} onClick={() => onChange('')}>{t('Все теги')}</button>{BACKGROUND_TAGS.map((tag) =>
+    <button key={tag} aria-pressed={value === tag} onClick={() => onChange(value === tag ? '' : tag)}>{t(tag)}</button>)}</div>;
 }
 // Choosing up to three tags when publishing or moderating.
 export function BackgroundTagPicker({ value, onChange }) {
-  return <fieldset><legend>Теги <span className="catalog-muted">до трёх, необязательно</span></legend><div className="catalog-tags">{BACKGROUND_TAGS.map((tag) =>
-    <button type="button" key={tag} aria-pressed={value.includes(tag)} disabled={!value.includes(tag) && value.length === 3} onClick={() => onChange(value.includes(tag) ? value.filter((x) => x !== tag) : [...value, tag])}>{tag}</button>)}</div></fieldset>;
+  return <fieldset><legend>{t('Теги')} <span className="catalog-muted">{t('до трёх, необязательно')}</span></legend><div className="catalog-tags">{BACKGROUND_TAGS.map((tag) =>
+    <button type="button" key={tag} aria-pressed={value.includes(tag)} disabled={!value.includes(tag) && value.length === 3} onClick={() => onChange(value.includes(tag) ? value.filter((x) => x !== tag) : [...value, tag])}>{t(tag)}</button>)}</div></fieldset>;
 }
 
 // A card like a grid's: the poster (the video while the pointer is on it), title, author and one
@@ -50,8 +51,8 @@ export function BackgroundCard({ item, children, poster = null, playable = true,
       <img src={poster || backgroundMedia(item.id, 'poster.jpg')} alt="" loading="lazy"/>
       <video ref={video} muted loop playsInline preload="none"/>
     </div></SensitiveArt>
-    <div className="background-card-info"><div><h3 title={item.title}>{item.title}</h3><p>{item.author || 'Без подписи'}</p></div>{children}</div>
-    <div className="background-card-meta"><span>{item.aspect}{item.seconds ? ` · ${seconds(item.seconds)}` : ''}</span><span>{item.tags.join(', ')}</span></div>
+    <div className="background-card-info"><div><h3 title={item.title}>{item.title}</h3><p>{item.author || t('Без подписи')}</p></div>{children}</div>
+    <div className="background-card-meta"><span>{item.aspect}{item.seconds ? ` · ${seconds(item.seconds)}` : ''}</span><span>{item.tags.map((tag) => t(tag)).join(', ')}</span></div>
     {footer}
   </article>;
 }

@@ -128,3 +128,26 @@ test('glyphs the game does not show (symbol test in Dota) are named on input and
   doc.entities.push(C.entity(doc, { type: 'text', text: 'РАМКА \u2554\u2550\u2557', name: 'РАМКА', x: 10, y: 10, w: 90, h: 30, layer: 'decor' }));
   assert.ok(C.warnings(doc).includes('Dota не показывает: символы рамок — в игре этого не будет видно.'));
 });
+
+test('characters missing from Radiance are counted, and named once they are a noticeable part', () => {
+  const { inDotaFont, foreignGlyphs, foreignNoticeable, foreignSample, gridForeignGlyphs } = require('../scripts/dota-rendering.mjs');
+  // Radiance: Latin, Cyrillic (lower case by its capitals), Greek, a few typographic signs.
+  for (const char of ['A', 'z', 'Ж', 'ё', 'Ω', '—', '…', '•', '№', '€', '.', '*']) assert.equal(inDotaFont(char), true, char);
+  // Not in Radiance: the backtick, the macron, symbols, kana, emoji.
+  for (const char of ['`', '¯', '★', '♥', '⁘', '⁜', 'あ', '\u{1f600}']) assert.equal(inDotaFont(char), false, char);
+  // Whitespace and what the game does not show at all (invisibleWarning) are not counted.
+  const some = foreignGlyphs(['⁘⁘ . . .', '⁜', '⠀█', 'AB']);
+  assert.deepEqual(some, { total: 8, count: 3, chars: [['⁘', 2], ['⁜', 1]] });
+  assert.equal(foreignNoticeable(some), false, 'fewer than 20');
+  const many = foreignGlyphs([...Array(25).fill('⁕'), ...Array(400).fill('.')]);
+  assert.equal(foreignNoticeable(many), true, '25 of 425 is over 5 %');
+  assert.equal(foreignNoticeable(foreignGlyphs([...Array(25).fill('⁕'), ...Array(600).fill('.')])), false, '25 of 625 is under 5 %');
+  assert.equal(foreignSample(foreignGlyphs(['⁘⁕⁜⁎※‵⁔'])), '⁘ ⁕ ⁜ ⁎ ※ ‵ …');
+  // A workshop grid: hero categories do not count.
+  const grid = { configs: [{ categories: [{ category_name: '★', hero_ids: [] }, { category_name: 'КЕРРИ ★', hero_ids: [1] }] }] };
+  assert.equal(gridForeignGlyphs(grid).count, 1);
+  // On export, the warning names them.
+  const doc = C.createDocument();
+  for (let i = 0; i < 30; i++) doc.entities.push(C.entity(doc, { type: 'symbol', text: '⁜', x: 10 + i, y: 10, w: 30, h: 30, layer: 'decor' }));
+  assert.ok(C.warnings(doc).some((line) => line.startsWith('30 символов нет в шрифте Dota (⁜)')), C.warnings(doc).join(' | '));
+});

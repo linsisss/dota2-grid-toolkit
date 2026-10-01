@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import { applyGridBackground } from '../scripts/grid-background.mjs';
+import { followTitle, languageReady } from '../scripts/i18n.mjs';
 import '../styles/studio.css';
 import '../styles/site.css';
 import '../styles/refinements.css';
@@ -22,4 +23,6 @@ if (import.meta.hot) {
   import.meta.hot.data.root = root;
   import.meta.hot.prune(() => root.unmount());
 }
-root.render(<App />);
+// Drawn once the language is settled (for English, with its dictionaries; scripts/i18n.mjs).
+languageReady(() => import('./i18n/en/common.js'), () => import('./i18n/en/server.js'), () => import('./i18n/en/catalog.js'),
+  () => import('./i18n/en/editor-ui.js'), () => import('./i18n/en/editor.js')).then(() => { followTitle(); root.render(<App />); });

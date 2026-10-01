@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { HERO_OPACITY } from '../../scripts/menu-background.mjs';
 import DotaHeroModel from './DotaHeroModel.jsx';
+import { t } from '../../scripts/i18n.mjs';
 import bar from '../../assets/dota-menu/ui/hero-bar.webp';
 import barMid from '../../assets/dota-menu/ui/bar-mid.webp';
 import tabs from '../../assets/dota-menu/ui/hero-tabs.webp';
@@ -58,7 +59,7 @@ export default function DotaHeroPage({ interactive = true }) {
       <div className="dh-content">
         <img className="dh-left" src={left} alt=""/>
         <img className="dh-right" src={right} alt=""/>
-        <button type="button" className="dh-taunt" tabIndex={-1} title="Насмешка" aria-label="Насмешка" onClick={(event) => { event.stopPropagation(); taunt(); }}/>
+        <button type="button" className="dh-taunt" tabIndex={-1} title={t('Насмешка')} aria-label={t('Насмешка')} onClick={(event) => { event.stopPropagation(); taunt(); }}/>
       </div>
       <div className="dh-band"/>
       <img className="dh-prev" src={prev} alt=""/>

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { Icon } from './Icon.jsx';
+import { t } from '../scripts/i18n.mjs';
 
 // The editor's welcome and first-steps tour, like Figma's: a spotlight on one part of the editor
 // and a card that says what it is for. Shown once per browser (TOUR_KEY), again from «Помощь»
 // (the «Обучение» button dispatches TOUR_EVENT). A step whose target is not on screen (a hidden
-// panel, a narrow window) is skipped.
+// panel, a narrow window) is skipped. Titles and texts are Russian keys, shown through t().
 const TOUR_KEY = 'gridstudio.tour.v1';
 export const TOUR_EVENT = 'gridstudio:tour';
 const STEPS = [
@@ -78,11 +79,11 @@ export default function EditorTour() {
   if (phase === 'welcome') return <div className="tour-backdrop" role="dialog" aria-modal="true" aria-labelledby="tourWelcome">
     <div className="tour-welcome">
       <svg className="tour-logo" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m5 4 23 24M5 18v10h10M18 4h10v10"/></svg>
-      <h2 id="tourWelcome">Добро пожаловать в редактор</h2>
-      <p>Здесь собираются сетки героев Dota 2: группы героев, подписи, символы и рисунки из картинок. Короткое знакомство покажет, где что, — это меньше минуты.</p>
-      <div className="tour-actions"><button type="button" className="button secondary" onClick={close}>Разберусь сам</button>
-        <button type="button" className="button primary" autoFocus onClick={() => { setStep(0); setPhase('tour'); }}>Показать, где что<Icon name="arrow" size={18}/></button></div>
-      <p className="tour-note">Обучение всегда можно открыть снова в «Помощи» (?).</p>
+      <h2 id="tourWelcome">{t('Добро пожаловать в редактор')}</h2>
+      <p>{t('Здесь собираются сетки героев Dota 2: группы героев, подписи, символы и рисунки из картинок. Короткое знакомство покажет, где что, — это меньше минуты.')}</p>
+      <div className="tour-actions"><button type="button" className="button secondary" onClick={close}>{t('Разберусь сам')}</button>
+        <button type="button" className="button primary" autoFocus onClick={() => { setStep(0); setPhase('tour'); }}>{t('Показать, где что')}<Icon name="arrow" size={18}/></button></div>
+      <p className="tour-note">{t('Обучение всегда можно открыть снова в «Помощи» (?).')}</p>
     </div>
   </div>;
   if (!current || !rect) return null;
@@ -90,13 +91,13 @@ export default function EditorTour() {
   return <div className="tour-layer" role="dialog" aria-modal="true" aria-labelledby="tourTitle">
     <div className="tour-spotlight" style={{ left: rect.left - PAD, top: rect.top - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }}/>
     <section className="tour-card" key={step} style={card}>
-      <header><span className="tour-count">{step + 1} / {steps.length}</span><button type="button" className="tour-skip" onClick={close}>Пропустить</button></header>
-      <h3 id="tourTitle">{current.title}</h3>
-      <p>{current.text}</p>
+      <header><span className="tour-count">{step + 1} / {steps.length}</span><button type="button" className="tour-skip" onClick={close}>{t('Пропустить')}</button></header>
+      <h3 id="tourTitle">{t(current.title)}</h3>
+      <p>{t(current.text)}</p>
       <footer>
         <span className="tour-dots" aria-hidden="true">{steps.map((_, index) => <i key={index} className={index === step ? 'is-on' : ''}/>)}</span>
-        {step > 0 && <button type="button" className="button secondary" onClick={() => setStep(step - 1)}>Назад</button>}
-        <button type="button" className="button primary" autoFocus onClick={() => last ? close() : setStep(step + 1)}>{last ? 'Готово' : 'Далее'}</button>
+        {step > 0 && <button type="button" className="button secondary" onClick={() => setStep(step - 1)}>{t('Назад')}</button>}
+        <button type="button" className="button primary" autoFocus onClick={() => last ? close() : setStep(step + 1)}>{last ? t('Готово') : t('Далее')}</button>
       </footer>
     </section>
   </div>;

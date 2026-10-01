@@ -1,3 +1,4 @@
+import { t } from './i18n.mjs';
 // Application versions must never change these keys or the database name.
 export const PROJECT_KEY = 'dota-grid-studio.document.v1';
 export const JOURNAL_PREFIX = `${PROJECT_KEY}.pending.`;
@@ -5,18 +6,18 @@ const BACKUP_PREFIX = `${PROJECT_KEY}.backup.`;
 const META = '_studioSave';
 const uuid = () => globalThis.crypto.randomUUID();
 const info = (raw) => { try { return JSON.parse(raw)?.[META] || {}; } catch { return {}; } };
-const conflict = () => Object.assign(new Error('Проект изменён в другой вкладке.'), { code: 'CONFLICT' });
+const conflict = () => Object.assign(new Error(t('Проект изменён в другой вкладке.')), { code: 'CONFLICT' });
 export const KEEP_UPDATES = 3, KEEP_DAYS = 30;
 
 export function openProjectDatabase(indexedDB = globalThis.indexedDB, scope = '') {
   return new Promise((resolve, reject) => {
-    if (!indexedDB) return reject(new Error('IndexedDB недоступна.'));
+    if (!indexedDB) return reject(new Error(t('IndexedDB недоступна.')));
     const request = indexedDB.open('gridstudio-projects', 1);
     let expired = false;
-    const timer = setTimeout(() => { expired = true; reject(new Error('Хранилище не отвечает.')); }, 4000);
+    const timer = setTimeout(() => { expired = true; reject(new Error(t('Хранилище не отвечает.'))); }, 4000);
     request.onupgradeneeded = () => request.result.createObjectStore('documents', { keyPath: 'key' });
     request.onerror = () => { clearTimeout(timer); reject(request.error); };
-    request.onblocked = () => { clearTimeout(timer); expired = true; reject(new Error('Закрой старую вкладку редактора.')); };
+    request.onblocked = () => { clearTimeout(timer); expired = true; reject(new Error(t('Закрой старую вкладку редактора.'))); };
     request.onsuccess = () => {
       clearTimeout(timer);
       const db = request.result;
@@ -26,7 +27,7 @@ export function openProjectDatabase(indexedDB = globalThis.indexedDB, scope = ''
         const tx = db.transaction('documents', mode), store = tx.objectStore('documents');
         let result, error;
         tx.oncomplete = () => done(result);
-        tx.onerror = tx.onabort = () => fail(error || tx.error || new Error('Запись не завершена.'));
+        tx.onerror = tx.onabort = () => fail(error || tx.error || new Error(t('Запись не завершена.')));
         run(store, (value) => { result = value; }, (reason) => { error = reason; tx.abort(); });
       });
       resolve({
@@ -47,6 +48,7 @@ export function openProjectDatabase(indexedDB = globalThis.indexedDB, scope = ''
             if ((previous?.raw || null) !== expected) return abort(conflict());
             if (previous && previous.raw !== record.raw) {
               // Ten rolling minute snapshots; version/migration snapshots are separate and never pruned here.
+              // Reasons are stored and compared in Russian; the versions list translates them.
               const minute = Math.floor(record.savedAt / 60000);
               store.put({ ...previous, key: `${scope}rolling:${minute % 10}`, reason: reason || 'Автокопия' });
             }
@@ -101,9 +103,9 @@ export class ProjectStorage {
     const result = [];
     for (const record of records) {
       if (!record.raw) continue;
-      let name = 'Нераспознанный проект', valid = false;
+      let name = t('Нераспознанный проект'), valid = false;
       try { name = this.decode(record.raw).name; valid = true; } catch { /* Raw data can still be downloaded. */ }
-      result.push({ ...record, name, valid, version: info(record.raw).version || 'до нумерации' });
+      result.push({ ...record, name, valid, version: info(record.raw).version || t('до нумерации') });
     }
     return result.sort((a, b) => b.savedAt - a.savedAt);
   }
@@ -163,7 +165,7 @@ export class ProjectStorage {
     if (!chosen) chosen = records.find((record) => record.valid);
     if (records.length && !chosen) {
       this.blocked = true;
-      this.issue = 'Не удалось открыть сохранённый проект. Исходные данные сохранены; скачай их в разделе «Копии проекта».';
+      this.issue = t('Не удалось открыть сохранённый проект. Исходные данные сохранены; скачай их в разделе «Копии проекта».');
       return { doc: null, issue: this.issue, hasData: true };
     }
     if (chosen) {
@@ -172,12 +174,12 @@ export class ProjectStorage {
         if (info(raw).version !== this.version || raw !== chosen.raw) {
           if (!await this.protect(raw)) {
             this.blocked = true;
-            this.issue = 'Не хватает места для копии перед обновлением. Скачай проект; прежнее сохранение не перезаписано.';
+            this.issue = t('Не хватает места для копии перед обновлением. Скачай проект; прежнее сохранение не перезаписано.');
           }
         }
       }
       if (!this.issue && chosen.raw !== this.localRaw && chosen.raw !== this.databaseRaw)
-        this.issue = 'Проект восстановлен из резервной копии. Остальные копии доступны в меню сохранения.';
+        this.issue = t('Проект восстановлен из резервной копии. Остальные копии доступны в меню сохранения.');
     }
     return { doc: chosen ? this.decode(chosen.raw) : null, issue: this.issue, hasData: records.length > 0 };
   }
@@ -241,7 +243,7 @@ export class ProjectStorage {
       const latestLocal = this.localGet(PROJECT_KEY);
       const latestDatabase = this.database ? (await this.database.list()).find((r) => r.key === 'current')?.raw || null : null;
       for (const original of new Set([latestLocal, latestDatabase, JSON.stringify(currentDocument)].filter(Boolean))) {
-        if (!await this.protect(original, 'Перед восстановлением')) throw new Error('Не удалось сохранить текущую работу перед восстановлением. Сначала скачай проект.');
+        if (!await this.protect(original, 'Перед восстановлением')) throw new Error(t('Не удалось сохранить текущую работу перед восстановлением. Сначала скачай проект.'));
       }
       this.localRaw = latestLocal;
       this.databaseRaw = latestDatabase;
@@ -261,7 +263,7 @@ export function scopedLocalStorage(storage, workspace) {
     getItem: key => storage.getItem(actual(key)), setItem: (key, value) => storage.setItem(actual(key), value), removeItem: key => storage.removeItem(actual(key)) };
 }
 export async function createProjectStorage(importProject, version, workspace = 'legacy') {
-  if (workspace !== 'legacy' && !/^[a-f0-9-]{36}$/.test(workspace)) throw new Error('Некорректное рабочее пространство.');
+  if (workspace !== 'legacy' && !/^[a-f0-9-]{36}$/.test(workspace)) throw new Error(t('Некорректное рабочее пространство.'));
   let storage = null, database = null;
   try { storage = scopedLocalStorage(globalThis.localStorage, workspace); } catch { /* Browser policy. */ }
   try { database = await openProjectDatabase(globalThis.indexedDB, workspace === 'legacy' ? '' : `workspace:${workspace}:`); } catch { /* localStorage fallback. */ }

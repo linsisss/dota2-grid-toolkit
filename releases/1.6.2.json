@@ -14,5 +14,20 @@
         }
       ]
     }
-  ]
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Workshop",
+        "changes": [
+          {
+            "text": "If your grid, background or art is rejected, the bot sends you the reason in Telegram",
+            "children": [
+              "For those signed in with Telegram; the reason also shows in “My publications”"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

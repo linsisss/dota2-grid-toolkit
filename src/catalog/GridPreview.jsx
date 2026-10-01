@@ -5,6 +5,7 @@ import { gameFontsReady, koreanFontReady, needsKoreanFont } from '../typography.
 import { myGridBackground } from '../my-background.js';
 import { catalogAPI } from './api.js';
 import { portrait } from '../../scripts/portraits.mjs';
+import { t } from '../../scripts/i18n.mjs';
 
 // Cards remount on every filter and page change. A published revision never
 // changes, so its grid is fetched once per page load and cached by the browser.
@@ -37,7 +38,7 @@ function queueDraw(job) {
 // over a phone's 3× screen blurred dot art (one «.» is under 2 px there) into dust.
 const STEP = 64, MAX_WIDTH = 1193 * 2;
 const pixelWidth = (cssWidth) => Math.min(MAX_WIDTH, Math.max(STEP, Math.ceil(cssWidth * Math.min(3, globalThis.devicePixelRatio || 1) / STEP) * STEP));
-export default function GridPreview({ grid: supplied, id, revision, title = 'Превью сетки', large = false }) {
+export default function GridPreview({ grid: supplied, id, revision, title = t('Превью сетки'), large = false }) {
   const canvas = useRef(null), container = useRef(null);
   const [grid, setGrid] = useState(supplied), [error, setError] = useState('');
   const [background, setBackground] = useState(gridBackground), [pixels, setPixels] = useState(0);
@@ -73,13 +74,13 @@ export default function GridPreview({ grid: supplied, id, revision, title = 'П�
         const width = pixels, scale = width / 1193;
         element.width = width; element.height = Math.round(593 * scale);
         drawCatalogGrid(ctx, grid, new Map(ids.map((id, i) => [id, images[i]])), width, groundImage);
-      } catch { setError('Не удалось нарисовать превью.'); }
-    })).catch(() => { if (active) setError('Не удалось нарисовать превью.'); });
+      } catch { setError(t('Не удалось нарисовать превью.')); }
+    })).catch(() => { if (active) setError(t('Не удалось нарисовать превью.')); });
     return () => { active = false; };
   }, [grid, large, background, pixels]);
   return <div className="catalog-preview" ref={container}>
     <canvas ref={canvas} width="716" height="356" role="img" aria-label={title} />
-    {!grid && !error && <span className="catalog-preview-status" role="status">Загружаем сетку…</span>}
+    {!grid && !error && <span className="catalog-preview-status" role="status">{t('Загружаем сетку…')}</span>}
     {error && <span className="catalog-preview-status" role="status">{error}</span>}
   </div>;
 }

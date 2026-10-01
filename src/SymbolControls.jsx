@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import C from '../scripts/core.mjs';
 import { NumberInput } from './NumberInput.jsx';
 import { categorySelection, toggleCategory } from '../scripts/symbol-tools.mjs';
+import { foreignNoticeable, foreignSample } from '../scripts/dota-rendering.mjs';
+import { t, tn, translateMessage } from '../scripts/i18n.mjs';
 
 export function CategoryCheckbox({ value, chars, onChange }) {
   const ref = useRef(null),
@@ -18,20 +20,20 @@ export function CategoryCheckbox({ value, chars, onChange }) {
         disabled={!Array.from(chars).length}
         onChange={(e) => onChange(toggleCategory(value, chars, e.target.checked))}
       />
-      Выбрать все символы
+      {t('Выбрать все символы')}
     </label>
   );
 }
 export function RecentSymbols({ symbols = [], onPick }) {
   return (
-    <div className="recent-symbols" role="toolbar" aria-label="Последние символы">
-      <span>Недавние</span>
+    <div className="recent-symbols" role="toolbar" aria-label={t('Последние символы')}>
+      <span>{t('Недавние')}</span>
       {Array.from({ length: 8 }, (_, i) =>
         symbols[i] ? (
           <button
             key={i}
-            title={`Взять символ ${symbols[i]}`}
-            aria-label={`Взять символ ${symbols[i]}`}
+            title={t('Взять символ {symbol}', { symbol: symbols[i] })}
+            aria-label={t('Взять символ {symbol}', { symbol: symbols[i] })}
             onClick={() => onPick(symbols[i])}
           >
             {symbols[i]}
@@ -68,11 +70,32 @@ export function CategoryWarning({ count, onOptimize }) {
     <div className="category-warning" role="alert">
       <span aria-hidden="true">!</span>
       <div>
-        <strong>{count.toLocaleString('ru-RU')} категорий — высокая нагрузка</strong>
-        <p>Больше 2000 категорий могут вызывать лаги и вылет Dota 2.</p>
+        <strong>{t('{count} — высокая нагрузка', { count: tn(count, ['категория', 'категории', 'категорий'], ['category', 'categories']) })}</strong>
+        <p>{t('Больше 2000 категорий могут вызывать лаги и вылет Dota 2.')}</p>
       </div>
-      {onOptimize && <button className="button secondary compact" onClick={onOptimize}>Сократить категории</button>}
-      <button type="button" className="category-warning-close" aria-label="Скрыть предупреждение" onClick={() => setState('done')}>×</button>
+      {onOptimize && <button className="button secondary compact" onClick={onOptimize}>{t('Сократить категории')}</button>}
+      <button type="button" className="category-warning-close" aria-label={t('Скрыть предупреждение')} onClick={() => setState('done')}>×</button>
+    </div>
+  );
+}
+// Characters missing from Dota's font (dota-rendering inDotaFont), when they are a noticeable part
+// of the picture: the game draws them with a Windows font, so they look different there. Closed,
+// it stays closed for these characters this session and comes back when others are added.
+const FONT_WARNING_SEEN = 'gridstudio.fontWarningSeen';
+export function FontWarning({ foreign, onSelect }) {
+  const chars = (foreign?.chars || []).map(([char]) => char), key = chars.slice().sort().join('');
+  const [closed, setClosed] = useState(() => { try { return sessionStorage.getItem(FONT_WARNING_SEEN) || ''; } catch { return ''; } });
+  if (!foreign || !foreignNoticeable(foreign) || closed === key) return null;
+  const close = () => { try { sessionStorage.setItem(FONT_WARNING_SEEN, key); } catch { /* Shown again after a reload; harmless. */ } setClosed(key); };
+  return (
+    <div className="category-warning font-warning" role="status">
+      <span aria-hidden="true">Aa</span>
+      <div>
+        <strong>{t('{count} нет в шрифте Dota: {sample}', { count: tn(foreign.count, ['символа', 'символов', 'символов'], ['symbol is', 'symbols are']), sample: foreignSample(foreign) })}</strong>
+        <p>{t('Игра рисует их шрифтом Windows — в Dota они выглядят иначе, чем здесь, и на разных компьютерах по-разному.')}</p>
+      </div>
+      {onSelect && <button className="button secondary compact" onClick={() => onSelect(chars)}>{t('Выделить')}</button>}
+      <button type="button" className="category-warning-close" aria-label={t('Скрыть предупреждение')} onClick={close}>×</button>
     </div>
   );
 }
@@ -91,16 +114,16 @@ export function CanvasSizeFields({ size, onApply }) {
       setError('');
       if (next.w !== size.w || next.h !== size.h) onApply(next);
     } catch (error) {
-      setError(error.message);
+      setError(translateMessage(error.message));
     }
   };
   return (
     <div className="canvas-dimensions-edit">
-      <div className="canvas-dimension-inputs" role="group" aria-label="Размер холста">
+      <div className="canvas-dimension-inputs" role="group" aria-label={t('Размер холста')}>
         <label>
           <span>W</span>
           <NumberInput
-            aria-label="Ширина холста"
+            aria-label={t('Ширина холста')}
             type="number"
             min="100"
             max="6000"
@@ -127,7 +150,7 @@ export function CanvasSizeFields({ size, onApply }) {
         <label>
           <span>H</span>
           <NumberInput
-            aria-label="Высота холста"
+            aria-label={t('Высота холста')}
             type="number"
             min="100"
             max="6000"

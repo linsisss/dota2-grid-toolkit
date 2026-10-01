@@ -4,6 +4,7 @@
 // replaces one of them when it is saved under Valve's file name with Valve's family name inside:
 // the pack overwrites those files and nothing else, and «Verify integrity» restores the originals.
 // Static TrueType/CFF only: that FreeType predates WOFF2 and fontconfig variable instances.
+import { t } from './i18n.mjs';
 
 export const DOTA_FAMILIES = {
   Radiance: { prefix: 'radiance', role: 'text' },
@@ -54,21 +55,21 @@ export function readFont(input) {
   const bytes = ArrayBuffer.isView(input) ? new Uint8Array(input.buffer, input.byteOffset, input.byteLength) : new Uint8Array(input);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const fail = (message) => { throw Object.assign(new Error(message), { code: 'font' }); };
-  if (bytes.length < 12) fail('Файл слишком маленький для шрифта.');
+  if (bytes.length < 12) fail(t('Файл слишком маленький для шрифта.'));
   const signature = tag(bytes, 0);
-  if (signature === 'wOFF' || signature === 'wOF2') fail('Это веб-шрифт (WOFF). Нужен файл .ttf или .otf.');
-  if (signature === 'ttcf') fail('Это коллекция шрифтов (.ttc). Нужен один шрифт .ttf или .otf.');
+  if (signature === 'wOFF' || signature === 'wOF2') fail(t('Это веб-шрифт (WOFF). Нужен файл .ttf или .otf.'));
+  if (signature === 'ttcf') fail(t('Это коллекция шрифтов (.ttc). Нужен один шрифт .ttf или .otf.'));
   const version = u32(view, 0);
-  if (version !== 0x00010000 && signature !== 'OTTO' && signature !== 'true') fail('Это не шрифт TrueType или OpenType.');
+  if (version !== 0x00010000 && signature !== 'OTTO' && signature !== 'true') fail(t('Это не шрифт TrueType или OpenType.'));
   const count = u16(view, 4), tables = {};
-  if (12 + count * 16 > bytes.length) fail('Шрифт повреждён.');
+  if (12 + count * 16 > bytes.length) fail(t('Шрифт повреждён.'));
   for (let i = 0; i < count; i++) {
     const at = 12 + i * 16, offset = u32(view, at + 8), length = u32(view, at + 12);
-    if (offset + length > bytes.length) fail('Шрифт повреждён.');
+    if (offset + length > bytes.length) fail(t('Шрифт повреждён.'));
     tables[tag(bytes, at)] = bytes.subarray(offset, offset + length);
   }
-  for (const need of ['head', 'name', 'cmap', 'OS/2', 'hhea', 'hmtx', 'maxp']) if (!tables[need]) fail(`В шрифте нет таблицы ${need}.`);
-  if (tables.fvar) fail('Это вариативный шрифт. Dota понимает только статичные: скачай отдельные начертания (Regular, Bold…).');
+  for (const need of ['head', 'name', 'cmap', 'OS/2', 'hhea', 'hmtx', 'maxp']) if (!tables[need]) fail(t('В шрифте нет таблицы {table}.', { table: need }));
+  if (tables.fvar) fail(t('Это вариативный шрифт. Dota понимает только статичные: скачай отдельные начертания (Regular, Bold…).'));
   const tableView = (name) => new DataView(tables[name].buffer, tables[name].byteOffset, tables[name].byteLength);
   const os2 = tableView('OS/2');
   return {

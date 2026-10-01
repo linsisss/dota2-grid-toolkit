@@ -2,9 +2,10 @@ import C from './core.mjs';
 import { createProjectStorage } from './project-storage.mjs';
 import { APP_VERSION } from './version.mjs';
 import { cloudWorkspaceId } from './workspaces.mjs';
+import { t } from './i18n.mjs';
 
 export function workspaceGridPreview(document, index) {
-  if (!Number.isInteger(index) || index < 0 || index >= document.source.configs.length) throw new Error('Сетка не найдена.');
+  if (!Number.isInteger(index) || index < 0 || index >= document.source.configs.length) throw new Error(t('Сетка не найдена.'));
   // Read the live state or the saved draft, not the original imported categories.
   const state = index === document.configIndex ? document : document.configDrafts?.[index];
   if (!state) return { version: 3, configs: [C.clone(document.source.configs[index])] };
@@ -24,5 +25,5 @@ export async function readWorkspacePreview(meta, api, signal) {
     try { return { document: (await api(`/spaces/${cloudWorkspaceId(meta)}`, { signal })).document }; }
     catch (error) { if (signal?.aborted || !local.doc) throw error; return { document: local.doc, offline: true }; }
   }
-  throw new Error(local.issue || 'Не удалось прочитать файл для превью.');
+  throw new Error(local.issue || t('Не удалось прочитать файл для превью.'));
 }

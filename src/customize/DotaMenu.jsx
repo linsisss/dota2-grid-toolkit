@@ -9,6 +9,10 @@ import railParty from '../../assets/dota-menu/ui/rail-party.webp';
 import avatar from '../../assets/dota-menu/ui/avatar.webp';
 import mailOn from '../../assets/dota-menu/ui/mail-on.webp';
 import notice from '../../assets/dota-menu/ui/notice.webp';
+import eventLogo from '../../assets/dota-menu/ui/event-logo.webp';
+import eventTitle from '../../assets/dota-menu/ui/event-title.webp';
+import eventBackTitle from '../../assets/dota-menu/ui/event-back-title.webp';
+import eventScreen from '../../assets/dota-menu/ui/event-screen.webp';
 
 // Dota 2's main menu over the chosen background, laid out in 1080p pixels like Panorama does it:
 // the layer is scaled by min(width / 1920, height / 1080), so on a wide screen the panels move to
@@ -16,10 +20,16 @@ import notice from '../../assets/dota-menu/ui/notice.webp';
 // browser: the top bar, ИГРАТЬ, the chat line and the event card are cut from a real screenshot
 // (scripts/make-menu-sprites.mjs), the friends rail with its text is rendered by
 // scripts/make-menu-rail.mjs (browsers on Windows would draw Radiance with ClearType, heavier than
-// the game). The owner is dissonance, one of GridStudio's authors. The one live thing is an easter
-// egg: the envelope opens Dota's notifications popup (scripts/make-menu-notice.mjs).
-export default function DotaMenu({ clean }) {
+// the game). The owner is dissonance, one of GridStudio's authors. Two things are live: an easter
+// egg, the envelope opens Dota's notifications popup (scripts/make-menu-notice.mjs), and, with
+// `event`, the pack's button to the season event, which shows the event screen and turns into
+// «НАЗАД», like in the game: drawn in CSS like the pack's, with the logo and the texts from
+// scripts/make-menu-event.mjs (the screen loads on the first hover). `event` is null when the site
+// has no event; false keeps the button mounted but away, so turning it on and off both animate.
+export default function DotaMenu({ clean, event = null }) {
   const frame = useRef(null), layer = useRef(null), mail = useRef(null), [open, setOpen] = useState(false);
+  const [season, setSeason] = useState(false), [warm, setWarm] = useState(false), [loaded, setLoaded] = useState(false);
+  useEffect(() => { if (!event) setSeason(false); }, [event]);
   // Written straight to the style, so the screen's shape animation does not re-render React.
   useLayoutEffect(() => {
     const fit = () => {
@@ -41,7 +51,9 @@ export default function DotaMenu({ clean }) {
     document.addEventListener('pointerdown', away); document.addEventListener('keydown', escape);
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', escape); };
   }, [open]);
-  return <div className="dota-menu" ref={frame} aria-hidden="true"><div className="dm-layer" ref={layer}>
+  return <div className="dota-menu" ref={frame} aria-hidden="true"><div className={`dm-layer${season ? ' is-event' : ''}`} ref={layer}>
+    {/* The screen comes in once its picture is there, so a slow load does not pop it in halfway. */}
+    {warm && <div className={`dm-event${loaded ? ' is-loaded' : ''}`} style={{ '--event': `url(${eventScreen})` }}><img src={eventScreen} alt="" onLoad={() => setLoaded(true)}/></div>}
     <div className="dm-bar-left" style={{ backgroundImage: `url(${bar})` }}/>
     <div className="dm-bar-mid" style={{ backgroundImage: `url(${barMid})` }}/>
     <div className="dm-bar-right" style={{ backgroundImage: `url(${bar})` }}/>
@@ -49,6 +61,10 @@ export default function DotaMenu({ clean }) {
     <div className="dm-party"><img src={railParty} alt=""/><img className="dm-party-me" src={avatar} alt=""/></div>
     {/* Stays mounted, so hiding and showing the news both animate. */}
     <img className={`dm-news${clean ? ' is-hidden' : ''}`} src={news} alt=""/>
+    {/* Under the event card, or at the column's top when the news are hidden (MENU_UI in menu-background.mjs). */}
+    {event !== null && <button type="button" tabIndex={-1} className={`dm-event-toggle${clean ? ' is-top' : ''}${event ? '' : ' is-off'}`} onPointerEnter={() => setWarm(true)}
+      onPointerDown={(e) => e.stopPropagation()} onClick={() => { setWarm(true); setSeason((value) => !value); }}>
+      <img className="dm-event-logo" src={eventLogo} alt=""/><img className="dm-event-title" src={eventTitle} alt=""/><img className="dm-event-title is-back" src={eventBackTitle} alt=""/></button>}
     <img className="dm-chat" src={chat} alt=""/>
     <img className="dm-play" src={play} alt=""/>
     <button ref={mail} type="button" tabIndex={-1} className={`dm-mail${open ? ' is-open' : ''}`} onClick={() => setOpen((value) => !value)}><img src={mailOn} alt=""/></button>

@@ -84,5 +84,90 @@
         "Новые иконки на всём сайте — один стиль и толщина линий"
       ]
     }
-  ]
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Hero pick screen",
+        "changes": [
+          "Grids no longer shift during hero pick or at resolutions other than 1080p",
+          "Heroes can be picked with a click again — symbol rows no longer cover them",
+          "Multi-line labels show in full",
+          {
+            "text": "Workshop grids download already fixed",
+            "children": [
+              "Downloaded or made a grid on 1.5? Download it again"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Main menu background",
+        "changes": [
+          {
+            "text": "A new menu background builder from your own picture, GIF or video up to 50 MB",
+            "children": [
+              "A ready file for Dota right in the browser — no create.bat, no programs"
+            ]
+          },
+          "“Fill” or “Fit” for your screen — 16:9, 16:10, 21:9 or 4:3",
+          "The preview is the real Dota main menu: top bar, friends, chat, PLAY DOTA",
+          "Background blur and dimming; news can be hidden",
+          "A video clip of up to 30 seconds with a smooth loop from end to start",
+          "“Where to get a background?” — a list of sites with live wallpapers and GIFs",
+          "After download, a guide: where to put the file and which launch option to add",
+          "“With installer”: the .bat finds Dota by itself, “Remove background” puts everything back",
+          "“Is it safe?” — briefly, what changes in the game files",
+          "There’s an Easter egg hidden in the menu preview"
+        ]
+      },
+      {
+        "title": "Workshop",
+        "changes": [
+          "A “Grids / Backgrounds” switch — ready-made menu backgrounds from users, with tags and search",
+          "“Use” opens a background straight in the builder",
+          "Backgrounds have likes, “Popular” and reports — just like grids",
+          "You can publish your background to the Workshop — the button is right in the builder",
+          "“My background” — see a grid over your own menu background, as in the game"
+        ]
+      },
+      {
+        "title": "Studio",
+        "changes": [
+          "“My files” is now the Studio — grids and backgrounds together, with an “All / Grids / Backgrounds” filter",
+          "The “Create” button — a hero grid or a main menu background",
+          {
+            "text": "Backgrounds are saved in the Studio: download again, rename, open in the builder",
+            "children": [
+              "Signed in with Telegram — on your other devices too"
+            ]
+          },
+          "A background’s card shows its publication status",
+          "The Studio always opens the file list — grids no longer “disappear”"
+        ]
+      },
+      {
+        "title": "Editor",
+        "changes": [
+          "A welcome and a short tour of the buttons — replay it from “Help”",
+          {
+            "text": "A style strip in “Image to ASCII” — your picture in every style at once",
+            "children": [
+              "A click applies the style with all its settings"
+            ]
+          },
+          "“Outlines and dots” is the default again"
+        ]
+      },
+      {
+        "title": "Site",
+        "changes": [
+          "A new home page: “Make Dota 2 your own” — grids, menu backgrounds, fonts and guides coming soon",
+          "The home page shows a random Workshop grid (3+ likes) right in the editor",
+          "Editor screenshots on the home page show the new interface",
+          "New icons across the site — one style and line weight"
+        ]
+      }
+    ]
+  }
 }

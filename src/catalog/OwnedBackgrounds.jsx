@@ -4,8 +4,9 @@ import { publicationStatus } from '../studio-backgrounds.js';
 import { BackgroundCard } from './BackgroundGallery.jsx';
 import { Icon, Notice } from './Common.jsx';
 import { catalogAPI, CUSTOMIZE_PATH, STUDIO_PATH } from './api.js';
+import { t, translateMessage } from '../../scripts/i18n.mjs';
 
-const STATUS = { approved: 'Опубликован', pending: 'На проверке', rejected: 'Отклонён', hidden: 'Скрыт из мастерской' };
+const STATUS = () => ({ approved: t('Опубликован'), pending: t('На проверке'), rejected: t('Отклонён'), hidden: t('Скрыт из мастерской') });
 const STATUS_CLASS = { approved: 'approved', pending: 'pending', rejected: 'rejected', hidden: 'blocked' };
 
 // A guest's submissions are the studio's backgrounds of this browser that were published (they keep
@@ -35,23 +36,23 @@ export default function OwnedBackgrounds({ auth }) {
     browserSubmissions().then((items) => { made = items; if (alive) setLocal(items); else items.forEach((item) => item.poster && URL.revokeObjectURL(item.poster)); });
     return () => { alive = false; made.forEach((item) => item.poster && URL.revokeObjectURL(item.poster)); };
   }, [retry]);
-  if (!remote || !local) return <p role="status">Загружаем публикации…</p>;
+  if (!remote || !local) return <p role="status">{t('Загружаем публикации…')}</p>;
   const items = [...remote, ...local.filter((item) => !remote.some((own) => own.id === item.id))];
-  return <section className="catalog-owned" aria-label="Мои фоны">
-    <div className="catalog-results publication-summary"><span>Публикаций: {items.length}</span>
-      {!auth.user && <p>Без входа видны фоны, опубликованные из этого браузера. <button className="catalog-link" onClick={() => auth.requestLogin()}>Войти через Telegram</button></p>}
+  return <section className="catalog-owned" aria-label={t('Мои фоны')}>
+    <div className="catalog-results publication-summary"><span>{t('Публикаций: {count}', { count: items.length })}</span>
+      {!auth.user && <p>{t('Без входа видны фоны, опубликованные из этого браузера.')} <button className="catalog-link" onClick={() => auth.requestLogin()}>{t('Войти через Telegram')}</button></p>}
     </div>
-    {error && <Notice error>{error}<button className="catalog-link" onClick={() => setRetry((x) => x + 1)}>Повторить</button></Notice>}
+    {error && <Notice error>{error}<button className="catalog-link" onClick={() => setRetry((x) => x + 1)}>{t('Попробовать снова')}</button></Notice>}
     {items.length ? <div className="background-grid">{items.map((item) => {
       const approved = item.status === 'approved';
       return <BackgroundCard key={`${item.local ? 'local' : 'own'}:${item.id}`} item={item} poster={approved ? null : item.poster} playable={approved || !item.local}
-        footer={<div className="background-card-status"><span className={`publication-status status-${STATUS_CLASS[item.status] || 'loading'}`}><i aria-hidden="true"/>{STATUS[item.status] || 'Не удалось узнать статус'}</span>
-          {item.reason && <p className="publication-reason">{item.reason}</p>}</div>}>
+        footer={<div className="background-card-status"><span className={`publication-status status-${STATUS_CLASS[item.status] || 'loading'}`}><i aria-hidden="true"/>{STATUS()[item.status] || t('Не удалось узнать статус')}</span>
+          {item.reason && <p className="publication-reason">{translateMessage(item.reason)}</p>}</div>}>
         <div className="background-card-actions">
-          {item.local && <a className="catalog-icon" href={`${STUDIO_PATH}&show=backgrounds`} aria-label={`«${item.title}» в студии`} title="Открыть в студии"><Icon name="studio"/></a>}
-          {approved && <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`}>Использовать</a>}
+          {item.local && <a className="catalog-icon" href={`${STUDIO_PATH}&show=backgrounds`} aria-label={t('«{title}» в студии', { title: item.title })} title={t('Открыть в студии')}><Icon name="studio"/></a>}
+          {approved && <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`}>{t('Использовать')}</a>}
         </div>
       </BackgroundCard>;
-    })}</div> : <div className="catalog-empty"><Icon name="image"/><h2>Публикаций пока нет</h2><p>Собери фон и нажми «Опубликовать в мастерскую».</p><a className="catalog-button" href={CUSTOMIZE_PATH}>Собрать фон</a></div>}
+    })}</div> : <div className="catalog-empty"><Icon name="image"/><h2>{t('Публикаций пока нет')}</h2><p>{t('Собери фон и нажми «Опубликовать в мастерскую».')}</p><a className="catalog-button" href={CUSTOMIZE_PATH}>{t('Собрать фон')}</a></div>}
   </section>;
 }

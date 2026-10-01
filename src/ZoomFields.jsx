@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { MIN_ZOOM, MAX_ZOOM, sliderToZoom, zoomToSlider } from '../scripts/zoom.mjs';
+import { t } from '../scripts/i18n.mjs';
 const formatPercent = (zoom) => String(Math.round(zoom * 1000) / 10);
 
 export function ZoomFields({ zoom, onChange }) {
@@ -16,10 +17,10 @@ export function ZoomFields({ zoom, onChange }) {
   };
   return <>
     <input className="zoom-slider" type="range" min="0" max="1000" step="1"
-      aria-label="Масштаб холста" aria-valuetext={`${Math.round(zoom * 100)} процентов`}
+      aria-label={t('Масштаб холста')} aria-valuetext={t('{value} процентов', { value: Math.round(zoom * 100) })}
       value={zoomToSlider(zoom)} onChange={(e) => onChange(sliderToZoom(Number(e.target.value)))} />
-    <label className="zoom-percent" data-tooltip="Точный масштаб: от 1 до 800%">
-      <input id="zoomValue" type="text" inputMode="decimal" aria-label="Масштаб в процентах"
+    <label className="zoom-percent" data-tooltip={t('Точный масштаб: от 1 до 800%')}>
+      <input id="zoomValue" type="text" inputMode="decimal" aria-label={t('Масштаб в процентах')}
         value={value} onFocus={() => { editing.current = true; }}
         onChange={(e) => setValue(e.target.value)} onBlur={apply}
         onKeyDown={(e) => {

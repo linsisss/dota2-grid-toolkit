@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { randomUUID } = require('node:crypto');
 
 const recipe = (extra = {}) => ({ aspect: '16:9', fit: 'cover', blur: 40, dim: 20, frame: { zoom: 1.5, x: 0.25, y: 0.5 }, clean: false, folder: 'russian', delivery: 'file',
-  piece: { start: 1.5, end: 21.5 }, crossfade: 1, source: { kind: 'workshop', id: 7, title: 'Корги' }, hero: { mode: 'menu' }, ...extra });
+  piece: { start: 1.5, end: 21.5 }, crossfade: 1, source: { kind: 'workshop', id: 7, title: 'Корги' }, hero: { mode: 'menu' }, event: true, profile: true, grid: { mode: 'menu' }, ...extra });
 
 test('studio recipes: the settings and the source, nothing else', async () => {
   const { studioRecipe, defaultStudioName } = await import('../scripts/studio-background.mjs');
@@ -12,11 +12,21 @@ test('studio recipes: the settings and the source, nothing else', async () => {
   assert.deepEqual(own.source, { kind: 'file', name: 'Лес.MP4', size: 123, type: 'video', label: 'MP4' }, 'only what identifies the file');
   assert.equal(defaultStudioName(own.source), 'Лес');
   assert.equal(defaultStudioName(recipe().source), 'Корги');
-  for (const wrong of [{ aspect: '5:4' }, { blur: 101 }, { dim: 1.5 }, { crossfade: 3 }, { folder: 'dota' }, { piece: { start: 5, end: 5 } }, { source: { kind: 'url', href: 'x' } }, { clean: 'yes' },
+  for (const wrong of [{ aspect: '5:4' }, { blur: 101 }, { dim: 1.5 }, { crossfade: 3 }, { folder: 'dota' }, { piece: { start: 5, end: 5 } }, { source: { kind: 'url', href: 'x' } }, { clean: 'yes' }, { event: 'no' }, { profile: 1 }, { grid: { mode: 'dark' } }, { grid: { mode: 'dim', dim: 101 } },
     { frame: { zoom: 0.5, x: 0.5, y: 0.5 } }, { frame: { zoom: 4, x: 0.5, y: 0.5 } }, { frame: { zoom: 1, x: -0.1, y: 0.5 } }, { frame: { zoom: 1, x: 0.5 } }])
     assert.throws(() => studioRecipe(recipe(wrong)), /не читаются/, JSON.stringify(wrong));
   const { frame, ...before } = recipe();
   assert.deepEqual(studioRecipe(before).frame, { zoom: 1, x: 0.5, y: 0.5 }, 'recipes from before 1.6.1: the middle, not enlarged');
+  const { event, profile, ...older } = recipe();
+  assert.equal(studioRecipe(older).event, true, 'recipes from before 1.6.4 get the event button');
+  // The Dota language (1.7): 'custom' (dota_123, which Dota no longer reads) is a Russian Dota now.
+  assert.equal(studioRecipe(recipe({ folder: 'english' })).folder, 'english');
+  assert.equal(studioRecipe(recipe({ folder: 'custom' })).folder, 'russian');
+  assert.equal(studioRecipe(older).profile, true, '…and the profile buttons');
+  assert.deepEqual(studioRecipe(older).grid, { mode: 'menu' }, '…and the «Герои» page as it was');
+  assert.deepEqual(studioRecipe(recipe({ grid: { mode: 'dim', dim: 60 } })).grid, { mode: 'dim', dim: 60 });
+  assert.equal(studioRecipe(recipe({ event: false, profile: false })).event, false);
+  assert.equal(studioRecipe(recipe({ event: false, profile: false })).profile, false);
 });
 
 test('framing: the picture fills or fits the screen, is enlarged and placed as the builder draws it', async () => {

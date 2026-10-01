@@ -3,8 +3,12 @@ import catalog from '../data/ascii-arts.json';
 import { ArtPreview } from './ArtPreview.jsx';
 import { ArtSubmission } from './ArtSubmission.jsx';
 import { catalogAPI } from './catalog/api.js';
+import { t } from '../scripts/i18n.mjs';
 
+// 'Все' and PLAYERS are the filter's values; t() turns them, the categories and the built-in arts'
+// names into labels (users' arts keep their names).
 const PLAYERS = 'От пользователей';
+const artName = (art) => (art.player ? art.name : t(art.name));
 
 function ArtDialog({ art, editor, canvas, close }) {
   const ref = useRef(null);
@@ -20,10 +24,10 @@ function ArtDialog({ art, editor, canvas, close }) {
     <dialog ref={ref} className="art-dialog" aria-labelledby="artDialogTitle" onCancel={close}>
       <header className="art-dialog-heading">
         <div>
-          <h2 id="artDialogTitle">{art.name}</h2>
-          <span>{[art.category, art.author, art.player && 'от пользователей'].filter(Boolean).join(' · ')}</span>
+          <h2 id="artDialogTitle">{artName(art)}</h2>
+          <span>{[art.category && t(art.category), art.author, art.player && t('от пользователей')].filter(Boolean).join(' · ')}</span>
         </div>
-        <button className="icon-button" aria-label="Закрыть просмотр арта" onClick={close}>
+        <button className="icon-button" aria-label={t('Закрыть просмотр арта')} onClick={close}>
           ×
         </button>
       </header>
@@ -34,17 +38,17 @@ function ArtDialog({ art, editor, canvas, close }) {
         <div>
           <span>
             {layout
-              ? `${Math.ceil(layout.width)} × ${layout.height} px · ${layout.rows} строк`
-              : 'Оригинальные символы'}
+              ? t('{w} × {h} px · {rows} строк', { w: Math.ceil(layout.width), h: layout.height, rows: layout.rows })
+              : t('Оригинальные символы')}
           </span>
           {layout && (layout.width > canvas.w || layout.height > canvas.h) && (
             <p className="canvas-size-note">
-              Арт больше холста. После вставки можно увеличить холст или изменить размер арта.
+              {t('Арт больше холста. После вставки можно увеличить холст или изменить размер арта.')}
             </p>
           )}
         </div>
         <button className="button secondary" onClick={close}>
-          Отмена
+          {t('Отмена')}
         </button>
         <button
           className="button primary"
@@ -52,7 +56,7 @@ function ArtDialog({ art, editor, canvas, close }) {
             if (editor.addAsciiArt(art)) close();
           }}
         >
-          Добавить на холст
+          {t('Добавить на холст')}
         </button>
       </footer>
     </dialog>
@@ -83,23 +87,23 @@ export function AsciiLibrary({ editor, canvas }) {
   const arts = all.filter(
     (art) =>
       (category === 'Все' || art.category === category || (category === PLAYERS && art.player)) &&
-      `${art.name} ${art.category} ${art.author || ''}`
+      `${art.name} ${artName(art)} ${art.category} ${t(art.category)} ${art.author || ''}`
         .toLocaleLowerCase('ru')
         .includes(query.trim().toLocaleLowerCase('ru'))
   );
   return (
-    <section className="ascii-library" aria-label="Библиотека ASCII-артов">
+    <section className="ascii-library" aria-label={t('Библиотека ASCII-артов')}>
       <div className="ascii-library-heading">
-        <h2>Готовые арты</h2>
+        <h2>{t('Готовые арты')}</h2>
         <span>{all.length}</span>
       </div>
       <button className="button secondary full art-offer" onClick={() => setSubmitting(true)}>
-        Предложить свой арт
+        {t('Предложить свой арт')}
       </button>
       <input
         type="search"
-        aria-label="Найти ASCII-арт"
-        placeholder="Найти арт…"
+        aria-label={t('Найти ASCII-арт')}
+        placeholder={t('Найти арт…')}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -107,7 +111,7 @@ export function AsciiLibrary({ editor, canvas }) {
         }}
       />
       <select
-        aria-label="Категория ASCII-артов"
+        aria-label={t('Категория ASCII-артов')}
         value={category}
         onChange={(e) => {
           setCategory(e.target.value);
@@ -115,7 +119,7 @@ export function AsciiLibrary({ editor, canvas }) {
         }}
       >
         {categories.map((name) => (
-          <option key={name}>{name}</option>
+          <option key={name} value={name}>{t(name)}</option>
         ))}
       </select>
       <div className="art-cards">
@@ -124,22 +128,22 @@ export function AsciiLibrary({ editor, canvas }) {
             key={art.id}
             className="art-card"
             onClick={() => setSelected(art)}
-            aria-label={`Посмотреть арт: ${art.name}`}
+            aria-label={t('Посмотреть арт: {name}', { name: artName(art) })}
           >
             <div className="art-thumbnail">
               <ArtPreview art={art} />
             </div>
             <span>
-              {art.name}
-              {art.player && <small>{art.author || 'от пользователей'}</small>}
+              {artName(art)}
+              {art.player && <small>{art.author || t('от пользователей')}</small>}
             </span>
           </button>
         ))}
       </div>
-      {!arts.length && <p className="hint">Арты не найдены. Попробуй другое название.</p>}
+      {!arts.length && <p className="hint">{t('Арты не найдены. Попробуй другое название.')}</p>}
       {arts.length > limit && (
         <button className="button secondary full" onClick={() => setLimit((n) => n + 12)}>
-          Показать ещё · {arts.length - limit}
+          {t('Показать ещё')} · {arts.length - limit}
         </button>
       )}
       {submitting && <ArtSubmission onClose={() => setSubmitting(false)} />}

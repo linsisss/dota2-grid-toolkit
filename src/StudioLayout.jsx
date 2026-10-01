@@ -2,13 +2,15 @@ import { memo } from 'react';
 import { Icon } from './Icon.jsx';
 import { NumberInput } from './NumberInput.jsx';
 import { ImageImportDialog } from './ImageImportDialog.jsx';
+import LanguageSwitch from './LanguageSwitch.jsx';
+import { t, locale } from '../scripts/i18n.mjs';
 // Stable shell: the editor exclusively owns the canvas and empty imperative hosts.
 export const StudioLayout = memo(function StudioLayout({ onBack }) {
   return (
     <>
       <header className="app-header">
-        <button className="workspace-back" onClick={onBack} aria-label="Вернуться в студию"><Icon name="back" /><span>Студия</span></button>
-        <a className="brand" href="./" aria-label="Grid Studio, главная">
+        <button className="workspace-back" onClick={onBack} aria-label={t('Вернуться в студию')}><Icon name="back" /><span>{t('Студия')}</span></button>
+        <a className="brand" href="./" aria-label={t('Grid Studio, главная')}>
           <span className="brand-mark" aria-hidden="true">
             <svg viewBox="0 0 32 32">
               <path d="m5 4 23 24M5 18v10h10M18 4h10v10" />
@@ -19,24 +21,24 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
             <small>DOTA 2 TOOLKIT</small>
           </span>
         </a>
-        <button id="saveState" className="save-state" data-state="saved" aria-label="Изменения сохранены. Открыть версии проекта" aria-haspopup="dialog" data-tooltip="Открыть версии проекта">
+        <button id="saveState" className="save-state" data-state="saved" aria-label={t('Изменения сохранены. Открыть версии проекта')} aria-haspopup="dialog" data-tooltip={t('Открыть версии проекта')}>
           <span className="save-state-dot" aria-hidden="true" />
-          <span id="saveStateLabel">Изменения сохранены</span>
+          <span id="saveStateLabel">{t('Изменения сохранены')}</span>
         </button>
         <div className="header-actions">
-          <button id="importButton" className="button secondary" aria-label="Импортировать">
+          <button id="importButton" className="button secondary" aria-label={t('Импортировать')}>
             <span data-icon="import"></span>
-            <span>Импортировать</span>
+            <span>{t('Импортировать')}</span>
           </button>
           <button id="exportButton" className="button primary">
             <span data-icon="export"></span>
-            <span>Экспортировать</span>
+            <span>{t('Экспортировать')}</span>
           </button>
         </div>
       </header>
 
-      <nav className="studio-navigation" aria-label="Рабочее пространство">
-        <div className="mode-tabs" role="tablist" aria-label="Режим редактора">
+      <nav className="studio-navigation" aria-label={t('Рабочее пространство')}>
+        <div className="mode-tabs" role="tablist" aria-label={t('Режим редактора')}>
           <button
             role="tab"
             id="tab-heroes"
@@ -44,7 +46,7 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
             aria-selected="true"
             data-mode="heroes"
           >
-            <span data-icon="heroes"></span>Сетка
+            <span data-icon="heroes"></span>{t('Сетка')}
           </button>
           <button
             role="tab"
@@ -54,7 +56,7 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
             tabIndex="-1"
             data-mode="draw"
           >
-            <span data-icon="pen"></span>Рисование
+            <span data-icon="pen"></span>{t('Рисование')}
           </button>
           <button
             role="tab"
@@ -64,7 +66,7 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
             tabIndex="-1"
             data-mode="image"
           >
-            <span data-icon="image"></span>ASCII-арты
+            <span data-icon="image"></span>{t('ASCII-арты')}
           </button>
         </div>
         <div id="gridFilePanel" />
@@ -73,23 +75,24 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
           className="button secondary settings-toggle"
           aria-controls="propertiesPanel"
           aria-expanded="false"
-          title="Показать настройки (F)"
+          title={t('Показать настройки (F)')}
         >
           <span data-icon="sliders" />
-          <span>Настройки</span>
+          <span>{t('Настройки')}</span>
         </button>
+        <LanguageSwitch className="editor-language" />
         <button
           id="helpButton"
           className="icon-button help-button"
-          aria-label="Помощь и горячие клавиши"
-          title="Помощь и горячие клавиши (?)"
+          aria-label={t('Помощь и горячие клавиши')}
+          title={t('Помощь и горячие клавиши (?)')}
         >
           <span data-icon="help"></span>
         </button>
       </nav>
 
       <div className="app-layout">
-        <aside id="libraryPanel" className="library-panel" aria-label="Библиотека и инструменты">
+        <aside id="libraryPanel" className="library-panel" aria-label={t('Библиотека и инструменты')}>
           <div id="libraryDismiss" />
           <div className="panel-intro">
             <h1 id="libraryTitle" />
@@ -110,63 +113,63 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
             hidden
           >
             <button id="openDrawing" className="button primary full drawing-window-button">
-              <span data-icon="pen"></span>В отдельном окне
+              <span data-icon="pen"></span>{t('В отдельном окне')}
             </button>
             <button id="addAscii" className="button secondary full">
-              <span data-icon="text"></span>Вставить ASCII-арт или текст
+              <span data-icon="text"></span>{t('Вставить ASCII-арт или текст')}
             </button>
             <div id="referencePanel" />
             <div className="section-heading">
-              <span>ИНСТРУМЕНТЫ</span>
+              <span>{t('ИНСТРУМЕНТЫ')}</span>
               <span className="muted">B</span>
             </div>
             <div id="drawingTools" className="drawing-tools"></div>
             <div id="eraserSizeField" hidden>
               <label className="range-label" htmlFor="eraserSize">
-                <span id="eraserSizeName">Размер ластика</span> <output id="eraserSizeValue">44 px</output>
+                <span id="eraserSizeName">{t('Размер ластика')}</span> <output id="eraserSizeValue">44 px</output>
               </label>
               <input id="eraserSize" type="range" min="6" max="400" defaultValue="44" />
-              <p className="hint">Колесо мыши над холстом или [ и ] — меньше и больше. Ctrl + колесо — масштаб.</p>
+              <p className="hint">{t('Колесо мыши над холстом или [ и ] — меньше и больше. Ctrl + колесо — масштаб.')}</p>
             </div>
             {/* «Распыление»: how far the glyphs under the brush fly and how widely they fan out. */}
             <div id="scatterField" hidden>
-              <label className="range-label" htmlFor="scatterDistance">Дальность <output id="scatterDistanceValue">×2,5</output></label>
-              <input id="scatterDistance" type="range" min="5" max="60" defaultValue="25" onInput={(event) => { document.getElementById('scatterDistanceValue').textContent = `×${(Number(event.currentTarget.value) / 10).toLocaleString('ru-RU')}`; }} />
-              <label className="range-label" htmlFor="scatterSpread">Разброс <output id="scatterSpreadValue">35°</output></label>
+              <label className="range-label" htmlFor="scatterDistance">{t('Дальность')} <output id="scatterDistanceValue">×{(2.5).toLocaleString(locale)}</output></label>
+              <input id="scatterDistance" type="range" min="5" max="60" defaultValue="25" onInput={(event) => { document.getElementById('scatterDistanceValue').textContent = `×${(Number(event.currentTarget.value) / 10).toLocaleString(locale)}`; }} />
+              <label className="range-label" htmlFor="scatterSpread">{t('Разброс')} <output id="scatterSpreadValue">35°</output></label>
               <input id="scatterSpread" type="range" min="0" max="90" defaultValue="35" onInput={(event) => { document.getElementById('scatterSpreadValue').textContent = `${event.currentTarget.value}°`; }} />
-              <p className="hint">Веди кистью по рисунку: точки под ней разлетятся в сторону движения, будто рисунок крошится. Клик без движения — тает вниз.</p>
+              <p className="hint">{t('Веди кистью по рисунку: точки под ней разлетятся в сторону движения, будто рисунок крошится. Клик без движения — тает вниз.')}</p>
             </div>
             <div className="section-heading">
-              <span>СИМВОЛЫ КИСТИ</span>
+              <span>{t('СИМВОЛЫ КИСТИ')}</span>
               <span id="brushPreview">★</span>
             </div>
-            <input id="symbolSearch" type="search" aria-label="Поиск символов" placeholder="Символ, название или U+…" />
-            <select id="symbolCategory" aria-label="Категория символов"></select>
+            <input id="symbolSearch" type="search" aria-label={t('Поиск символов')} placeholder={t('Символ, название или U+…')} />
+            <select id="symbolCategory" aria-label={t('Категория символов')}></select>
             <label className="check-row category-select-all">
               <input id="brushSelectAll" type="checkbox" />
-              Выбрать все символы
+              {t('Выбрать все символы')}
             </label>
             <div id="symbolLibrary" className="symbol-library"></div>
             <label className="field-label" htmlFor="brushInput">
-              Свой символ или набор
+              {t('Свой символ или набор')}
             </label>
             <input id="brushInput" type="text" defaultValue="★" maxLength="1000" />
             <button id="clearBrush" className="button ghost compact">
-              Очистить набор
+              {t('Очистить набор')}
             </button>
             <label className="field-label" htmlFor="brushOrder">
-              Порядок символов
+              {t('Порядок символов')}
             </label>
             <select id="brushOrder">
-              <option value="sequence">Чередовать</option>
-              <option value="random">Случайно</option>
-              <option value="gradient">Плавный переход</option>
+              <option value="sequence">{t('Чередовать')}</option>
+              <option value="random">{t('Случайно')}</option>
+              <option value="gradient">{t('Плавный переход')}</option>
             </select>
             <label id="brushGradientField" className="field-label" hidden>
-              Длина градиента, px
+              {t('Длина градиента, px')}
               <NumberInput
                 id="brushGradientLength"
-                aria-label="Длина градиента"
+                aria-label={t('Длина градиента')}
                 type="number"
                 min="10"
                 max="6000"
@@ -174,63 +177,63 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
               />
             </label>
             <label className="range-label" htmlFor="brushStep">
-              Шаг кисти <output id="brushStepValue">16 px</output>
+              {t('Шаг кисти')} <output id="brushStepValue">16 px</output>
             </label>
             <input id="brushStep" type="range" min="5" max="40" defaultValue="16" />
             <label className="field-label" htmlFor="brushDynamics">
-              Динамика кисти
+              {t('Динамика кисти')}
             </label>
             <select id="brushDynamics">
-              <option value="constant">Постоянная плотность</option>
-              <option value="denser">От редкого к плотному</option>
-              <option value="sparser">От плотного к редкому</option>
+              <option value="constant">{t('Постоянная плотность')}</option>
+              <option value="denser">{t('От редкого к плотному')}</option>
+              <option value="sparser">{t('От плотного к редкому')}</option>
             </select>
             <div id="brushDynamicsFields" className="field-pair" hidden>
               <label>
-                Конечный шаг, px
+                {t('Конечный шаг, px')}
                 <NumberInput
                   id="brushEndStep"
-                  aria-label="Конечный шаг"
+                  aria-label={t('Конечный шаг')}
                   min="3"
                   max="120"
                   defaultValue="40"
                 />
               </label>
               <label>
-                Длина перехода, px
+                {t('Длина перехода, px')}
                 <NumberInput
                   id="brushLength"
-                  aria-label="Длина перехода"
+                  aria-label={t('Длина перехода')}
                   min="30"
                   max="2000"
                   defaultValue="350"
                 />
               </label>
             </div>
-            <p className="hint">Shift во время рисования — сдвинуть фигуру. У кисти — ровная линия по ближайшей оси.</p>
+            <p className="hint">{t('Shift во время рисования — сдвинуть фигуру. У кисти — ровная линия по ближайшей оси.')}</p>
             <div className="field-pair">
               <label className="check-row">
                 <input id="mirrorH" type="checkbox" />
-                Симметрия X
+                {t('Симметрия X')}
               </label>
               <label className="check-row">
                 <input id="mirrorV" type="checkbox" />
-                Симметрия Y
+                {t('Симметрия Y')}
               </label>
             </div>
             <label className="field-label" htmlFor="drawLayer">
-              Рисовать на слое
+              {t('Рисовать на слое')}
             </label>
             <select id="drawLayer">
-              <option value="decor">Декор</option>
-              <option value="background">Фон</option>
+              <option value="decor">{t('Декор')}</option>
+              <option value="background">{t('Фон')}</option>
             </select>
             <details>
-              <summary>Конструктор рамки</summary>
-              <select id="frameStyle" aria-label="Стиль рамки"></select>
+              <summary>{t('Конструктор рамки')}</summary>
+              <select id="frameStyle" aria-label={t('Стиль рамки')}></select>
               <div id="frameBuilder" className="frame-builder"></div>
               <p className="hint">
-                Измени символы рамки и протяни её на холсте инструментом «Рамка».
+                {t('Измени символы рамки и протяни её на холсте инструментом «Рамка».')}
               </p>
             </details>
           </section>
@@ -242,13 +245,13 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
             hidden
           >
             <div className="section-heading">
-              <span>ИЗОБРАЖЕНИЕ В ASCII</span>
+              <span>{t('ИЗОБРАЖЕНИЕ В ASCII')}</span>
             </div>
-            <p className="hint">Выбери картинку, настрой ASCII и добавь отдельным слоем.</p>
+            <p className="hint">{t('Выбери картинку, настрой ASCII и добавь отдельным слоем.')}</p>
             <button id="imageUpload" className="image-upload">
               <span data-icon="image"></span>
-              <strong>Выбрать изображение</strong>
-              <span>PNG, JPG, WebP · до 20 МБ</span>
+              <strong>{t('Выбрать изображение')}</strong>
+              <span>{t('PNG, JPG, WebP · до 20 МБ')}</span>
             </button>
             <div id="textArtHost" />
             <div id="asciiLibrary" />
@@ -261,98 +264,98 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
               <div
                 className="toolbar-group tool-dock"
                 role="toolbar"
-                aria-label="Инструменты холста"
+                aria-label={t('Инструменты холста')}
               >
                 <button
                   id="dockAddGroup"
                   className="tool-button dock-add-group"
-                  title="Добавить группу героев"
-                  aria-label="Добавить группу героев"
+                  title={t('Добавить группу героев')}
+                  aria-label={t('Добавить группу героев')}
                 >
                   <span data-icon="groupPlus" />
-                  <span className="dock-tool-label">Герои</span>
+                  <span className="dock-tool-label">{t('Герои')}</span>
                 </button>
                 <span className="toolbar-separator" />
                 <button
                   className="tool-button active"
                   data-tool="select"
-                  title="Выделение (V)"
-                  aria-label="Выделение"
+                  title={t('Выделение (V)')}
+                  aria-label={t('Выделение')}
                   aria-pressed="true"
                 >
                   <span data-icon="cursor"></span>
-                  <span className="dock-tool-label">Выделить</span>
+                  <span className="dock-tool-label">{t('Выделить')}</span>
                 </button>
                 <button
                   className="tool-button"
                   data-tool="hand"
-                  title="Перемещение холста (Space)"
-                  aria-label="Перемещение холста"
+                  title={t('Перемещение холста (Space)')}
+                  aria-label={t('Перемещение холста')}
                   aria-pressed="false"
                 >
                   <span data-icon="hand"></span>
-                  <span className="dock-tool-label">Холст</span>
+                  <span className="dock-tool-label">{t('Холст')}</span>
                 </button>
                 <span className="toolbar-separator"></span>
                 <button
                   className="tool-button"
                   data-tool="lasso"
-                  title="Лассо (L)"
-                  aria-label="Лассо"
+                  title={t('Лассо (L)')}
+                  aria-label={t('Лассо')}
                   aria-pressed="false"
                 >
                   <span data-icon="lasso"></span>
-                  <span className="dock-tool-label">Лассо</span>
+                  <span className="dock-tool-label">{t('Лассо')}</span>
                 </button>
                 <button
                   className="tool-button"
                   data-tool="pencil"
-                  title="Кисть (B)"
-                  aria-label="Кисть"
+                  title={t('Кисть (B)')}
+                  aria-label={t('Кисть')}
                   aria-pressed="false"
                 >
                   <span data-icon="pen"></span>
-                  <span className="dock-tool-label">Кисть</span>
+                  <span className="dock-tool-label">{t('Кисть')}</span>
                 </button>
                 <button
                   className="tool-button"
                   data-tool="text"
-                  title="Текст (T)"
-                  aria-label="Текст"
+                  title={t('Текст (T)')}
+                  aria-label={t('Текст')}
                   aria-pressed="false"
                 >
                   <span data-icon="text"></span>
-                  <span className="dock-tool-label">Текст</span>
+                  <span className="dock-tool-label">{t('Текст')}</span>
                 </button>
                 <button
                   className="tool-button"
                   data-tool="eyedropper"
-                  title="Взять символ (I)"
-                  aria-label="Взять символ"
+                  title={t('Взять символ (I)')}
+                  aria-label={t('Взять символ')}
                   aria-pressed="false"
                 >
                   <span data-icon="eyedropper"></span>
-                  <span className="dock-tool-label">Пипетка</span>
+                  <span className="dock-tool-label">{t('Пипетка')}</span>
                 </button>
                 <button
                   className="tool-button"
                   data-tool="rect"
-                  title="Прямоугольник (R)"
-                  aria-label="Прямоугольник"
+                  title={t('Прямоугольник (R)')}
+                  aria-label={t('Прямоугольник')}
                   aria-pressed="false"
                 >
                   <span data-icon="rect"></span>
-                  <span className="dock-tool-label">Фигура</span>
+                  <span className="dock-tool-label">{t('Фигура')}</span>
                 </button>
                 <button
                   className="tool-button"
                   data-tool="eraser"
-                  title="Ластик (E)"
-                  aria-label="Ластик"
+                  title={t('Ластик (E)')}
+                  aria-label={t('Ластик')}
                   aria-pressed="false"
                 >
                   <span data-icon="eraser"></span>
-                  <span className="dock-tool-label">Ластик</span>
+                  <span className="dock-tool-label">{t('Ластик')}</span>
                 </button>
                 <span className="toolbar-separator" />
                 <div id="dockLabels" />
@@ -361,8 +364,8 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
                 <button
                   id="undoButton"
                   className="tool-button"
-                  title="Отменить (Ctrl+Z)"
-                  aria-label="Отменить"
+                  title={t('Отменить (Ctrl+Z)')}
+                  aria-label={t('Отменить')}
                   disabled
                 >
                   <span data-icon="undo"></span>
@@ -370,8 +373,8 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
                 <button
                   id="redoButton"
                   className="tool-button"
-                  title="Повторить (Ctrl+Shift+Z)"
-                  aria-label="Повторить"
+                  title={t('Повторить (Ctrl+Shift+Z)')}
+                  aria-label={t('Повторить')}
                   disabled
                 >
                   <span data-icon="redo"></span>
@@ -381,26 +384,26 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
                   id="previewButton"
                   className="button ghost compact"
                   aria-pressed="false"
-                  aria-label="Превью холста"
+                  aria-label={t('Превью холста')}
                 >
                   <span data-icon="eye"></span>
-                  <span>Превью</span>
+                  <span>{t('Превью')}</span>
                 </button>
               </div>
             </div>
             <button id="closePreview" className="preview-exit" hidden>
               <span data-icon="close" />
-              <span>Закрыть превью</span>
+              <span>{t('Закрыть превью')}</span>
               <kbd>Esc</kbd>
             </button>
-            <button id="previewBackground" className="preview-exit preview-background" hidden aria-label="Фон превью">
-              <span id="previewBackgroundLabel">Фон: как в Dota</span>
+            <button id="previewBackground" className="preview-exit preview-background" hidden aria-label={t('Фон превью')}>
+              <span id="previewBackgroundLabel">{t('Фон: как в Dota')}</span>
             </button>
             <div id="canvasTopTools" />
             <div className="canvas-caption">
               <span>
                 <i className="canvas-dot"></i>
-                <span id="canvasName">Новая сетка</span>
+                <span id="canvasName">{t('Новая сетка')}</span>
               </span>
               <span id="canvasDimensions" />
             </div>
@@ -412,25 +415,25 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
                   height="593"
                   tabIndex="0"
                   role="img"
-                  aria-label="Холст сетки Dota 2. Для доступного редактирования используйте список объектов и панель свойств."
+                  aria-label={t('Холст сетки Dota 2. Для доступного редактирования используйте список объектов и панель свойств.')}
                 ></canvas>
                 <div id="canvasReactOverlay" className="canvas-react-overlay" />
               </div>
               <div id="dropOverlay" className="drop-overlay" hidden>
                 <span data-icon="import"></span>
-                <strong>Отпусти файл здесь</strong>
-                <span>JSON-проект или изображение</span>
+                <strong>{t('Отпусти файл здесь')}</strong>
+                <span>{t('JSON-проект или изображение')}</span>
               </div>
               <div id="emptyCanvas" className="empty-canvas" hidden>
                 <span data-icon="heroes"></span>
-                <strong>Нет объектов</strong>
+                <strong>{t('Нет объектов')}</strong>
                 <span>
-                  Добавь группу героев, нарисуй что-нибудь
+                  {t('Добавь группу героев, нарисуй что-нибудь')}
                   <br />
-                  или перетащи изображение.
+                  {t('или перетащи изображение.')}
                 </span>
                 <button id="emptyAddGroup" className="button primary">
-                  Добавить группу
+                  {t('Добавить группу')}
                 </button>
               </div>
             </div>
@@ -448,35 +451,35 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
                   id="gridToggle"
                   className="button ghost compact active"
                   aria-pressed="true"
-                  title="Сетка (G)"
+                  title={t('Сетка (G)')}
                 >
                   <span data-icon="gridLines"></span>
-                  <span>Сетка</span>
+                  <span>{t('Сетка')}</span>
                 </button>
                 <button
                   id="snapToggle"
                   className="button ghost compact active"
                   aria-pressed="true"
-                  title="Привязка к сетке"
+                  title={t('Привязка к сетке')}
                 >
                   <span data-icon="magnet"></span>
-                  <span>Привязка</span>
+                  <span>{t('Привязка')}</span>
                 </button>
               </div>
               <div className="toolbar-group zoom-controls">
-                <button id="zoomOut" className="icon-button" aria-label="Уменьшить масштаб">
+                <button id="zoomOut" className="icon-button" aria-label={t('Уменьшить масштаб')}>
                   <span data-icon="minus"></span>
                 </button>
                 <span id="zoomFields" />
-                <button id="zoomIn" className="icon-button" aria-label="Увеличить масштаб">
+                <button id="zoomIn" className="icon-button" aria-label={t('Увеличить масштаб')}>
                   <span data-icon="plus"></span>
                 </button>
                 <span className="toolbar-separator"></span>
                 <button
                   id="fitButton"
                   className="icon-button"
-                  title="Вписать холст (0)"
-                  aria-label="Вписать холст"
+                  title={t('Вписать холст (0)')}
+                  aria-label={t('Вписать холст')}
                 >
                   <span data-icon="fit"></span>
                 </button>
@@ -485,26 +488,26 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
           </div>
         </main>
 
-        <aside id="propertiesPanel" className="inspector-panel" aria-label="Свойства и слои">
+        <aside id="propertiesPanel" className="inspector-panel" aria-label={t('Свойства и слои')}>
           <div id="inspectorDismiss" />
           <div className="inspector-title">
             <span data-icon="sliders"></span>
-            <h2>Свойства</h2>
+            <h2>{t('Свойства')}</h2>
             <span id="selectionCount" className="count-badge">
-              Холст
+              {t('Холст')}
             </span>
           </div>
           <div id="inspectorContent" className="inspector-content"></div>
           <div className="layers-panel">
             <div className="section-heading">
-              <span>СЛОИ И ОБЪЕКТЫ</span>
+              <span>{t('СЛОИ И ОБЪЕКТЫ')}</span>
               <span id="objectCount" className="count-badge">
                 6
               </span>
             </div>
             <div id="layerList"></div>
             <button id="addGroup" className="button secondary full">
-              <span data-icon="plus"></span>Добавить группу героев
+              <span data-icon="plus"></span>{t('Добавить группу героев')}
             </button>
           </div>
         </aside>

@@ -3,6 +3,7 @@ import { Icon } from './Icon.jsx';
 import C from '../scripts/core.mjs';
 import { TEXT_ART_LIMITS, TEXT_ART_STYLES, loadTextArtFonts, placeTextArt, renderTextArt, textArtCategories } from '../scripts/text-art.mjs';
 import { drawCategoryLabel, glyphWidths, measureCategoryInk } from '../scripts/dota-rendering.mjs';
+import { t, tn, translateMessage } from '../scripts/i18n.mjs';
 
 // «Текст в ASCII» (scripts/text-art.mjs): the text in every lettering at once, each drawn as it will
 // stand on the canvas — glyph by glyph, in Dota's font; a click picks one. The footer counts the
@@ -16,7 +17,6 @@ function ink(char) {
   return inks.get(char);
 }
 const STYLE_KEY = 'gridstudio.textArtStyle';
-const plural = (n, one, few, many) => (n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many);
 const savedStyle = () => { try { return localStorage.getItem(STYLE_KEY) || 'dots-bold'; } catch { return 'dots-bold'; } };
 
 function ArtCanvas({ art, color = '#d6c8f7', max = 2 }) {
@@ -80,41 +80,41 @@ function TextArtDialog({ editor, canvas, close }) {
   return (
     <dialog ref={ref} className="art-dialog text-art-dialog" aria-labelledby="textArtTitle" onCancel={close}>
       <header className="art-dialog-heading">
-        <div><h2 id="textArtTitle">Текст в ASCII</h2><span>Надпись из символов и точек — как её покажет Dota</span></div>
-        <button className="icon-button" aria-label="Закрыть" onClick={close}>×</button>
+        <div><h2 id="textArtTitle">{t('Текст в ASCII')}</h2><span>{t('Надпись из символов и точек — как её покажет Dota')}</span></div>
+        <button className="icon-button" aria-label={t('Закрыть')} onClick={close}>×</button>
       </header>
       <div className="text-art-body">
-        <textarea className="text-art-input" rows={2} maxLength={TEXT_ART_LIMITS.text} value={text} autoFocus placeholder="Напиши текст, например: GG WP" aria-label="Текст" onChange={(e) => setText(e.target.value)}/>
-        <div className="text-art-size" role="group" aria-label="Размер надписи">
-          <span>Размер</span>
-          <label>Ш<input type="number" min={20} max={2400} disabled={!art || !sizedStyle} value={art ? (target?.w ?? Math.round(art.w)) : ''}
+        <textarea className="text-art-input" rows={2} maxLength={TEXT_ART_LIMITS.text} value={text} autoFocus placeholder={t('Напиши текст, например: GG WP')} aria-label={t('Текст')} onChange={(e) => setText(e.target.value)}/>
+        <div className="text-art-size" role="group" aria-label={t('Размер надписи')}>
+          <span>{t('Размер')}</span>
+          <label>{t('Ш')}<input type="number" min={20} max={2400} disabled={!art || !sizedStyle} value={art ? (target?.w ?? Math.round(art.w)) : ''}
             onChange={(e) => setTarget(e.target.value ? { w: Math.min(2400, Math.max(20, +e.target.value)) } : null)}/></label>
           <span aria-hidden="true">×</span>
-          <label>В<input type="number" min={10} max={1200} disabled={!art || !sizedStyle} value={art ? (target?.h ?? Math.round(art.h)) : ''}
+          <label>{t('В')}<input type="number" min={10} max={1200} disabled={!art || !sizedStyle} value={art ? (target?.h ?? Math.round(art.h)) : ''}
             onChange={(e) => setTarget(e.target.value ? { h: Math.min(1200, Math.max(10, +e.target.value)) } : null)}/></label>
           <span>px</span>
-          {target && sizedStyle && <button type="button" className="button secondary compact" onClick={() => setTarget(null)}>Как у стиля</button>}
-          {art && !sizedStyle && <em>У буквенных стилей размер задаёт сам шрифт</em>}
+          {target && sizedStyle && <button type="button" className="button secondary compact" onClick={() => setTarget(null)}>{t('Как у стиля')}</button>}
+          {art && !sizedStyle && <em>{t('У буквенных стилей размер задаёт сам шрифт')}</em>}
         </div>
-        <div className="text-art-large">{art ? <ArtCanvas art={art} max={2.4}/> : <p>{!ready ? 'Загружаем шрифты…' : text.trim() ? 'Ни один стиль не умеет написать такие символы.' : 'Напиши текст — ниже он сразу появится во всех стилях.'}</p>}</div>
-        <div className="text-art-styles" role="listbox" aria-label="Стиль букв">
+        <div className="text-art-large">{art ? <ArtCanvas art={art} max={2.4}/> : <p>{!ready ? t('Загружаем шрифты…') : text.trim() ? t('Ни один стиль не умеет написать такие символы.') : t('Напиши текст — ниже он сразу появится во всех стилях.')}</p>}</div>
+        <div className="text-art-styles" role="listbox" aria-label={t('Стиль букв')}>
           {ordered.map((s) => {
             const sampleArt = arts[s.id];
             return <button key={s.id} role="option" aria-selected={shown === s.id} disabled={ready && !sampleArt} onClick={() => pick(s.id)}
-              title={ready && !sampleArt ? 'В этом стиле нет некоторых символов текста (кириллицы, цифр)' : s.name}>
+              title={ready && !sampleArt ? t('В этом стиле нет некоторых символов текста (кириллицы, цифр)') : translateMessage(s.name)}>
               <span className="text-art-thumb">{sampleArt && <ArtCanvas art={sampleArt} max={1}/>}</span>
-              <span>{s.name}{ready && !sampleArt ? ' · не пишет' : ''}</span>
+              <span>{translateMessage(s.name)}{ready && !sampleArt ? ` · ${t('не пишет')}` : ''}</span>
             </button>;
           })}
         </div>
       </div>
       <footer className="art-dialog-footer">
         <div>
-          {art ? <span>{`${Math.round(art.w)} × ${Math.round(art.h)} px · ${categories.toLocaleString('ru-RU')} ${plural(categories, 'категория', 'категории', 'категорий')} в Dota`}</span> : <span>Кириллицу пишут точечные стили, «Пиксели», Banner и Graceful.</span>}
-          {art && (art.w > canvas.w || art.h > canvas.h) && <p className="canvas-size-note">Надпись больше холста. После вставки можно увеличить холст или уменьшить надпись.</p>}
+          {art ? <span>{t('{w} × {h} px · {categories} в Dota', { w: Math.round(art.w), h: Math.round(art.h), categories: tn(categories, ['категория', 'категории', 'категорий'], ['category', 'categories']) })}</span> : <span>{t('Кириллицу пишут точечные стили, «Пиксели», Banner и Graceful.')}</span>}
+          {art && (art.w > canvas.w || art.h > canvas.h) && <p className="canvas-size-note">{t('Надпись больше холста. После вставки можно увеличить холст или уменьшить надпись.')}</p>}
         </div>
-        <button className="button secondary" onClick={close}>Отмена</button>
-        <button className="button primary" disabled={!art} onClick={() => { if (editor.addTextArt(art, text.trim().replace(/\s+/g, ' ').slice(0, 40))) close(); }}>Добавить на холст</button>
+        <button className="button secondary" onClick={close}>{t('Отмена')}</button>
+        <button className="button primary" disabled={!art} onClick={() => { if (editor.addTextArt(art, text.trim().replace(/\s+/g, ' ').slice(0, 40))) close(); }}>{t('Добавить на холст')}</button>
       </footer>
     </dialog>
   );
@@ -125,8 +125,8 @@ export function TextArtButton({ editor, canvas }) {
   return <>
     <button className="image-upload text-upload" onClick={() => setOpen(true)}>
       <Icon name="text" size={18}/>
-      <strong>Текст в ASCII</strong>
-      <span>Надпись из символов и точек</span>
+      <strong>{t('Текст в ASCII')}</strong>
+      <span>{t('Надпись из символов и точек')}</span>
     </button>
     {open && <TextArtDialog editor={editor} canvas={canvas} close={() => setOpen(false)}/>}
   </>;

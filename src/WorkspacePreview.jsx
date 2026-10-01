@@ -3,6 +3,7 @@ import { cloudWorkspaceId } from '../scripts/workspaces.mjs';
 import { freshThumbnails, makeThumbnails, readThumbnails, THUMBNAILS_EVENT } from '../scripts/workspace-thumbnails.mjs';
 import { useGridGround } from './grid-ground.js';
 import { Icon } from './catalog/Common.jsx';
+import { t, tn } from '../scripts/i18n.mjs';
 
 // A grid file's card in «Студия»: its grids as pictures (scripts/workspace-thumbnails.mjs), never
 // the document itself. Pictures made in this browser show at once, even while newer ones are
@@ -37,7 +38,7 @@ export default function WorkspacePreview({ item, disabled, onOpen }) {
   // Pictures as object URLs, released with the record.
   const local = useMemo(() => record?.grids.map((grid) => ({ name: grid.name, url: grid.image ? URL.createObjectURL(grid.image) : '' })) || [], [record]);
   useEffect(() => () => local.forEach((grid) => grid.url && URL.revokeObjectURL(grid.url)), [local]);
-  const names = item.gridNames?.length ? item.gridNames : Array.from({ length: item.grids || 1 }, (_, i) => i === 0 && item.preview?.configs?.[0]?.config_name || `Сетка ${i + 1}`);
+  const names = item.gridNames?.length ? item.gridNames : Array.from({ length: item.grids || 1 }, (_, i) => i === 0 && item.preview?.configs?.[0]?.config_name || t('Сетка {number}', { number: i + 1 }));
   const grids = remote ? names.map((name, index) => ({ name, url: `/api/catalog/spaces/${cloudWorkspaceId(item)}/thumbnail.webp?grid=${index}&revision=${item.remoteRevision}` })) : local;
   const count = grids.length, multiple = count > 1;
   const start = remote ? item.configIndex ?? 0 : record?.configIndex ?? 0;
@@ -67,14 +68,14 @@ export default function WorkspacePreview({ item, disabled, onOpen }) {
   }, [index, count]);
 
   const picture = grids[index]?.url;
-  return <div className="workspace-carousel" ref={container} role="group" aria-label={`Сетки в файле ${item.name}`} onKeyDown={event => {
+  return <div className="workspace-carousel" ref={container} role="group" aria-label={t('Сетки в файле {name}', { name: item.name })} onKeyDown={event => {
     if (!count || event.altKey || event.ctrlKey || event.metaKey) return;
     const step = { ArrowLeft: index - 1, ArrowUp: index - 1, ArrowRight: index + 1, ArrowDown: index + 1, Home: 0, End: count - 1 }[event.key];
     if (step === undefined) return;
     event.preventDefault(); choose(step, dots.current?.contains(event.target));
   }}>
     <div className={`workspace-carousel-body${multiple ? ' has-pages' : ''}`}>
-      <button className="workspace-file-preview" disabled={disabled} aria-label={`Открыть ${item.name}${count ? `, сетка ${index + 1}: ${title}` : ''}`}
+      <button className="workspace-file-preview" disabled={disabled} aria-label={count ? t('Открыть {name}, сетка {number}: {title}', { name: item.name, number: index + 1, title }) : t('Открыть {name}', { name: item.name })}
         onPointerDown={event => { if (event.button !== 0 || !event.isPrimary) return; suppressClick.current = false; gesture.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }}
         onPointerUp={event => {
           const origin = gesture.current; gesture.current = null; if (!origin) return;
@@ -86,17 +87,17 @@ export default function WorkspacePreview({ item, disabled, onOpen }) {
         onClick={event => { if (event.detail && suppressClick.current) { suppressClick.current = false; return; } onOpen(count ? index : undefined); }}>
         <span className="workspace-carousel-slide" key={`${picture ? 'picture' : 'empty'}-${index}`} style={{ '--slide-offset': `${direction * 14}px` }}>
           {picture ? <span className="catalog-preview workspace-thumbnail" style={{ background: ground || undefined }}><img src={picture} alt="" draggable="false" decoding="async" loading="lazy"/></span>
-            : <span className="workspace-file-empty"><Icon name="grid"/><span>{item.issue ? 'Доступно восстановление' : making ? 'Готовим превью…' : 'Превью появится после сохранения'}</span></span>}
+            : <span className="workspace-file-empty"><Icon name="grid"/><span>{item.issue ? t('Доступно восстановление') : making ? t('Готовим превью…') : t('Превью появится после сохранения')}</span></span>}
         </span>
       </button>
-      {multiple && <div className="workspace-carousel-dots" ref={dots} role="group" aria-label={`${count} сеток в файле`}>
-        {grids.map((grid, i) => <button key={i} type="button" aria-label={`Сетка ${i + 1}: ${grid.name}`} aria-pressed={index === i} tabIndex={index === i ? 0 : -1} onClick={() => choose(i)}><span/></button>)}
+      {multiple && <div className="workspace-carousel-dots" ref={dots} role="group" aria-label={t('{count} в файле', { count: tn(count, ['сетка', 'сетки', 'сеток'], ['grid', 'grids']) })}>
+        {grids.map((grid, i) => <button key={i} type="button" aria-label={t('Сетка {number}: {name}', { number: i + 1, name: grid.name })} aria-pressed={index === i} tabIndex={index === i ? 0 : -1} onClick={() => choose(i)}><span/></button>)}
       </div>}
     </div>
     {count > 0 && <div className="workspace-carousel-caption"><span className="workspace-grid-name" aria-live="polite" aria-atomic="true">{title}</span><div className="workspace-carousel-nav">
-      {multiple && <button className="catalog-icon" aria-label="Предыдущая сетка" disabled={index === 0} onClick={() => choose(index - 1)}><Icon name="back"/></button>}
-      <span className="workspace-grid-count" aria-label={`Сетка ${index + 1} из ${count}`}>{index + 1}<span> / {count}</span></span>
-      {multiple && <button className="catalog-icon" aria-label="Следующая сетка" disabled={index === count - 1} onClick={() => choose(index + 1)}><Icon name="arrow"/></button>}
+      {multiple && <button className="catalog-icon" aria-label={t('Предыдущая сетка')} disabled={index === 0} onClick={() => choose(index - 1)}><Icon name="back"/></button>}
+      <span className="workspace-grid-count" aria-label={t('Сетка {number} из {count}', { number: index + 1, count })}>{index + 1}<span> / {count}</span></span>
+      {multiple && <button className="catalog-icon" aria-label={t('Следующая сетка')} disabled={index === count - 1} onClick={() => choose(index + 1)}><Icon name="arrow"/></button>}
     </div></div>}
   </div>;
 }

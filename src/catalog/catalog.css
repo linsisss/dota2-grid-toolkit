@@ -302,7 +302,7 @@ dialog.catalog-dialog:focus { outline:none; }
 .catalog-rules section>p { margin:0; line-height:1.6; color:#dcd6e6; }
 .catalog-footer a:hover { color:var(--cat-ink); }
 /* The site's version beside its source, so a report can say which build it was seen on. */
-.catalog-footer-source { display:flex; gap:10px; }
+.catalog-footer-source { display:flex; align-items:center; gap:10px; }
 .catalog-footer-source .version-button { font-size:13px; }
 a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text-underline-offset:3px; }
 

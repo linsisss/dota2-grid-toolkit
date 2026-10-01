@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useAccount } from './Account.jsx';
 import SubmissionForm from './SubmissionForm.jsx';
 import { catalogAPI, editingWork, forgetEditing, ownedWorks } from './api.js';
+import { t } from '../../scripts/i18n.mjs';
 
-const STATUS = { pending: 'на проверке', rejected: 'нужны изменения', approved: 'опубликована' };
+const STATUS = () => ({ pending: t('на проверке'), rejected: t('нужны изменения'), approved: t('опубликована') });
 const ORDER = { rejected: 0, pending: 1, approved: 2 };
 
 // Publishing from the editor either creates a work or updates one of the player's own
@@ -31,13 +32,13 @@ export default function PublishTarget({ grid }) {
   const existing = works.find(item => item.id === target);
   return <>
     {works.length > 0 && <div className="publish-target">
-      <label>Куда отправить<select value={target} onChange={event => setTarget(event.target.value)}>
-        <option value="">Новая публикация</option>
+      <label>{t('Куда отправить')}<select value={target} onChange={event => setTarget(event.target.value)}>
+        <option value="">{t('Новая публикация')}</option>
         {works.map(item => <option key={item.id} value={item.id} disabled={!item.canEdit}>
-          Обновить «{item.title}» — {STATUS[item.status] || item.status}{item.canEdit ? '' : ' (изменить можно после входа через Telegram)'}
+          {t('Обновить «{title}» — {status}', { title: item.title, status: STATUS()[item.status] || item.status })}{item.canEdit ? '' : ` ${t('(изменить можно после входа через Telegram)')}`}
         </option>)}
       </select></label>
-      {existing && <p className="catalog-muted">Заявка обновится на месте: сетка, название и теги заменятся, и она снова пройдёт проверку.{existing.published ? ' До одобрения в мастерской останется прежняя версия.' : ''}</p>}
+      {existing && <p className="catalog-muted">{t('Заявка обновится на месте: сетка, название и теги заменятся, и она снова пройдёт проверку.')}{existing.published ? ` ${t('До одобрения в мастерской останется прежняя версия.')}` : ''}</p>}
     </div>}
     <SubmissionForm key={target || 'new'} grid={grid} existing={existing} token={existing?.token}
       onSaved={() => { if (existing) forgetEditing(); }}/>

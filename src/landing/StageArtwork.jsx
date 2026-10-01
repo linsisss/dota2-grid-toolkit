@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { CATALOG_PATH } from '../catalog/api.js';
 import { Icon } from '../Icon.jsx';
 import emptyEditor from '../../assets/landing/editor-template.webp';
+import { t } from '../../scripts/i18n.mjs';
 
 // A random workshop grid with at least 3 likes (never 18+), drawn again on every visit and
 // rendered by the server as opened in the editor. The last one shown is skipped while there are
@@ -62,17 +63,17 @@ export default function StageArtwork({ image }) {
           <div className="stage-screen">
             <div className="stage-display">
               <img className="editor-shot" src={emptyEditor} alt="" aria-hidden="true" width="1440" height="760" fetchPriority="high" draggable="false" />
-              {fallback && <img className="editor-shot stage-grid" src={image} alt="Сетка Dota 2 в GridStudio: портреты героев, рисунок из символов и панель редактирования" width="1280" height="675" draggable="false" />}
-              {item && <img className="editor-shot stage-grid" src={item.image} srcSet={item.srcset} sizes="(max-width: 960px) 100vw, 60vw" alt={`«${item.title}» из мастерской, открытая в редакторе`} width="1440" height="760" draggable="false" />}
+              {fallback && <img className="editor-shot stage-grid" src={image} alt={t('Сетка Dota 2 в GridStudio: портреты героев, рисунок из символов и панель редактирования')} width="1280" height="675" draggable="false" />}
+              {item && <img className="editor-shot stage-grid" src={item.image} srcSet={item.srcset} sizes="(max-width: 960px) 100vw, 60vw" alt={t('«{title}» из мастерской, открытая в редакторе', { title: item.title })} width="1440" height="760" draggable="false" />}
             </div>
           </div>
         </div>
       </div>
     </div>
     {item && <a className="stage-caption" href={`${CATALOG_PATH}?id=${item.id}`}>
-      <span className="stage-caption-likes" aria-label={`Лайков: ${item.likes}`}><Icon name="heart" size={16} aria-hidden="true"/>{item.likes}</span>
-      <span className="stage-caption-title">«{item.title}»{item.author ? ` — ${item.author}` : ''}</span>
-      <span className="stage-caption-note">случайная сетка из мастерской</span>
+      <span className="stage-caption-likes" aria-label={t('Лайков: {count}', { count: item.likes })}><Icon name="heart" size={16} aria-hidden="true"/>{item.likes}</span>
+      <span className="stage-caption-title">{t('«{title}»', { title: item.title })}{item.author ? ` — ${item.author}` : ''}</span>
+      <span className="stage-caption-note">{t('случайная сетка из мастерской')}</span>
     </a>}
   </div>;
 }

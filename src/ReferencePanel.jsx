@@ -1,6 +1,7 @@
 import { NumberInput } from './NumberInput.jsx';
 import { useEffect, useId, useRef, useState } from 'react';
 import { readReferenceImage } from '../scripts/reference-image.mjs';
+import { t, translateMessage } from '../scripts/i18n.mjs';
 
 // Shared by the main canvas and the separate drawing draft.
 // onPreview(opacity | null): the opacity to draw while the slider moves, without a history step.
@@ -26,7 +27,7 @@ export function ReferencePanel({ value, onChange, onPreview, onEdit, editing = f
       const image = await readReferenceImage(file, canvasSize);
       if (alive.current) onChange(image);
     } catch (e) {
-      if (alive.current) setError(e.message);
+      if (alive.current) setError(translateMessage(e.message));
     } finally {
       if (alive.current) setBusy(false);
     }
@@ -38,9 +39,9 @@ export function ReferencePanel({ value, onChange, onPreview, onEdit, editing = f
     onPreview?.(null);
   }
   return (
-    <section className="reference-panel" aria-label="Фон для обводки">
+    <section className="reference-panel" aria-label={t('Фон для обводки')}>
       <div className="section-heading">
-        <span>ФОН ДЛЯ ОБВОДКИ</span>
+        <span>{t('ФОН ДЛЯ ОБВОДКИ')}</span>
       </div>
       <input
         ref={input}
@@ -58,7 +59,7 @@ export function ReferencePanel({ value, onChange, onPreview, onEdit, editing = f
         disabled={busy}
         onClick={() => input.current.click()}
       >
-        {busy ? 'Загрузка…' : value ? 'Заменить фон' : 'Загрузить фон'}
+        {busy ? t('Загрузка…') : value ? t('Заменить фон') : t('Загрузить фон')}
       </button>
       {value && (
         <>
@@ -68,18 +69,18 @@ export function ReferencePanel({ value, onChange, onPreview, onEdit, editing = f
           </div>
           {onEdit && (
             <button className="button secondary full" aria-pressed={editing} onClick={onEdit}>
-              {editing ? 'Фон выделен' : 'Переместить / растянуть'}
+              {editing ? t('Фон выделен') : t('Переместить / растянуть')}
             </button>
           )}
           {editing && (
-            <p className="hint">Тяни картинку или маркеры рамки. Shift — сохранить пропорции.</p>
+            <p className="hint">{t('Тяни картинку или маркеры рамки. Shift — сохранить пропорции.')}</p>
           )}
           <label className="range-label" htmlFor={id}>
-            Непрозрачность <output>{opacity}%</output>
+            {t('Непрозрачность')} <output>{opacity}%</output>
           </label>
           <input
             id={id}
-            aria-label="Непрозрачность фона"
+            aria-label={t('Непрозрачность фона')}
             type="range"
             min="0"
             max="100"
@@ -100,25 +101,25 @@ export function ReferencePanel({ value, onChange, onPreview, onEdit, editing = f
                 checked={value.visible}
                 onChange={(e) => onChange({ ...value, visible: e.target.checked })}
               />
-              Показывать
+              {t('Показывать')}
             </label>
             <button className="button ghost compact" onClick={() => onChange(null)}>
-              Убрать фон
+              {t('Убрать фон')}
             </button>
           </div>
           <details>
-            <summary>Положение фона</summary>
+            <summary>{t('Положение фона')}</summary>
             <div className="reference-fields">
               {[
                 ['x', 'X'],
                 ['y', 'Y'],
-                ['w', 'Ширина'],
-                ['h', 'Высота']
+                ['w', t('Ширина')],
+                ['h', t('Высота')]
               ].map(([key, label]) => (
                 <label key={key}>
                   {label}
                   <NumberInput
-                    aria-label={`${label} фона`}
+                    aria-label={t('{label} фона', { label })}
                     type="number"
                     key={`${key}-${value[key]}`}
                     defaultValue={Math.round(value[key])}
@@ -143,7 +144,7 @@ export function ReferencePanel({ value, onChange, onPreview, onEdit, editing = f
           </details>
         </>
       )}
-      <p className="hint">Только для обводки. Сохраняется в проекте, в Dota JSON не входит.</p>
+      <p className="hint">{t('Только для обводки. Сохраняется в проекте, в Dota JSON не входит.')}</p>
       {error && (
         <p role="alert" className="drawing-error">
           {error}

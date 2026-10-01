@@ -62,5 +62,68 @@
         "Случайная сетка на главной появляется плавно, без подмены на другую"
       ]
     }
-  ]
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Main menu background",
+        "changes": [
+          {
+            "text": "You can also put the background behind your hero — Heroes → Loadout, instead of the event picture",
+            "children": [
+              "The preview has a 3D Shadow Fiend in his arcana, as in the game: turn it with the mouse or the wheel"
+            ]
+          },
+          "Framing: drag the picture or video and zoom in up to 300%",
+          "The video clip handles move again",
+          "There’s an Easter egg hidden on the hero page"
+        ]
+      },
+      {
+        "title": "Workshop",
+        "changes": [
+          {
+            "text": "You can no longer like your own grid or background",
+            "children": [
+              "Likes on your own works were removed — they no longer count in “Popular”"
+            ]
+          },
+          "The Workshop no longer freezes when it opens",
+          "“Popular” opens by default — for both grids and backgrounds",
+          "Links to grids and backgrounds show previews in Telegram, Discord and VK",
+          "Backgrounds can be marked 18+ too — they stay blurred until you confirm your age",
+          "18+ grids are blurred again after a reload; the “Hide 18+” button is next to the background switch",
+          "“My publications” for backgrounds — with review status; an approved one can be used right away",
+          "Grid previews are sharp on phones — dot grids no longer crumble into dust"
+        ]
+      },
+      {
+        "title": "Studio",
+        "changes": [
+          "The Studio opens at once and doesn’t freeze, even with many files",
+          "Syncing with your account no longer blocks the buttons",
+          "On another device, file previews arrive as pictures right away",
+          "“Before update” copies no longer pile up forever — the last 3 and all from the past 30 days are kept"
+        ]
+      },
+      {
+        "title": "Editor",
+        "changes": [
+          "A “Line” can be bent into an arc — drag the point in the middle",
+          "New “Scatter” tool — dots under the brush fly apart as if the drawing were crumbling",
+          "Sliders in “Image to ASCII” work live",
+          "Reference image opacity changes while you drag",
+          "The Korean font loads only for Korean grids — the editor opens faster",
+          "The “high load” banner no longer covers “Undo”, “Redo” and “Preview”"
+        ]
+      },
+      {
+        "title": "Site",
+        "changes": [
+          "“Support development” under the authors",
+          "The random grid on the home page fades in smoothly, without switching to another"
+        ]
+      }
+    ]
+  }
 }

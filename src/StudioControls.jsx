@@ -8,7 +8,7 @@ import { LayersPanel } from './LayersPanel.jsx';
 import { GridFilePanel } from './GridFilePanel.jsx';
 import { DrawingDialog } from './DrawingDialog.jsx';
 import { ReferencePanel } from './ReferencePanel.jsx';
-import { RecentSymbols, CategoryWarning, CanvasSizeFields } from './SymbolControls.jsx';
+import { RecentSymbols, CategoryWarning, FontWarning, CanvasSizeFields } from './SymbolControls.jsx';
 
 import { AsciiLibrary } from './AsciiLibrary.jsx';
 import { TextArtButton } from './TextArtDialog.jsx';
@@ -16,6 +16,7 @@ import { CanvasContextMenu, DockLabels, Tooltips } from './EditorActions.jsx';
 import { ArtworkOptimizer } from './ArtworkOptimizer.jsx';
 import { ZoomFields } from './ZoomFields.jsx';
 import EditorCatalog from './catalog/EditorCatalog.jsx';
+import { t, tn, plural, locale, translateMessage } from '../scripts/i18n.mjs';
 
 const attributes = [
   ['any', 'Все герои'],
@@ -25,6 +26,8 @@ const attributes = [
   ['all', 'Универсалы']
 ];
 const knownHeroes = new Set(D.heroes.map((hero) => hero.id));
+// Hero names come from scripts/data.mjs; the one Russian name there (the Target Dummy) has an entry.
+const heroName = (hero) => translateMessage(hero.name);
 const attributeIcons = { str: 'strength', agi: 'agility', int: 'intelligence', all: 'universal' };
 function AttributeIcon({ attribute }) {
   return (
@@ -42,54 +45,55 @@ function Plus() {
 }
 
 function ProjectPanel({ editor, state }) {
+  const [before, after] = t('Нажми {plus} на группе, чтобы выбрать героев.').split('{plus}');
   return (
     <div className="project-panel">
       <div className="project-overview">
-        <span className="eyebrow">СЕТКА</span>
+        <span className="eyebrow">{t('СЕТКА')}</span>
         <div>
           <strong>{state.groups}</strong>
-          <span>групп</span>
+          <span>{plural(state.groups, ['группа', 'группы', 'групп'], ['group', 'groups'])}</span>
           <i />
           <strong>{state.heroes}</strong>
-          <span>героев</span>
+          <span>{plural(state.heroes, ['герой', 'героя', 'героев'], ['hero', 'heroes'])}</span>
         </div>
       </div>
       <button className="create-group-card" onClick={editor.addGroup}>
         <span className="create-group-icon">
           <Plus />
         </span>
-        <strong>Новая группа</strong>
-        <span>Герои и название</span>
+        <strong>{t('Новая группа')}</strong>
+        <span>{t('Герои и название')}</span>
         <span className="card-arrow">↗</span>
       </button>
       <div className="canvas-guide">
         <p>
-          Нажми <b>+</b> на группе, чтобы выбрать героев.
+          {before}<b>+</b>{after}
         </p>
       </div>
       <div className="project-templates">
-        <span className="eyebrow">ШАБЛОНЫ</span>
+        <span className="eyebrow">{t('ШАБЛОНЫ')}</span>
         <button onClick={editor.templateRoles}>
           <span className="template-icon">▥</span>
           <span>
-            <strong>По ролям</strong>
-            <small>Пять групп по позициям</small>
+            <strong>{t('По ролям')}</strong>
+            <small>{t('Пять групп по позициям')}</small>
           </span>
           <span>↗</span>
         </button>
         <button onClick={editor.templateMinimal}>
           <span className="template-icon">▦</span>
           <span>
-            <strong>Мой пул</strong>
-            <small>Две группы героев</small>
+            <strong>{t('Мой пул')}</strong>
+            <small>{t('Две группы героев')}</small>
           </span>
           <span>↗</span>
         </button>
         <button onClick={editor.quickImage}>
           <span className="template-icon">✦</span>
           <span>
-            <strong>Из изображения</strong>
-            <small>Конвертация в ASCII</small>
+            <strong>{t('Из изображения')}</strong>
+            <small>{t('Конвертация в ASCII')}</small>
           </span>
           <span>↗</span>
         </button>
@@ -97,9 +101,9 @@ function ProjectPanel({ editor, state }) {
       <div className="project-note">
         <kbd>Shift</kbd>
         <span>
-          Сохраняет пропорции
+          {t('Сохраняет пропорции')}
           <br />
-          при изменении размера
+          {t('при изменении размера')}
         </span>
       </div>
     </div>
@@ -116,14 +120,14 @@ function GroupControl({ editor, state }) {
   return (
     <>
       {!empty && !state.resizing && group.heroIds.map((id, index) => {
-        const name = D.heroes.find((hero) => hero.id === id)?.name || `Герой ${id}`;
+        const hero = D.heroes.find((item) => item.id === id), name = hero ? heroName(hero) : t('Герой {id}', { id });
         return (
           <button
             key={`${group.id}:${index}:${id}`}
             type="button"
             className="group-remove-hero"
-            aria-label={`Удалить ${name} из группы ${group.name}`}
-            data-tooltip={`Удалить ${name}`}
+            aria-label={t('Удалить {hero} из группы {group}', { hero: name, group: group.name })}
+            data-tooltip={t('Удалить {name}', { name })}
             style={{
               left: (group.x + first.left + (index % first.cols) * first.stepX + first.cardW) * state.zoom,
               top: (group.y + first.top + Math.floor(index / first.cols) * first.stepY) * state.zoom
@@ -150,8 +154,8 @@ function GroupControl({ editor, state }) {
         <button
           key={group.id}
           className="hero-slot-add"
-          aria-label={`Выбрать героев: ${group.name}`}
-          title="Выбрать героев (/)"
+          aria-label={t('Выбрать героев: {group}', { group: group.name })}
+          title={t('Выбрать героев (/)')}
           style={{ left: slot.x * state.zoom, top: slot.y * state.zoom, width: slot.w * state.zoom, height: slot.h * state.zoom }}
           onClick={() => editor.openHeroPicker(group.id)}
         >
@@ -167,7 +171,7 @@ function GroupControl({ editor, state }) {
           }}
         >
           <kbd>Shift</kbd>
-          {state.proportional ? 'Пропорции сохранены' : 'Сохранить пропорции'}
+          {state.proportional ? t('Пропорции сохранены') : t('Сохранить пропорции')}
         </div>
       )}
     </>
@@ -189,8 +193,8 @@ function RotationControl({ editor, state }) {
     <>
       <button
         className="rotation-handle"
-        aria-label="Повернуть выделение"
-        title="Тяни для поворота · Shift — шаг 15° · ← → — 1°"
+        aria-label={t('Повернуть выделение')}
+        title={t('Тяни для поворота · Shift — шаг 15° · ← → — 1°')}
         style={{ left, top }}
         onPointerDown={editor.startRotation}
         onKeyDown={(event) => {
@@ -206,10 +210,10 @@ function RotationControl({ editor, state }) {
       {state.rotating && (
         <output
           className={`rotation-angle ${state.rotationSnapped ? 'snapped' : ''}`}
-          aria-label="Угол поворота"
+          aria-label={t('Угол поворота')}
           style={{ left, top: top + 23 }}
         >
-          {angle}°<span>{state.rotationSnapped ? 'Шаг 15°' : 'Shift — шаг 15°'}</span>
+          {angle}°<span>{state.rotationSnapped ? t('Шаг 15°') : t('Shift — шаг 15°')}</span>
         </output>
       )}
     </>
@@ -225,6 +229,7 @@ function HeroPicker({ editor, group }) {
     [attribute, setAttribute] = useState('any'),
     [closing, setClosing] = useState(false);
   const chosen = new Set(group.heroIds);
+  const [groupBefore, groupAfter] = t('Группа {group} · нажми на героя, чтобы добавить или убрать').split('{group}');
   const normalized = query.trim().toLowerCase();
   const heroes = D.heroes.filter(
     (hero) =>
@@ -278,13 +283,13 @@ function HeroPicker({ editor, group }) {
     >
       <div className="picker-heading">
         <div>
-          <span className="eyebrow">ГЕРОИ</span>
-          <h2 id="heroPickerTitle">Выбор героев</h2>
+          <span className="eyebrow">{t('ГЕРОИ')}</span>
+          <h2 id="heroPickerTitle">{t('Выбор героев')}</h2>
           <p id="heroPickerDescription">
-            Группа <strong>{group.name}</strong> · нажми на героя, чтобы добавить или убрать
+            {groupBefore}<strong>{group.name}</strong>{groupAfter}
           </p>
         </div>
-        <button className="picker-close" aria-label="Закрыть выбор героев" onClick={close}>
+        <button className="picker-close" aria-label={t('Закрыть выбор героев')} onClick={close}>
           ×
         </button>
       </div>
@@ -293,14 +298,14 @@ function HeroPicker({ editor, group }) {
         <input
           ref={search}
           type="search"
-          aria-label="Поиск героев"
-          placeholder="Имя героя или ID…"
+          aria-label={t('Поиск героев')}
+          placeholder={t('Имя героя или ID…')}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
         <kbd>Esc</kbd>
       </div>
-      <div className="picker-filters" role="group" aria-label="Атрибут героя">
+      <div className="picker-filters" role="group" aria-label={t('Атрибут героя')}>
         {attributes.map(([key, label]) => (
           <button
             key={key}
@@ -309,27 +314,27 @@ function HeroPicker({ editor, group }) {
             onClick={() => setAttribute(key)}
           >
             {key !== 'any' && <AttributeIcon attribute={key} />}
-            {label}
+            {t(label)}
           </button>
         ))}
       </div>
       <div className="picker-results-heading">
-        <span>{normalized ? 'РЕЗУЛЬТАТЫ ПОИСКА' : 'ГЕРОИ DOTA 2'}</span>
-        <span>{heroes.length} найдено</span>
+        <span>{normalized ? t('РЕЗУЛЬТАТЫ ПОИСКА') : t('ГЕРОИ DOTA 2')}</span>
+        <span>{t('{count} найдено', { count: heroes.length })}</span>
         <button
           className="button secondary compact"
           disabled={!heroes.length || heroes.every((hero) => chosen.has(hero.id))}
           onClick={() => editor.selectAllHeroes(heroes.map((hero) => hero.id))}
         >
-          Выбрать всех героев
+          {t('Выбрать всех героев')}
         </button>
       </div>
-      <div ref={grid} className="picker-grid" tabIndex="0" aria-label="Герои по выбранному фильтру">
+      <div ref={grid} className="picker-grid" tabIndex="0" aria-label={t('Герои по выбранному фильтру')}>
         {heroes.map((hero) => (
           <button
             key={hero.id}
             className={`picker-hero ${chosen.has(hero.id) ? 'chosen' : ''}`}
-            aria-label={hero.name}
+            aria-label={heroName(hero)}
             aria-pressed={chosen.has(hero.id)}
             onClick={() => editor.toggleHero(hero.id)}
           >
@@ -346,15 +351,15 @@ function HeroPicker({ editor, group }) {
             </div>
             <span className="picker-name">
               <AttributeIcon attribute={hero.attr} />
-              {hero.name}
+              {heroName(hero)}
             </span>
           </button>
         ))}
         {!heroes.length && (
           <div className="picker-empty">
             <span>⌕</span>
-            <strong>Герой не найден</strong>
-            <p>Попробуй другое имя или выбери все атрибуты.</p>
+            <strong>{t('Герой не найден')}</strong>
+            <p>{t('Попробуй другое имя или выбери все атрибуты.')}</p>
             <button
               className="button secondary"
               onClick={() => {
@@ -363,7 +368,7 @@ function HeroPicker({ editor, group }) {
                 search.current.focus();
               }}
             >
-              Сбросить фильтры
+              {t('Сбросить фильтры')}
             </button>
           </div>
         )}
@@ -380,20 +385,20 @@ function HeroPicker({ editor, group }) {
               })}
           </div>
           <span role="status" aria-live="polite">
-            В группе: <strong>{group.heroIds.length}</strong>
+            {t('В группе:')} <strong>{group.heroIds.length}</strong>
           </span>
         </div>
         <button className="button primary picker-done" onClick={close}>
-          Готово <span>↵</span>
+          {t('Готово')} <span>↵</span>
         </button>
       </div>
     </dialog>
   );
 }
 
-export function StudioControls({ editor }) {
+export function StudioControls({ editor, panel: openPanel = null }) {
   const state = useSyncExternalStore(editor.subscribe, editor.getSnapshot);
-  const [panel, setPanel] = useState(null);
+  const [panel, setPanel] = useState(openPanel);
   const [pinned, setPinned] = useState(() => {
     try { return localStorage.getItem('gridstudio.library-pinned') === '1'; } catch { return false; }
   });
@@ -474,7 +479,7 @@ export function StudioControls({ editor }) {
   return (
     <>
       <StudioPortal targetId="libraryTitle">
-        {state.mode === 'draw' ? 'Рисование' : state.mode === 'image' ? 'ASCII-арты' : 'Сетка героев'}
+        {state.mode === 'draw' ? t('Рисование') : state.mode === 'image' ? t('ASCII-арты') : t('Сетка героев')}
       </StudioPortal>
       <StudioPortal targetId="gridFilePanel">
         <GridFilePanel editor={editor} state={state} />
@@ -483,11 +488,12 @@ export function StudioControls({ editor }) {
         {/* The first row keeps room for the undo/redo/preview buttons pinned to the canvas corner. */}
         <RecentSymbols symbols={state.recentSymbols} onPick={editor.useBrushSymbol} />
         <CategoryWarning count={state.categories} onOptimize={() => setOptimization(editor.getDocument())} />
+        <FontWarning foreign={state.foreign} onSelect={editor.selectGlyphs} />
         {(state.canvas.w !== C.WIDTH || state.canvas.h !== C.HEIGHT) && (
           <p className="canvas-size-note canvas-size-persistent">
-            При изменении размеров холста в Доте появятся ползунки.
+            {t('При изменении размеров холста в Доте появятся ползунки.')}
             {(state.canvas.w > C.WIDTH || state.canvas.h > C.HEIGHT) && (
-              <span className="default-area-legend">Пунктир — стандартная область 1193 × 593</span>
+              <span className="default-area-legend">{t('Пунктир — стандартная область 1193 × 593')}</span>
             )}
           </p>
         )}
@@ -513,11 +519,11 @@ export function StudioControls({ editor }) {
         <LayersPanel editor={editor} layers={state.layers} />
       </StudioPortal>
       <StudioPortal targetId="libraryDismiss">
-        <button className="panel-pin" aria-pressed={pinned} aria-label={pinned ? 'Открепить панель' : 'Закрепить панель'}
-          data-tooltip={pinned ? 'Открепить панель' : 'Закрепить панель'} onClick={() => setPinned(value => !value)}>
+        <button className="panel-pin" aria-pressed={pinned} aria-label={pinned ? t('Открепить панель') : t('Закрепить панель')}
+          data-tooltip={pinned ? t('Открепить панель') : t('Закрепить панель')} onClick={() => setPinned(value => !value)}>
           <Icon name="pin" />
         </button>
-        <button className="panel-dismiss" onClick={closeLibrary} aria-label="Закрыть панель">
+        <button className="panel-dismiss" onClick={closeLibrary} aria-label={t('Закрыть панель')}>
           <Icon name="close" />
         </button>
       </StudioPortal>
@@ -529,7 +535,7 @@ export function StudioControls({ editor }) {
             document.getElementById('focusButton').focus();
           }}
         >
-          Закрыть ×
+          {t('Закрыть')} ×
         </button>
       </StudioPortal>
       <StudioPortal targetId="projectPanel">
@@ -550,19 +556,19 @@ export function StudioControls({ editor }) {
         {state.overflow.count > 0 ? (
           <div className="canvas-warning" role="status">
             <span>
-              За границами {state.canvas.w} × {state.canvas.h}:{' '}
-              <strong>{state.overflow.count} символов</strong>
+              {t('За границами {w} × {h}:', { w: state.canvas.w, h: state.canvas.h })}{' '}
+              <strong>{tn(state.overflow.count, ['символ', 'символа', 'символов'], ['symbol', 'symbols'])}</strong>
             </span>
             <button
               onClick={editor.cropOverflow}
               disabled={!state.overflow.editable}
               title={
                 state.overflow.editable
-                  ? 'Удалить символы, которые выходят за границы'
-                  : 'Разблокируй слой для обрезки'
+                  ? t('Удалить символы, которые выходят за границы')
+                  : t('Разблокируй слой для обрезки')
               }
             >
-              Обрезать
+              {t('Обрезать')}
             </button>
           </div>
         ) : null}
@@ -576,10 +582,10 @@ export function StudioControls({ editor }) {
       <StudioPortal targetId="symbolCounter">
         <>
           <span className="category-counter">
-            Категорий <strong>{state.categories.toLocaleString('ru-RU')}</strong>
+            {t('Категорий')} <strong>{state.categories.toLocaleString(locale)}</strong>
           </span>
           <button className="button ghost compact optimize-trigger" disabled={!state.categories}
-            onClick={() => setOptimization(editor.getDocument())}>Оптимизация</button>
+            onClick={() => setOptimization(editor.getDocument())}>{t('Оптимизация')}</button>
         </>
       </StudioPortal>
       <EditorCatalog editor={editor}/>

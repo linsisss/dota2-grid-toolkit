@@ -1,4 +1,5 @@
 import C from './core.mjs';
+import { t } from './i18n.mjs';
 
 // Deterministic, spatially balanced sampling. Coordinates and glyphs never change.
 // Text lines, hero groups, hidden and locked layers are deliberately excluded.
@@ -18,7 +19,7 @@ function spatialOrder(items, depth = 0) {
   return result;
 }
 export function simplifyArtwork(doc, percent = 100) {
-  if (!Number.isFinite(percent)) throw new Error('Укажи процент оставшихся символов.');
+  if (!Number.isFinite(percent)) throw new Error(t('Укажи процент оставшихся символов.'));
   const fraction = C.clamp(percent, 5, 100) / 100, candidates = simplifiableItems(doc);
   const grouped = new Map(), keep = new Set();
   for (const item of candidates) {

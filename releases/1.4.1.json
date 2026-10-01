@@ -27,5 +27,33 @@
       ]
     },
     "Лендинг легче на 1,5 МБ: аватарки и скриншот в WebP; корейский шрифт в каталоге загружается только для сеток с корейским текстом"
-  ]
+  ],
+  "en": {
+    "changes": [
+      {
+        "text": "The catalog opens faster",
+        "children": [
+          "Grid previews download once and stay in the browser cache",
+          "Changing filters and pages doesn’t reload the grids",
+          "Grids are sent compressed and are 15–20 times smaller"
+        ]
+      },
+      "The server no longer writes every page view to the database and responds faster under load",
+      {
+        "text": "Sign in with Telegram",
+        "children": [
+          "Checked less often when you switch windows, e.g. Alt+Tab from Dota",
+          "Signing in or out in another tab applies right away"
+        ]
+      },
+      {
+        "text": "Saving during site updates",
+        "children": [
+          "A file is re-sent to your account automatically if the server restarted",
+          "Open tabs keep working after a new version comes out"
+        ]
+      },
+      "The landing page is 1.5 MB lighter: avatars and the screenshot are WebP; the catalog loads the Korean font only for grids with Korean text"
+    ]
+  }
 }

@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react';
 import { Icon } from './Icon.jsx';
+import { t, locale } from '../scripts/i18n.mjs';
 
 
 export function LayersPanel({ editor, layers }) {
@@ -31,13 +32,13 @@ export function LayersPanel({ editor, layers }) {
           <section
             key={layer.id}
             className={`layer-section ${art ? 'artwork-layer' : ''} ${layer.selected ? 'selected' : ''} ${!layer.visible ? 'hidden-layer' : ''}`}
-            aria-label={`Слой ${layer.name}`}
+            aria-label={t('Слой {name}', { name: layer.name })}
           >
             <div className="layer-head">
               {!art && (
                 <button
                   className="layer-collapse"
-                  aria-label={`${layer.expanded ? 'Свернуть' : 'Развернуть'} слой ${layer.name}`}
+                  aria-label={t(layer.expanded ? 'Свернуть слой {name}' : 'Развернуть слой {name}', { name: layer.name })}
                   aria-expanded={layer.expanded}
                   onClick={() => editor.collapseLayer(layer.id)}
                 >
@@ -47,18 +48,18 @@ export function LayersPanel({ editor, layers }) {
               <button
                 className="layer-name"
                 title={layer.name}
-                aria-label={`Выделить слой ${layer.name}`}
+                aria-label={t('Выделить слой {name}', { name: layer.name })}
                 aria-pressed={layer.selected}
                 onClick={() => editor.selectLayer(layer.id)}
               >
                 {art && <Icon name="art" />}
                 <span>{layer.name}</span>
-                <span className="item-count">{layer.count.toLocaleString('ru-RU')}</span>
+                <span className="item-count">{layer.count.toLocaleString(locale)}</span>
               </button>
               <button
                 className={`icon-button ${!layer.visible ? 'off' : ''}`}
-                aria-label={`${layer.visible ? 'Скрыть' : 'Показать'} слой ${layer.name}`}
-                title={layer.visible ? 'Скрыть слой' : 'Показать слой'}
+                aria-label={t(layer.visible ? 'Скрыть слой {name}' : 'Показать слой {name}', { name: layer.name })}
+                title={layer.visible ? t('Скрыть слой') : t('Показать слой')}
                 aria-pressed={layer.visible}
                 onClick={() => editor.toggleLayer(layer.id, 'visible')}
               >
@@ -66,8 +67,8 @@ export function LayersPanel({ editor, layers }) {
               </button>
               <button
                 className={`icon-button ${layer.locked ? 'off' : ''}`}
-                aria-label={`${layer.locked ? 'Разблокировать' : 'Заблокировать'} слой ${layer.name}`}
-                title={layer.locked ? 'Разблокировать' : 'Заблокировать'}
+                aria-label={t(layer.locked ? 'Разблокировать слой {name}' : 'Заблокировать слой {name}', { name: layer.name })}
+                title={layer.locked ? t('Разблокировать') : t('Заблокировать')}
                 aria-pressed={layer.locked}
                 onClick={() => editor.toggleLayer(layer.id, 'locked')}
               >
@@ -76,8 +77,8 @@ export function LayersPanel({ editor, layers }) {
               {art && (
                 <button
                   className="icon-button danger"
-                  aria-label={`Удалить слой ${layer.name}`}
-                  title="Удалить слой"
+                  aria-label={t('Удалить слой {name}', { name: layer.name })}
+                  title={t('Удалить слой')}
                   disabled={layer.locked}
                   onClick={() => editor.deleteLayer(layer.id)}
                 >
@@ -111,15 +112,15 @@ export function LayersPanel({ editor, layers }) {
                         onClick={() => editor.selectLayer(layer.id, true)}
                       >
                         <Icon name="art" />
-                        <span className="item-name">Символы</span>
+                        <span className="item-name">{t('Символы')}</span>
                         <span className="item-count">
-                          {layer.symbolCount.toLocaleString('ru-RU')}
+                          {layer.symbolCount.toLocaleString(locale)}
                         </span>
                       </button>
                     )}
-                    {!layer.count && <div className="layer-empty">Пустой слой</div>}
+                    {!layer.count && <div className="layer-empty">{t('Пустой слой')}</div>}
                     {layer.count - layer.symbolCount > 80 && (
-                      <div className="layer-empty">Остальные объекты — на холсте</div>
+                      <div className="layer-empty">{t('Остальные объекты — на холсте')}</div>
                     )}
                   </div>
                 </div>

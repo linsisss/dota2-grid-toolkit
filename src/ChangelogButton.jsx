@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { APP_VERSION } from '../scripts/version.mjs';
 import { mountDisclosureMotion } from '../scripts/disclosure-motion.mjs';
+import { lang, locale, t } from '../scripts/i18n.mjs';
 import './changelog.css';
 
 // The site's version beside its source link (workshop and home footers); a click opens «Что нового»:
@@ -9,11 +10,13 @@ import './changelog.css';
 // entry. The lists load with the window, not with the page. It rises in and sinks away, the releases
 // come in one after another, and a release unfolds smoothly (disclosure-motion.mjs, mounted on the
 // window itself, since the home page does not mount it); all of it off with reduced motion.
+// English users read a release's `en` notes (the same shape, item for item) when it has them, else the
+// Russian ones; the Telegram post is always made from the Russian (scripts/release-format.mjs).
 const RELEASES = import.meta.glob('../releases/[0-9]*.json', { import: 'default' });
 const FULL = 'https://github.com/linsisss/dota2-grid-toolkit/blob/main/CHANGELOG.md';
 const semver = (v) => v.split(/[.-]/).slice(0, 3).map(Number);
 const newer = (a, b) => { const [x, y] = [semver(a.version), semver(b.version)]; return y[0] - x[0] || y[1] - x[1] || y[2] - x[2]; };
-const day = (date) => { try { return new Date(`${date}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }); } catch { return date; } };
+const day = (date) => { try { return new Date(`${date}T12:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }); } catch { return date; } };
 
 function Changes({ items }) {
   return <ul>{items.map((item, i) => typeof item === 'string' ? <li key={i}>{item}</li>
@@ -21,9 +24,10 @@ function Changes({ items }) {
 }
 
 function Release({ release, latest, index }) {
-  const sections = release.sections ?? [{ title: '', changes: release.changes }];
+  const notes = (lang === 'en' && release.en) || release;
+  const sections = notes.sections ?? [{ title: '', changes: notes.changes }];
   return <details className="changelog-release" open={latest} style={{ '--i': index }}>
-    <summary><strong>Версия {release.version}</strong>{release.date && <span>{day(release.date)}</span>}{latest && <em>новое</em>}</summary>
+    <summary><strong>{t('Версия {version}', { version: release.version })}</strong>{release.date && <span>{day(release.date)}</span>}{latest && <em>{t('новое')}</em>}</summary>
     {sections.map((section, i) => <section key={i}>{section.title && <h4>{section.title}</h4>}<Changes items={section.changes}/></section>)}
   </details>;
 }
@@ -49,21 +53,21 @@ function ChangelogDialog({ close: done }) {
     onCancel={(e) => { e.preventDefault(); close(); }} onClick={(e) => { if (e.target === ref.current) close(); }}
     onAnimationEnd={(e) => { if (closing && e.target === ref.current) done(); }}>
     <header>
-      <div><h2 id="changelogTitle">Что нового</h2><span>Сейчас на сайте — версия {APP_VERSION}</span></div>
-      <button type="button" aria-label="Закрыть" onClick={close}>×</button>
+      <div><h2 id="changelogTitle">{t('Что нового')}</h2><span>{t('Сейчас на сайте — версия {version}', { version: APP_VERSION })}</span></div>
+      <button type="button" aria-label={t('Закрыть')} onClick={close}>×</button>
     </header>
     <div className="changelog-body">
-      {error ? <p>Не удалось загрузить список изменений.</p> : !releases ? <p>Загружаем…</p>
+      {error ? <p>{t('Не удалось загрузить список изменений.')}</p> : !releases ? <p>{t('Загружаем…')}</p>
         : releases.map((release, i) => <Release key={release.version} release={release} latest={i === 0} index={i}/>)}
     </div>
-    <footer><a href={FULL} target="_blank" rel="noreferrer">Полный список изменений на GitHub ↗</a></footer>
+    <footer><a href={FULL} target="_blank" rel="noreferrer">{t('Полный список изменений на GitHub ↗')}</a></footer>
   </dialog>;
 }
 
 export function VersionButton({ className = '' }) {
   const [open, setOpen] = useState(false);
   return <>
-    <button type="button" className={`version-button ${className}`} title="Что нового" onClick={() => setOpen(true)}>v{APP_VERSION}</button>
+    <button type="button" className={`version-button ${className}`} title={t('Что нового')} onClick={() => setOpen(true)}>v{APP_VERSION}</button>
     {open && <ChangelogDialog close={() => setOpen(false)}/>}
   </>;
 }

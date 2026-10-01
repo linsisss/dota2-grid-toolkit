@@ -44,5 +44,50 @@
         "Клик по версии внизу страницы открывает «Что нового»"
       ]
     }
-  ]
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Grids in Dota",
+        "changes": [
+          {
+            "text": "Grids no longer fall apart on the hero pick screen, at 4:3 and on some PCs",
+            "children": [
+              "Downloaded a grid on 1.6? Download it again"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Editor",
+        "changes": [
+          {
+            "text": "“Text to ASCII” — your text in every style at once, as Dota will show it",
+            "children": [
+              "39 styles; dot styles write Cyrillic too, size in pixels"
+            ]
+          },
+          "The eraser erases exactly what’s under its ring",
+          "The eraser ring uses the site’s colors",
+          "The reference image can be moved past any edge of the canvas",
+          "The “ASCII” tab is now called “ASCII art”",
+          "The 2,000-categories banner shows once per session"
+        ]
+      },
+      {
+        "title": "Main menu background",
+        "changes": [
+          "The 3D Shadow Fiend loads faster — 5 MB instead of 8",
+          "Shadow Fiend’s hands no longer show squares on a light background",
+          "The builder is now at gridstudio.me/background — old links still work"
+        ]
+      },
+      {
+        "title": "Site",
+        "changes": [
+          "Clicking the version at the bottom of the page opens “What’s new”"
+        ]
+      }
+    ]
+  }
 }

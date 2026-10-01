@@ -1,4 +1,5 @@
 import C from './core.mjs';
+import { t } from './i18n.mjs';
 import { simplifiableItems } from './artwork-optimization.mjs';
 import { planCategoryRows, compactCategoryRows, textWidth } from './export-rows.mjs';
 import { packPlan, applyPacking } from './dot-packing.mjs';
@@ -201,7 +202,7 @@ function build(plan, keep) {
 }
 
 export function optimizeCategories(plan, target = plan.losslessCount) {
-  if (!Number.isFinite(target)) throw new Error('Укажи число категорий.');
+  if (!Number.isFinite(target)) throw new Error(t('Укажи число категорий.'));
   const budget = Math.max(plan.minimum, Math.min(plan.losslessCount, Math.round(target)));
   const all = plan.units.length, clamp = (k) => Math.max(plan.minimumKeep, Math.min(all, k));
   if (budget >= plan.losslessCount) return { ...build(plan, all), budget };

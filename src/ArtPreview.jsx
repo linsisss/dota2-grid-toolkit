@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { layoutAsciiArt } from '../scripts/ascii-library.mjs';
 import { drawCategoryLabel, measureCategoryText } from '../scripts/dota-rendering.mjs';
+import { t, translateMessage } from '../scripts/i18n.mjs';
 
 // An art drawn with the Dota label font, fitted into its box. Used by the library,
 // the submission form and the admin panel. With `canvas` the box stands for the Dota grid,
@@ -40,5 +41,5 @@ export function ArtPreview({ art, onLayout, canvas: frame = null }) {
       observer.disconnect();
     };
   }, [art, onLayout, frame?.w, frame?.h]);
-  return <canvas ref={ref} role="img" aria-label={`Превью: ${art.name}`} />;
+  return <canvas ref={ref} role="img" aria-label={t('Превью: {name}', { name: translateMessage(art.name) })} />;
 }

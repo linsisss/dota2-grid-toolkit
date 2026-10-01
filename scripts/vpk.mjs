@@ -99,11 +99,13 @@ export function readVPK(bytes) {
   return { version, files };
 }
 
-// Panorama resources. kind: layout (.xml → .vxml_c), style (.css → .vcss_c), script (.js → .vjs_c).
+// Panorama resources. kind: layout (.xml → .vxml_c), style (.css → .vcss_c), script (.js → .vjs_c),
+// vector (.svg → .vsvg_c: Panorama's vector images, the same text-in-DATA resource, version 2).
 const PANORAMA = {
   layout: { compiled: 'vxml', source: 'xml', compiler: 'Panorama Layout Compiler Version' },
   style: { compiled: 'vcss', source: 'css', compiler: 'Panorama Style Compiler Version' },
-  script: { compiled: 'vjs', source: 'js', compiler: 'Panorama Script Compiler Version' }
+  script: { compiled: 'vjs', source: 'js', compiler: 'Panorama Script Compiler Version' },
+  vector: { compiled: 'vsvg', source: 'svg', compiler: 'Vector Graphic Version', compile: 'CompileVectorGraphic', compilerVersion: 2, resourceVersion: 2, sourceFirst: true }
 };
 // The edit-info block: ten lists of records, each list followed by its own strings (not shared
 // between records); string fields hold offsets relative to the field. `order` is the order the
@@ -111,11 +113,12 @@ const PANORAMA = {
 function editInfo({ path, kind, sourceCRC, searchPath }) {
   const type = PANORAMA[kind], stem = path.replace(/\.[^.\/]+$/, '');
   const lists = [
-    // Input dependencies: the compiled name (optional, absent) and the source file.
-    { records: [[`${stem}.${type.compiled}`, searchPath, 0, 1], [`${stem}.${type.source}`, searchPath, sourceCRC, 2]], order: [0, 1] },
+    // Input dependencies: the compiled name (optional, absent) and the source file (vector images
+    // list the source first).
+    { records: ((inputs) => (type.sourceFirst ? inputs.reverse() : inputs))([[`${stem}.${type.compiled}`, searchPath, 0, 1], [`${stem}.${type.source}`, searchPath, sourceCRC, 2]]), order: [0, 1] },
     { records: [] },
     { records: [['___OverrideInputData___', 'BinaryBlobArg', 0, 0]], order: [0, 1] }, // argument dependencies
-    { records: [[type.compiler, 'CompilePanorama', 1, 0]], order: [1, 0] },           // special dependencies
+    { records: [[type.compiler, type.compile ?? 'CompilePanorama', type.compilerVersion ?? 1, 0]], order: [1, 0] }, // special dependencies
     { records: [] }, { records: [] }, { records: [] },
     { records: [['IsChildResource', 0]], order: [0] },                                 // searchable user data (int)
     { records: [] }, { records: [] }
@@ -126,7 +129,8 @@ function editInfo({ path, kind, sourceCRC, searchPath }) {
   chunks.push(new Uint8Array(head.buffer));
   lists.forEach(({ records, order }, index) => {
     if (!records.length) return;
-    size = (size + 3) & ~3;
+    // Lists start on 4 bytes; the searchable user data (list 7) on 8 (seen in a vsvg_c of Valve's).
+    size = index === 7 ? (size + 7) & ~7 : (size + 3) & ~3;
     const start = size, width = records[0].length * 4, recordBytes = new Uint8Array(records.length * width), view = new DataView(recordBytes.buffer);
     head.setUint32(index * 8, start - index * 8, true);
     head.setUint32(index * 8 + 4, records.length, true);
@@ -147,7 +151,7 @@ function editInfo({ path, kind, sourceCRC, searchPath }) {
 }
 // path: the compiled file's path in the game (panorama/layout/x.vxml_c); source: its text.
 export function panoramaResource(path, source, { searchPath = 'dota', sourceCRC } = {}) {
-  const kind = { vxml_c: 'layout', vcss_c: 'style', vjs_c: 'script' }[path.split('.').pop()];
+  const kind = { vxml_c: 'layout', vcss_c: 'style', vjs_c: 'script', vsvg_c: 'vector' }[path.split('.').pop()];
   if (!kind) throw new Error(`Не Panorama-ресурс: ${path}`);
   const body = typeof source === 'string' ? text(source) : source;
   const redi = editInfo({ path, kind, sourceCRC: sourceCRC ?? crc32(body), searchPath });
@@ -160,7 +164,7 @@ export function panoramaResource(path, source, { searchPath = 'dota', sourceCRC 
   const out = new Uint8Array(dataAt + data.length), view = new DataView(out.buffer);
   view.setUint32(0, out.length, true);
   view.setUint16(4, 12, true);  // header version
-  view.setUint16(6, 3, true);   // resource version
+  view.setUint16(6, PANORAMA[kind].resourceVersion ?? 3, true);   // resource version
   view.setUint32(8, 8, true);   // block table follows the header
   view.setUint32(12, 2, true);
   const block = (at, name, offset, size) => { out.set(text(name), at); view.setUint32(at + 4, offset - (at + 4), true); view.setUint32(at + 8, size, true); };

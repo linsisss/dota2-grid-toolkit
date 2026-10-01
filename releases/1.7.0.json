@@ -1,0 +1,111 @@
+{
+  "version": "1.7.0",
+  "date": "2026-10-01",
+  "githubUrl": "https://github.com/justkiddingxd/dota2-grid-toolkit/releases/tag/v1.7.0",
+  "sections": [
+    {
+      "title": "Сайт",
+      "changes": [
+        {
+          "text": "Английская версия всего сайта",
+          "children": ["Язык выбирается сам, переключатель RU / EN — внизу страниц и в редакторе"]
+        },
+        "Язык меняется плавно и без перезагрузки — в редакторе ничего не теряется"
+      ]
+    },
+    {
+      "title": "Фон главного меню",
+      "changes": [
+        {
+          "text": "Кнопка ивента «Диковинки Квортеро» под карточкой Dark Carnival",
+          "children": ["Свой фон больше не прячет ивент — награды забираются прямо из меню"]
+        },
+        {
+          "text": "Кнопки Stratz и Dotabuff в профиле любого пользователя",
+          "children": ["Под статусом, открывают его страницу в браузере"]
+        },
+        {
+          "text": "Вкладка «Сетка героев» — свой фон под сеткой на странице «Герои»",
+          "children": ["Как в меню, темнее или другой; в превью — сетка на выбор"]
+        },
+        "Видео фона чётче при том же размере",
+        "Исправлено: шумное видео могло дать чёрное меню — теперь ролик укладывается в 14 МБ",
+        "«Скрыть новости на главной» теперь «Отображать новости на главной» и включено по умолчанию",
+        "Настройки сборщика помещаются на экран без прокрутки",
+        {
+          "text": "«Язык Dota» вместо «Папки в Dota»: установщик сам ставит русскую озвучку, без неё Dota не видит фон",
+          "children": ["У английской Dota интерфейс остаётся английским"]
+        }
+      ]
+    },
+    {
+      "title": "Редактор",
+      "changes": [
+        {
+          "text": "Предупреждение о символах, которых нет в шрифте Dota: в игре они выглядят иначе",
+          "children": ["Кнопка «Выделить» выделяет их, чтобы заменить"]
+        }
+      ]
+    },
+    {
+      "title": "Мастерская",
+      "changes": [
+        "То же предупреждение — на странице сетки и при публикации"
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Site",
+        "changes": [
+          {
+            "text": "The whole site in English",
+            "children": ["The language is picked by itself; the RU / EN switch is at the bottom of the pages and in the editor"]
+          },
+          "The language changes smoothly, without reloading: nothing is lost in the editor"
+        ]
+      },
+      {
+        "title": "Main menu background",
+        "changes": [
+          {
+            "text": "A button to the Quartero’s Curios event under the Dark Carnival card",
+            "children": ["A custom background no longer hides the event: rewards are claimed right from the menu"]
+          },
+          {
+            "text": "Stratz and Dotabuff buttons in any user’s profile",
+            "children": ["Under the status; they open that user’s page in the browser"]
+          },
+          {
+            "text": "“Hero grid” tab: a background of its own under the grid on the Heroes page",
+            "children": ["As in the menu, darker or a different one; the preview shows a grid of your choice"]
+          },
+          "Sharper background video at the same size",
+          "Fixed: a noisy video could give a black menu; now it fits in 14 MB",
+          "“Hide news on the home page” is now “Show news on the home page”, on by default",
+          "The builder’s settings fit on the screen without scrolling",
+          {
+            "text": "“Dota language” instead of “Folder in Dota”: the installer sets the Russian audio language, without which Dota doesn’t see the background",
+            "children": ["An English Dota keeps its English interface"]
+          }
+        ]
+      },
+      {
+        "title": "Editor",
+        "changes": [
+          {
+            "text": "A warning about symbols missing from Dota’s font: they look different in the game",
+            "children": ["“Select” selects them so you can replace them"]
+          }
+        ]
+      },
+      {
+        "title": "Workshop",
+        "changes": [
+          "The same warning on a grid’s page and when publishing"
+        ]
+      }
+    ]
+  }
+}

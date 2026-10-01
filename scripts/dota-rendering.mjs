@@ -1,3 +1,4 @@
+import { t } from './i18n.mjs';
 // Panorama hero_grid_new: HeroCategoryName and HeroCard / HeroImage.
 // Coordinates stay in the JSON's unscaled 1193 × 593 space.
 export const DOTA = Object.freeze({
@@ -22,16 +23,50 @@ export const DOTA = Object.freeze({
 // Braille, box drawing, block elements and these few symbols and emoji. Everything else
 // tested — including every glyph of the symbol library — is visible.
 const INVISIBLE = /[\u2500-\u259f\u2800-\u28ff\u30fb\u2b1b\u2b1c\u2b50\u2b55\u3036\u2728\u26bd]|\u{1f525}|\u{1f480}|\u{1f451}|\u{1f3ae}|\u{1f338}/u;
+// Names are translated when a warning is made (this module also loads on the server).
 const INVISIBLE_GROUPS = [[/[\u2800-\u28ff]/u, 'брайль'], [/[\u2500-\u257f]/u, 'символы рамок'], [/[\u2580-\u259f]/u, 'блоки ▀█░']];
 export const invisibleGlyphs = (text) => [...new Set(Array.from(String(text ?? '')).filter((char) => INVISIBLE.test(char)))];
 // '' when everything is visible; otherwise one sentence naming what the game will not show.
 export function invisibleWarning(text) {
   const found = invisibleGlyphs(text);
   if (!found.length) return '';
-  const names = INVISIBLE_GROUPS.filter(([range]) => found.some((char) => range.test(char))).map(([, name]) => name);
+  const names = INVISIBLE_GROUPS.filter(([range]) => found.some((char) => range.test(char))).map(([, name]) => t(name));
   const single = found.filter((char) => !INVISIBLE_GROUPS.some(([range]) => range.test(char)));
-  return `Dota не показывает: ${[...names, ...single].join(', ')} — в игре этого не будет видно.`;
+  return t('Dota не показывает: {glyphs} — в игре этого не будет видно.', { glyphs: [...names, ...single].join(', ') });
 }
+// The characters of Radiance, the font of category names (its cmap, the same in every weight; read
+// with fc-query from the game's radiance-*.otf, 01.10.2026). Dota draws any other character with a
+// fallback font of the user's system, as it did U+2006: its shape and width differ from the site's
+// preview and from one computer to another (report 01.10.2026: on a 1440p screen ⁜ came out as a
+// little grid and ⁕ as a blot). Two thirds of the workshop's grids have a few such characters, the
+// backtick ` most of all; a third use them for 5 % of their glyphs or more.
+const RADIANCE = '20-5f 61-7e a1-a7 a9-ac ae b0-b3 b5-b7 b9-107 10a-113 116-11b 11e-123 126-12b 12e-131 136-137 139-148 14a-14d 150-15b 15e-16b 16e-17e 192 1a0-1a1 1af-1b0 218-21b 237 300-304 306-30c 312 31b 323 326-328 384-38a 38c 38e-3a1 3a3-3ce 401-40c 40e-44f 451-45c 45e-45f 4bb 4c0 4cf 4e2-4e3 4ef 1e80-1e85 1ea0-1ef9 2013-2015 2018-201a 201c-201e 2020-2022 2026 2030 2039-203a 2044 20ac 2116-2117 2122 2126 212e 2153-2154 2202 2206 220f 2211-2212 221a 221e 222b 2248 2260 2264-2265 25ca f6be fb01-fb02';
+const RADIANCE_CODES = new Set(RADIANCE.split(' ').flatMap((range) => {
+  const [from, to = from] = range.split('-').map((hex) => parseInt(hex, 16));
+  return Array.from({ length: to - from + 1 }, (_, i) => from + i);
+}));
+// The game writes category names in capitals, so a letter is drawn by its capital.
+export const inDotaFont = (char) => Array.from(char.toUpperCase()).every((c) => RADIANCE_CODES.has(c.codePointAt(0)));
+// The characters of the names that Radiance lacks: whitespace and what the game shows nothing for
+// (invisibleWarning) are left out. { total, count, chars: [[char, n], …] most frequent first }.
+export function foreignGlyphs(texts) {
+  const seen = new Map(); let total = 0, count = 0;
+  for (const text of texts) for (const char of Array.from(String(text ?? ''))) {
+    if (/\s/u.test(char) || INVISIBLE.test(char)) continue;
+    total++;
+    if (inDotaFont(char)) continue;
+    count++; seen.set(char, (seen.get(char) || 0) + 1);
+  }
+  return { total, count, chars: [...seen].sort((a, b) => b[1] - a[1]) };
+}
+// Worth a word when they are a noticeable part of the picture: at least FOREIGN_LIMITS.count glyphs
+// and FOREIGN_LIMITS.share of all.
+export const FOREIGN_LIMITS = Object.freeze({ count: 20, share: 0.05 });
+export const foreignNoticeable = ({ total, count }) => count >= FOREIGN_LIMITS.count && count >= total * FOREIGN_LIMITS.share;
+// The same for a hero_grid_config grid (the workshop): category names, hero lists left out.
+export const gridForeignGlyphs = (grid) => foreignGlyphs((grid?.configs || []).flatMap((config) => config.categories || []).filter((category) => !category.hero_ids?.length).map((category) => category.category_name));
+export const foreignSample = ({ chars }, size = 6) => chars.slice(0, size).map(([char]) => char).join(' ') + (chars.length > size ? ' …' : '');
+
 // Stored with measured advances, so metrics taken with an older model are measured again.
 export const TEXT_MODEL = 2;
 const FONT = `${DOTA.fontWeight} ${DOTA.fontSize}px ${DOTA.fontFamily}`;

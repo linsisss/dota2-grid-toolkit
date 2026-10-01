@@ -1,6 +1,7 @@
 import { catalogAPI } from './catalog/api.js';
 import { getBackground, keepBackgrounds, putBackground, updateBackground } from '../scripts/background-library.mjs';
 import { defaultStudioName, studioRecipe } from '../scripts/studio-background.mjs';
+import { t } from '../scripts/i18n.mjs';
 
 // «Студия» backgrounds between this browser and a Telegram account: the browser keeps the built
 // WebM (scripts/background-library.mjs), the account only the recipe and a poster
@@ -12,7 +13,7 @@ export async function posterFrame(video, width = 640, quality = 0.85) {
   const element = document.createElement('video'), url = URL.createObjectURL(new Blob([video], { type: 'video/webm' }));
   try {
     element.muted = true; element.src = url;
-    await new Promise((done, failed) => { element.onloadeddata = done; element.onerror = () => failed(new Error('Не удалось сделать обложку.')); });
+    await new Promise((done, failed) => { element.onloadeddata = done; element.onerror = () => failed(new Error(t('Не удалось сделать обложку.'))); });
     element.currentTime = Math.min(1, (element.duration || 1) / 2);
     await new Promise((done) => { element.onseeked = done; });
     const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = Math.round(width * element.videoHeight / element.videoWidth);
@@ -39,13 +40,15 @@ const signedIn = () => (account ||= catalogAPI('/auth/me').then((result) => resu
 // After a build: the background (new, or the one opened from the studio) is kept in this browser
 // with its WebM; a signed-in account gets the recipe. Syncing failures are left to the studio,
 // which uploads anything not yet synced when it opens.
-export async function saveBuiltBackground({ id = null, recipe, video, heroVideo = null, codec, seconds }) {
+export async function saveBuiltBackground({ id = null, recipe, video, heroVideo = null, gridVideo = null, codec, seconds }) {
   const [user, old] = await Promise.all([signedIn(), id ? getBackground(id) : null]);
   const now = Date.now(), checked = studioRecipe(recipe);
   const record = { id: old?.id || id || crypto.randomUUID(), name: old?.name || defaultStudioName(checked.source), account: old?.account || user,
     recipe: checked, poster: await posterFrame(video, 480, 0.8), video: new Blob([video], { type: 'video/webm' }), codec, seconds,
     // The video behind the hero, when it has its own (recipe.hero.mode 'own'); like `video`, this browser only.
     heroVideo: heroVideo ? new Blob([heroVideo], { type: 'video/webm' }) : null,
+    // The video under the hero grid (recipe.grid.mode 'own', 1.6.4), the same way.
+    gridVideo: gridVideo ? new Blob([gridVideo], { type: 'video/webm' }) : null,
     created: old?.created || now, updated: now, synced: false };
   await putBackground(record);
   keepBackgrounds();

@@ -1,5 +1,8 @@
 import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { Icon } from './catalog/Common.jsx';
+import { t } from '../scripts/i18n.mjs';
+
+const gridName = (grid) => grid?.name || t('Без названия');
 
 export function GridFilePanel({ editor, state }) {
   const id = useId(), trigger = useRef(null), popup = useRef(null);
@@ -21,16 +24,16 @@ export function GridFilePanel({ editor, state }) {
   }, [open]);
   function close() { popup.current.hidePopover(); trigger.current.focus({ preventScroll: true }); }
   return <div className="grid-file-panel">
-    <span className="grid-file-label">Сетки в файле</span>
+    <span className="grid-file-label">{t('Сетки в файле')}</span>
     <div className="grid-file-controls">
       <button ref={trigger} id="activeGrid" className="grid-file-trigger" popoverTarget={id}
-        aria-label={`Сетка в файле: ${active?.name || 'Без названия'}`} aria-haspopup="dialog" aria-expanded={open}>
-        <span>{active?.name || 'Без названия'}</span><Icon name="chevron"/>
+        aria-label={t('Сетка в файле: {name}', { name: gridName(active) })} aria-haspopup="dialog" aria-expanded={open}>
+        <span>{gridName(active)}</span><Icon name="chevron"/>
       </button>
-      <button className="button secondary" aria-label="Новая сетка в этом файле" title="Новая сетка в этом файле"
+      <button className="button secondary" aria-label={t('Новая сетка в этом файле')} title={t('Новая сетка в этом файле')}
         onClick={editor.newGrid} disabled={state.configurations.length >= 100}><Icon name="plus"/></button>
     </div>
-    <div ref={popup} id={id} className="grid-file-menu" popover="auto" role="dialog" aria-label="Сетки в файле"
+    <div ref={popup} id={id} className="grid-file-menu" popover="auto" role="dialog" aria-label={t('Сетки в файле')}
       onToggle={event => setOpen(event.newState === 'open')} onKeyDown={event => {
         if (event.key === 'Escape') { event.stopPropagation(); return; }
         if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
@@ -44,15 +47,15 @@ export function GridFilePanel({ editor, state }) {
         <button className="grid-row-select" aria-current={grid.index === state.configIndex ? 'true' : undefined}
           onClick={() => { close(); editor.switchGrid(grid.index); }}>
           <span className="grid-row-check">{grid.index === state.configIndex && <Icon name="check"/>}</span>
-          <span>{grid.name || 'Без названия'}</span>
+          <span>{gridName(grid)}</span>
         </button>
-        <button className="grid-row-rename" aria-label={`Переименовать ${grid.name || 'Без названия'}`}
-          data-tooltip="Переименовать сетку" onClick={() => { close(); editor.renameGrid(grid.index); }}><Icon name="edit"/></button>
-        {state.configurations.length > 1 && <button className="grid-row-delete" aria-label={`Удалить ${grid.name || 'Без названия'}`}
-          data-tooltip="Удалить сетку" onClick={() => { close(); editor.deleteGrid(grid.index); }}><Icon name="trash"/></button>}
+        <button className="grid-row-rename" aria-label={t('Переименовать {name}', { name: gridName(grid) })}
+          data-tooltip={t('Переименовать сетку')} onClick={() => { close(); editor.renameGrid(grid.index); }}><Icon name="edit"/></button>
+        {state.configurations.length > 1 && <button className="grid-row-delete" aria-label={t('Удалить {name}', { name: gridName(grid) })}
+          data-tooltip={t('Удалить сетку')} onClick={() => { close(); editor.deleteGrid(grid.index); }}><Icon name="trash"/></button>}
       </div>)}
     </div>
     <button className="grid-file-append button ghost compact" onClick={editor.importGrids}
-      title="Загрузить один или несколько файлов и добавить их сетки к текущим">Добавить из файла</button>
+      title={t('Загрузить один или несколько файлов и добавить их сетки к текущим')}>{t('Добавить из файла')}</button>
   </div>;
 }

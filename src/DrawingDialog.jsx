@@ -27,6 +27,7 @@ import { ReferencePanel } from './ReferencePanel.jsx';
 import { CategoryCheckbox, RecentSymbols, CategoryWarning } from './SymbolControls.jsx';
 import { pickSymbol, toggleSymbol, searchSymbols, MAX_BRUSH_CHARS } from '../scripts/symbol-tools.mjs';
 import { ERASER, clampEraser, drawBrushRing, readEraserSize, stepEraserSize, storeEraserSize, wheelEraserSize } from '../scripts/eraser-size.mjs';
+import { t, tn, translateMessage } from '../scripts/i18n.mjs';
 
 export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) {
   const dialog = useRef(null),
@@ -105,8 +106,8 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
   }, []);
   // «Распыление» works on the editor's canvas only (scripts/app.mjs scatterAt).
   const tools = [
-    ['select', '↖', 'Выделение'],
-    ['reference', '▧', 'Переместить фон'],
+    ['select', '↖', t('Выделение')],
+    ['reference', '▧', t('Переместить фон')],
     ...DRAWING_TOOLS.filter(([id]) => id !== 'scatter')
   ];
   const bounds = overflow(doc);
@@ -209,7 +210,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
   function commit(next, before = latest.current) {
     try {
       C.assertCategoryLimit(next);
-      if (next.entities.length > C.MAX_ENTITIES) throw Error('Лимит — 10 000 объектов.');
+      if (next.entities.length > C.MAX_ENTITIES) throw Error(t('Лимит — 10 000 объектов.'));
       if (JSON.stringify(next) === JSON.stringify(before)) return;
       history.current.push(C.clone(before));
       update(next);
@@ -218,7 +219,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
       return true;
     } catch (e) {
       update(before);
-      setError(e.message);
+      setError(translateMessage(e.message));
     }
   }
   function undo(redo = false) {
@@ -257,7 +258,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
         measureCategoryText(canvas.current.getContext('2d'), text)
       );
       if (char) useSymbol(char);
-      else setError('Нажми на существующий символ.');
+      else setError(t('Нажми на существующий символ.'));
       return;
     }
     if (tool === 'reference') {
@@ -475,8 +476,8 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     >
       <header className="drawing-heading">
         <div>
-          <span className="eyebrow">РИСОВАНИЕ</span>
-          <h2 id="drawingTitle">Новый рисунок</h2>
+          <span className="eyebrow">{t('РИСОВАНИЕ')}</span>
+          <h2 id="drawingTitle">{t('Новый рисунок')}</h2>
         </div>
         <div className="drawing-history">
           <button
@@ -484,19 +485,19 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
             disabled={!history.current.past.length}
             onClick={() => undo()}
           >
-            ↶ Отменить
+            ↶ {t('Отменить')}
           </button>
           <button
             className="button secondary compact"
             disabled={!history.current.future.length}
             onClick={() => undo(true)}
           >
-            ↷ Вернуть
+            ↷ {t('Вернуть')}
           </button>
         </div>
         <button
           className="picker-close"
-          aria-label="Закрыть рисование"
+          aria-label={t('Закрыть рисование')}
           onClick={editor.closeDrawing}
         >
           ×
@@ -504,12 +505,12 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
       </header>
       <div className="drawing-body">
         <div className="drawing-workspace">
-          <div className="drawing-toolbar" role="toolbar" aria-label="Инструменты рисунка">
+          <div className="drawing-toolbar" role="toolbar" aria-label={t('Инструменты рисунка')}>
             {tools.map(([key, glyph, label]) => (
               <button
                 key={key}
-                title={label}
-                aria-label={label}
+                title={translateMessage(label)}
+                aria-label={translateMessage(label)}
                 aria-pressed={tool === key}
                 className={tool === key ? 'active' : ''}
                 disabled={key === 'reference' && !doc.reference?.visible}
@@ -530,7 +531,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
             <div className="drawing-canvas-frame">
             <canvas
               ref={canvas}
-              aria-label="Холст нового рисунка"
+              aria-label={t('Холст нового рисунка')}
               tabIndex="0"
               style={{
                 width: size.w,
@@ -554,13 +555,13 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
               {board.w} × {board.h}
             </span>
             <span>
-              Символов: <strong>{C.countSymbols(doc)}</strong>
+              {t('Символов:')} <strong>{C.countSymbols(doc)}</strong>
             </span>
-            <span>Строк и объектов: {doc.entities.length}</span>
+            <span>{t('Строк и объектов: {count}', { count: doc.entities.length })}</span>
           </div>
           {!!bounds.count && (
             <div className="canvas-warning" role="status">
-              <span>За границами: {bounds.count} символов</span>
+              <span>{t('За границами:')} {tn(bounds.count, ['символ', 'символа', 'символов'], ['symbol', 'symbols'])}</span>
               <button
                 onClick={() => {
                   const next = C.clone(doc);
@@ -568,26 +569,26 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
                   commit(next);
                 }}
               >
-                Обрезать
+                {t('Обрезать')}
               </button>
             </div>
           )}
           <p className="drawing-shortcuts">
-            Shift — сдвинуть фигуру, у кисти — прямая по оси · V — перемещение · Ctrl Z — отмена
+            {t('Shift — сдвинуть фигуру, у кисти — прямая по оси · V — перемещение · Ctrl Z — отмена')}
           </p>
         </div>
-        <aside className="drawing-settings" aria-label="Настройки рисунка">
-          <button className="button secondary full" onClick={() => document.getElementById('draftReferencePanel').scrollIntoView({ block:'nearest', behavior:'smooth' })}>Фон для обводки</button>
-          <label className="check-row"><input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />Привязка к сетке 8 px</label>
-          {tool === 'eraser' && <><label className="range-label" htmlFor="draftEraserSize">Размер ластика <output>{Math.round(eraserSize)} px</output></label>
+        <aside className="drawing-settings" aria-label={t('Настройки рисунка')}>
+          <button className="button secondary full" onClick={() => document.getElementById('draftReferencePanel').scrollIntoView({ block:'nearest', behavior:'smooth' })}>{t('Фон для обводки')}</button>
+          <label className="check-row"><input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />{t('Привязка к сетке 8 px')}</label>
+          {tool === 'eraser' && <><label className="range-label" htmlFor="draftEraserSize">{t('Размер ластика')} <output>{Math.round(eraserSize)} px</output></label>
             <input id="draftEraserSize" type="range" min={ERASER.min} max={ERASER.max} value={Math.round(eraserSize)} onChange={(e) => changeEraser(Number(e.target.value))} />
-            <p className="hint">Колесо мыши над холстом или [ и ] — меньше и больше.</p></>}
-          {tool === 'frame' && <><label className="field-label" htmlFor="draftFrame">Стиль рамки</label>
+            <p className="hint">{t('Колесо мыши над холстом или [ и ] — меньше и больше.')}</p></>}
+          {tool === 'frame' && <><label className="field-label" htmlFor="draftFrame">{t('Стиль рамки')}</label>
             <select id="draftFrame" value={frameStyle} onChange={(e) => setFrameStyle(e.target.value)}>
               {Object.entries(D.frames).map(([key, frame]) => <option key={key} value={key}>{frame.tl} {frame.h} {frame.tr} · {frame.v}</option>)}
             </select></>}
           <label className="field-label" htmlFor="draftChars">
-            Символы кисти
+            {t('Символы кисти')}
           </label>
           <input
             id="draftChars"
@@ -599,10 +600,10 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
             className="button ghost compact"
             onClick={() => setBrush({ ...brush, chars: '' })}
           >
-            Очистить набор
+            {t('Очистить набор')}
           </button>
           <label className="field-label" htmlFor="draftOrder">
-            Порядок символов
+            {t('Порядок символов')}
           </label>
           <select
             id="draftOrder"
@@ -612,15 +613,15 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
               if (tool === 'gradient' && e.target.value !== 'gradient') setTool('pencil');
             }}
           >
-            <option value="sequence">Чередовать</option>
-            <option value="random">Случайно</option>
-            <option value="gradient">Плавный переход</option>
+            <option value="sequence">{t('Чередовать')}</option>
+            <option value="random">{t('Случайно')}</option>
+            <option value="gradient">{t('Плавный переход')}</option>
           </select>
           {brush.order === 'gradient' && (
             <label className="field-label">
-              Длина градиента, px
+              {t('Длина градиента, px')}
               <NumberInput
-                aria-label="Длина градиента"
+                aria-label={t('Длина градиента')}
                 type="number"
                 min="10"
                 max="6000"
@@ -630,12 +631,12 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
             </label>
           )}
           <label className="field-label" htmlFor="draftCategory">
-            Библиотека символов
+            {t('Библиотека символов')}
           </label>
-          <input type="search" aria-label="Поиск символов" placeholder="Символ, название или U+…" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input type="search" aria-label={t('Поиск символов')} placeholder={t('Символ, название или U+…')} value={query} onChange={(e) => setQuery(e.target.value)} />
           <select id="draftCategory" value={category} onChange={(e) => setCategory(e.target.value)}>
             {Object.keys(D.symbols).map((name) => (
-              <option key={name}>{name}</option>
+              <option key={name} value={name}>{t(name)}</option>
             ))}
           </select>
           <CategoryCheckbox
@@ -644,11 +645,11 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
             onChange={(chars) => setBrush({ ...brush, chars: chars.slice(0, MAX_BRUSH_CHARS) })}
           />
           <div className="symbol-library draft-symbols">
-            {!matchingSymbols.length && <p className="hint">Символы не найдены. Попробуй название категории или вставь сам символ.</p>}
+            {!matchingSymbols.length && <p className="hint">{t('Символы не найдены. Попробуй название категории или вставь сам символ.')}</p>}
             {matchingSymbols.map((ch, i) => (
               <button
                 key={i}
-                title={`Добавить ${ch}`}
+                title={t('Добавить {symbol}', { symbol: ch })}
                 aria-pressed={brush.chars.includes(ch)}
                 className={brush.chars.includes(ch) ? 'active' : ''}
                 onClick={() =>
@@ -663,10 +664,10 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
             ))}
           </div>
           {tool === 'smart' && (
-            <p className="hint">Умная кисть ставит −, |, / и \ по направлению движения.</p>
+            <p className="hint">{t('Умная кисть ставит −, |, / и \\ по направлению движения.')}</p>
           )}
           <label className="range-label" htmlFor="draftStep">
-            Шаг кисти <output>{brush.step} px</output>
+            {t('Шаг кисти')} <output>{brush.step} px</output>
           </label>
           <input
             id="draftStep"
@@ -677,7 +678,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
             onChange={(e) => setBrush({ ...brush, step: Number(e.target.value) })}
           />
           <label className="field-label" htmlFor="draftDynamics">
-            Динамика кисти
+            {t('Динамика кисти')}
           </label>
           <select
             id="draftDynamics"
@@ -690,16 +691,16 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
               })
             }
           >
-            <option value="constant">Постоянная плотность</option>
-            <option value="denser">От редкого к плотному</option>
-            <option value="sparser">От плотного к редкому</option>
+            <option value="constant">{t('Постоянная плотность')}</option>
+            <option value="denser">{t('От редкого к плотному')}</option>
+            <option value="sparser">{t('От плотного к редкому')}</option>
           </select>
           {brush.dynamics !== 'constant' && (
             <div className="field-pair">
               <label>
-                Конечный шаг
+                {t('Конечный шаг')}
                 <NumberInput
-                  aria-label="Конечный шаг"
+                  aria-label={t('Конечный шаг')}
                   type="number"
                   min="3"
                   max="120"
@@ -708,9 +709,9 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
                 />
               </label>
               <label>
-                Длина перехода
+                {t('Длина перехода')}
                 <NumberInput
-                  aria-label="Длина перехода"
+                  aria-label={t('Длина перехода')}
                   type="number"
                   min="30"
                   max="2000"
@@ -722,8 +723,8 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
           )}
           <div className="field-pair">
             {[
-              ['mirrorH', 'Симметрия X'],
-              ['mirrorV', 'Симметрия Y']
+              ['mirrorH', t('Симметрия X')],
+              ['mirrorV', t('Симметрия Y')]
             ].map(([key, label]) => (
               <label key={key} className="check-row">
                 <input
@@ -737,12 +738,12 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
           </div>
           {selected.length > 0 && (
             <>
-              <div className="section-heading">ВЫДЕЛЕНО: {selected.length}</div>
+              <div className="section-heading">{t('ВЫДЕЛЕНО: {count}', { count: selected.length })}</div>
               <div className="align-actions">
                 {[
-                  ['left', 'По левому краю', '⊢'],
-                  ['center', 'По горизонтальному центру', '↔'],
-                  ['right', 'По правому краю', '⊣']
+                  ['left', t('По левому краю'), '⊢'],
+                  ['center', t('По горизонтальному центру'), '↔'],
+                  ['right', t('По правому краю'), '⊣']
                 ].map(([side, label, glyph]) => (
                   <button
                     key={side}
@@ -789,14 +790,14 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
           {error}
         </span>
         <button className="button secondary" onClick={editor.closeDrawing}>
-          Отмена
+          {t('Отмена')}
         </button>
         <button
           className="button primary"
           disabled={!doc.entities.length}
           onClick={() => editor.addDrawing(doc.entities, doc.reference || null)}
         >
-          Добавить на холст
+          {t('Добавить на холст')}
         </button>
       </footer>
     </dialog>

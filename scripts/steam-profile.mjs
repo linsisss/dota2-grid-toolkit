@@ -1,3 +1,5 @@
+import { t } from './i18n.mjs';
+
 const STEAM_BASE = 76561197960265728n;
 const MAX_ACCOUNT = 4294967295n;
 export const DEFAULT_STEAM_DIRECTORY = 'C:\\Program Files (x86)\\Steam';
@@ -26,6 +28,6 @@ export function parseSteamProfile(value) {
 export function steamConfigFolder(accountId, directory = DEFAULT_STEAM_DIRECTORY) {
   const root = directory.trim().replace(/^"(.*)"$/, '$1').replaceAll('/', '\\');
   if (!root || root.length > 260 || !/^(?:[A-Za-z]:\\|\\\\[^\\]+\\[^\\]+)/.test(root)) throw new Error('Укажи полный путь к папке Steam, например D:\\Steam.');
-  const account = accountId ? steamAccount(String(accountId)).accountId : 'ID АККАУНТА';
+  const account = accountId ? steamAccount(String(accountId)).accountId : t('ID АККАУНТА');
   return `${root.replace(/\\+$/, '')}\\userdata\\${account}\\570\\remote\\cfg`;
 }

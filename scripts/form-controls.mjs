@@ -1,4 +1,5 @@
 import { iconSVG } from './icons.mjs';
+import { t } from './i18n.mjs';
 // Preserve native numeric semantics and events without browser spinner chrome.
 export function stepNumber(input, direction, multiplier = 1) {
   if (input.disabled || input.readOnly) return;
@@ -16,4 +17,4 @@ export function stepNumber(input, direction, multiplier = 1) {
 }
 
 export const numberButtons = (label) =>
-  `<span class="number-step-buttons"><button type="button" data-number-step="1" aria-label="Увеличить ${label}">${iconSVG('chevronUp')}</button><button type="button" data-number-step="-1" aria-label="Уменьшить ${label}">${iconSVG('chevron')}</button></span>`;
+  `<span class="number-step-buttons"><button type="button" data-number-step="1" aria-label="${t('Увеличить {label}', { label })}">${iconSVG('chevronUp')}</button><button type="button" data-number-step="-1" aria-label="${t('Уменьшить {label}', { label })}">${iconSVG('chevron')}</button></span>`;

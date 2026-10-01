@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ALIGN_ACTIONS, DISTRIBUTE_ACTIONS } from '../scripts/align-icons.mjs';
 import { Icon } from './Icon.jsx';
+import { t, translateMessage } from '../scripts/i18n.mjs';
 
 const contextTools = [
   ['select', 'Выделение', 'V'],
@@ -33,7 +34,7 @@ export function DockLabels() {
     }
     return () => document.body.classList.remove('compact-dock');
   }, [compact]);
-  const label = compact ? 'Показать названия инструментов' : 'Скрыть названия инструментов';
+  const label = compact ? t('Показать названия инструментов') : t('Скрыть названия инструментов');
   return (
     <button
       type="button"
@@ -44,7 +45,7 @@ export function DockLabels() {
       onClick={() => setCompact(!compact)}
     >
       <Icon name={compact ? 'labelsShow' : 'labelsHide'} />
-      <span className="dock-tool-label">Скрыть подписи</span>
+      <span className="dock-tool-label">{t('Скрыть подписи')}</span>
     </button>
   );
 }
@@ -89,7 +90,7 @@ export function CanvasContextMenu({ editor, state }) {
       ref={ref}
       className="canvas-context-menu"
       role="menu"
-      aria-label="Действия на холсте"
+      aria-label={t('Действия на холсте')}
       style={{ left: menu.x, top: menu.y }}
       onContextMenu={(e) => e.preventDefault()}
       onKeyDown={(event) => {
@@ -125,27 +126,27 @@ export function CanvasContextMenu({ editor, state }) {
             aria-checked={state.tool === id}
             onClick={() => run('tool:' + id)}
           >
-            <span>{name}</span>
+            <span>{t(name)}</span>
             <kbd>{key}</kbd>
           </button>
         ))}
       </div>
       <div className="context-action-pair">
-        {item('undo', 'Отменить', 'Ctrl Z', !state.canUndo)}
-        {item('redo', 'Повторить', '⇧ Ctrl Z', !state.canRedo)}
+        {item('undo', t('Отменить'), 'Ctrl Z', !state.canUndo)}
+        {item('redo', t('Повторить'), '⇧ Ctrl Z', !state.canRedo)}
       </div>
       <div role="separator" />
-      {item('add-group', 'Добавить группу героев')}
-      {item('add-text', 'Добавить текст')}
+      {item('add-group', t('Добавить группу героев'))}
+      {item('add-text', t('Добавить текст'))}
       <div className="context-action-pair">
-        {item('copy', 'Копировать', 'Ctrl C', !state.selectedCount)}
-        {item('paste', 'Вставить', 'Ctrl V', !state.canPaste)}
+        {item('copy', t('Копировать'), 'Ctrl C', !state.selectedCount)}
+        {item('paste', t('Вставить'), 'Ctrl V', !state.canPaste)}
       </div>
-      {item('duplicate', 'Дублировать', 'Ctrl D', !state.editableCount)}
-      <div className="context-reflections" role="group" aria-label="Отразить расположение">
-        <span>Отразить</span>
+      {item('duplicate', t('Дублировать'), 'Ctrl D', !state.editableCount)}
+      <div className="context-reflections" role="group" aria-label={t('Отразить расположение')}>
+        <span>{t('Отразить')}</span>
         {['horizontal', 'vertical'].map((axis) => {
-          const label = `Отразить по ${axis === 'horizontal' ? 'горизонтали' : 'вертикали'}`;
+          const label = axis === 'horizontal' ? t('Отразить по горизонтали') : t('Отразить по вертикали');
           return (
             <button
               key={axis}
@@ -161,11 +162,11 @@ export function CanvasContextMenu({ editor, state }) {
         })}
       </div>
       {arrange.rotation.length > 0 && (
-        <div className="context-block" role="group" aria-label="Повернуть расположение">
-          <span>Повернуть</span>
+        <div className="context-block" role="group" aria-label={t('Повернуть расположение')}>
+          <span>{t('Повернуть')}</span>
           <div>
             {arrange.rotation.map((angle) => {
-              const label = angle === 180 ? 'Повернуть на 180°' : `Повернуть на ${Math.abs(angle)}° ${angle < 0 ? 'против часовой' : 'по часовой'}`;
+              const label = angle === 180 ? t('Повернуть на 180°') : t(angle < 0 ? 'Повернуть на {angle}° против часовой' : 'Повернуть на {angle}° по часовой', { angle: Math.abs(angle) });
               return (
                 <button key={angle} role="menuitem" aria-label={label} data-tooltip={label} onClick={() => run(`rotate:${angle}`)}>
                   {angle === 180 ? '180°' : `${angle < 0 ? '↺' : '↻'} ${Math.abs(angle)}°`}
@@ -176,12 +177,12 @@ export function CanvasContextMenu({ editor, state }) {
         </div>
       )}
       {state.editableCount > 0 && (
-        <div className="context-block" role="group" aria-label={arrange.units > 1 ? 'Выровнять объекты' : 'Выровнять по холсту'}>
-          <span>{arrange.units > 1 ? 'Выровнять объекты' : 'Выровнять по холсту'}</span>
+        <div className="context-block" role="group" aria-label={arrange.units > 1 ? t('Выровнять объекты') : t('Выровнять по холсту')}>
+          <span>{arrange.units > 1 ? t('Выровнять объекты') : t('Выровнять по холсту')}</span>
           {[ALIGN_ACTIONS, ...(arrange.units > 2 ? [DISTRIBUTE_ACTIONS] : [])].map((actions, row) => (
             <div key={row}>
               {actions.map(([action, label, icon]) => (
-                <button key={action} role="menuitem" aria-label={label} data-tooltip={label} onClick={() => run(action)}>
+                <button key={action} role="menuitem" aria-label={translateMessage(label)} data-tooltip={translateMessage(label)} onClick={() => run(action)}>
                   <Icon name={icon} className="align-icon" />
                 </button>
               ))}
@@ -189,24 +190,24 @@ export function CanvasContextMenu({ editor, state }) {
           ))}
         </div>
       )}
-      {arrange.canReplace && item('replace-glyphs', 'Заменить символы…')}
+      {arrange.canReplace && item('replace-glyphs', t('Заменить символы…'))}
       {state.editableCount > 0 && (
         <div className="context-action-pair">
-          {item('group', 'Объединить', null, !arrange.canGroup, 'Объединить в группу · Ctrl+G')}
-          {item('ungroup', 'Разъединить', null, !arrange.canUngroup, 'Разъединить · Ctrl+Shift+G')}
+          {item('group', t('Объединить'), null, !arrange.canGroup, t('Объединить в группу · Ctrl+G'))}
+          {item('ungroup', t('Разъединить'), null, !arrange.canUngroup, t('Разъединить · Ctrl+Shift+G'))}
         </div>
       )}
-      {item('center', 'В центр холста', null, !state.editableCount)}
-      {item('select-all', 'Выделить всё', 'Ctrl A')}
+      {item('center', t('В центр холста'), null, !state.editableCount)}
+      {item('select-all', t('Выделить всё'), 'Ctrl A')}
       <div role="separator" />
-      {item('fit', 'Вписать холст', '0')}
+      {item('fit', t('Вписать холст'), '0')}
       <button
         className="context-delete"
         role="menuitem"
         disabled={!state.editableCount}
         onClick={() => run('delete')}
       >
-        <span>Удалить</span>
+        <span>{t('Удалить')}</span>
         <kbd>Del</kbd>
       </button>
     </div>,

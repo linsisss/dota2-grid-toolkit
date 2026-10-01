@@ -1,3 +1,4 @@
+import { t, translateMessage } from '../../scripts/i18n.mjs';
 // The workshop lives at /workshop; nginx sends the former /catalog links there with their query and #hash.
 export const CATALOG_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'catalog.html' : 'workshop'}`;
 export const RULES_PATH = `${CATALOG_PATH}?rules`;
@@ -12,10 +13,10 @@ export async function catalogAPI(path, { method = 'GET', body, token, signal } =
   try { response = await fetch(`/api/catalog${path}`, { method, credentials: 'same-origin', referrerPolicy: 'no-referrer',
     headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     ...(body ? { body: JSON.stringify(body) } : {}), signal: signal || AbortSignal.timeout(15000) }); }
-  catch (error) { if (signal?.aborted) throw error; throw new Error('Нет связи с мастерской. Проверь подключение и попробуй ещё раз.'); }
+  catch (error) { if (signal?.aborted) throw error; throw new Error(t('Нет связи с мастерской. Проверь подключение и попробуй ещё раз.')); }
   let value;
-  try { value = await response.json(); } catch { throw new Error('Мастерская сейчас недоступна. Редактор и скачивание файла продолжают работать.'); }
-  if (!response.ok) throw Object.assign(new Error(value.error || 'Не удалось выполнить запрос.'), { status: response.status, duplicateId: value.duplicateId });
+  try { value = await response.json(); } catch { throw new Error(t('Мастерская сейчас недоступна. Редактор и скачивание файла продолжают работать.')); }
+  if (!response.ok) throw Object.assign(new Error(value.error ? translateMessage(value.error) : t('Не удалось выполнить запрос.')), { status: response.status, duplicateId: value.duplicateId });
   return value;
 }
 const OWNERS_KEY = 'gridstudio.catalog.ownership.v1';

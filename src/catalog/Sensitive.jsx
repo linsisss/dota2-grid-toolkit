@@ -1,5 +1,6 @@
 import { useState, useSyncExternalStore } from 'react';
 import { Icon, Modal } from './Common.jsx';
+import { t } from '../../scripts/i18n.mjs';
 
 // The viewer confirms their age for this page only: it applies to every 18+ grid and background at
 // once, and after a reload they are blurred again; «Скрыть 18+» blurs them at once. Until 1.6.1 the answer
@@ -18,7 +19,7 @@ export const useAdultConfirmed = () => useSyncExternalStore(subscribe, () => con
 // Shown once 18+ works are uncovered, to blur them again without a reload.
 export function HideAdultButton() {
   if (!useAdultConfirmed()) return null;
-  return <button type="button" className="catalog-hide-adult" onClick={() => setAdult(false)}><Icon name="eyeOff" size={16}/>Скрыть 18+</button>;
+  return <button type="button" className="catalog-hide-adult" onClick={() => setAdult(false)}><Icon name="eyeOff" size={16}/>{t('Скрыть 18+')}</button>;
 }
 
 // kind: 'grid' or 'background', for the words.
@@ -28,14 +29,14 @@ export function SensitiveArt({ item, kind = 'grid', className = '', children }) 
   const background = kind === 'background';
   return <div className={`catalog-nsfw ${className}`.trim()}>
     <div className="catalog-nsfw-art" inert>{children}</div>
-    <button className="catalog-nsfw-reveal" aria-label={`Показать ${background ? 'фон' : 'сетку'} 18+ «${item.title}»`} onClick={() => setAsking(true)}>
-      <Icon name="eye"/><span>18+</span><small>Нажми, чтобы показать</small>
+    <button className="catalog-nsfw-reveal" aria-label={background ? t('Показать фон 18+ «{title}»', { title: item.title }) : t('Показать сетку 18+ «{title}»', { title: item.title })} onClick={() => setAsking(true)}>
+      <Icon name="eye"/><span>18+</span><small>{t('Нажми, чтобы показать')}</small>
     </button>
-    {asking && <Modal title="Тебе есть 18?" onClose={() => setAsking(false)}><div className="catalog-confirm">
-      <p>Автор отметил {background ? 'этот фон' : 'эту сетку'} как 18+: в {background ? 'нём' : 'ней'} может быть откровенный контент.</p>
-      <p className="catalog-muted">Если подтвердишь, сетки и фоны 18+ будут показываться без размытия, пока ты не перезагрузишь страницу. Скрыть их раньше — кнопка «Скрыть 18+».</p>
-      <div className="catalog-actions"><button className="catalog-button" onClick={() => setAsking(false)}>Нет</button>
-        <button className="catalog-button primary" onClick={() => { setAdult(true); setAsking(false); }} autoFocus>Мне есть 18</button></div>
+    {asking && <Modal title={t('Тебе есть 18?')} onClose={() => setAsking(false)}><div className="catalog-confirm">
+      <p>{background ? t('Автор отметил этот фон как 18+: в нём может быть откровенный контент.') : t('Автор отметил эту сетку как 18+: в ней может быть откровенный контент.')}</p>
+      <p className="catalog-muted">{t('Если подтвердишь, сетки и фоны 18+ будут показываться без размытия, пока ты не перезагрузишь страницу. Скрыть их раньше — кнопка «Скрыть 18+».')}</p>
+      <div className="catalog-actions"><button className="catalog-button" onClick={() => setAsking(false)}>{t('Нет')}</button>
+        <button className="catalog-button primary" onClick={() => { setAdult(true); setAsking(false); }} autoFocus>{t('Мне есть 18')}</button></div>
     </div></Modal>}
   </div>;
 }

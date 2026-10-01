@@ -11,6 +11,7 @@ import { ReferencePanel } from './ReferencePanel.jsx';
 import { RecentSymbols, CategoryWarning, CanvasSizeFields } from './SymbolControls.jsx';
 
 import { AsciiLibrary } from './AsciiLibrary.jsx';
+import { TextArtButton } from './TextArtDialog.jsx';
 import { CanvasContextMenu, DockLabels, Tooltips } from './EditorActions.jsx';
 import { ArtworkOptimizer } from './ArtworkOptimizer.jsx';
 import { ZoomFields } from './ZoomFields.jsx';
@@ -473,7 +474,7 @@ export function StudioControls({ editor }) {
   return (
     <>
       <StudioPortal targetId="libraryTitle">
-        {state.mode === 'draw' ? 'Рисование' : state.mode === 'image' ? 'ASCII' : 'Сетка героев'}
+        {state.mode === 'draw' ? 'Рисование' : state.mode === 'image' ? 'ASCII-арты' : 'Сетка героев'}
       </StudioPortal>
       <StudioPortal targetId="gridFilePanel">
         <GridFilePanel editor={editor} state={state} />
@@ -496,6 +497,9 @@ export function StudioControls({ editor }) {
       </StudioPortal>
       <StudioPortal targetId="zoomFields">
         <ZoomFields zoom={state.zoom} onChange={editor.setZoom} />
+      </StudioPortal>
+      <StudioPortal targetId="textArtHost">
+        <TextArtButton editor={editor} canvas={state.canvas} />
       </StudioPortal>
       <StudioPortal targetId="asciiLibrary">
         <AsciiLibrary editor={editor} canvas={state.canvas} />

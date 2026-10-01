@@ -277,7 +277,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       }
       // The landing page's random well-liked grid. Never cached, so every visit draws again. The
       // picture is rendered only for grids that may be on the landing, once per revision.
-      // A shared work's page with its link preview (nginx sends /workshop?id= and /customize?background= here).
+      // A shared work's page with its link preview (nginx sends /workshop?id= and /background?background= here).
       const page = /^\/page\/(workshop|customize)$/.exec(path);
       if (page && ['GET', 'HEAD'].includes(method)) {
         const html = sitePage(config.site, page[1] === 'workshop' ? 'catalog' : 'customize');
@@ -292,7 +292,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
           const backgroundId = url.searchParams.get('background') || '';
           if (page[1] === 'customize' && /^[1-9]\d{0,12}$/.test(backgroundId)) {
             const row = gallery().get(Number(backgroundId));
-            if (row?.status === 'approved') meta = { title: previewTitle(row), description: PREVIEW_TEXT.background, url: `${config.origin}/customize?background=${row.id}`,
+            if (row?.status === 'approved') meta = { title: previewTitle(row), description: PREVIEW_TEXT.background, url: `${config.origin}/background?background=${row.id}`,
               image: `${config.origin}/api/catalog/preview/background/${row.id}.jpg?updated=${row.updated}`, alt: `Фон «${row.title}»` };
           }
         } catch (error) { if (!(error instanceof CatalogError)) throw error; }

@@ -552,15 +552,20 @@ function material(tex, r) {
     uniforms: { map: { value: tex }, overbright: { value: number(r.m_flOverbrightFactor, 1)(null, null) }, addSelf: { value: 1 + number(r.m_flAddSelfAmount, 0)(null, null) },
       saturateColor: { value: r.m_bSaturateColorPreAlphaBlend !== false }, mode: { value: mode }, blendFrames: { value: r.m_bBlendFramesSeq0 !== false } },
   });
-  if (mode === 5) Object.assign(m, { blending: THREE.CustomBlending, blendSrc: THREE.DstColorFactor, blendDst: THREE.SrcColorFactor, blendEquation: THREE.AddEquation });
+  // Mod2x: colour = 2 × source × destination, so 50 % grey changes nothing. The canvas's alpha must
+  // stay as it is: blended like the colour, it fell to 2 × a × alpha, and the sprite's whole square
+  // cut a see-through hole in the hero, invisible on a dark background, a pale square on a light one.
+  if (mode === 5) Object.assign(m, { blending: THREE.CustomBlending, blendSrc: THREE.DstColorFactor, blendDst: THREE.SrcColorFactor, blendEquation: THREE.AddEquation,
+    blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor, blendEquationAlpha: THREE.AddEquation });
   else Object.assign(m, { blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendEquation: THREE.AddEquation, premultipliedAlpha: true });
   return m;
 }
 const lin = (x) => (x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4));
 class QuadBatch {
   constructor(group, tex, r, capacity) {
-    // Colours are authored in gamma space and made linear unless the renderer says otherwise.
-    this.linear = r.m_bGammaCorrectVertexColors !== false;
+    // Colours are authored in gamma space and made linear unless the renderer says otherwise; mod2x
+    // keeps them as they are, since its neutral is 0.5 (see texture()).
+    this.linear = r.m_bGammaCorrectVertexColors !== false && r.m_nOutputBlendMode !== 'PARTICLE_OUTPUT_BLEND_MODE_MOD2X';
     this.capacity = capacity; const g = new THREE.BufferGeometry();
     this.pos = new Float32Array(capacity * 12); this.uv = new Float32Array(capacity * 8); this.col = new Float32Array(capacity * 16); this.ua = new Float32Array(capacity * 16); this.ub = new Float32Array(capacity * 16); this.bl = new Float32Array(capacity * 4);
     const idx = new Uint32Array(capacity * 6); for (let i = 0; i < capacity; i++) idx.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3], i * 6);
@@ -680,14 +685,17 @@ export class Library {
     this.group = new THREE.Group(); this.group.matrixAutoUpdate = false; this.group.matrix.copy(SOURCE_TO_GLTF); this.loader = new THREE.TextureLoader();
   }
   system(path) { const k = path.replace(/\.vpcf$/, ''), d = this.systems[k]; return d || null; }
+  // Colour textures are read as sRGB, except for mod2x: its «modulate» textures are 50 % grey where
+  // they leave the picture alone, which as sRGB would be 21 % linear and darken the whole square.
   texture(r) {
     const path = r.m_vecTexturesInput?.[0]?.m_hTexture || r.m_hTexture || 'materials/particle/particle_glow_05.vtex';
-    if (!this.cache.has(path)) {
+    const raw = r.m_nOutputBlendMode === 'PARTICLE_OUTPUT_BLEND_MODE_MOD2X', key = raw ? `${path}#raw` : path;
+    if (!this.cache.has(key)) {
       const info = this.textures[path], t = info ? this.loader.load(this.url(info.file)) : null;
-      if (t) { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; t.wrapS = t.wrapT = THREE.RepeatWrapping; }
-      this.cache.set(path, { texture: t, info });
+      if (t) { t.colorSpace = raw ? THREE.NoColorSpace : THREE.SRGBColorSpace; t.flipY = false; t.wrapS = t.wrapT = THREE.RepeatWrapping; }
+      this.cache.set(key, { texture: t, info });
     }
-    return this.cache.get(path);
+    return this.cache.get(key);
   }
   renderer(r, sim) {
     switch (r._class) {

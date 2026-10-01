@@ -37,7 +37,7 @@ function Wait-DotaClosed {
   while (Get-Process -Name dota2 -ErrorAction SilentlyContinue) { Read-Host 'Dota 2 запущена. Закрой её и нажми Enter' | Out-Null }
 }
 `;
-const FRAME = (title, body) => `# GridStudio — ${title}. https://gridstudio.me/customize
+const FRAME = (title, body) => `# GridStudio — ${title}. https://gridstudio.me/background
 # Запускается через «Установить …bat» и «Удалить …bat» рядом. Только копирует файлы, ничего не скачивает.
 param([switch]$Remove)
 $ErrorActionPreference = 'Stop'

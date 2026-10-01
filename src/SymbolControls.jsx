@@ -45,8 +45,25 @@ export function RecentSymbols({ symbols = [], onPick }) {
     </div>
   );
 }
+// The «… категорий — высокая нагрузка» banner shows once per browser session, in the editor or the
+// drawing window, whichever crosses 2000 first: it closes by its cross or by itself after 15 s and
+// does not come back until the tab is opened anew. The optimizer and the download keep their own
+// warnings, which stay.
+const CATEGORY_WARNING_SEEN = 'gridstudio.categoryWarningSeen', CATEGORY_WARNING_MS = 15000;
+const categoryWarningSeen = () => { try { return sessionStorage.getItem(CATEGORY_WARNING_SEEN) === '1'; } catch { return false; } };
 export function CategoryWarning({ count, onOptimize }) {
-  if (count <= 2000) return null;
+  const over = count > 2000, [state, setState] = useState(() => (categoryWarningSeen() ? 'done' : 'waiting'));
+  useEffect(() => {
+    if (!over || state !== 'waiting') return;
+    try { sessionStorage.setItem(CATEGORY_WARNING_SEEN, '1'); } catch { /* Shown again next time; harmless. */ }
+    setState('open');
+  }, [over, state]);
+  useEffect(() => {
+    if (state !== 'open') return;
+    const timer = setTimeout(() => setState('done'), CATEGORY_WARNING_MS);
+    return () => clearTimeout(timer);
+  }, [state]);
+  if (!over || state !== 'open') return null;
   return (
     <div className="category-warning" role="alert">
       <span aria-hidden="true">!</span>
@@ -55,6 +72,7 @@ export function CategoryWarning({ count, onOptimize }) {
         <p>Больше 2000 категорий могут вызывать лаги и вылет Dota 2.</p>
       </div>
       {onOptimize && <button className="button secondary compact" onClick={onOptimize}>Сократить категории</button>}
+      <button type="button" className="category-warning-close" aria-label="Скрыть предупреждение" onClick={() => setState('done')}>×</button>
     </div>
   );
 }

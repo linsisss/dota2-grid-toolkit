@@ -40,3 +40,15 @@ test('sections become collapsed <details> blocks with their own task lists', () 
   assert.throws(() => formatRelease({ version: '1.2.3', sections: [{ title: 'Пусто', changes: [] }] }, config));
   assert.throws(() => formatRelease({ version: '1.2.3', sections: [{ title: 'a\nb', changes: ['A'] }] }, config));
 });
+
+test('every release file is valid for the post and for «Что нового»: its version, an ISO date, a GitHub link', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const dir = path.join(__dirname, '..', 'releases'), files = fs.readdirSync(dir).filter((f) => /^\d+\.\d+\.\d+\.json$/.test(f));
+  assert.ok(files.length >= 6);
+  for (const file of files) {
+    const release = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+    assert.equal(`${release.version}.json`, file);
+    assert.match(release.date, /^2\d{3}-\d{2}-\d{2}$/, file);
+    assert.ok(formatRelease(release, config).includes(`Обновление ${release.version}`), file);
+  }
+});

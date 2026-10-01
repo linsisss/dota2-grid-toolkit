@@ -5,7 +5,7 @@ import { createCanvas, GlobalFonts, loadImage } from '@napi-rs/canvas';
 import { renderCatalogPreview } from './catalog-preview.mjs';
 
 // Link previews (Open Graph) for a work shared from the workshop: a grid (/workshop?id=…) or a menu
-// background (/customize?background=…). Messengers do not run the page's script, so nginx hands
+// background (/background?background=…). Messengers do not run the page's script, so nginx hands
 // these two addresses to the API, which returns the built page with the work's title, author,
 // a line of text and a 1200 × 630 picture: the grid on Dota's backdrop, or a frame of the
 // background's video. 18+ works get a blurred picture. Everything else is the page as built.

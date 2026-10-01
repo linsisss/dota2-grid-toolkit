@@ -5,6 +5,7 @@ import linsissya from '../../assets/design/linsissya.webp';
 import dissonance from '../../assets/design/dissonance.webp';
 import StageArtwork from './StageArtwork.jsx';
 import { CATALOG_PATH, CUSTOMIZE_PATH } from '../catalog/api.js';
+import { VersionButton } from '../ChangelogButton.jsx';
 
 const VARIANTS = [
   { id: 'edge', name: 'За край', heading: <>Твоя сетка<br />героев.</> },
@@ -77,7 +78,7 @@ function Landing({ variant }) {
           <div className="landing-actions">
             {/* «Студия» (/editor) is where grids and menu backgrounds are made; the background and the font
                 also have buttons of their own, so the landing says what the site can do; fonts and guides are
-              coming (the font page, /customize?tab=font, waits for a check in the game). */}
+              coming (the font page, /background?tab=font, waits for a check in the game). */}
             <a className="landing-primary" href={`./${import.meta.env.VITE_EDITOR_ENTRY || 'editor'}?files=1`}><Icon name="studio" />Открыть студию</a>
             <a className="landing-catalog" href={CATALOG_PATH}><Icon name="workshop" />Смотреть сетки и фоны</a>
           </div>
@@ -91,7 +92,7 @@ function Landing({ variant }) {
       </div>
       <EditorArtwork variant={variant} />
     </main>
-    <footer className="landing-footer"><a href="https://github.com/linsisss/dota2-grid-toolkit" target="_blank" rel="noreferrer">Проект на GitHub<Icon name="external" /></a><span>gridstudio.me</span></footer>
+    <footer className="landing-footer"><span className="landing-footer-source"><a href="https://github.com/linsisss/dota2-grid-toolkit" target="_blank" rel="noreferrer">Проект на GitHub<Icon name="external" /></a><VersionButton/></span><span>gridstudio.me</span></footer>
   </div>;
 }
 

@@ -3,6 +3,7 @@
 // canvas over the preview's background and under the page's interface.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { Library, Simulation, SOURCE_TO_GLTF } from './fx.js';
 
 // Framing matched to the game's 1920 × 1080 screenshot: the camera looks at 3.48 m from 16.1 m with
@@ -97,7 +98,8 @@ void main() {
 
   const textures = new THREE.TextureLoader(), made = [];
   const texture = (file, srgb = false) => { const t = textures.load(url(`textures/${file}`)); t.flipY = false; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; made.push(t); return t; };
-  const time = { value: 0 }, loader = new GLTFLoader();
+  // The models are packed with EXT_meshopt_compression (scripts/compress-hero-3d.mjs).
+  const time = { value: 0 }, loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   const [hero, head, arms, shoulders, pedestal] = await Promise.all(['hero', 'head', 'arms', 'shoulders', 'pedestal'].map((k) => loader.loadAsync(url(manifest.models[k]))));
 
   // Items follow the hero's skeleton by bone name, as the game bone-merges them; an item's own

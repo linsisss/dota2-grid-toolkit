@@ -49,6 +49,18 @@ test('particles emit, move with gravity and decay', async () => {
   assert.equal(lib.unsupported.size, 0);
 });
 
+test('the hero models are meshopt-packed, with exact positions and the page animations', () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(hero, 'hero.json'), 'utf8'));
+  for (const file of Object.values(manifest.models)) {
+    const glb = fs.readFileSync(path.join(hero, file)), json = JSON.parse(glb.subarray(20, 20 + glb.readUInt32LE(12)));
+    assert.ok(json.extensionsRequired.includes('EXT_meshopt_compression'), file);
+    // Quantized positions would carry their dequantization in the skins' inverse bind matrices, which
+    // scene.js skin() also uses for the particle snapshots, so positions stay floats.
+    for (const mesh of json.meshes) for (const primitive of mesh.primitives) assert.equal(json.accessors[primitive.attributes.POSITION].componentType, 5126, file);
+    if (file.endsWith('hero.glb')) assert.deepEqual(json.animations.map((a) => a.name).sort(), Object.values(manifest.animations).sort());
+  }
+});
+
 test('the hero set is complete', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(hero, 'hero.json'), 'utf8'));
   for (const file of Object.values(manifest.models)) assert.ok(fs.existsSync(path.join(hero, file)), file);

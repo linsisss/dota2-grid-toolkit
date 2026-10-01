@@ -1,0 +1,59 @@
+/* «Что нового» (ChangelogButton.jsx), on the workshop and the home page: its own colours, so it looks
+   the same on both. */
+.version-button { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-variant-numeric: tabular-nums; text-decoration: underline dotted 1px; text-underline-offset: 3px; cursor: pointer; opacity: .75; }
+.version-button:hover, .version-button:focus-visible { opacity: 1; color: #efeaf5; text-decoration-color: #c4b5ed; }
+.changelog-dialog { --ch-ink: #efeaf5; --ch-muted: #a69fb6; --ch-line: #35303f; --ch-accent: #c4b5ed;
+  width: min(720px, calc(100vw - 24px)); max-height: min(820px, calc(100dvh - 32px)); padding: 0; border: 1px solid var(--ch-line); border-radius: 14px;
+  background: #1c1a22; color: var(--ch-ink); font: 14px/1.5 Inter, 'Segoe UI', Arial, sans-serif; box-shadow: 0 24px 80px #000a; }
+.changelog-dialog[open] { display: flex; flex-direction: column; }
+.changelog-dialog::backdrop { background: #0b0912c4; }
+.changelog-dialog > header { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 24px; border-bottom: 1px solid var(--ch-line); }
+.changelog-dialog h2 { margin: 0 0 2px; font-size: 21px; }
+.changelog-dialog > header span { color: var(--ch-muted); font-size: 12px; }
+.changelog-dialog > header button { width: 34px; height: 34px; border: 0; border-radius: 8px; background: none; color: var(--ch-muted); font-size: 22px; cursor: pointer; }
+.changelog-dialog > header button:hover { background: #ffffff10; color: var(--ch-ink); }
+.changelog-body { flex: 1; min-height: 0; overflow: auto; padding: 8px 24px 16px; overscroll-behavior: contain; }
+.changelog-body > p { color: var(--ch-muted); }
+.changelog-release { border-bottom: 1px solid var(--ch-line); }
+.changelog-release:last-child { border-bottom: 0; }
+.changelog-release > summary { display: flex; align-items: baseline; gap: 12px; padding: 16px 0; cursor: pointer; list-style: none; }
+.changelog-release > summary::-webkit-details-marker { display: none; }
+.changelog-release > summary::before { content: '›'; display: inline-block; color: var(--ch-muted); transition: transform var(--disclosure-duration, 240ms) cubic-bezier(.4, 0, .2, 1); }
+.changelog-release[open] > summary::before { transform: rotate(90deg); }
+/* While a release folds away it is still [open] (disclosure-motion.mjs): the arrow turns back at once. */
+.changelog-dialog .changelog-release[data-disclosure-state='closing'] > summary::before { transform: none; }
+.changelog-release > summary strong { font-size: 16px; }
+.changelog-release > summary span { color: var(--ch-muted); font-size: 12px; }
+.changelog-release > summary em { margin-left: auto; padding: 2px 9px; border-radius: 99px; background: #c4b5ed1f; color: var(--ch-accent); font-size: 11px; font-style: normal; }
+.changelog-release section { padding: 0 0 12px 18px; }
+.changelog-release h4 { margin: 4px 0 6px; color: var(--ch-accent); font-size: 13px; font-weight: 600; }
+.changelog-release ul { margin: 0; padding-left: 18px; }
+.changelog-release li { margin: 4px 0; }
+.changelog-release li ul { margin-top: 4px; color: var(--ch-muted); }
+.changelog-dialog > footer { padding: 14px 24px; border-top: 1px solid var(--ch-line); font-size: 13px; }
+.changelog-dialog > footer a { color: var(--ch-accent); }
+
+/* Motion: the window rises in over a fading backdrop and sinks away on close; the releases come in one
+   after another; the «новое» chip glows twice; the cross turns under the pointer. */
+.changelog-dialog { --ch-ease: cubic-bezier(.16, 1, .3, 1); }
+@media (prefers-reduced-motion: no-preference) {
+  .version-button { transition: opacity 140ms ease-out, color 140ms ease-out, text-decoration-color 140ms ease-out; }
+  .changelog-dialog[open] { animation: changelog-in 340ms var(--ch-ease) both; }
+  .changelog-dialog[open]::backdrop { animation: changelog-fade 260ms ease-out both; }
+  .changelog-dialog.is-closing { animation: changelog-out 190ms cubic-bezier(.4, 0, 1, 1) both; }
+  .changelog-dialog.is-closing::backdrop { animation: changelog-fade-out 190ms ease-in both; }
+  .changelog-release { animation: changelog-rise 460ms var(--ch-ease) both; animation-delay: calc(90ms + var(--i, 0) * 55ms); }
+  .changelog-release > summary em { animation: changelog-glow 1.6s ease-in-out 700ms 2; }
+  .changelog-release > summary { transition: color 140ms ease-out; }
+  .changelog-release > summary:hover strong { color: #fff; }
+  .changelog-body > p { animation: changelog-fade 400ms ease-out 120ms both; }
+  .changelog-dialog > header button { transition: background-color 140ms ease-out, color 140ms ease-out, transform 260ms var(--ch-ease); }
+  .changelog-dialog > header button:hover { transform: rotate(90deg); }
+  .changelog-dialog > footer a { transition: color 140ms ease-out; }
+}
+@keyframes changelog-in { from { opacity: 0; transform: translateY(16px) scale(.97); } }
+@keyframes changelog-out { to { opacity: 0; transform: translateY(10px) scale(.98); } }
+@keyframes changelog-fade { from { opacity: 0; } }
+@keyframes changelog-fade-out { to { opacity: 0; } }
+@keyframes changelog-rise { from { opacity: 0; transform: translateY(12px); } }
+@keyframes changelog-glow { 50% { background: #c4b5ed3d; box-shadow: 0 0 0 4px #c4b5ed1f; } }

@@ -1,6 +1,7 @@
 /* Grid Studio: one canvas, one document, one history for all three workflows. */
 import C from './core.mjs';
 import { APP_VERSION } from './version.mjs';
+import { placeTextArt } from './text-art.mjs';
 import { saveIndicator } from './save-status.mjs';
 import { steamFolderMarkup, mountSteamFolder } from './steam-folder.mjs';
 import { selectedCatalogGrid, appendCatalogGrid } from './catalog-document.mjs';
@@ -16,7 +17,7 @@ import { numberButtons, stepNumber } from './form-controls.mjs';
 import { gamePreviewLayout } from './game-preview.mjs';
 import { layoutAsciiArt, placeAsciiArt } from './ascii-library.mjs';
 import { BRUSH_TOOLS, DRAWING_TOOLS, GRADIENT_CHARS, bentLine, constrainAxis, drawingPoints, lassoContains, setDrawingShift, advanceDrawingStroke } from './drawing.mjs';
-import { clampEraser, readEraserSize, stepEraserSize, storeEraserSize, wheelEraserSize } from './eraser-size.mjs';
+import { clampEraser, readEraserSize, stepEraserSize, storeEraserSize, wheelEraserSize, drawBrushRing } from './eraser-size.mjs';
 import { guideLines, snapMove } from './smart-guides.mjs';
 import { ALIGN_ACTIONS, DISTRIBUTE_ACTIONS, alignIconSVG } from './align-icons.mjs';
 import { iconSVG } from './icons.mjs';
@@ -702,33 +703,12 @@ export function createStudio(projectStorage, initial) {
     }
     const heading = direction || gesture.direction, settings = scatterSettings(), steps = Math.max(1, Math.ceil(length / Math.max(2, radius / 2)));
     for (let i = 1; i <= steps; i++)
-      scatterSymbols(doc, { x: from.x + (dx * i) / steps, y: from.y + (dy * i) / steps }, radius, heading, { ...settings, seed: gesture.seed, thrown: gesture.thrown });
+      scatterSymbols(doc, { x: from.x + (dx * i) / steps, y: from.y + (dy * i) / steps }, radius, heading, { ...settings, seed: gesture.seed, thrown: gesture.thrown, ink });
     gesture.last = { ...p }; gesture.moved = true;
   }
-  // Photoshop-style brush outline: the ring is exactly the area eraseSymbols clears.
+  // Photoshop-style brush outline: the ring is exactly the area eraseSymbols clears (eraser-size.mjs drawBrushRing).
   function drawEraserRing(p) {
-    const radius = eraserSize / 2;
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-    ctx.lineWidth = 3 / zoom;
-    ctx.strokeStyle = '#0c0b10b0';
-    ctx.stroke();
-    ctx.lineWidth = 1.2 / zoom;
-    ctx.strokeStyle = '#efeaf5';
-    ctx.stroke();
-    ctx.fillStyle = '#efeaf5';
-    ctx.fillRect(p.x - 1 / zoom, p.y - 1 / zoom, 2 / zoom, 2 / zoom);
-    if (performance.now() < eraserLabelUntil) {
-      const label = `${Math.round(eraserSize)} px`;
-      ctx.font = `600 ${12 / zoom}px 'SF Pro Display', system-ui, sans-serif`;
-      const x = p.x + radius * 0.72 + 8 / zoom, y = p.y - radius * 0.72 - 8 / zoom, w = ctx.measureText(label).width + 12 / zoom;
-      ctx.fillStyle = '#211e29e8';
-      ctx.fillRect(x, y - 15 / zoom, w, 20 / zoom);
-      ctx.fillStyle = '#efeaf5';
-      ctx.fillText(label, x + 6 / zoom, y);
-    }
-    ctx.restore();
+    drawBrushRing(ctx, p, eraserSize / 2, 1 / zoom, performance.now() < eraserLabelUntil ? `${Math.round(eraserSize)} px` : '');
   }
   function setEraserSize(value) {
     eraserSize = clampEraser(value);
@@ -1571,7 +1551,7 @@ export function createStudio(projectStorage, initial) {
     if (gesture) { gesture.pointerId = event.pointerId; canvas.setPointerCapture(event.pointerId); }
   });
   function eraseAt(p) {
-    eraseSymbols(doc, p, eraserSize / 2);
+    eraseSymbols(doc, p, eraserSize / 2, ink);
   }
   function reorderGroupHero(groupId, from, to) {
     const group = doc.entities.find(e => e.id === groupId && e.type === 'heroes');
@@ -2878,7 +2858,7 @@ export function createStudio(projectStorage, initial) {
     ];
     openModal(
       `GridStudio ${APP_VERSION} · Работа с холстом`,
-      `<p>Выбери группу на холсте и нажми «+» после последнего героя. В попапе можно искать героев и выбирать атрибут. Перетаскивай портреты внутри группы, чтобы менять их порядок; за название или свободное место перемещается вся группа. Esc отменяет перетаскивание, Ctrl+Z — готовую перестановку. На вкладке «Рисование» можно рисовать символами, а «ASCII» превращает изображение в редактируемый рисунок.</p><p>Тяни объекты для перемещения. Любой угол выделения меняет размер. Удерживай <kbd>Shift</kbd>, чтобы сохранить пропорции. Для поворота текста тяни снаружи угла рамки или за круглую ручку; <kbd>Shift</kbd> задаёт шаг 15°. Точный угол можно ввести в свойствах. <kbd>Shift</kbd> + клик добавляет объект к выделению. Протяни рамку на пустом месте, чтобы выделить несколько объектов. <kbd>Alt</kbd> + клик выбирает весь слой рисунка. Двойной клик открывает редактирование текста.</p><h3>Горячие клавиши</h3><div class="shortcuts-grid">${shortcuts.map(([text, key]) => `<div><span>${text}</span><kbd>${key}</kbd></div>`).join('')}</div><h3>О сохранении</h3><p class="hint">Проект сохраняется в этом браузере вместе со всеми сетками, слоями и подложкой. Перед обновлением сохраняется резервная копия. Нажми «Изменения сохранены» в шапке или «Версии проекта» в этой справке, чтобы скачать или восстановить сохранение. Очистка данных браузера удаляет локальные копии — для независимого хранения скачай файл проекта. Картинка конвертера и рисунок в отдельном окне сохранятся в проект только после добавления на холст.</p><p class="hint">Превью приблизительное: файл Dota не хранит цвета и произвольные размеры шрифта. Поворот меняет расположение символов и сохраняется в Dota JSON. Можно загрузить локальный Radiance для более близкого отображения текста.</p><p><a class="source-link" href="https://github.com/linsisss/dota2-grid-toolkit" target="_blank" rel="noreferrer">Исходный репозиторий ↗</a></p>`,
+      `<p>Выбери группу на холсте и нажми «+» после последнего героя. В попапе можно искать героев и выбирать атрибут. Перетаскивай портреты внутри группы, чтобы менять их порядок; за название или свободное место перемещается вся группа. Esc отменяет перетаскивание, Ctrl+Z — готовую перестановку. На вкладке «Рисование» можно рисовать символами, а «ASCII-арты» превращают картинку или текст в редактируемый рисунок.</p><p>Тяни объекты для перемещения. Любой угол выделения меняет размер. Удерживай <kbd>Shift</kbd>, чтобы сохранить пропорции. Для поворота текста тяни снаружи угла рамки или за круглую ручку; <kbd>Shift</kbd> задаёт шаг 15°. Точный угол можно ввести в свойствах. <kbd>Shift</kbd> + клик добавляет объект к выделению. Протяни рамку на пустом месте, чтобы выделить несколько объектов. <kbd>Alt</kbd> + клик выбирает весь слой рисунка. Двойной клик открывает редактирование текста.</p><h3>Горячие клавиши</h3><div class="shortcuts-grid">${shortcuts.map(([text, key]) => `<div><span>${text}</span><kbd>${key}</kbd></div>`).join('')}</div><h3>О сохранении</h3><p class="hint">Проект сохраняется в этом браузере вместе со всеми сетками, слоями и подложкой. Перед обновлением сохраняется резервная копия. Нажми «Изменения сохранены» в шапке или «Версии проекта» в этой справке, чтобы скачать или восстановить сохранение. Очистка данных браузера удаляет локальные копии — для независимого хранения скачай файл проекта. Картинка конвертера и рисунок в отдельном окне сохранятся в проект только после добавления на холст.</p><p class="hint">Превью приблизительное: файл Dota не хранит цвета и произвольные размеры шрифта. Поворот меняет расположение символов и сохраняется в Dota JSON. Можно загрузить локальный Radiance для более близкого отображения текста.</p><p><a class="source-link" href="https://github.com/linsisss/dota2-grid-toolkit" target="_blank" rel="noreferrer">Исходный репозиторий ↗</a></p>`,
       '<button id="helpTour" class="button secondary">Обучение</button><button id="helpRecovery" class="button secondary">Версии проекта</button><button class="button primary" data-close>Всё понятно</button>',
       'help'
     );
@@ -3734,6 +3714,15 @@ export function createStudio(projectStorage, initial) {
       else if (action === 'fit') $('fitButton').click();
       else if (action === 'replace-glyphs') openReplaceGlyphs();
       else selectionAction(action);
+    },
+    // «Текст в ASCII» (src/TextArtDialog.jsx): one symbol per glyph in its cell (scripts/text-art.mjs).
+    addTextArt: (art, name) => {
+      const done = commit(() => {
+        const result = C.addArtwork(doc, placeTextArt(art, workspace(), ink), name ? `Текст «${name}»` : 'Текст');
+        selected = new Set(result.items.map((item) => item.id));
+      }, 'Надпись добавлена');
+      if (done) setTool('select');
+      return done;
     },
     addAsciiArt: (art) => {
       const layout = layoutAsciiArt(art.text, (text) =>

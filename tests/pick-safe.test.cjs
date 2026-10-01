@@ -15,7 +15,7 @@ async function glyphsAt(c, scale) {
   return out;
 }
 
-test('a download for every screen: lines split, art glyphs rejoin with zero-width spaces', async () => {
+test('a download for every screen: lines split, art glyphs rejoin with spaces', async () => {
   const { default: C } = await import('../scripts/core.mjs');
   const { advanceAt } = await import('../scripts/dota-rendering.mjs');
   const safe = (list, options) => view(C.pickSafeCategories(list, widths, options));
@@ -24,12 +24,14 @@ test('a download for every screen: lines split, art glyphs rejoin with zero-widt
   assert.deepEqual(safe([category('RYŌIKI TENKAI')]), [['RYŌIKI TENKAI', 100, 50]], 'plain text stays whole');
 
   const dots = category('· ·  ·');
-  const [row] = C.pickSafeCategories([dots], widths);
-  assert.ok(!row.category_name.includes(' ') && row.category_name.includes(' '), 'gaps are zero-width spaces');
-  const before = await glyphsAt(dots), after = await glyphsAt(row);
+  const rows = C.pickSafeCategories([dots], widths);
+  // Gaps are Radiance's own spaces: U+2006 (1.6.0–1.6.2) is drawn by a system font where one has it,
+  // and spread the rows on those systems. A space snaps like a glyph, so a row ends where its drift
+  // would pass 2.5 units on some screen (here the third dot, after two spaces, at 720p).
+  assert.ok(rows.some((row) => row.category_name.includes(' ')) && rows.every((row) => !row.category_name.includes(' ')), 'gaps are spaces');
+  const before = await glyphsAt(dots), after = (await Promise.all(rows.map((row) => glyphsAt(row)))).flat().sort((a, b) => a - b);
   assert.equal(after.length, 3);
   after.forEach((x, i) => assert.ok(Math.abs(x - before[i]) <= 1, `dot ${i}: ${x} vs ${before[i]}`));
-  assert.equal(advanceAt(0, 0.7), 2, 'a zero-width space advances 2 units at any size');
 
   assert.deepEqual(safe([dots], { rows: false }), before.map((x) => ['·', +x.toFixed(6), 50]), 'without rows, a glyph per category');
   const extra = C.pickSafeCategories([category('· ·', 0, 0, { custom: 7 })], widths);
@@ -43,7 +45,10 @@ test('hero categories go last and no row lies on a hero card', async () => {
   const out = C.pickSafeCategories([heroes, left, right], widths);
   assert.equal(out.at(-1), heroes, 'drawn on top, untouched');
   assert.deepEqual(view(out.slice(0, -1)), [['·', 150, 40], ['·', 300, 40]], 'a row across the card would take its clicks');
-  const open = C.pickSafeCategories([left, right], widths);
+  // With no card between, two dots a whole number of spaces apart are one row (spaces of no width
+  // here, so that the gap holds on every screen whatever its size).
+  const flat = (line) => widths(line).map((w, i) => (Array.from(line)[i] === ' ' ? 0 : w));
+  const open = C.pickSafeCategories([left, right], flat);
   assert.equal(open.length, 1, 'with no card between, the two dots are one row');
 });
 
@@ -74,10 +79,10 @@ test('downloads use it when given widths; publishing and previews keep the page 
   const grid = { version: 3, configs: [{ config_name: 'Тест', categories: [category('· · ·', 10, 10), category('A\nB', 200, 10), { ...category('Керри', 300, 300), hero_ids: [1], width: 100, height: 100 }] }] };
   const doc = C.importDota(grid);
   const measure = (text) => ({ width: widths(text.toUpperCase()).reduce((a, b) => a + b + 2, 0) });
-  const names = (m, options) => C.exportDota(doc, m, options).configs[0].categories.map((c) => c.category_name.replaceAll(' ', '_'));
+  const names = (m, options) => C.exportDota(doc, m, options).configs[0].categories.map((c) => c.category_name.replaceAll(' ', '_'));
   assert.deepEqual(names(null, { compactRows: false, widths }), ['·', '·', '·', 'A', 'B', 'Керри']);
   const [row, ...rest] = names(null, { widths });
   assert.match(row, /^·_+·_+·$/);
   assert.deepEqual(rest, ['A', 'B', 'Керри']);
-  assert.deepEqual(names(measure, { compactRows: true }), ['· · ·', 'A\nB', 'Керри'], 'without widths nothing changes');
+  assert.deepEqual(names(measure, { compactRows: true }), ['·_·_·', 'A\nB', 'Керри'], 'without widths nothing changes');
 });

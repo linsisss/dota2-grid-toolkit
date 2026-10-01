@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://gridstudio.me/editor"><strong>Открыть студию</strong></a> ·
   <a href="https://gridstudio.me/workshop">Мастерская</a> ·
-  <a href="https://gridstudio.me/customize">Фон меню</a> ·
+  <a href="https://gridstudio.me/background">Фон меню</a> ·
   <a href="#самостоятельный-запуск">Self-hosting</a>
 </p>
 
@@ -58,7 +58,7 @@
 
 ### Фон главного меню
 
-Открой **[gridstudio.me/customize](https://gridstudio.me/customize)**, перетащи картинку, GIF или видео (до 50 МБ), выбери свой экран и настрой вид. Нажми «Собрать фон», затем «Скачать» — получишь `pak02_dir.vpk`. Всё собирается прямо в браузере, файл никуда не загружается.
+Открой **[gridstudio.me/background](https://gridstudio.me/background)**, перетащи картинку, GIF или видео (до 50 МБ), выбери свой экран и настрой вид. Нажми «Собрать фон», затем «Скачать» — получишь `pak02_dir.vpk`. Всё собирается прямо в браузере, файл никуда не загружается.
 
 <details>
 <summary><strong>Куда положить файл</strong></summary>
@@ -140,12 +140,14 @@ gzip_types application/json application/javascript text/css image/svg+xml;
 
 location = /editor { try_files /editor.html =404; }
 location = /workshop { try_files /catalog.html =404; }
-location = /customize { try_files /customize.html =404; }
+location = /background { try_files /customize.html =404; }
 location = /editor/ { return 308 /editor$is_args$args; }
 location = /workshop/ { return 308 /workshop$is_args$args; }
-location = /customize/ { return 308 /customize$is_args$args; }
+location = /background/ { return 308 /background$is_args$args; }
 # До 1.5 мастерская называлась каталогом: старые ссылки ведут туда же, #hash браузер сохраняет сам.
 location = /catalog { return 301 /workshop$is_args$args; }
+# До 1.6.3 сборщик фона был /customize.
+location ~ ^/customize/?$ { return 301 /background$is_args$args; }
 location = /catalog/ { return 301 /workshop$is_args$args; }
 
 location /api/catalog/ {

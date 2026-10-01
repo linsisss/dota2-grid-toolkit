@@ -8,7 +8,7 @@
 // (the calibrated label advances with kerning), at most `tol` px sideways and half of `py`
 // up or down from where it stood. «Упаковать точки» (dot-packing.mjs) uses PACK_DEFAULTS.
 import { ROW_GLYPH_SETS } from './ascii-rows.mjs';
-import { DOTA, ZERO_WIDTH_SPACE, advanceAt } from './dota-rendering.mjs';
+import { DOTA, advanceAt } from './dota-rendering.mjs';
 
 export const PACK_DEFAULTS = Object.freeze({ py: 2, tol: 1.5 });
 // One grid unit is 1.1497 screen pixels at 1080p.
@@ -95,20 +95,28 @@ export const plainCategory = (c) => Object.keys(c).every((key) => fields.has(key
 
 // Rows for every screen (docs/zoom-and-optimization.md «Экран выбора героя»). Dota snaps each
 // glyph of a category to whole pixels at the size it draws the grid, so a row that is exact on
-// the 1080p «Герои» page drifts elsewhere, by up to a unit per glyph. Here gaps are made of zero-
-// width spaces, which advance exactly 2 units at every size, and a glyph joins a row only while
+// the 1080p «Герои» page drifts elsewhere, by up to a unit per glyph. Here gaps are made of spaces
+// (ROW_SPACE, which snap like glyphs), and a glyph joins a row only while
 // it stays within `drift` units of its place on the page and on the hero-pick screen at every
 // common resolution (SCREENS), and within `tol` on the 1080p page. A row never covers a hero card
 // (`cards`): Dota's category name is a draggable header, 20 units tall and as wide as its text,
 // and one lying on a card takes its clicks.
 export const PICK_ROWS = Object.freeze({ py: 0.87, tol: 1, drift: 2.5, spacers: 90 });
 // Hero-pick screen: 0.8695 of the page (1680 × 1050, 29.09.2026).
-const SCREENS = [768, 900, 1050, 1080, 1200, 1440, 1600, 2160]
+const SCREENS = [720, 768, 900, 960, 1024, 1050, 1080, 1200, 1440, 1600, 2160]
   .flatMap((height) => [1, 0.8695].map((pick) => DOTA.screenScale * height / 1080 * pick));
 const covers = (cards, left, right, y) => cards.some((c) => left < c.x + c.w && right > c.x && y < c.y + c.h && y + DOTA.header > c.y);
+// The gaps of a row are Radiance's own space, the one blank glyph the font has. 1.6.0–1.6.2 used the
+// six-per-em space U+2006: Radiance lacks it, so on the testers' Dota it had no width and advanced by
+// the letter spacing alone, exactly 2 units everywhere — but Dota draws a missing character with a
+// fallback font, and on other users' systems that font has U+2006 with a width (about 2.4 px at
+// 1080p): every gap grew, and the rows spread into a mess (reports 01.10.2026, 1080p and 4:3). A space
+// snaps to whole pixels like any glyph, so its drift is counted like theirs and rows end sooner.
+export const ROW_SPACE = ' ';
 // points: [{ ch, x, y }]; width(before, ch) → raw kerned width of ch after `before` ('' after a gap),
 // as glyphWidths gives it. cards: [{ x, y, w, h }]. Returns rows as packGlyphs does.
 export function packPickRows(points, width, { cards = [], py = PICK_ROWS.py, tol = PICK_ROWS.tol, drift = PICK_ROWS.drift, spacers = PICK_ROWS.spacers } = {}) {
+  const spaceRaw = width('', ROW_SPACE), spaceAt = (scale) => advanceAt(spaceRaw, scale), space = spaceAt(DOTA.screenScale), spaces = SCREENS.map(spaceAt);
   const order = points.map((_, i) => i).sort((a, b) => points[a].y - points[b].y || points[a].x - points[b].x);
   const rows = [];
   for (let start = 0; start < order.length;) {
@@ -122,19 +130,28 @@ export function packPickRows(points, width, { cards = [], py = PICK_ROWS.py, tol
       let best = null;
       for (const run of role ? runs : []) {
         if (!run.open) continue;
-        const target = x - run.x, gaps = Math.max(0, Math.round((target - run.width) / 2));
-        const pen = run.width + gaps * 2, error = Math.abs(pen - target);
-        if (gaps > spacers || error > tol || run.pens.some((p) => Math.abs(p + gaps * 2 - target) > drift)) continue;
-        const raw = width(gaps ? '' : run.last, ch);
+        // A space is 5–6 units wide, so of the space counts around the gap the one that keeps the glyph
+        // nearest its place on the worst screen wins.
+        const target = x - run.x, near = Math.round((target - run.width) / space);
+        let gaps = -1, pen = 0, worst = Infinity;
+        for (const k of [near - 1, near, near + 1]) {
+          if (k < 0 || k > spacers) continue;
+          const at = run.width + k * space, error = Math.abs(at - target);
+          if (error > tol) continue;
+          const off = Math.max(error, ...run.pens.map((p, i) => Math.abs(p + k * spaces[i] - target)));
+          if (off <= drift && off < worst) { gaps = k; pen = at; worst = off; }
+        }
+        if (gaps < 0) continue;
+        const error = Math.abs(pen - target), raw = width(gaps ? '' : run.last, ch);
         if (covers(cards, run.x, run.x + DOTA.listPadding + pen + advanceAt(raw), y)) continue;
         const cost = error - run.members.length * 0.01;
         if (!best || cost < best.cost) best = { run, gaps, pen, raw, cost };
       }
       if (best) {
         const { run, gaps, pen, raw } = best;
-        run.text += ZERO_WIDTH_SPACE.repeat(gaps) + ch;
+        run.text += ROW_SPACE.repeat(gaps) + ch;
         run.width = pen + advanceAt(raw);
-        run.pens = run.pens.map((p, i) => p + gaps * 2 + advanceAt(raw, SCREENS[i]));
+        run.pens = run.pens.map((p, i) => p + gaps * spaces[i] + advanceAt(raw, SCREENS[i]));
         run.last = ch; run.members.push(index); run.open = role !== 'end';
       } else {
         const raw = width('', ch);

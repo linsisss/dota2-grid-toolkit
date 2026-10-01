@@ -112,9 +112,11 @@ svg { flex-shrink: 0; display: block; }
 .landing-support:hover { background: #383340; transform: translateY(-2px); }
 .landing-support:hover svg { transform: scale(1.15); }
 .landing-footer { display: flex; align-items: center; justify-content: space-between; gap: 24px; width: 100%; max-width: 1680px; margin: 0 auto; padding: 15px 5% 24px; color: var(--lp-muted); font-size: 12px; z-index: 2; }
-.landing-footer > a { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; transition: color 160ms; }
-.landing-footer > a:hover { color: var(--lp-ink); }
-.landing-footer > a svg { width: 13px; height: 13px; }
+.landing-footer-source { display: flex; align-items: center; gap: 14px; }
+.landing-footer-source .version-button { font-size: 12px; }
+.landing-footer a { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; transition: color 160ms; }
+.landing-footer a:hover { color: var(--lp-ink); }
+.landing-footer a svg { width: 13px; height: 13px; }
 .editor-visual { position: relative; min-width: 0; width: 100%; perspective: 1300px; }
 .editor-artwork {
   padding: 0; display: block; border: 0; background: none; width: 100%; position: relative;

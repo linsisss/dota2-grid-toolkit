@@ -4,6 +4,7 @@
 // effects. Everything is taken from the game's files by Source 2 Viewer's command line
 // (github.com/ValveResourceFormat/ValveResourceFormat, MIT):
 //   node scripts/make-hero-3d.mjs <game dir> <Source2Viewer-CLI> [out dir]
+// Also needs cwebp (libwebp) on PATH for the lossless textures.
 // <game dir>: the needed part of pak01 extracted with the game's layout (models/, materials/,
 // particles/…) and a gameinfo.gi with «Game dota» beside it, so the CLI resolves dependencies.
 // Models: glTF with only the page's animations, textures stripped (the page draws them with its
@@ -18,6 +19,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { inflateSync } from 'node:zlib';
 import { parseKV3 } from './kv3.mjs';
 import { Euler, Matrix4, Quaternion, Vector3 } from 'three';
+import { compressHeroModels } from './compress-hero-3d.mjs';
 
 const [gameArg, cliArg, outArg] = process.argv.slice(2);
 if (!gameArg || !cliArg) throw new Error('Укажи папку с файлами игры (с gameinfo.gi) и путь к Source2Viewer-CLI.');
@@ -150,6 +152,15 @@ function readPng(file) {
 async function image(file) { return loadImage(readFileSync(file)); }
 function channel(img, size) { const c = createCanvas(size, size).getContext('2d'); c.drawImage(img, 0, 0, size, size); return c.getImageData(0, 0, size, size).data; }
 async function webp(canvas, file, quality = 90) { writeFileSync(file, await canvas.encode('webp', quality)); return basename(file); }
+// Truly lossless WebP (VP8L) by cwebp: the canvas's quality 100 is still lossy VP8 with half-resolution
+// colour, which bleeds one mask channel into another along thin trims, and it is a quarter bigger.
+async function lossless(canvas, file) {
+  const png = join(temp, 'lossless.png'); writeFileSync(png, await canvas.encode('png'));
+  execFileSync('cwebp', ['-quiet', '-lossless', '-z', '9', '-exact', png, '-o', file]); return basename(file);
+}
+// The pedestal fills the bottom of the page at a few hundred pixels: its colour and normal map are
+// enough at 512 (the game's are 2048 and 1024).
+const sizeCap = (name) => (/pedestal/.test(name) ? 512 : 2048);
 const vector = (text) => (text || '').replace(/[[\]]/g, '').trim().split(/\s+/).map(Number);
 const details = new Map();
 for (const [name, entry] of Object.entries(materials)) {
@@ -161,11 +172,13 @@ for (const [name, entry] of Object.entries(materials)) {
   // Colour with the alpha-test mask in alpha.
   // Textures need not be square (Souls Tyrant's are 512 × 256): the colour keeps its own shape, the
   // masks below are stretched to squares, which keeps their UVs.
-  const color = await image(pick('_color')), size = color.width, c = createCanvas(color.width, color.height), cc = c.getContext('2d'); cc.drawImage(color, 0, 0);
+  const original = await image(pick('_color')), fit = Math.min(1, sizeCap(name) / Math.max(original.width, original.height));
+  const color = { width: Math.round(original.width * fit), height: Math.round(original.height * fit) };
+  const size = color.width, c = createCanvas(color.width, color.height), cc = c.getContext('2d'); cc.drawImage(original, 0, 0, color.width, color.height);
   const trans = pick('_trans');
   if (trans) { const t = createCanvas(c.width, c.height).getContext('2d'); t.drawImage(await image(trans), 0, 0, c.width, c.height); const a = t.getImageData(0, 0, c.width, c.height).data, d = cc.getImageData(0, 0, c.width, c.height);
     for (let i = 0; i < a.length; i += 4) d.data[i + 3] = a[i]; cc.putImageData(d, 0, 0); }
-  // Masks and the specular texture are saved lossless (WebP quality 100): lossy WebP halves the
+  // Masks and the specular texture are saved lossless (lossless() below): lossy WebP halves the
 // colour resolution and bleeds one mask into another along thin trims.
 // Masks: R detail (where the fire shows), G self-illumination, B rim light; the specular mask
   // apart (a canvas keeps colour premultiplied, so a fourth mask in alpha would erase the others).
@@ -178,17 +191,17 @@ for (const [name, entry] of Object.entries(materials)) {
   const specLayers = await Promise.all(['_specmask', '_metalnessmask', '_basetintmask'].map(async (s) => (pick(s) ? channel(await image(pick(s)), ss) : null)));
   for (let i = 0; i < sd.data.length; i += 4) { for (let k = 0; k < 3; k++) sd.data[i + k] = specLayers[k] ? specLayers[k][i] : 0; sd.data[i + 3] = 255; }
   sc.putImageData(sd, 0, 0);
-  const normal = entry.normalFile && existsSync(entry.normalFile) ? readPng(entry.normalFile) : null, n = normal && createCanvas(Math.min(normal.width, 1024), Math.min(normal.width, 1024));
+  const normal = entry.normalFile && existsSync(entry.normalFile) ? readPng(entry.normalFile) : null, n = normal && createCanvas(Math.min(normal.width, 1024, sizeCap(name)), Math.min(normal.width, 1024, sizeCap(name)));
   // The normal's blue channel (rebuilt from red and green on the page) carries the specular exponent mask.
   if (n) { const nc = n.getContext('2d'); nc.drawImage(normal, 0, 0, n.width, n.height); const exponent = pick('_specexp') && channel(await image(pick('_specexp')), n.width), d = nc.getImageData(0, 0, n.width, n.height);
     for (let i = 0; i < d.data.length; i += 4) d.data[i + 2] = exponent ? exponent[i] : 255; nc.putImageData(d, 0, 0); }
   // The fresnel warp (R rim, G colour, B specular by the angle to the eye), shared by materials.
   const warp = /"g_tFresnelWarp"\s+"([^"]+)\.vtex"/.exec(text)?.[1], warpName = warp ? basename(warp).replace(/_tga_|_psd_/, '_') : null;
-  if (warp && !details.has(warpName)) { decompile(`${warp}.vtex`, join(temp, 'warp', 'warp.png')); details.set(warpName, await webp(readPng(join(temp, 'warp', `${basename(warp)}.png`)), join(out, 'textures', `${warpName}.webp`), 100)); }
+  if (warp && !details.has(warpName)) { decompile(`${warp}.vtex`, join(temp, 'warp', 'warp.png')); details.set(warpName, await lossless(readPng(join(temp, 'warp', `${basename(warp)}.png`)), join(out, 'textures', `${warpName}.webp`))); }
   const detailName = p.TextureDetail ? basename(p.TextureDetail).replace(/\.\w+$/, '') : null;
   if (detailName && !details.has(detailName)) { const f = pick(`${detailName.replace(/^.*\//, '')}`) || join(dir, basename(p.TextureDetail)); if (existsSync(f)) { const d = await image(f), dc = createCanvas(d.width, d.height); dc.getContext('2d').drawImage(d, 0, 0); details.set(detailName, await webp(dc, join(out, 'textures', `${detailName}.webp`))); } }
   materials[name] = {
-    color: await webp(c, join(out, 'textures', `${name}_color.webp`)), masks: await webp(masks, join(out, 'textures', `${name}_masks.webp`), 100), specular: await webp(spec, join(out, 'textures', `${name}_specular.webp`), 100),
+    color: await webp(c, join(out, 'textures', `${name}_color.webp`)), masks: await lossless(masks, join(out, 'textures', `${name}_masks.webp`)), specular: await lossless(spec, join(out, 'textures', `${name}_specular.webp`)),
     normal: n ? await webp(n, join(out, 'textures', `${name}_normal.webp`), 92) : null, detail: detailName ? details.get(detailName) || null : null, fresnel: warpName ? details.get(warpName) : null,
     detailMode: +(p.F_DETAIL || 0), detailScale: vector(p.g_vDetailTexCoordScale).slice(0, 2), detailScroll: scroll ? [+scroll[1], +scroll[2]] : [0, 0], detailBlend: +(p.g_flDetailBlendFactor ?? 1),
     rimColor: vector(p.g_vRimLightColor).slice(0, 3), rimScale: +(p.g_flRimLightScale ?? 0), specColor: vector(p.g_vSpecularColor).slice(0, 3), specScale: +(p.g_flSpecularScale ?? 1),
@@ -309,5 +322,7 @@ writeFileSync(join(out, 'hero.json'), JSON.stringify({
   effects: EFFECTS.map(([path, owner, options]) => ({ system: path.replace(/\.vpcf$/, ''), owner, ...options })),
   systems, textures, snapshots, attachments,
 }));
+// Last, once the snapshots were fitted to the plain models: pack the models (compress-hero-3d.mjs).
+for (const [file, before, after] of await compressHeroModels(join(out, 'models'))) console.log(`${file}: ${(before / 1024).toFixed(0)} → ${(after / 1024).toFixed(0)} КБ`);
 rmSync(temp, { recursive: true, force: true });
 console.log(`Готово: ${Object.keys(modelFiles).length} моделей, ${Object.keys(materials).length} материалов, ${Object.keys(systems).length} систем частиц, ${Object.keys(textures).length} текстур эффектов → ${out}`);

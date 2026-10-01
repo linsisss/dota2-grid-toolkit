@@ -69,3 +69,7 @@ Interface icons are [Lucide](https://lucide.dev) (ISC License), picked by `scrip
 > THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  Portraits are served with the site, and user projects/images stay in the browser. The font CDN receives ordinary web-font requests; no project data is sent to it.
+
+## FIGlet fonts («Текст в ASCII»)
+
+`scripts/text-art.mjs` uses [figlet.js](https://github.com/patorjk/figlet.js) (MIT, © Patrick Gillespie and contributors) and the FIGlet fonts it ships (Standard, Slant, Big, Doom, Banner, Graceful, Star Wars, Epic, Alligator2, Larry 3D, 3D-ASCII, Graffiti, Big Money-ne, Merlin1, Fire Font-k, Modular, Rounded, Speed, Ogre, Fender, Shadow, Small, Small Slant, Small Shadow, Rectangles, Cyberlarge), made by FIGlet's authors and contributors; their headers keep their credits. The fonts are loaded only when the «Текст в ASCII» window opens. The «Жирные точки» style follows the lettering of the workshop grid «Seijūrō Akashi» by anesthesia (the technique, not its dots).

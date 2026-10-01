@@ -302,7 +302,7 @@ test('movement stops the whole selection at the origin and permits right/bottom 
   near(C.bounds(doc.entities, true).y, 900);
 });
 
-test('reference drag, free stretch and Shift scaling retain their anchors at the origin', () => {
+test('the reference moves and stretches past every edge; a resize keeps its opposite anchor', () => {
   const r = {
     x: 50,
     y: 40,
@@ -313,8 +313,8 @@ test('reference drag, free stretch and Shift scaling retain their anchors at the
     src: 'data:image/png;base64,AA=='
   };
   const moved = E.transformReference(r, { x: -100, y: -100 }, 'move');
-  near(moved.x, 0);
-  near(moved.y, 0);
+  near(moved.x, -50); // left and up past the canvas, as right and down
+  near(moved.y, -60);
   const outside = E.transformReference(r, { x: 1400, y: 800 }, 'move');
   near(outside.x, 1450);
   near(outside.y, 840);
@@ -328,8 +328,7 @@ test('reference drag, free stretch and Shift scaling retain their anchors at the
   near(proportional.w / proportional.h, 2);
   near(proportional.x + proportional.w, 250);
   near(proportional.y + proportional.h, 140);
-  near(proportional.x, 0);
-  assert.ok(proportional.y >= 0);
+  assert.ok(proportional.x < 0 && proportional.y < 0, 'past the origin too');
   assert.equal(free.src, r.src);
   for (const handle of E.referenceHandles(r))
     assert.equal(E.referenceHit(r, handle, 3), handle.key);

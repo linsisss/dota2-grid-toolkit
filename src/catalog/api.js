@@ -1,8 +1,9 @@
 // The workshop lives at /workshop; nginx sends the former /catalog links there with their query and #hash.
 export const CATALOG_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'catalog.html' : 'workshop'}`;
 export const RULES_PATH = `${CATALOG_PATH}?rules`;
-// Dota customization (menu background, font): /customize, customize.html on static hosting.
-export const CUSTOMIZE_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'customize.html' : 'customize'}`;
+// Dota customization (menu background, font): /background (/customize until 1.6.3, which now
+// redirects), customize.html on static hosting.
+export const CUSTOMIZE_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'customize.html' : 'background'}`;
 export const EDITOR_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY || 'editor'}`;
 // The file list itself; plain EDITOR_PATH reopens the file this tab last edited.
 export const STUDIO_PATH = `${EDITOR_PATH}?files=1`;

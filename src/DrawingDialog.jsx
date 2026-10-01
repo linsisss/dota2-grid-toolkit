@@ -26,7 +26,7 @@ import { drawCategoryLabel, measureCategoryText, measureCategoryInk } from '../s
 import { ReferencePanel } from './ReferencePanel.jsx';
 import { CategoryCheckbox, RecentSymbols, CategoryWarning } from './SymbolControls.jsx';
 import { pickSymbol, toggleSymbol, searchSymbols, MAX_BRUSH_CHARS } from '../scripts/symbol-tools.mjs';
-import { ERASER, clampEraser, readEraserSize, stepEraserSize, storeEraserSize, wheelEraserSize } from '../scripts/eraser-size.mjs';
+import { ERASER, clampEraser, drawBrushRing, readEraserSize, stepEraserSize, storeEraserSize, wheelEraserSize } from '../scripts/eraser-size.mjs';
 
 export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) {
   const dialog = useRef(null),
@@ -77,26 +77,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     const p = eraserHover.current;
     if (tool !== 'eraser' || !p) return;
     ctx.setTransform(w / board.w, 0, 0, h / board.h, 0, 0);
-    const css = board.w / size.w, radius = eraserRef.current / 2;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-    ctx.lineWidth = 3 * css;
-    ctx.strokeStyle = '#0c0b10b0';
-    ctx.stroke();
-    ctx.lineWidth = 1.2 * css;
-    ctx.strokeStyle = '#efeaf5';
-    ctx.stroke();
-    ctx.fillStyle = '#efeaf5';
-    ctx.fillRect(p.x - css, p.y - css, 2 * css, 2 * css);
-    if (performance.now() < eraserLabelUntil.current) {
-      const label = `${Math.round(eraserRef.current)} px`;
-      ctx.font = `600 ${12 * css}px 'SF Pro Display', system-ui, sans-serif`;
-      const x = p.x + radius * 0.72 + 8 * css, y = p.y - radius * 0.72 - 8 * css;
-      ctx.fillStyle = '#211e29e8';
-      ctx.fillRect(x, y - 15 * css, ctx.measureText(label).width + 12 * css, 20 * css);
-      ctx.fillStyle = '#efeaf5';
-      ctx.fillText(label, x + 6 * css, y);
-    }
+    drawBrushRing(ctx, p, eraserRef.current / 2, board.w / size.w, performance.now() < eraserLabelUntil.current ? `${Math.round(eraserRef.current)} px` : '');
   }
   function changeEraser(value) {
     const next = clampEraser(value);
@@ -322,7 +303,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     setSelected([]);
     if (tool === 'eraser') {
       const next = C.clone(before);
-      eraseSymbols(next, p, eraserRef.current / 2);
+      eraseSymbols(next, p, eraserRef.current / 2, ink);
       update(next);
     } else previewStroke(e.shiftKey);
   }
@@ -367,7 +348,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
       setPath([s.start, { x:p.x, y:s.start.y }, p, { x:s.start.x, y:p.y }]);
     } else if (s.type === 'erase') {
       const next = C.clone(latest.current);
-      eraseSymbols(next, p, eraserRef.current / 2);
+      eraseSymbols(next, p, eraserRef.current / 2, ink);
       update(next);
     } else if (s.type === 'draw') {
       advanceDrawingStroke(s, snapPoint(p, snap), e.shiftKey);

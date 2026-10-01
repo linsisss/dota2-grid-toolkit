@@ -192,44 +192,29 @@ export function referenceHit(r, point, radius) {
     ? 'move'
     : null;
 }
+// The reference is only a guide under the drawing: it moves and stretches past every edge of the
+// canvas, left and up as well as right and down. A resize keeps the opposite side or corner in place.
 export function transformReference(r, delta, handle, proportional = false) {
-  if (handle === 'move')
-    return { ...r, x: Math.max(0, r.x + delta.x), y: Math.max(0, r.y + delta.y) };
-  // Clamp the scale at the origin, preserving the opposite resize anchor.
-  const fit = (d) =>
-    C.resizeBounds(
-      r,
-      {
-        x: /[we]/.test(handle) ? d.x : 0,
-        y: /[ns]/.test(handle) ? d.y : 0
-      },
-      handle,
-      proportional,
-      8
-    );
-  let bounds = fit(delta);
-  if (bounds.x < 0 || bounds.y < 0) {
-    let low = 0,
-      high = 1;
-    for (let i = 0; i < 40; i++) {
-      const t = (low + high) / 2,
-        b = fit({ x: delta.x * t, y: delta.y * t });
-      if (b.x < 0 || b.y < 0) high = t;
-      else low = t;
-    }
-    bounds = fit({ x: delta.x * low, y: delta.y * low });
-  }
-  return { ...r, ...bounds, x: Math.max(0, bounds.x), y: Math.max(0, bounds.y) };
+  if (handle === 'move') return { ...r, x: r.x + delta.x, y: r.y + delta.y };
+  const bounds = C.resizeBounds(r, { x: /[we]/.test(handle) ? delta.x : 0, y: /[ns]/.test(handle) ? delta.y : 0 }, handle, proportional, 8);
+  return { ...r, ...bounds };
 }
-// Distance is measured to each glyph as Dota draws it (4 px label padding, ~16 px cap height),
-// not to the category corner, so the eraser ring on screen removes exactly what it covers.
+// Distance is measured to the middle of each glyph's own ink as it is drawn, not to the category
+// corner, so the brush ring on screen removes exactly what it covers. `ink(text)` gives the ink box
+// of a text from its category origin (dota-rendering measureCategoryInk, cached by the caller); a
+// «.» sits on the baseline, about 9 units below a letter's middle, so one fixed centre for every
+// glyph missed dots right under the ring. Without `ink` (tests, no canvas) a letter's middle is used.
 const GLYPH_CENTER = { x: 9, y: 8 };
-export function eraseSymbols(doc, point, radius = 22) {
+const glyphDistance = (g, point, ink) => {
+  const box = ink?.(g.text), cx = box ? box.x + box.w / 2 : GLYPH_CENTER.x, cy = box ? box.y + box.h / 2 : GLYPH_CENTER.y;
+  return Math.hypot(g.x + cx - point.x, g.y + cy - point.y);
+};
+export function eraseSymbols(doc, point, radius = 22, ink = null) {
   doc.entities = doc.entities.flatMap((item) => {
     const layer = doc.layers.find((l) => l.id === item.layer);
     if (item.type === 'heroes' || !layer?.visible || layer.locked) return [item];
     const glyphs = C.textGlyphs(item, true);
-    const keep = glyphs.filter((g) => Math.hypot(g.x + GLYPH_CENTER.x - point.x, g.y + GLYPH_CENTER.y - point.y) > radius);
+    const keep = glyphs.filter((g) => glyphDistance(g, point, ink) > radius);
     if (keep.length === glyphs.length) return [item];
     return keep.map((g) => {
       const clean = { ...g, rotation: 0 };
@@ -254,14 +239,14 @@ function scatterNoise(seed, x, y, salt) {
   h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; h = Math.imul(h, 0x297a2d39); h ^= h >>> 15;
   return (h >>> 0) / 4294967296;
 }
-export function scatterSymbols(doc, point, radius, direction, { distance = SCATTER_DEFAULTS.distance, spread = SCATTER_DEFAULTS.spread, seed = 1, thrown = new Set() } = {}) {
+export function scatterSymbols(doc, point, radius, direction, { distance = SCATTER_DEFAULTS.distance, spread = SCATTER_DEFAULTS.spread, seed = 1, thrown = new Set(), ink = null } = {}) {
   const heading = Math.atan2(direction.y, direction.x), cone = (spread * Math.PI) / 180;
   let changed = false;
   doc.entities = doc.entities.flatMap((item) => {
     const layer = doc.layers.find((l) => l.id === item.layer);
     if (item.type === 'heroes' || !layer?.visible || layer.locked || thrown.has(item.id)) return [item];
     const glyphs = C.textGlyphs(item, true);
-    const under = glyphs.map((g) => Math.hypot(g.x + GLYPH_CENTER.x - point.x, g.y + GLYPH_CENTER.y - point.y) <= radius);
+    const under = glyphs.map((g) => glyphDistance(g, point, ink) <= radius);
     if (!under.some(Boolean)) return [item];
     changed = true;
     return glyphs.map((g, i) => {

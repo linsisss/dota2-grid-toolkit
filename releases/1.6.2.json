@@ -1,0 +1,18 @@
+{
+  "version": "1.6.2",
+  "date": "2026-09-30",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/pull/6",
+  "sections": [
+    {
+      "title": "Мастерская",
+      "changes": [
+        {
+          "text": "Если сетку, фон или арт отклонили, бот пришлёт в Telegram причину",
+          "children": [
+            "Для тех, кто вошёл через Telegram; причина видна и в «Мои публикации»"
+          ]
+        }
+      ]
+    }
+  ]
+}

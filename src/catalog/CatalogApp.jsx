@@ -13,6 +13,7 @@ import OwnedPublications from './OwnedPublications.jsx';
 import OwnedBackgrounds from './OwnedBackgrounds.jsx';
 import { AccountProvider, AccountButton, LikeButton, SubscribeButton, useAccount } from './Account.jsx';
 import { useAppMotion } from '../useAppMotion.js';
+import { VersionButton } from '../ChangelogButton.jsx';
 import { GridBackgroundSwitch } from './GridBackgroundSwitch.jsx';
 import { BackgroundCard, BackgroundTagFilter, useBackgrounds } from './BackgroundGallery.jsx';
 
@@ -166,5 +167,5 @@ function CatalogShell() {
   const params = new URLSearchParams(location.search), id = params.get('id'), moderation = params.has('moderate'), rules = params.has('rules');
   const ownerToken = new URLSearchParams(location.hash.slice(1)).get('manage');
   const managing = !!ownerToken || params.has('manage');
-  return <div className="catalog-page"><header className="catalog-nav"><Brand/><nav>{auth.admin && <a href={`${CATALOG_PATH}?moderate`}>Админка</a>}<a href={STUDIO_PATH}>Студия<Icon name="arrow"/></a><AccountButton/></nav></header><main className="catalog-main">{moderation ? <Moderation/> : rules ? <Rules/> : id ? <WorkDetail id={id} ownerToken={ownerToken} managing={managing}/> : <Gallery/>}</main><footer className="catalog-footer"><span>GridStudio</span><a href={RULES_PATH}>Правила мастерской</a><a href="https://github.com/linsisss/dota2-grid-toolkit">GitHub</a></footer></div>;
+  return <div className="catalog-page"><header className="catalog-nav"><Brand/><nav>{auth.admin && <a href={`${CATALOG_PATH}?moderate`}>Админка</a>}<a href={STUDIO_PATH}>Студия<Icon name="arrow"/></a><AccountButton/></nav></header><main className="catalog-main">{moderation ? <Moderation/> : rules ? <Rules/> : id ? <WorkDetail id={id} ownerToken={ownerToken} managing={managing}/> : <Gallery/>}</main><footer className="catalog-footer"><span>GridStudio</span><a href={RULES_PATH}>Правила мастерской</a><span className="catalog-footer-source"><a href="https://github.com/linsisss/dota2-grid-toolkit">GitHub</a><VersionButton/></span></footer></div>;
 }

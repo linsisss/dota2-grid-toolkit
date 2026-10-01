@@ -64,7 +64,7 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
             tabIndex="-1"
             data-mode="image"
           >
-            <span data-icon="image"></span>ASCII
+            <span data-icon="image"></span>ASCII-арты
           </button>
         </div>
         <div id="gridFilePanel" />
@@ -250,6 +250,7 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
               <strong>Выбрать изображение</strong>
               <span>PNG, JPG, WebP · до 20 МБ</span>
             </button>
+            <div id="textArtHost" />
             <div id="asciiLibrary" />
           </section>
         </aside>

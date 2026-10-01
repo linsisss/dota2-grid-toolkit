@@ -43,8 +43,11 @@ const BASELINE = DOTA.fontSize * 0.857;
 // within 0.01 px). The editor shows the «Герои» page at 1080p; at any other size — the hero-pick
 // screen draws the grid at 0.87 of the page, other resolutions at their own scale — the same
 // line snaps differently, so glyphs of one category drift apart (export-rows.mjs packPickRows).
-// En, em, ⅓ em and ⅙ em spaces are not in Radiance and Dota draws them with no width: they
-// advance by the letter spacing alone, exactly 2 units at every size.
+// En, em, ⅓ em and ⅙ em spaces are not in Radiance. On the testers' Dota they had no width and
+// advanced by the letter spacing alone, exactly 2 units at every size — but Dota draws a missing
+// character with a fallback font, and on other systems that font has them with a width, so rows
+// made of them spread apart there (reports 01.10.2026). Rows now use plain spaces (export-rows.mjs
+// ROW_SPACE); the model below still reads grids that hold these characters as the testers saw them.
 export const ZERO_WIDTH_SPACE = '\u2006';
 const ZERO_WIDTH = /[\u2002-\u2004\u2006]/u;
 export const advanceAt = (width, scale = DOTA.screenScale) => Math.max(0, Math.round(width * scale) / scale + DOTA.letterSpacing);

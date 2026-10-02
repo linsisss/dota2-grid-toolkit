@@ -137,6 +137,7 @@ export function CanvasContextMenu({ editor, state }) {
       </div>
       <div role="separator" />
       {item('add-group', t('Добавить группу героев'))}
+      {item('add-meta-group', t('Добавить группу по мете'))}
       {item('add-text', t('Добавить текст'))}
       <div className="context-action-pair">
         {item('copy', t('Копировать'), 'Ctrl C', !state.selectedCount)}

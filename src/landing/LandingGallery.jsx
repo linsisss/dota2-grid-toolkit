@@ -4,8 +4,10 @@ import editorImage from '../../assets/design/editor-landing-reference.webp';
 import linsissya from '../../assets/design/linsissya.webp';
 import dissonance from '../../assets/design/dissonance.webp';
 import StageArtwork from './StageArtwork.jsx';
-import { CATALOG_PATH, CUSTOMIZE_PATH } from '../catalog/api.js';
+import { CATALOG_PATH, CUSTOMIZE_PATH, FONT_PATH, GUIDES_PATH } from '../catalog/api.js';
 import { VersionButton } from '../ChangelogButton.jsx';
+import { openCommunity } from '../Community.jsx';
+import { COMMUNITY } from '../../scripts/community.mjs';
 import LanguageSwitch from '../LanguageSwitch.jsx';
 import { t } from '../../scripts/i18n.mjs';
 import { useLanguage } from '../useLanguage.js';
@@ -40,19 +42,31 @@ function Brand() {
   </a>;
 }
 
-// The authors and, under them, where to support the project (DonationAlerts).
+// The authors and, under them, a way to support the project: a window with DonationAlerts and
+// coins (src/SupportDialog.jsx, loaded on the first click); without scripts the link is DonationAlerts.
+// Beside it, the users' chat and the news channel (src/Community.jsx); without scripts, the chat.
 const SUPPORT_URL = 'https://www.donationalerts.com/r/linsiss';
 function Authors() {
+  const [Support, setSupport] = useState(null);
+  const open = (event) => {
+    event.preventDefault();
+    import('../SupportDialog.jsx').then((module) => setSupport(() => module.default)).catch(() => window.open(SUPPORT_URL, '_blank', 'noreferrer'));
+  };
   return <div className="landing-credits">
     <div className="landing-authors">
       <span className="author-credit">{t('Авторы')}</span>
       <div className="landing-author-links">
-        <a href="tg://resolve?domain=linsissya"><img src={linsissya} alt="" width="25" height="25" />@linsissya</a>
+        <a href="tg://resolve?domain=linsissya"><img src={linsissya} alt="" width="32" height="32" />@linsissya</a>
         <span>&amp;</span>
-        <a href="https://rin.ms/" target="_blank" rel="noreferrer"><img src={dissonance} alt="" width="25" height="25" />@dissonance</a>
+        <a href="https://rin.ms/" target="_blank" rel="noreferrer"><img src={dissonance} alt="" width="32" height="32" />@dissonance</a>
       </div>
     </div>
-    <a className="landing-support" href={SUPPORT_URL} target="_blank" rel="noreferrer"><Icon name="heart" />{t('Поддержать разработку')}</a>
+    <div className="landing-credit-links">
+      <a className="landing-support" href={SUPPORT_URL} target="_blank" rel="noreferrer" onClick={open} aria-haspopup="dialog"><Icon name="support" />{t('Поддержать разработку')}</a>
+      <a className="landing-support landing-community" href={COMMUNITY.chat} target="_blank" rel="noreferrer" onClick={(event) => { event.preventDefault(); openCommunity(); }}
+        aria-haspopup="dialog"><Icon name="telegramLogo" />{t('Чат и новости')}</a>
+    </div>
+    {Support && <Support onClose={() => setSupport(null)}/>}
   </div>;
 }
 
@@ -87,16 +101,15 @@ function Landing({ variant }) {
         <p className="landing-description">{t(DESCRIPTION)}</p>
         <div className="landing-buttons">
           <div className="landing-actions">
-            {/* «Студия» (/editor) is where grids and menu backgrounds are made; the background and the font
-                also have buttons of their own, so the landing says what the site can do; fonts and guides are
-              coming (the font page, /background?tab=font, waits for a check in the game). */}
+            {/* «Студия» (/editor) is where grids and menu backgrounds are made; the background, the font
+                and the guides also have buttons of their own, so the landing says what the site can do. */}
             <a className="landing-primary" href={`./${import.meta.env.VITE_EDITOR_ENTRY || 'editor'}?files=1`}><Icon name="studio" />{t('Открыть студию')}</a>
             <a className="landing-catalog" href={CATALOG_PATH}><Icon name="workshop" />{t('Смотреть сетки и фоны')}</a>
           </div>
           <div className="landing-tools">
             <a className="landing-catalog landing-tool" href={CUSTOMIZE_PATH}><Icon name="brush" />{t('Фон меню Dota')}</a>
-            <span className="landing-catalog landing-tool is-soon" aria-disabled="true" title={t('Шрифты для Dota — скоро')}><Icon name="font" />{t('Шрифты')}<small>{t('скоро')}</small></span>
-            <span className="landing-catalog landing-tool is-soon" aria-disabled="true" title={t('Гайды по оформлению профиля — скоро')}><Icon name="book" />{t('Гайды')}<small>{t('скоро')}</small></span>
+            <a className="landing-catalog landing-tool" href={FONT_PATH}><Icon name="font" />{t('Шрифты')}</a>
+            <a className="landing-catalog landing-tool" href={GUIDES_PATH}><Icon name="guides" />{t('Гайды')}</a>
           </div>
         </div>
         <Authors />

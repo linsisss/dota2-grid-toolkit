@@ -3,6 +3,7 @@ import { Icon } from './Icon.jsx';
 import { NumberInput } from './NumberInput.jsx';
 import { ImageImportDialog } from './ImageImportDialog.jsx';
 import LanguageSwitch from './LanguageSwitch.jsx';
+import { CommunityLink } from './Community.jsx';
 import { t, locale } from '../scripts/i18n.mjs';
 // Stable shell: the editor exclusively owns the canvas and empty imperative hosts.
 export const StudioLayout = memo(function StudioLayout({ onBack }) {
@@ -26,6 +27,7 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
           <span id="saveStateLabel">{t('Изменения сохранены')}</span>
         </button>
         <div className="header-actions">
+          <CommunityLink className="header-community" />
           <button id="importButton" className="button secondary" aria-label={t('Импортировать')}>
             <span data-icon="import"></span>
             <span>{t('Импортировать')}</span>
@@ -95,7 +97,7 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
         <aside id="libraryPanel" className="library-panel" aria-label={t('Библиотека и инструменты')}>
           <div id="libraryDismiss" />
           <div className="panel-intro">
-            <h1 id="libraryTitle" />
+            <div id="libraryTitle" className="panel-heading" />
           </div>
           <section
             id="panel-heroes"
@@ -418,23 +420,24 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
                   aria-label={t('Холст сетки Dota 2. Для доступного редактирования используйте список объектов и панель свойств.')}
                 ></canvas>
                 <div id="canvasReactOverlay" className="canvas-react-overlay" />
+                {/* Over the canvas itself: the room around it scrolls (scripts/app.mjs updateZoom). */}
+                <div id="emptyCanvas" className="empty-canvas" hidden>
+                  <span data-icon="heroes"></span>
+                  <strong>{t('Нет объектов')}</strong>
+                  <span>
+                    {t('Добавь группу героев, нарисуй что-нибудь')}
+                    <br />
+                    {t('или перетащи изображение.')}
+                  </span>
+                  <button id="emptyAddGroup" className="button primary">
+                    {t('Добавить группу')}
+                  </button>
+                </div>
               </div>
               <div id="dropOverlay" className="drop-overlay" hidden>
                 <span data-icon="import"></span>
                 <strong>{t('Отпусти файл здесь')}</strong>
                 <span>{t('JSON-проект или изображение')}</span>
-              </div>
-              <div id="emptyCanvas" className="empty-canvas" hidden>
-                <span data-icon="heroes"></span>
-                <strong>{t('Нет объектов')}</strong>
-                <span>
-                  {t('Добавь группу героев, нарисуй что-нибудь')}
-                  <br />
-                  {t('или перетащи изображение.')}
-                </span>
-                <button id="emptyAddGroup" className="button primary">
-                  {t('Добавить группу')}
-                </button>
               </div>
             </div>
             <div id="canvasNotices" />
@@ -491,7 +494,7 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
         <aside id="propertiesPanel" className="inspector-panel" aria-label={t('Свойства и слои')}>
           <div id="inspectorDismiss" />
           <div className="inspector-title">
-            <span data-icon="sliders"></span>
+            <span className="win-icon" data-icon="sliders" aria-hidden="true"></span>
             <h2>{t('Свойства')}</h2>
             <span id="selectionCount" className="count-badge">
               {t('Холст')}

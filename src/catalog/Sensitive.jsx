@@ -32,7 +32,7 @@ export function SensitiveArt({ item, kind = 'grid', className = '', children }) 
     <button className="catalog-nsfw-reveal" aria-label={background ? t('Показать фон 18+ «{title}»', { title: item.title }) : t('Показать сетку 18+ «{title}»', { title: item.title })} onClick={() => setAsking(true)}>
       <Icon name="eye"/><span>18+</span><small>{t('Нажми, чтобы показать')}</small>
     </button>
-    {asking && <Modal title={t('Тебе есть 18?')} onClose={() => setAsking(false)}><div className="catalog-confirm">
+    {asking && <Modal title={t('Тебе есть 18?')} icon="shield" onClose={() => setAsking(false)}><div className="catalog-confirm">
       <p>{background ? t('Автор отметил этот фон как 18+: в нём может быть откровенный контент.') : t('Автор отметил эту сетку как 18+: в ней может быть откровенный контент.')}</p>
       <p className="catalog-muted">{t('Если подтвердишь, сетки и фоны 18+ будут показываться без размытия, пока ты не перезагрузишь страницу. Скрыть их раньше — кнопка «Скрыть 18+».')}</p>
       <div className="catalog-actions"><button className="catalog-button" onClick={() => setAsking(false)}>{t('Нет')}</button>

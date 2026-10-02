@@ -226,7 +226,9 @@ test('followers get one message for an author\'s new work, none for updates or g
   await f.worker.deliverNotifications(); await f.worker.deliverNotifications();
   assert.equal(direct.length, 1);
   assert.equal(direct[0].chat_id, '502');
-  assert.match(direct[0].text, /Игрок &amp; автор<\/b> выложил новую сетку героев <a href="https:\/\/gridstudio\.me\/workshop\?id=[0-9a-f-]{36}">«&lt;Сетка&gt;»<\/a>/);
+  // The author's profile nickname, not their signature or Telegram name.
+  assert.match(direct[0].text, new RegExp(`${f.store.profiles.creator('501').name}</b> выложил новую сетку героев`));
+  assert.match(direct[0].text, /<\/b> выложил новую сетку героев <a href="https:\/\/gridstudio\.me\/workshop\?id=[0-9a-f-]{36}">«&lt;Сетка&gt;»<\/a>/);
   assert.equal(direct[0].reply_markup.inline_keyboard[1][0].callback_data, `sub:off:${second.id}`);
   // Whole values and standalone numbers only: the work UUID in the link may contain «501».
   const values = []; JSON.stringify(direct[0], (key, value) => { values.push(value); return value; });
@@ -332,7 +334,7 @@ test('admins correct the title, author and tags of the public version or a pendi
   f.store.moderate(f.saved.id, { action: 'approve', revision: f.saved.revision });
   const update = f.store.save({ ...input(55), title: 'Обновление автора' }, identity, f.saved.id, f.saved.managementToken, f.saved.revision);
   const meta = f.store.moderate(f.saved.id, { action: 'edit', revision: f.saved.revision, title: '  Сетка дня ', author: 'Команда', tags: ['Мемы', 'Аниме', 'Мемы'] }, { actor });
-  assert.deepEqual(meta, { title: 'Сетка дня', author: 'Команда', tags: ['Аниме', 'Мемы'] });
+  assert.deepEqual(meta, { title: 'Сетка дня', author: 'Команда', credit: '', tags: ['Аниме', 'Мемы'] });
   const card = f.store.publicItem(f.saved.id);
   assert.deepEqual([card.title, card.author, card.tags, card.grid.configs[0].config_name], ['Сетка дня', 'Команда', ['Аниме', 'Мемы'], 'Сетка дня']);
   assert.equal(f.store.revision(update.revision).title, 'Обновление автора', 'the pending update keeps its own title');

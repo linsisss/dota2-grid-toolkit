@@ -119,7 +119,7 @@ function StudioFile({ meta, registry, user, onBack }) {
       <StudioLayout key={lang} onBack={async () => { try { if (studio) await studio.flush(); onBack(); } catch (error) { setSyncStatus(error.message); } }} />
       {!editor && <div className="studio-loading" role="status">{loadingError || t('Открываем проект…')}{loadingError && <button onClick={onBack}>{t('Вернуться в студию')}</button>}</div>}
       {studio && <StudioControls editor={studio} panel={editor.view?.panel} />}
-      {studio && <EditorTour/>}
+      {studio && <EditorTour editor={studio}/>}
     </>
   );
 }

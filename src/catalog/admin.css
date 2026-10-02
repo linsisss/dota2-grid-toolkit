@@ -1,0 +1,175 @@
+/* The admin panel (src/catalog/Moderation.jsx, AdminReview.jsx, AdminInbox.jsx, AdminJournal.jsx),
+   redone on 2026-10-02: a compact head with the intake switch, a menu of sections with what waits in
+   each, the list beside the review, and the decision on top of the review, staying in view. */
+.admin { --ad-line: #ffffff14; --ad-muted: #afa7bf; --ad-ink: #efeaf5; --ad-accent: #c4b5ed; --ad-glass: #1b1922; }
+/* Like an app: the panel fills the window under the site's header (Moderation.jsx measures it into
+   --admin-offset); the menu and the lists scroll inside, a review fits on one screen. */
+.admin { display: flex; flex-direction: column; height: max(640px, calc(100dvh - var(--admin-offset, 150px))); }
+.admin > * { flex: none; }
+.admin-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 12px; }
+/* Compact, so the review below gets the screen. */
+:root .catalog-main:has(> .admin) { margin-top: 10px; }
+.admin-top > div:first-child { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; min-width: 0; }
+:root .admin .admin-top h1 { margin: 0; font-size: 24px; line-height: 1.2; letter-spacing: -.02em; }
+.admin-top p { margin: 0; color: var(--ad-muted); font-size: 13px; }
+.admin > .catalog-notice { margin: 0 0 12px; }
+.admin-top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.admin-top-actions .catalog-button { display: inline-flex; align-items: center; gap: 8px; }
+.admin-pause { display: inline-flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 14px 0 10px; border: 1px solid #7fd1a040; border-radius: 12px; background: #7fd1a00f;
+  color: #bfeccf; font: inherit; font-size: 14px; cursor: pointer; transition: border-color .2s, background-color .2s, color .2s; }
+.admin-pause i { position: relative; width: 34px; height: 20px; border-radius: 99px; background: #7fd1a080; transition: background-color .2s; }
+.admin-pause i::after { content: ''; position: absolute; top: 3px; left: 17px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: left .25s cubic-bezier(.3, 1.3, .5, 1); }
+.admin-pause.is-paused { border-color: #f3cf9655; background: #f3cf960f; color: #f6dcb0; }
+.admin-pause.is-paused i { background: #ffffff26; }
+.admin-pause.is-paused i::after { left: 3px; }
+.admin-pause:disabled { opacity: .6; cursor: default; }
+
+.admin > .admin-layout { flex: 1; min-height: 0; }
+.admin-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 28px; }
+.admin-nav { display: grid; gap: 4px; align-content: start; min-height: 0; overflow: auto; }
+.admin-nav > button { display: flex; align-items: center; gap: 11px; min-height: 42px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--ad-muted);
+  font: inherit; font-size: 14.5px; text-align: left; cursor: pointer; transition: background-color .15s, color .15s; }
+.admin-nav > button svg { flex: none; width: 18px; height: 18px; }
+.admin-nav > button span:first-of-type { flex: 1; }
+.admin-nav > button:hover { background: #ffffff08; color: var(--ad-ink); }
+.admin-nav > button[aria-current='page'] { background: #c4b5ed1a; color: var(--ad-ink); box-shadow: inset 0 0 0 1px #c4b5ed33; }
+.admin-nav > button[aria-current='page'] svg { color: var(--ad-accent); }
+.admin-nav > button:nth-child(1) { margin-bottom: 8px; }
+.admin-nav > button:nth-child(6) { margin-top: 8px; }
+.admin-keys { display: grid; gap: 6px; margin-top: 18px; padding: 14px 12px 4px; border-top: 1px solid var(--ad-line); color: var(--ad-muted); font-size: 12.5px; }
+.admin-keys strong { color: var(--ad-muted); font-size: 11px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+.admin-keys p { margin: 0; }
+.admin kbd { display: inline-block; min-width: 20px; margin: 0 2px; padding: 0 5px; border-radius: 6px; background: #ffffff10; box-shadow: inset 0 0 0 1px #ffffff1c, inset 0 -2px 0 #00000059;
+  color: var(--ad-ink); font-family: inherit; font-size: 11.5px; font-weight: 600; line-height: 1.7; text-align: center; }
+.admin-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.admin-main > * { flex: none; }
+.admin-main > .catalog-toolbar { margin-top: 0; padding-bottom: 12px; }
+.admin-main > :is(.catalog-moderation, .catalog-empty, .admin-journal) { flex: 1; min-height: 0; }
+.admin-main > .catalog-empty { min-height: 0; }
+.admin-toolbar { gap: 14px; flex-wrap: wrap; }
+.admin-hint { margin: 0; font-size: 13px; }
+.admin-empty > svg { color: #a6e3bd; }
+
+/* The list: a row is the kind (in «Входящие»), a small picture when there is one, the title, the author. */
+.admin .catalog-moderation { grid-template-columns: 290px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 24px; margin-top: 12px; align-items: stretch; }
+.admin .catalog-queue-side { position: static; max-height: none; min-height: 0; }
+.admin-list button { position: relative; display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 3px !important; padding: 12px 14px !important; border: 1px solid transparent !important;
+  border-radius: 12px !important; text-align: left; transition: background-color .15s, border-color .15s; }
+.admin-list button:hover { background: #ffffff06 !important; }
+.admin-list button[aria-current='true'] { border-color: #c4b5ed4d !important; background: #c4b5ed14 !important; }
+.admin-list button > strong { overflow: hidden; color: var(--ad-ink); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.admin-list button:has(.admin-thumb) { grid-template-columns: 64px minmax(0, 1fr); column-gap: 12px !important; }
+.admin-list button:has(.admin-thumb) > :not(.admin-thumb):not(.admin-kind) { grid-column: 2; }
+.admin-thumb { grid-row: span 3; width: 64px; height: 40px; border-radius: 8px; object-fit: cover; background: #121117; box-shadow: 0 0 0 1px #ffffff14; align-self: center; }
+.admin-list button:has(.admin-kind):has(.admin-thumb) .admin-thumb { grid-row: 2 / span 3; }
+.admin-kind { display: inline-flex; align-items: center; gap: 5px; width: fit-content; margin-bottom: 2px; padding: 1px 8px 1px 6px; border-radius: 99px; background: #ffffff0d;
+  color: var(--ad-muted); font-size: 11px; font-weight: 650; letter-spacing: .03em; grid-column: 1 / -1; }
+.admin-kind.is-report { background: #ff8a951a; color: #ffb1b8; }
+
+/* A review on one screen: the decision with the fields to correct on top, reports, then the stage —
+   the picture or video fitted into what is left (container units), or a guide's text scrolling. */
+.admin-review { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; }
+.admin-review > * { flex: none; }
+.admin-decision { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid #c4b5ed33; border-radius: 18px;
+  background: radial-gradient(120% 140% at 0% 0%, #c4b5ed14, transparent 60%), #1b1922; }
+:root .admin .admin-decision h2 { margin: 0; color: var(--ad-ink); font-size: 21px; line-height: 1.2; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.admin-meta { margin: 0; color: var(--ad-muted); font-size: 13px; line-height: 1.45; }
+.admin-stage { position: relative; flex: 1 1 auto !important; min-height: 140px; display: grid; place-items: center; container-type: size; }
+.admin-stage > :is(.catalog-preview, .art-review-preview) { width: min(100cqw, 100cqh * 1193 / 593); max-height: none; border-radius: 14px; overflow: hidden; }
+.admin-stage > video { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; border-radius: 14px; background: #000; }
+.admin-stage.is-text { display: block; container-type: normal; overflow: auto; border-radius: 16px; }
+.admin-stage.is-text .guide-review-text { max-height: none; }
+.admin-stage-label { position: absolute; top: 10px; left: 10px; padding: 3px 10px; border-radius: 99px; background: #15131bd9; color: #f6dcb0; font-size: 12px; font-weight: 600; backdrop-filter: blur(6px); }
+.admin-reports, .admin-files { max-height: 22vh; overflow: auto; }
+/* The fields in the decision: the title as its heading, the author (and an art's category), the tags. */
+.admin-fields { display: grid; gap: 8px; margin: 0; }
+:root .catalog-page .admin-fields :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select) {
+  display: block; width: 100%; min-height: 34px; margin: 0; padding: 5px 10px; border-radius: 9px; font-size: 14px; }
+:root .catalog-page .admin-fields .admin-title-input:is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file])) {
+  flex: 1 1 240px; width: auto; min-width: 0; min-height: 36px; margin-left: -10px; padding: 2px 10px; border-color: transparent; background-color: transparent;
+  color: var(--ad-ink); font-size: 21px; font-weight: 700; letter-spacing: -.01em; }
+:root .catalog-page .admin-fields .admin-title-input:is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file])):is(:hover, :focus) { border-color: #ffffff1c; background-color: #15121b; }
+.admin-fields-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+/* «Автор», «Категория»: the name inside the field's box, on the title's line. */
+.admin-inline { display: flex !important; align-items: center; gap: 0; flex: 0 1 250px; margin: 0; border: 1px solid #ffffff17; border-radius: 9px; background: #15121b; overflow: hidden; }
+.admin-inline:focus-within { border-color: #c4b5ed99; box-shadow: 0 0 0 4px #c4b5ed1f; }
+.admin-inline > span { flex: none; padding: 0 2px 0 10px; color: var(--ad-muted); font-size: 12px; font-weight: 500; }
+:root .catalog-page .admin-fields .admin-inline :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select) {
+  flex: 1; min-width: 0; border: 0; background-color: transparent; box-shadow: none; }
+.admin-fields-row .catalog-button { min-height: 34px; padding: 0 14px; }
+.admin-tags fieldset { margin: 0; padding: 0; border: 0; }
+.admin-tags legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+:root .admin .admin-tags .catalog-tags, :root .admin .catalog-tags.admin-tags { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; }
+:root .admin .admin-tags button { min-height: 28px; padding: 3px 10px; font-size: 12.5px; }
+.admin-tools { margin-left: auto; }
+.admin-meta a { color: var(--ad-accent); }
+.admin-meta a svg, .admin-journal a svg { margin-left: 3px; vertical-align: -2px; }
+.admin-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.admin-badge { padding: 2px 9px; border-radius: 99px; background: #c4b5ed24; color: var(--ad-accent); font-size: 11px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; }
+.admin-status { padding: 2px 9px; border-radius: 99px; background: #ffffff0f; color: var(--ad-muted); font-size: 12px; font-weight: 600; }
+.admin-status.is-wait { background: #f3cf9619; color: #f6dcb0; }
+.admin-status.is-ok { background: #7fd1a01a; color: #a6e3bd; }
+.admin-status.is-bad { background: #ff8a951a; color: #ffb1b8; }
+.admin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.admin-actions .catalog-button { display: inline-flex; align-items: center; gap: 8px; }
+.admin-actions .catalog-button kbd { margin-left: 2px; opacity: .75; }
+.admin-actions .catalog-button.primary kbd { background: #231b3526; box-shadow: inset 0 0 0 1px #231b3540; color: #231b35; }
+.admin-actions .catalog-button[aria-pressed='true'] { border-color: #ff8a9580; background: #ff8a951a; }
+.admin-reason { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--ad-line); }
+.admin-reason .catalog-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-reason textarea { margin: 0 !important; }
+.admin-reason .catalog-check { margin: 0; }
+.admin-reason p { margin: 0; font-size: 12.5px; }
+.admin-reason-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.admin-reason-foot .catalog-muted { flex: 1; min-width: 200px; font-size: 12.5px; }
+.admin-reports, .admin-files { padding: 12px 16px; border: 1px solid #ff8a9540; border-radius: 14px; background: #ff8a950d; color: #ffd6da; font-size: 14px; }
+.admin-files { border-color: #f3cf9640; background: #f3cf960c; color: #f6dcb0; }
+.admin-reports strong, .admin-files strong { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.admin-reports ul, .admin-files ul { display: grid; gap: 6px; margin: 0; padding-left: 20px; }
+.admin-reports small { color: #c9a3a8; }
+.admin-reports .catalog-link { margin-left: 8px; }
+.admin-files a { color: inherit; font-weight: 600; }
+
+/* «Журнал». */
+.admin-journal { display: grid; gap: 22px; align-content: start; overflow: auto; padding-right: 6px; }
+:root .admin .admin-journal-day h3 { margin: 0 0 8px; color: var(--ad-muted); font-size: 12px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; }
+.admin-journal ol { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.admin-journal li { display: grid; grid-template-columns: 52px auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 10px; font-size: 14px; }
+.admin-journal li:hover { background: #ffffff06; }
+.admin-journal time { color: var(--ad-muted); font-variant-numeric: tabular-nums; }
+.admin-journal-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ad-ink); }
+.admin-journal-what a { color: var(--ad-ink); }
+.admin-journal-what a:hover { color: var(--ad-accent); }
+.admin-journal-who { display: inline-flex; align-items: center; gap: 6px; color: var(--ad-muted); font-size: 13px; white-space: nowrap; }
+.admin-journal > .catalog-button { justify-self: start; }
+
+@media (max-width: 1100px) {
+  .admin { height: auto; }
+  .admin-stage { min-height: 50vw; }
+  .admin-layout { grid-template-columns: minmax(0, 1fr); }
+  .admin-nav { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  .admin-nav > button { margin: 0 !important; }
+  .admin-keys { display: none; }
+  .admin .catalog-moderation { grid-template-columns: minmax(0, 1fr); }
+  .admin .catalog-queue-side { position: static; max-height: 300px; }
+  .admin-journal li { grid-template-columns: 46px minmax(0, 1fr); }
+}
+
+/* «Похоже на …» and the comparison (AdminReview.jsx SimilarAlert, CompareStage). */
+.admin-similar { max-height: 22vh; overflow: auto; padding: 12px 16px; border: 1px solid #f5b94a4d; border-radius: 14px; background: #f5b94a0f; color: #f6dcb0; font-size: 14px; }
+.admin-similar strong { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.admin-similar ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.admin-similar li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.admin-similar li > span { flex: 1 1 240px; min-width: 0; }
+.admin-similar small { color: #d9bf8f; }
+.admin-similar .catalog-button { min-height: 32px; padding: 0 12px; font-size: 13px; }
+.admin-stage > .admin-compare { position: relative; width: min(100cqw, 100cqh * var(--aspect)); aspect-ratio: var(--aspect); border-radius: 14px; overflow: hidden;
+  cursor: ew-resize; touch-action: none; user-select: none; }
+.admin-compare-layer { position: absolute; inset: 0; }
+.admin-compare-layer > * { width: 100% !important; height: 100% !important; max-height: none !important; border-radius: 0 !important; }
+.admin-compare-layer > video { object-fit: cover; background: #000; }
+.admin-compare-line { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #c4b5ed; box-shadow: 0 0 10px #000a; pointer-events: none; }
+.admin-compare-line button { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 32px; height: 32px; margin: -16px 0 0 -16px; padding: 0;
+  border: 2px solid #c4b5ed; border-radius: 50%; background: #1b1922e6; color: #c4b5ed; pointer-events: auto; cursor: ew-resize; }
+.admin-stage-label.is-right { left: auto; right: 10px; }
+

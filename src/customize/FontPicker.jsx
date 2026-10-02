@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Icon, Notice } from '../catalog/Common.jsx';
+import { Icon, Modal, Notice } from '../catalog/Common.jsx';
 import catalog from '../../data/dota-fonts.json';
 import { dotaFontPack, fontCoverage, readFont } from '../../scripts/dota-font.mjs';
 import { buildZip } from '../../scripts/zip.mjs';
-import { fontInstaller, installerNames } from '../../scripts/installer.mjs';
-import { t } from '../../scripts/i18n.mjs';
-import { DELIVERY, InstallerSteps } from './MenuBackground.jsx';
+import { FONT_NAME, installCommand } from '../../scripts/installer.mjs';
+import { lang, t } from '../../scripts/i18n.mjs';
+import { DELIVERY } from './MenuBackground.jsx';
 import { CopyField, Field, InstallWindow, Segmented, rich } from './CustomizeApp.jsx';
+import FontScene from './FontScene.jsx';
 
 // The Dota font: a catalog font (assets/dota-fonts, data/dota-fonts.json) or the user's own
 // .ttf/.otf becomes Valve's font files (scripts/dota-font.mjs), zipped in the browser. Nothing is
-// uploaded. The preview draws game text the way Panorama styles it.
+// uploaded: «Командой PowerShell» saves the zip under a name with its SHA-256 and gives a command whose
+// address carries the SHA-256 and size (scripts/installer.mjs fontScript). The preview (FontScene.jsx)
+// puts the font on the game's own screens.
 const ROLES = () => [['Radiance', t('Текст')], ['Reaver', t('Заголовки')], ['RadianceM', t('Цифры')]];
 const ROLE_HINT = () => t('Текст — чат, подсказки и категории сетки героев. Заголовки — верхнее меню и имена героев. Цифры — таймер и счёт.');
 const fontURL = (id, file) => `./assets/dota-fonts/${id}/${file}`;
@@ -23,50 +26,40 @@ function previewFace(family, source, weight) {
   return loaded.get(key);
 }
 const nearest = (files, weight) => [...files].sort((a, b) => Math.abs(a.weight - weight) - Math.abs(b.weight - weight))[0];
+const removeCommand = () => installCommand(`${location.origin}/api/catalog/install/font-remove${lang === 'en' ? '-en' : ''}`);
 // The archive's read-me (ПРОЧТИ.txt / README.txt), in the site's language; Windows line ends.
-const README = (name, license, installer) => {
-  const names = installerNames('font');
-  return [t('Шрифт для Dota 2 от GridStudio: {name}.', { name }), license, '',
-    ...(installer ? [t('Проще всего: запусти «{install}» (Windows сам найдёт Dota 2). Вернуть шрифты Dota — «{remove}».', names), ''] : []),
-    t('Установка вручную:'),
-    t('1. Закрой Dota 2.'),
-    t('2. В Steam: Dota 2 -> «Свойства» -> «Установленные файлы» -> «Обзор».'),
-    t('3. Открой game\\dota\\panorama\\fonts. На всякий случай скопируй эту папку fonts куда-нибудь.'),
-    t('4. Скопируй туда все файлы из папки fonts этого архива С ЗАМЕНОЙ. Удалять ничего не нужно.'),
-    t('5. Если есть папка %TEMP%\\fontconfig (вставь %TEMP% в адресную строку проводника), удали её.'),
-    t('6. Запусти Dota 2.'), '',
-    t('Вернуть как было: Steam -> Dota 2 -> «Свойства» -> «Установленные файлы» -> «Проверить целостность файлов игры».'),
-    t('После больших обновлений Steam может вернуть шрифты Dota: тогда скопируй файлы ещё раз.'), ''].join('\r\n');
-};
+const README = (name, license, command) => [t('Шрифт для Dota 2 от GridStudio: {name}.', { name }), license, '',
+  ...(command ? [t('Проще всего: вставь в PowerShell команду с сайта — она сама найдёт этот архив и Dota. Вернуть шрифты Dota — вставь в PowerShell:'), removeCommand(), ''] : []),
+  t('Установка вручную:'),
+  t('1. Закрой Dota 2.'),
+  t('2. В Steam: Dota 2 -> «Свойства» -> «Установленные файлы» -> «Обзор».'),
+  t('3. Открой game\\dota\\panorama\\fonts. На всякий случай скопируй эту папку fonts куда-нибудь.'),
+  t('4. Скопируй туда все файлы из папки fonts этого архива С ЗАМЕНОЙ. Удалять ничего не нужно.'),
+  t('5. Если есть папка %TEMP%\\fontconfig (вставь %TEMP% в адресную строку проводника), удали её.'),
+  t('6. Запусти Dota 2.'), '',
+  t('Вернуть как было: Steam -> Dota 2 -> «Свойства» -> «Установленные файлы» -> «Проверить целостность файлов игры».'),
+  t('После больших обновлений Steam может вернуть шрифты Dota: тогда скопируй файлы ещё раз.'), ''].join('\r\n');
+function saveFile(blob, name) {
+  const url = URL.createObjectURL(blob), link = document.createElement('a');
+  link.href = url; link.download = name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 function FontChip({ font, selected, onSelect }) {
   const face = nearest(font.files, 400), family = `GSFont-${font.id}`, [ready, setReady] = useState(false);
   useEffect(() => { previewFace(family, fontURL(font.id, face.file), face.weight).then(setReady); }, [font.id]);
-  return <button type="button" role="radio" aria-checked={selected} onClick={onSelect} title={`${font.family} — ${font.style.toLowerCase()}`}>
+  return <button type="button" role="radio" aria-checked={selected} onClick={onSelect} title={`${font.family} — ${t(font.style).toLowerCase()}`}>
     <span style={{ fontFamily: ready ? `'${family}'` : undefined, fontWeight: face.weight, opacity: ready ? 1 : 0.4 }}>{font.family}</span></button>;
 }
 
-function GamePreview({ family, roles, text }) {
-  const font = (role) => roles[role] && family ? `'${family}', 'StudioRadiance'` : "'StudioRadiance'";
-  const heroes = [[1, 2, 7, 14, 18], [8, 11, 6, 44, 67], [5, 22, 25, 74, 86], [120, 135, 136, 137, 53]];
-  const names = [t('СИЛА'), t('ЛОВКОСТЬ'), t('ИНТЕЛЛЕКТ'), t('УНИВЕРСАЛЫ')];
-  return <div className="custom-game" aria-label={t('Превью шрифта в игре')}>
-    <div className="custom-game-bar" style={{ fontFamily: font('Reaver') }}><b>{t('ГЕРОИ')}</b><b>{t('АРСЕНАЛ')}</b><b>{t('МАГАЗИН')}</b><b>{t('ОБУЧЕНИЕ')}</b><span style={{ fontFamily: font('RadianceM') }}>23:41</span></div>
-    <div className="custom-game-grid">
-      {text && <div className="custom-game-category is-own" style={{ fontFamily: font('Radiance') }}><span>{text}</span></div>}
-      {names.map((name, index) => <div key={name} className="custom-game-category" style={{ fontFamily: font('Radiance') }}><span>{name}</span>
-        <div>{heroes[index].map((id) => <img key={id} src={`./assets/portraits/${id}.webp`} alt="" loading="lazy"/>)}</div></div>)}
-    </div>
-    <div className="custom-game-chat" style={{ fontFamily: font('Radiance') }}>
-      <p><i>{t('[Всем]')}</i> <b>{t('Пользователь:')}</b> {t('gg wp, изи катка')}</p><p><i>{t('[Союзникам]')}</i> <b>{t('Мипо:')}</b> {t('рошан через 2 минуты')}</p>
-      <p className="custom-game-score" style={{ fontFamily: font('RadianceM') }}>12 / 3 / 7 · 412 GPM</p>
-    </div>
-  </div>;
-}
-
-function Install({ delivery, onClose }) {
-  const names = installerNames('font');
-  if (delivery === 'installer') return <InstallWindow title={t('Как установить шрифт')} onClose={onClose}><InstallerSteps what={t('шрифт')} run={names.install} remove={names.remove}/></InstallWindow>;
+// The command of the archive just saved (its name and fingerprint are in it); before a download, a word on it.
+function Install({ delivery, handed, onClose }) {
+  if (delivery === 'command') return <InstallWindow title={t('Как установить шрифт')} onClose={onClose}><ol>
+    <li>{handed ? rich(t('Шрифт скачан как {file} — не переименовывай и не распаковывай его.'), { file: <code>{handed.name}</code> }) : t('Скачай шрифт: архив сохранится сам, а здесь появится команда для него.')}</li>
+    {handed && <li>{t('Скопируй команду:')}<CopyField value={handed.command}/></li>}
+    <li>{rich(t('Открой PowerShell ({key}, набери PowerShell, {enter}), вставь команду и нажми {enter}.'), { key: <kbd>Win</kbd>, enter: <kbd>Enter</kbd> })}</li>
+    <li>{t('Она сама найдёт скачанный архив и Dota через Steam, попросит закрыть игру, сохранит шрифты Dota и положит новые.')}</li>
+    <li>{t('Запусти Dota 2.')}</li>
+  </ol><p className="catalog-muted">{t('Вернуть шрифты Dota — вставь в PowerShell:')}</p><CopyField value={handed?.remove || removeCommand()}/></InstallWindow>;
   return <InstallWindow title={t('Как установить шрифт')} onClose={onClose}><ol>
     <li>{t('Закрой Dota 2.')}</li>
     <li>{t('В Steam: Dota 2 → «Свойства» → «Установленные файлы» → «Обзор».')}</li>
@@ -77,11 +70,30 @@ function Install({ delivery, onClose }) {
   </ol><p className="catalog-muted">{t('Вернуть шрифт Dota: Steam → Dota 2 → «Свойства» → «Установленные файлы» → «Проверить целостность файлов игры». После больших обновлений Steam иногда сам возвращает шрифты: тогда скопируй файлы ещё раз.')}</p></InstallWindow>;
 }
 
+// Back to Dota's own fonts, two ways: the command puts back the copy its install kept
+// (scripts/installer.mjs fontRemoveScript); by hand, Steam's file check brings back Valve's files.
+function Restore({ onClose }) {
+  return <Modal title={t('Вернуть обычный шрифт')} icon="undo" onClose={onClose} size="md"><div className="custom-install custom-restore">
+    <section><h3>{t('Командой PowerShell')}</h3>
+      <p>{t('Если шрифт ставился командой: она сохранила шрифты Dota и вернёт их.')}</p>
+      <CopyField value={removeCommand()}/>
+      <p className="catalog-muted">{rich(t('Открой PowerShell ({key}, набери PowerShell, {enter}), вставь команду и нажми {enter}. Закрыть игру она попросит сама.'), { key: <kbd>Win</kbd>, enter: <kbd>Enter</kbd> })}</p></section>
+    <section><h3>{t('Файлами')}</h3><ol>
+      <li>{t('Закрой Dota 2.')}</li>
+      <li>{t('В Steam: Dota 2 → «Свойства» → «Установленные файлы» → «Проверить целостность файлов игры». Steam сам вернёт шрифты Dota.')}</li>
+      <li>{rich(t('Или, если перед установкой сохранял папку {folder}, положи её обратно с заменой.'), { folder: <code>game\dota\panorama\fonts</code> })}</li>
+      <li>{rich(t('Если есть папка {folder}, удали её: там старый кэш шрифтов.'), { folder: <CopyField value="%TEMP%\fontconfig"/> })}</li>
+      <li>{t('Запусти Dota 2.')}</li>
+    </ol></section>
+  </div></Modal>;
+}
+
 export default function FontPicker() {
   const [selected, setSelected] = useState(catalog.fonts[0].id), [own, setOwn] = useState(null);
-  const [roles, setRoles] = useState({ Radiance: true, Reaver: true, RadianceM: true }), [text, setText] = useState('');
+  const [roles, setRoles] = useState({ Radiance: true, Reaver: true, RadianceM: true });
   const [delivery, setDelivery] = useState('file'), [previewFamily, setPreviewFamily] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState(''), [install, setInstall] = useState(false);
-  const input = useRef(null), shownGuide = useRef(false);
+  const [handed, setHanded] = useState(null), [restore, setRestore] = useState(false);
+  const input = useRef(null);
   const chosen = own ? null : catalog.fonts.find((font) => font.id === selected);
   // The preview family: every weight of the chosen font, so bold and semi-bold text look right.
   useEffect(() => {
@@ -131,20 +143,25 @@ export default function FontPicker() {
       }
       const files = dotaFontPack(fonts, families).map((file) => ({ name: `fonts/${file.name}`, data: file.data }));
       if (!own) files.push({ name: 'OFL.txt', data: await (await fetch(fontURL(chosen.id, 'OFL.txt'))).text() });
-      if (delivery === 'installer') files.push(...fontInstaller());
-      files.push({ name: t('ПРОЧТИ.txt'), data: new Uint8Array([0xef, 0xbb, 0xbf, ...new TextEncoder().encode(README(name, license, delivery === 'installer'))]) });
-      const zip = await buildZip(files), url = URL.createObjectURL(zip), link = document.createElement('a');
-      link.href = url; link.download = `gridstudio-font-${slug}.zip`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-      if (!shownGuide.current) { shownGuide.current = true; setInstall(true); }
+      files.push({ name: t('ПРОЧТИ.txt'), data: new Uint8Array([0xef, 0xbb, 0xbf, ...new TextEncoder().encode(README(name, license, delivery === 'command'))]) });
+      const zip = await buildZip(files);
+      if (delivery === 'command') {
+        // Under a name with its fingerprint, and the command for exactly this file, shown at once.
+        const bytes = new Uint8Array(await zip.arrayBuffer());
+        const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+        saveFile(zip, FONT_NAME(hash));
+        setHanded({ name: FONT_NAME(hash), command: installCommand(`${location.origin}/api/catalog/install/font-${hash}-${bytes.length}${lang === 'en' ? '-en' : ''}`), remove: removeCommand() });
+      } else saveFile(zip, `gridstudio-font-${slug}.zip`);
+      // The install window after every download: the command, or the steps by hand.
+      setInstall(true);
     } catch (e) { setError(e.message || t('Не удалось собрать шрифт.')); }
     finally { setBusy(false); }
   }
   const noRole = !Object.values(roles).some(Boolean);
   return <main className="custom-work">
     <section className="custom-stage" aria-label={t('Превью шрифта')}>
-      <div className="custom-stage-area"><div className="custom-screen" style={{ '--ratio': 16 / 9 }}><GamePreview family={previewFamily} roles={roles} text={text.trim().toUpperCase().slice(0, 40)}/></div></div>
-      <div className="custom-caption custom-try"><input value={text} maxLength={40} aria-label={t('Свой текст для превью')} placeholder={t('Напиши название своей категории')} onChange={(event) => setText(event.target.value)}/>
-        <span>{t('Категории — как в сетке героев: полужирный, 16 px, заглавные. Меню, чат и цифры — схематично.')}</span></div>
+      <div className="custom-stage-area"><div className="custom-screen" style={{ '--ratio': 16 / 9 }}><FontScene family={previewFamily} roles={roles}/></div></div>
+      <p className="custom-caption">{rich(t('Перетащи черту между меню и матчем. В матче {tab} — таблица счёта, клик по золоту — магазин.'), { tab: <b>Tab</b> })}</p>
     </section>
     <aside className="custom-panel">
       <div className="custom-panel-body">
@@ -165,12 +182,13 @@ export default function FontPicker() {
       </div>
       <footer className="custom-panel-foot">
         {error && <Notice error>{error}</Notice>}
-        <Segmented label={t('Что скачать')} value={delivery} onChange={setDelivery} options={DELIVERY()}/>
+        <Segmented label={t('Что скачать')} value={delivery} onChange={(value) => { setDelivery(value); setHanded(null); }} options={DELIVERY()}/>
         <button className="catalog-button primary" disabled={busy || noRole || (!own && !chosen)} onClick={download}><Icon name="download"/>{busy ? t('Собираем…') : t('Скачать шрифт для Dota')}</button>
-        <div className="custom-foot-row"><span className="catalog-muted">{own ? own.name : chosen?.family} · {own ? t('свой шрифт') : chosen?.license.replace('SIL Open Font License 1.1', t('бесплатный, OFL'))}</span>
+        <div className="custom-foot-row"><button type="button" className="catalog-link" onClick={() => setRestore(true)}>{t('Вернуть обычный шрифт')}</button>
           <button type="button" className="catalog-link" onClick={() => setInstall(true)}>{t('Как установить')}</button></div>
       </footer>
     </aside>
-    {install && <Install delivery={delivery} onClose={() => setInstall(false)}/>}
+    {install && <Install delivery={delivery} handed={delivery === 'command' ? handed : null} onClose={() => setInstall(false)}/>}
+    {restore && <Restore onClose={() => setRestore(false)}/>}
   </main>;
 }

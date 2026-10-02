@@ -74,3 +74,21 @@ export async function renderArtPreview(text) {
   return canvas.encode('png');
 }
 
+// Two pictures one under the other, each under its label («Было» / «Стало», «Новая» / «Похожа на …»):
+// the moderation card of an update or of a near copy (server/catalog-telegram.mjs).
+export async function renderComparison(parts, { width = 1193, jpeg = false } = {}) {
+  loadFonts();
+  const images = await Promise.all(parts.map(async (part) => ({ ...part, image: Buffer.isBuffer(part.image) ? await loadImage(part.image) : part.image })));
+  const band = 46, heights = images.map(({ image }) => Math.round(image.height * width / image.width));
+  const canvas = createCanvas(width, heights.reduce((sum, h) => sum + h + band, 0)), ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#121017'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  let y = 0;
+  images.forEach(({ image, label, tone }, i) => {
+    ctx.fillStyle = tone === 'warn' ? '#f3c46d' : '#d6c8f7';
+    ctx.font = '600 24px StudioRadiance, sans-serif'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, 18, y + band / 2, width - 36);
+    ctx.drawImage(image, 0, y + band, width, heights[i]);
+    y += band + heights[i];
+  });
+  return jpeg ? canvas.encode('jpeg', 86) : canvas.encode('png');
+}

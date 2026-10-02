@@ -1,10 +1,11 @@
 import { spawn } from 'node:child_process';
-import { mkdirSync, renameSync, rmSync, writeFileSync, existsSync, statSync } from 'node:fs';
+import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { digest, equal, fail } from './catalog-store.mjs';
 import { BACKGROUND_LIMITS, backgroundMeta } from '../scripts/background-document.mjs';
 import { MENU_SIZES } from '../scripts/menu-background.mjs';
+import { pictureHash, videoHashes } from './similarity.mjs';
 
 // Shared menu backgrounds (the workshop's «Фоны»). Like player arts: anyone may send one (ALTCHA, daily
 // limits), a moderator approves it on the site or in the Telegram topic, only approved ones are
@@ -36,6 +37,12 @@ async function probe(path) {
   return info;
 }
 
+// The frames of the video and the poster, as server/similarity.mjs compares them.
+async function fingerprint(video, seconds, poster) {
+  const frames = await videoHashes(video, seconds);
+  return [...frames, await pictureHash(poster).catch(() => null)];
+}
+
 export class CatalogBackgrounds {
   constructor(store, { dir }) {
     this.store = store; this.dir = dir;
@@ -58,10 +65,23 @@ export class CatalogBackgrounds {
       ALTER TABLE backgrounds ADD COLUMN tags TEXT NOT NULL DEFAULT '[]';
       UPDATE backgrounds SET tags=json_array(category) WHERE category<>'Другое';
       ALTER TABLE backgrounds DROP COLUMN category;`); });
+    // «Оригинал / по мотивам» of a signed-in author's background (scripts/background-document.mjs).
+    if (!store.all('PRAGMA table_info(backgrounds)').some((column) => column.name === 'credit')) store.run("ALTER TABLE backgrounds ADD COLUMN credit TEXT NOT NULL DEFAULT ''");
     // Own backgrounds cannot be liked any more (like()); earlier self-likes go, as for grids.
     store.removeSelfLikes('background_likes', 'background', 'backgrounds', backgroundKey('*'));
   }
   get(id) { return this.store.get('SELECT * FROM backgrounds WHERE id=?', id); }
+  // Backgrounds sent before fingerprints (2026-10-02) get theirs, one by one, a few seconds of ffmpeg each.
+  async fingerprintMissing(limit = 200) {
+    const rows = this.store.all(`SELECT id, seconds FROM backgrounds WHERE status IN ('pending','approved')
+      AND NOT EXISTS(SELECT 1 FROM fingerprints f WHERE f.kind='background' AND f.id=backgrounds.id) ORDER BY id LIMIT ?`, limit);
+    for (const row of rows) {
+      const video = this.file(row.id, 'video'), poster = this.file(row.id, 'poster');
+      if (!existsSync(video)) continue;
+      try { this.store.similarity.saveBackground(row.id, await fingerprint(video, row.seconds, readFileSync(poster))); } catch { /* Tried again on the next start. */ }
+    }
+    return rows.length;
+  }
   file(id, kind) { return join(this.dir, `${id}.${kind === 'poster' ? 'jpg' : 'webm'}`); }
   // Checks and quotas before anything is written; files first, then the row, so a row always has files.
   async submit(input, poster, video, identity, account = null) {
@@ -99,6 +119,8 @@ export class CatalogBackgrounds {
       canvas.getContext('2d').drawImage(image, 0, 0, w, h);
       jpeg = await canvas.encode('jpeg', 82);
     } catch { rmSync(temp, { force: true }); fail(415, 'Обложка не читается.'); }
+    // Its fingerprint for near copies (server/similarity.mjs); a background without one is only not compared.
+    const hashes = await fingerprint(temp, seconds, jpeg).catch(() => null);
     const now = store.now();
     return store.tx(() => {
       guard();
@@ -106,18 +128,22 @@ export class CatalogBackgrounds {
       else if (account) store.rate(`bg-account:${account}`, limits.accountDaily, 86_400_000, { message: `С Telegram можно отправить ${limits.accountDaily} фонов за 24 часа.`, code: 'background_account_limit' });
       else store.rate(`bg:${identity.browser}`, limits.daily, 86_400_000, { message: `Без входа можно отправить ${limits.daily} фона за 24 часа. С Telegram — до ${limits.accountDaily}.`, code: 'background_guest_limit' });
       store.rate(`bg-ip:${identity.ip}`, limits.networkDaily, 86_400_000, { message: 'Достигнут общий лимит отправки фонов из этой сети за 24 часа.', code: 'background_network_limit' });
-      const { lastInsertRowid } = store.run('INSERT INTO backgrounds(title,author,tags,aspect,seconds,bytes,hash,account,browser,ip,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
-        meta.title, meta.author, JSON.stringify(meta.tags), meta.aspect, Math.round(seconds * 10) / 10, video.length, hash, account, identity.browser, identity.ip, now, now);
+      // A signed-in author is their profile (server/profiles.mjs): no signature, only «по мотивам».
+      const { lastInsertRowid } = store.run('INSERT INTO backgrounds(title,author,credit,tags,aspect,seconds,bytes,hash,account,browser,ip,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        meta.title, account ? '' : meta.author, meta.credit, JSON.stringify(meta.tags), meta.aspect, Math.round(seconds * 10) / 10, video.length, hash, account, identity.browser, identity.ip, now, now);
       const id = Number(lastInsertRowid);
       writeFileSync(this.file(id, 'poster'), jpeg);
       renameSync(temp, this.file(id, 'video'));  // the very bytes ffprobe checked
+      if (hashes) store.similarity.saveBackground(id, hashes);
       store.audit(backgroundKey(id), 'background-submit');
       return { id, status: 'pending', token: this.token(id) };
     });
   }
   // liked and mine are the viewer's (the like button is off on their own background); the answers are never cached.
   view(row, account = null) {
-    return { id: row.id, title: row.title, author: row.author, tags: JSON.parse(row.tags), aspect: row.aspect, seconds: row.seconds, bytes: row.bytes, updated: row.updated,
+    // A signed-in author's background shows their profile; an old signature of theirs stays private.
+    return { id: row.id, title: row.title, author: row.account ? '' : row.author, credit: row.credit || '', ...(row.account ? { creator: this.store.profiles.creator(row.account) } : {}),
+      tags: JSON.parse(row.tags), aspect: row.aspect, seconds: row.seconds, bytes: row.bytes, updated: row.updated,
       likes: this.store.get('SELECT count(*) n FROM background_likes WHERE background=?', row.id).n,
       liked: !!(account && this.store.get('SELECT 1 FROM background_likes WHERE background=? AND account=?', row.id, account)), mine: !!(account && row.account === account) };
   }
@@ -157,7 +183,12 @@ export class CatalogBackgrounds {
   // there are for every screen with this search and tag, for the filter.
   list({ query = '', tag = '', aspect = '', page = 0, popular = false, account = null } = {}) {
     const clauses = ["status='approved'"], args = [];
-    if (query) { clauses.push("(unicode_lower(title) LIKE ? ESCAPE '!' OR unicode_lower(author) LIKE ? ESCAPE '!')"); const q = `%${query.toLowerCase().replace(/[!%_]/g, (c) => `!${c}`)}%`; args.push(q, q); }
+    if (query) {
+      // The title, a guest's signature or a signed-in author's nickname.
+      const q = `%${query.toLowerCase().replace(/[!%_]/g, (c) => `!${c}`)}%`, accounts = this.store.profiles.matching(query);
+      clauses.push(`(unicode_lower(title) LIKE ? ESCAPE '!' OR (account IS NULL AND unicode_lower(author) LIKE ? ESCAPE '!')${accounts.length ? ` OR account IN (${accounts.map(() => '?').join(',')})` : ''})`);
+      args.push(q, q, ...accounts);
+    }
     if (tag) { clauses.push('EXISTS (SELECT 1 FROM json_each(tags) WHERE value=?)'); args.push(tag); }
     const aspects = Object.fromEntries(this.store.all(`SELECT aspect, count(*) n FROM backgrounds WHERE ${clauses.join(' AND ')} GROUP BY aspect`, ...args).map((row) => [row.aspect, row.n]));
     if (aspect) { clauses.push('aspect=?'); args.push(aspect); }
@@ -165,6 +196,15 @@ export class CatalogBackgrounds {
     const total = this.store.get(`SELECT count(*) n FROM backgrounds WHERE ${where}`, ...args).n;
     const items = this.store.all(`SELECT * FROM backgrounds WHERE ${where} ORDER BY ${popular ? `${LIKES} DESC, ` : ''}updated DESC, id DESC LIMIT 24 OFFSET ?`, ...args, page * 24).map((row) => this.view(row, account));
     return { items, total, aspects };
+  }
+  // A creator's approved backgrounds, newest first (the profile page, server/profiles.mjs).
+  byAccount(account, viewer = null, limit = 60) {
+    return this.store.all("SELECT * FROM backgrounds WHERE account=? AND status='approved' ORDER BY updated DESC, id DESC LIMIT ?", account, limit).map((row) => this.view(row, viewer));
+  }
+  // The approved backgrounds an account liked, the latest like first.
+  liked(account, limit = 200) {
+    return this.store.all(`SELECT b.* FROM background_likes l JOIN backgrounds b ON b.id=l.background WHERE l.account=? AND b.status='approved'
+      ORDER BY l.created DESC, b.id DESC LIMIT ?`, account, limit).map((row) => this.view(row, account));
   }
   // A file may be read when it is approved, or by an admin.
   // Approved files are public; the others only for admins and the author's Telegram account.
@@ -182,17 +222,21 @@ export class CatalogBackgrounds {
   }
   // The admin queue; `search` finds a title or an author in it, as the gallery's search does (tab counts stay whole).
   moderation(filter = 'pending', page = 0, search = '') {
-    const store = this.store, match = search ? " AND (unicode_lower(title) LIKE ? ESCAPE '!' OR unicode_lower(author) LIKE ? ESCAPE '!')" : '';
-    const args = search ? Array(2).fill(`%${search.toLowerCase().replace(/[!%_]/g, (c) => `!${c}`)}%`) : [];
+    const store = this.store, creators = search ? store.profiles.matching(search) : [];
+    const match = search ? ` AND (unicode_lower(title) LIKE ? ESCAPE '!' OR unicode_lower(author) LIKE ? ESCAPE '!'${creators.length ? ` OR account IN (${creators.map(() => '?').join(',')})` : ''})` : '';
+    const args = search ? [...Array(2).fill(`%${search.toLowerCase().replace(/[!%_]/g, (c) => `!${c}`)}%`), ...creators] : [];
     const where = (FILTERS[filter] || FILTERS.pending) + match;
     const counts = Object.fromEntries(Object.entries(FILTERS).map(([key, sql]) => [key, store.get(`SELECT count(*) n FROM backgrounds WHERE ${sql}`).n]));
     const total = search ? store.get(`SELECT count(*) n FROM backgrounds WHERE ${where}`, ...args).n : counts[filter in FILTERS ? filter : 'pending'];
     const items = store.all(`SELECT * FROM backgrounds WHERE ${where} ORDER BY ${filter === 'pending' ? 'id' : 'updated DESC, id DESC'} LIMIT 20 OFFSET ?`, ...args, page * 20)
-      .map((row) => ({ ...this.view(row), status: row.status, reason: row.reason, created: row.created, linked: !!row.account, related: store.get('SELECT count(*) n FROM backgrounds WHERE browser=?', row.browser).n,
-        reports: store.all('SELECT id,reason,created FROM background_reports WHERE background=? AND resolved=0 ORDER BY id', row.id) }));
+      .map((row) => {
+        const reports = store.all('SELECT id,reason,created FROM background_reports WHERE background=? AND resolved=0 ORDER BY id', row.id);
+        return { ...this.view(row), status: row.status, reason: row.reason, created: row.created, linked: !!row.account, related: store.get('SELECT count(*) n FROM backgrounds WHERE browser=?', row.browser).n,
+          reports, similar: row.status === 'pending' || reports.length ? store.similarity.similarBackgrounds(row) : [] };
+      });
     return { items, total, counts, paused: store.paused() };
   }
-  moderate(id, { action, reason = '', title, author, tags }, { transaction = true, actor = null } = {}) {
+  moderate(id, { action, reason = '', title, author, credit, tags }, { transaction = true, actor = null } = {}) {
     const store = this.store;
     const apply = () => {
       const row = this.get(id);
@@ -209,10 +253,10 @@ export class CatalogBackgrounds {
         set('approved');
       } else if (action === 'edit') {
         need('pending', 'approved');
-        const meta = backgroundMeta({ title, author, tags, aspect: row.aspect });
-        store.run('UPDATE backgrounds SET title=?,author=?,tags=?,updated=? WHERE id=?', meta.title, meta.author, JSON.stringify(meta.tags), store.now(), id);
+        const meta = backgroundMeta({ title, author: row.account ? '' : author ?? row.author, credit: credit ?? row.credit, tags, aspect: row.aspect });
+        store.run('UPDATE backgrounds SET title=?,author=?,credit=?,tags=?,updated=? WHERE id=?', meta.title, meta.author, meta.credit, JSON.stringify(meta.tags), store.now(), id);
         store.audit(backgroundKey(id), action, actor);
-        return { title: meta.title, author: meta.author, tags: meta.tags };
+        return { title: meta.title, author: meta.author, credit: meta.credit, tags: meta.tags };
       } else fail(400, 'Неизвестное действие.');
       store.audit(backgroundKey(id), action, actor);
       return { id, status: this.get(id).status };

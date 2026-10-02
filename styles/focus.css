@@ -145,6 +145,18 @@ kbd {
 .header-actions #importButton {
   background: transparent;
 }
+/* «Чат и новости» (src/Community.jsx): the users' chat and the news channel, beside Import. */
+.header-actions .header-community {
+  min-height: 36px;
+  padding: 0 10px;
+  margin-right: 2px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.header-actions .header-community:hover {
+  background: #ffffff08;
+}
 .studio-navigation {
   display: flex;
   align-items: center;

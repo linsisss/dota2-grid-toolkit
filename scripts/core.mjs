@@ -1,6 +1,7 @@
 import { DOTA, advanceAt, foreignGlyphs, foreignNoticeable, foreignSample, invisibleGlyphs, invisibleWarning } from './dota-rendering.mjs';
 import { compactCategoryRows, packPickRows, plainCategory } from './export-rows.mjs';
 import { t } from './i18n.mjs';
+import { META_POSITIONS } from './hero-meta.mjs';
 
 const WIDTH = 1193,
   HEIGHT = 593,
@@ -186,7 +187,7 @@ function importDota(data, index = 0) {
 }
 function categoryEntries(state) {
     const hidden = new Set(state.layers.filter((l) => !l.visible).map((l) => l.id));
-    return state.entities
+    const entries = state.entities
       .filter((e) => !hidden.has(e.layer))
       .flatMap((item) =>
         item.rowText && !normalizeAngle(item.rotation || 0)
@@ -202,6 +203,10 @@ function categoryEntries(state) {
         height: +e.h.toFixed(6),
         hero_ids: e.type === 'heroes' ? [...e.heroIds] : []
       } }));
+    // A meta group's numbers and captions (metaLabels): categories without heroes, as text is.
+    const labels = state.entities.filter((e) => !hidden.has(e.layer) && e.meta).flatMap((e) => metaLabels(e).map((label) => ({ layer: 'decor', entityId: e.id, category: {
+      category_name: label.text, x_position: +label.x.toFixed(6), y_position: +label.y.toFixed(6), width: 30, height: 30, hero_ids: [] } })));
+    return [...labels, ...entries];
 }
 // A download for every screen (docs/zoom-and-optimization.md «Экран выбора героя»). Dota's hero-
 // pick screen shows only the first line of a name, and it and every resolution but 1080p set
@@ -313,7 +318,8 @@ function categoryCount(state) {
             normalizeAngle(item.rotation || 0) &&
             Array.from(item.text).length > 1
           ? Array.from(item.text.toUpperCase()).filter((char) => !/\s/u.test(char)).length
-          : 1)
+          : 1) +
+      (item.meta ? metaLabels(item).length : 0)
     );
   }, 0);
 }
@@ -333,6 +339,7 @@ function assertCategoryLimit(doc) {
             Array.from(item.text).length > 1
           ? Array.from(item.text.toUpperCase()).filter((char) => !/\s/u.test(char)).length
           : 1;
+      if (item.meta) count += metaLabels(item).length;
       if (count > MAX_ENTITIES)
         throw new Error(
           t('После разделения текста получается больше 10 000 категорий. Уменьши количество символов.')
@@ -444,6 +451,74 @@ function addConfig(doc, name = t('Новая сетка'), kind = 'blank') {
     entities: template.entities,
     layers: template.layers
   });
+  return next;
+}
+// A meta group (scripts/hero-meta.mjs, the editor's «По мете»; the user's drawing, 02.10.2026): a hero
+// group whose portraits have two numbers under them (pick rate, win rate) and the captions of the two
+// lines to the left of the first portrait. e.meta = { rows: { heroId: [[text, width] × 2] },
+// captions: [[text, width] × 2] }, widths in the game's font. The numbers belong to their heroes and
+// their places come from the group's layout, so moving, resizing or reordering keeps them under the
+// right portraits; a hero added later has none. They become categories without heroes on export.
+export const META_CAPTIONS = Object.freeze(['PICKRATE', 'WINRATE']);
+const META_LINE = 16, META_CAPTION_GAP = 10;
+function metaMeasure(heroIds, labels, measure) {
+  const pair = (text) => [String(text), Math.round(measure(String(text)) * 100) / 100];
+  const rows = {};
+  heroIds.forEach((id, k) => { if (Array.isArray(labels?.[k]) && labels[k].length) rows[id] = labels[k].slice(0, 2).map(pair); });
+  return { rows, captions: META_CAPTIONS.map(pair) };
+}
+function cleanMeta(meta) {
+  const pair = (value) => Array.isArray(value) && value.length === 2 && typeof value[0] === 'string' && value[0].length <= 40 && finite(value[1]) && value[1] >= 0 && value[1] < 2000;
+  if (!meta || typeof meta !== 'object' || !meta.rows || typeof meta.rows !== 'object' || Array.isArray(meta.rows)) return undefined;
+  const rows = {};
+  for (const [id, lines] of Object.entries(meta.rows).slice(0, 1000)) if (/^[1-9]\d{0,5}$/.test(id) && Array.isArray(lines) && lines.length <= 2 && lines.every(pair)) rows[id] = lines.map((line) => [...line]);
+  const captions = Array.isArray(meta.captions) && meta.captions.length <= 2 && meta.captions.every(pair) ? meta.captions.map((line) => [...line]) : [];
+  return { rows, captions };
+}
+// The places of a meta group's numbers and captions: [{ text, x, y, w }] (x, y: a category's origin).
+function metaLabels(e) {
+  if (e.type !== 'heroes' || !e.meta?.rows || !e.heroIds.length) return [];
+  const layout = heroLayout(e);
+  if (!layout) return [];
+  const out = [], line = (text, width, x, y) => out.push({ text, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, w: width });
+  e.heroIds.forEach((id, k) => {
+    const lines = e.meta.rows[id];
+    if (!lines) return;
+    const x = e.x + layout.left + (k % layout.cols) * layout.stepX, bottom = e.y + layout.top + Math.floor(k / layout.cols) * layout.stepY + layout.cardH;
+    lines.forEach(([text, width], n) => line(text, width, x + layout.cardW / 2 - width / 2 - DOTA.listPadding, bottom + 2 + n * META_LINE));
+  });
+  if (out.length) {
+    const x = e.x + layout.left, bottom = e.y + layout.top + layout.cardH;
+    (e.meta.captions || []).forEach(([text, width], n) => line(text, width, x - META_CAPTION_GAP - width - DOTA.listPadding, bottom + 2 + n * META_LINE));
+  }
+  return out;
+}
+// A new meta group's size: one row of `count` portraits at `scale` of Dota's size.
+function metaGroupSize(count, scale) {
+  const pad = DOTA.listPadding;
+  return { w: Math.max(1, count) * DOTA.cellWidth * scale + pad * 2, h: DOTA.cellHeight * scale + pad * 2 };
+}
+// A meta group ready to add: `labels[k]` are the two lines under hero k; `measure(text)` their widths.
+function metaGroup(doc, { name, heroIds, labels, x, y, scale = 1.08, measure }) {
+  return entity(doc, { type: 'heroes', name, heroIds: [...heroIds], x, y, ...metaGroupSize(heroIds.length, scale), layer: 'heroes', meta: metaMeasure(heroIds, labels, measure) });
+}
+// A grid of the hero meta: a heading and a meta group per position. Five groups with the numbers
+// and their captions do not fit the 593-unit grid in one column, so they make two: carry, mid,
+// offlane on the left, the two supports and the data's note (`legend`) on the right.
+const META_SCALE = 0.92, META_ROW = 140, META_TOP = 50;
+function addMetaConfig(doc, name, heading, groups, { labels = null, legend = [], measure = (text) => Array.from(text).length * 9 } = {}) {
+  if (!Array.isArray(groups) || groups.length !== META_POSITIONS.length || groups.some((ids) => !Array.isArray(ids) || ids.length > 10 || ids.some((id) => !Number.isSafeInteger(id))))
+    throw new Error(t('Не удалось собрать сетку меты.'));
+  const next = addConfig(doc, name, 'blank');
+  const caption = Math.max(...META_CAPTIONS.map((text) => measure(text))) + META_CAPTION_GAP + DOTA.listPadding * 2;
+  const { w } = metaGroupSize(10, META_SCALE), gap = 24;
+  const left = Math.round((WIDTH - 2 * (caption + w) - gap) / 2 + caption);
+  const slot = (i) => ({ x: left + (i < 3 ? 0 : caption + w + gap), y: META_TOP + (i % 3) * META_ROW });
+  const text = (value, x, y) => next.entities.push(entity(next, { type: 'text', name: value, text: value, x, y, w: Math.max(30, Math.ceil(measure(value)) + 8), h: 30, layer: 'decor' }));
+  groups.forEach((heroIds, i) => next.entities.push(metaGroup(next, { name: t(META_POSITIONS[i]), heroIds, labels: labels?.[i], ...slot(i), scale: META_SCALE, measure })));
+  const free = slot(5);
+  legend.forEach((value, line) => text(value, free.x, free.y + 30 + line * 22));
+  text(heading, Math.round((WIDTH - measure(heading)) / 2 - DOTA.listPadding), 12);
   return next;
 }
 function importProject(data) {
@@ -603,6 +678,12 @@ function importProject(data) {
   importDota(exportDota(copy), copy.configIndex);
   // Older autosaves may contain rows created by automatic grouping. Restore
   // their independent glyphs once, retaining IDs, geometry and layer metadata.
+  // A meta group's numbers (metaLabels) are kept only in the shape they were made in.
+  for (const item of copy.entities) {
+    if (item.meta === undefined) continue;
+    const meta = item.type === 'heroes' ? cleanMeta(item.meta) : undefined;
+    if (meta) item.meta = meta; else delete item.meta;
+  }
   copy.entities = copy.entities.flatMap((item) => {
     if (!item.rowGlyphs) return [item];
     return textGlyphs(item).map((glyph, index) => {
@@ -806,10 +887,12 @@ function bounds(items, visual = false) {
     y = Infinity,
     right = -Infinity,
     bottom = -Infinity;
-  for (const e of visual ? items.flatMap((item) => textGlyphs(item)) : items) {
+  // Seen on screen, a meta group also covers its numbers and captions (metaLabels).
+  const labels = visual ? items.flatMap((item) => metaLabels(item)).map((label) => ({ x: label.x, y: label.y, w: label.w + DOTA.listPadding * 2, h: DOTA.header })) : [];
+  for (const e of visual ? [...items.flatMap((item) => textGlyphs(item)), ...labels] : items) {
     const points = [
       { x: e.x, y: e.y },
-      { x: e.x + e.w, y: e.y + (visual ? visualHeight(e) : e.h) }
+      { x: e.x + e.w, y: e.y + (visual && e.type ? visualHeight(e) : e.h) }
     ];
     for (const p of points) {
       x = Math.min(x, p.x);
@@ -1099,6 +1182,12 @@ export default {
   groupEntities,
   ungroupLayers,
   addConfig,
+  addMetaConfig,
+  metaGroup,
+  metaGroupSize,
+  metaLabels,
+  cleanMeta,
+  META_CAPTIONS,
   appendConfigs,
   bounds,
   visualHeight,

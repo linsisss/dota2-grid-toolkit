@@ -42,7 +42,7 @@ export default function OwnedBackgrounds({ auth }) {
     <div className="catalog-results publication-summary"><span>{t('Публикаций: {count}', { count: items.length })}</span>
       {!auth.user && <p>{t('Без входа видны фоны, опубликованные из этого браузера.')} <button className="catalog-link" onClick={() => auth.requestLogin()}>{t('Войти через Telegram')}</button></p>}
     </div>
-    {error && <Notice error>{error}<button className="catalog-link" onClick={() => setRetry((x) => x + 1)}>{t('Попробовать снова')}</button></Notice>}
+    {error && <Notice error report>{error}<button className="catalog-link" onClick={() => setRetry((x) => x + 1)}>{t('Попробовать снова')}</button></Notice>}
     {items.length ? <div className="background-grid">{items.map((item) => {
       const approved = item.status === 'approved';
       return <BackgroundCard key={`${item.local ? 'local' : 'own'}:${item.id}`} item={item} poster={approved ? null : item.poster} playable={approved || !item.local}

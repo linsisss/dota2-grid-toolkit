@@ -6,6 +6,10 @@
 
 `setZoom` anchors the content under the pointer for wheel zoom and under the viewport centre for slider/typed changes. Canvas scrolling stays inside the studio, with Space-drag still available. Fit restores the automatic viewport scale. Zoom is a view setting and does not alter hero dimensions, symbol coordinates or exports. The existing 16-million-pixel canvas raster limit still applies at large scales.
 
+### Moving the canvas anywhere (02.10.2026)
+
+The user asked to move the canvas freely, not only zoom it. `updateZoom` puts empty room around `#stageWrap` (margins of the viewport's size minus `PAN_EDGE` = 96 px on each side), so the viewport scrolls until only 96 px of the canvas are left on screen, at any zoom. Fitted (`fit`, the «Вписать» button and 0), the canvas sits in the middle of the room; when the room changes (window, panels) a moved canvas keeps its place on screen. Moving it by hand (Space or hand drag, middle button, the wheel, a drag in the empty room around it with any tool) sets `fit` off, so a later resize or the preview's way back keep it where it was put; opening a side panel still fits it, as before. The viewport hides its scrollbars and shows a grab cursor over the room. «Нет объектов» lives inside `#stageWrap` (it stays over the canvas); the drop overlay is placed over the visible part of the room when a file is dragged in. getView/setView keep the scroll with the room.
+
 ## Optimizer
 
 The counter action is “Оптимизация”; the >2000-category warning also offers the action. Default mode reports the download's row joining. «Упаковать точки в строки» moves symbols by up to 1.5 px, so it is off until the user ticks it (user decision, 29.09.2026: nothing that shifts symbols happens automatically, the download stays below half a pixel). Detail reduction is an explicit checkbox, followed by an editable category budget and before/after previews.

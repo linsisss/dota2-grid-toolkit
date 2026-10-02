@@ -1,0 +1,85 @@
+/* Every window of the site in one look, set by the editor's tour and meta window (asked for on
+   2026-10-02: «переработай все окна»): dark glass with a lilac glow in the corner; a header with an
+   icon tile, the title and a line under it, a close cross that turns; choices as cards; the main
+   button glowing at the bottom. The tile pops and the header's lines rise when a window opens.
+   Shared by the site's windows (src/catalog/Common.jsx Modal) and the editor's
+   (styles/editor-windows.css adds their parts). Reduced motion keeps the look, drops the motion. */
+:root {
+  --win-bg: #1f1b27; --win-line: #3d3747; --win-ink: #efeaf5; --win-text: #d3cce0; --win-muted: #afa7bf;
+  --win-accent: #c4b5ed; --win-field: #15121b;
+  --win-ease: cubic-bezier(.2, .8, .2, 1); --win-spring: cubic-bezier(.3, 1.3, .45, 1);
+  --win-glass: radial-gradient(110% 60% at 0% 0%, #c4b5ed17, transparent 60%), var(--win-bg);
+  --win-shadow: 0 40px 100px -24px #000, 0 0 0 1px #00000040, inset 0 1px 0 #ffffff0f;
+  --win-head: radial-gradient(120% 160% at 0% 0%, #c4b5ed26, transparent 55%), linear-gradient(180deg, #ffffff06, transparent);
+}
+@keyframes win-pop { 0% { opacity: 0; scale: .5; rotate: -20deg; } 60% { opacity: 1; scale: 1.1; rotate: 4deg; } 100% { scale: 1; rotate: 0deg; } }
+@keyframes win-rise { from { opacity: 0; translate: 0 8px; } }
+
+/* The header's parts. */
+.win-icon {
+  flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; color: var(--win-accent);
+  background: radial-gradient(circle at 30% 25%, #c4b5ed40, #c4b5ed12 70%); box-shadow: inset 0 0 0 1px #c4b5ed3d, 0 10px 24px -12px #c4b5ed80;
+}
+.win-icon svg { width: 21px; height: 21px; }
+.win-icon[data-tone='danger'] { color: #ff9aa4; background: radial-gradient(circle at 30% 25%, #ff8a9540, #ff8a9512 70%); box-shadow: inset 0 0 0 1px #ff8a9545, 0 10px 24px -12px #ff8a9580; }
+.win-heading { flex: 1; min-width: 0; align-self: center; }
+.win-heading h2 { margin: 0; color: var(--win-ink); font-size: 18px; font-weight: 650; letter-spacing: -.01em; line-height: 1.3; text-wrap: balance; }
+.win-heading p { margin: 3px 0 0; color: var(--win-muted); font-size: 13px; line-height: 1.5; text-wrap: pretty; }
+.win-heading p strong { color: var(--win-ink); font-weight: 600; }
+.win-close { flex: none; align-self: start; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 10px;
+  background: none; color: var(--win-muted); cursor: pointer; transition: background-color .2s, color .2s; }
+.win-close:hover, .win-close:focus-visible { background: #ffffff10; color: var(--win-ink); }
+.win-close svg { width: 18px; height: 18px; transition: rotate .35s var(--win-spring); }
+.win-close:hover svg { rotate: 90deg; }
+
+/* Choices as cards: an icon, a name and a line, a radio dot in the corner; the chosen one glows. */
+.choice-cards { display: grid; gap: 8px; min-width: 0; margin: 14px 0 4px; padding: 0; border: 0; }
+.choice-cards > legend { margin-bottom: 8px; padding: 0; color: var(--win-muted); font-size: 11px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+.choice-cards > .choice-card {
+  position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; margin: 0;
+  padding: 12px 36px 12px 12px; border: 1px solid #ffffff12; border-radius: 14px; background: #ffffff05; color: var(--win-ink); cursor: pointer;
+  transition: border-color .2s, background-color .2s, box-shadow .25s, translate .25s var(--win-ease);
+}
+.choice-cards > .choice-card:hover { border-color: #ffffff22; background: #ffffff0a; translate: 0 -1px; }
+.choice-cards > .choice-card > input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: inherit; }
+.choice-card::after { content: ''; position: absolute; top: 12px; right: 12px; width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px #ffffff38; transition: box-shadow .25s var(--win-ease); }
+.choice-card:has(input:checked) { border-color: #c4b5ed80; background: radial-gradient(120% 140% at 0% 0%, #c4b5ed21, transparent 60%), #ffffff06; box-shadow: 0 12px 28px -18px #c4b5edaa; }
+.choice-card:has(input:checked)::after { box-shadow: inset 0 0 0 4px var(--win-accent); }
+.choice-card:has(input:focus-visible) { box-shadow: 0 0 0 3px #c4b5ed55; }
+.choice-card:has(input:disabled) { opacity: .5; cursor: not-allowed; translate: none; }
+.choice-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: #ffffff0d; box-shadow: inset 0 0 0 1px #ffffff12;
+  color: var(--win-muted); transition: color .2s, background-color .2s, box-shadow .2s; }
+.choice-icon svg { width: 18px; height: 18px; }
+.choice-card:has(input:checked) .choice-icon { color: var(--win-accent); background: #c4b5ed24; box-shadow: inset 0 0 0 1px #c4b5ed40; }
+.choice-card strong { display: block; color: var(--win-ink); font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+.choice-card small { display: block; margin-top: 2px; color: var(--win-muted); font-size: 12px; line-height: 1.4; }
+
+/* The site's windows (catalog, Studio, menu background builder). */
+.catalog-dialog { border: 1px solid var(--win-line); border-radius: 20px; background: var(--win-glass); box-shadow: var(--win-shadow); }
+.catalog-dialog::backdrop { background: #08060dc4; backdrop-filter: blur(5px); }
+.catalog-dialog .catalog-dialog-header, .catalog-dialog.is-lg .catalog-dialog-header {
+  position: sticky; top: 0; z-index: 2; display: flex; align-items: flex-start; gap: 14px; padding: 20px 16px 16px 22px;
+  border-bottom: 1px solid #ffffff12; background: var(--win-head), var(--win-bg);
+}
+.catalog-dialog .catalog-dialog-header h2, .catalog-dialog.is-lg .catalog-dialog-header h2 { font-size: 18px; }
+.catalog-dialog .catalog-confirm { padding-top: 18px; }
+:is(.catalog-dialog.is-sm, .catalog-dialog.is-md) :is(.catalog-report, .catalog-login-flow) { padding-top: 18px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  dialog[open] .win-icon { animation: win-pop .55s 40ms var(--win-spring) both; }
+  dialog[open] .win-heading > * { animation: win-rise .45s 60ms var(--win-ease) both; }
+  dialog[open] .win-heading > :nth-child(2) { animation-delay: 120ms; }
+  .choice-card:has(input:checked) .choice-icon svg { animation: win-pop .42s var(--win-spring); }
+}
+
+/* The report window (src/catalog/ReportDialog.jsx): quick reasons, the field with its count, the
+   captcha, and the buttons apart from the field under a line. */
+.catalog-report-form { display: grid; gap: 16px; padding: 18px 22px 20px; }
+.catalog-report-quick { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
+.catalog-report-quick legend { margin-bottom: 8px; padding: 0; color: var(--win-muted); font-size: 11px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+.catalog-report-quick .catalog-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.catalog-report-field { display: grid; gap: 8px; color: var(--win-ink); font-size: 14px; font-weight: 600; }
+.catalog-report-field small { justify-self: end; margin-top: -2px; color: var(--win-muted); font-size: 12px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.catalog-report-form .catalog-captcha { margin: 0; }
+.catalog-report-foot { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; margin: 4px -22px -20px; padding: 16px 22px; border-top: 1px solid #ffffff10; background: #ffffff04; border-radius: 0 0 20px 20px; }
+:root .catalog-report-field textarea { font-weight: 400; }

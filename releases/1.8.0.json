@@ -1,0 +1,203 @@
+{
+  "version": "1.8.0",
+  "date": "2026-10-02",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.0",
+  "sections": [
+    {
+      "title": "Профили",
+      "changes": [
+        {
+          "text": "Профиль автора: ник, аватарка, описание, все работы и сколько лайков они собрали",
+          "children": ["Открывается по нажатию на ник — в мастерской, у фонов, в гайдах и комментариях"]
+        },
+        {
+          "text": "Ник вместо @username: всем, кто входил через Telegram, выдан ник из двух слов",
+          "children": ["Свой ник, описание, аватарка и показ Telegram — в «Настройках профиля»; ник меняется раз в неделю"]
+        },
+        {
+          "text": "Значки: «Разработчик», «Bug Hunter», «Идейный вдохновитель», «Поддержавший», «100 лайков» и «500 лайков»",
+          "children": ["Видны в профиле и иконками рядом с ником; после доната напиши @dissonance — и получишь «Поддержавший»"]
+        },
+        "«Понравилось» в своём профиле — всё с твоим лайком в одном месте, видно только тебе",
+        "На автора можно подписаться прямо из профиля — бот пришлёт его новые сетки",
+        "Автор сетки или фона после входа — ник профиля, а вместо поля «Автор» — «Оригинал / по мотивам»",
+        "Меню аккаунта выпадает из кнопки с ником"
+      ]
+    },
+    {
+      "title": "Гайды",
+      "changes": [
+        {
+          "text": "Новый раздел «Гайды» — как оформить профиль, минипрофиль и не только",
+          "children": ["Писать можно после входа через Telegram, каждый гайд проверяет модератор"]
+        },
+        "Редактор гайдов: картинки и GIF, видео, YouTube и файлы для скачивания; черновик сохраняется сам",
+        "Лайки и комментарии с ответами веткой",
+        "Пометка «Модификация файлов» объясняет, чем может обернуться замена файлов игры и как всё вернуть"
+      ]
+    },
+    {
+      "title": "Шрифт",
+      "changes": [
+        {
+          "text": "Шрифты для Dota — больше не «скоро»: 10 бесплатных шрифтов с русскими буквами или свой .ttf/.otf",
+          "children": ["Audex, Bebas Neue, Comic Relief, Cormorant Unicase, Correction Tape, Divagon, Libre Franklin, Monocraft, Oswald и Playfair Display"]
+        },
+        {
+          "text": "Превью на настоящих экранах игры — главное меню и матч, черту между ними можно тянуть",
+          "children": ["В матче Tab открывает таблицу счёта, клик по золоту — магазин"]
+        },
+        "Установка командой PowerShell и «Вернуть обычный шрифт» под кнопкой скачивания"
+      ]
+    },
+    {
+      "title": "Редактор",
+      "changes": [
+        {
+          "text": "Мета от STRATZ: группа по мете и шаблон «По мете» — сильные герои каждой позиции с пикрейтом и винрейтом",
+          "children": ["Ранг и 5, 8 или 10 героев на выбор; у любой группы — «Упорядочить по мете»"]
+        },
+        {
+          "text": "Установка сетки командой PowerShell: сама найдёт папку аккаунта Steam и положит туда сетку",
+          "children": ["Прежние сетки сохраняются копией, вернуть их — второй командой"]
+        },
+        "Окно «Экспортировать» понятнее: «Файлом вручную» или «Командой PowerShell» и шаги выбранного способа",
+        "Видеогайд по установке сетки с главами — в окне скачивания и в мастерской",
+        "Холст двигается куда угодно: колесом, пробелом с перетаскиванием или средней кнопкой",
+        "Новое обучение: подсветка перелетает от шага к шагу, свойства и шаблоны открываются сами",
+        "Полоса стилей в «Изображении в ASCII» листается колесом мыши",
+        "«Чат и новости» в шапке редактора"
+      ]
+    },
+    {
+      "title": "Мастерская",
+      "changes": [
+        "«Как установить» — с выбором «Файлом вручную» или «Командой PowerShell» и видеогайдом",
+        "Ник и значки автора на карточках сеток и фонов",
+        "В каждой скачанной сетке первой строкой — что она создана на gridstudio.me"
+      ]
+    },
+    {
+      "title": "Фон главного меню",
+      "changes": [
+        {
+          "text": "Установка фона командой PowerShell вместо «Установить фон.bat»",
+          "children": ["Сама найдёт скачанный файл и Dota, положит фон и включит русскую озвучку; убрать — второй командой"]
+        },
+        "Окно «Как установить» открывается после каждого скачивания — в сборщике и в «Студии»"
+      ]
+    },
+    {
+      "title": "Сайт",
+      "changes": [
+        {
+          "text": "«Чат и новости» — чат пользователей и канал с новостями в одном окне",
+          "children": ["«Сообщить о баге» сразу копирует справку для разработчиков — останется вставить в сообщение"]
+        },
+        "«Поддержать разработку»: DonationAlerts и криптовалюта — адрес копируется по клику, QR-код при наведении",
+        "Новый вид всего сайта и редактора: тёмное стекло, плавные анимации, окна в одном стиле",
+        "Одно окно жалобы для сеток, фонов, гайдов и комментариев — частые причины одной кнопкой"
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Profiles",
+        "changes": [
+          {
+            "text": "Creator profiles: nickname, avatar, a few words about yourself, all the works and how many likes they got",
+            "children": ["Open one by clicking a nickname — in the workshop, backgrounds, guides and comments"]
+          },
+          {
+            "text": "A nickname instead of the @username: everyone who signed in with Telegram got a two-word nickname",
+            "children": ["Your own nickname, description, avatar and Telegram display are in «Profile settings»; the nickname changes once a week"]
+          },
+          {
+            "text": "Badges: Developer, Bug Hunter, Idea maker, Supporter, 100 likes and 500 likes",
+            "children": ["Shown in the profile and as icons next to the nickname; after donating, message @dissonance to get Supporter"]
+          },
+          "«Liked» on your profile — everything you liked in one place, only you can see it",
+          "Follow a creator right from their profile — the bot sends their new grids",
+          "A signed-in author's grid or background is signed by the profile nickname, and «Author» became «Original / based on»",
+          "The account menu drops down from the nickname button"
+        ]
+      },
+      {
+        "title": "Guides",
+        "changes": [
+          {
+            "text": "A new «Guides» section — how to style your profile, mini-profile and more",
+            "children": ["Write one after signing in with Telegram; a moderator checks every guide"]
+          },
+          "A guide editor: pictures and GIFs, video, YouTube and files to download; the draft saves itself",
+          "Likes and comments with threaded replies",
+          "The «Game file mods» mark explains what changing the game's files may lead to and how to undo it"
+        ]
+      },
+      {
+        "title": "Font",
+        "changes": [
+          {
+            "text": "Fonts for Dota are no longer «soon»: 10 free fonts with Cyrillic, or your own .ttf/.otf",
+            "children": ["Audex, Bebas Neue, Comic Relief, Cormorant Unicase, Correction Tape, Divagon, Libre Franklin, Monocraft, Oswald and Playfair Display"]
+          },
+          {
+            "text": "A preview on real game screens — the main menu and a match, with a draggable line between them",
+            "children": ["In the match, Tab opens the scoreboard and a click on the gold opens the shop"]
+          },
+          "Install with a PowerShell command, and «Restore the default font» under the download button"
+        ]
+      },
+      {
+        "title": "Editor",
+        "changes": [
+          {
+            "text": "Meta from STRATZ: a meta group and the «By meta» template — the strongest heroes of each position with pick and win rates",
+            "children": ["Pick the rank and 5, 8 or 10 heroes; any group can be «Sorted by meta»"]
+          },
+          {
+            "text": "Install a grid with a PowerShell command: it finds your Steam account folder and puts the grid there",
+            "children": ["Your previous grids are kept as a copy; a second command brings them back"]
+          },
+          "A clearer «Export» window: «File by hand» or «PowerShell command» and the steps of the chosen way",
+          "A video guide to installing a grid, with chapters — in the download window and in the workshop",
+          "Move the canvas anywhere: with the wheel, space and drag, or the middle button",
+          "A new tour: the highlight flies from step to step, properties and templates open by themselves",
+          "The style strip in «Image to ASCII» scrolls with the mouse wheel",
+          "«Chat and news» in the editor header"
+        ]
+      },
+      {
+        "title": "Workshop",
+        "changes": [
+          "«How to install» lets you choose «File by hand» or «PowerShell command» and has the video guide",
+          "The author's nickname and badges on grid and background cards",
+          "Every downloaded grid says on its first line that it was made on gridstudio.me"
+        ]
+      },
+      {
+        "title": "Main menu background",
+        "changes": [
+          {
+            "text": "Install a background with a PowerShell command instead of «Install background.bat»",
+            "children": ["It finds the downloaded file and Dota, puts the background in place and turns on the Russian voice-over; a second command removes it"]
+          },
+          "The «How to install» window opens after every download — in the builder and in the Studio"
+        ]
+      },
+      {
+        "title": "Site",
+        "changes": [
+          {
+            "text": "«Chat and news» — the users' chat and the news channel in one window",
+            "children": ["«Report a bug» copies a note for the developers right away — just paste it into your message"]
+          },
+          "«Support development»: DonationAlerts and crypto — the address copies on a click, the QR code shows on hover",
+          "A new look for the whole site and editor: dark glass, smooth animations, windows in one style",
+          "One report window for grids, backgrounds, guides and comments — common reasons in one click"
+        ]
+      }
+    ]
+  }
+}

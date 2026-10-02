@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { APP_VERSION } from '../scripts/version.mjs';
 import { mountDisclosureMotion } from '../scripts/disclosure-motion.mjs';
 import { lang, locale, t } from '../scripts/i18n.mjs';
+import { COMMUNITY } from '../scripts/community.mjs';
+import { Icon } from './Icon.jsx';
 import './changelog.css';
 
 // The site's version beside its source link (workshop and home footers); a click opens «Что нового»:
@@ -60,7 +62,8 @@ function ChangelogDialog({ close: done }) {
       {error ? <p>{t('Не удалось загрузить список изменений.')}</p> : !releases ? <p>{t('Загружаем…')}</p>
         : releases.map((release, i) => <Release key={release.version} release={release} latest={i === 0} index={i}/>)}
     </div>
-    <footer><a href={FULL} target="_blank" rel="noreferrer">{t('Полный список изменений на GitHub ↗')}</a></footer>
+    <footer><a href={FULL} target="_blank" rel="noreferrer">{t('Полный список изменений на GitHub ↗')}</a>
+      <a className="changelog-channel" href={COMMUNITY.channel} target="_blank" rel="noreferrer"><Icon name="telegramLogo" size={15}/>{t('Новости проекта — в Telegram-канале')}</a></footer>
   </dialog>;
 }
 

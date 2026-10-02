@@ -2,39 +2,42 @@ import { useState } from 'react';
 import { ART_CATEGORIES } from '../../scripts/art-document.mjs';
 import { ArtPreview, DOTA_GRID } from '../ArtPreview.jsx';
 import { catalogAPI } from './api.js';
-import { Icon } from './Common.jsx';
-import { Queue, RejectReason, reasonNote, useQueue } from './ModerationQueue.jsx';
+import { Queue, reasonNote, useQueue } from './ModerationQueue.jsx';
+import { MetaFields, ReviewLayout } from './AdminReview.jsx';
 
 const TABS = [['pending', 'На проверке'], ['approved', 'В библиотеке'], ['hidden', 'Скрыты и отклонены']];
-const STATUS = { pending: 'На проверке', approved: 'В библиотеке у всех пользователей', hidden: 'Скрыт из библиотеки', rejected: 'Отклонён' };
+const STATUS = { pending: ['На проверке', 'wait'], approved: ['В библиотеке', 'ok'], hidden: ['Скрыт', 'bad'], rejected: ['Отклонён', 'bad'] };
+
+// A row of the list (here and in «Входящие»).
+export const artEntry = (art) => <><strong>{art.name}</strong><span>{art.author || 'Без подписи'}</span><small>{art.category} · строк: {art.text.split('\n').length}</small></>;
 
 // Arts sent for the editor's library, in the admin panel.
-export default function ArtModeration({ denied }) {
-  const queue = useQueue('arts', 'pending', denied), { item } = queue;
-  return <Queue queue={queue} tabs={TABS} label="Арты" entry={art => <><strong>{art.name}</strong><span>{art.author || 'Без подписи'}</span><small>{art.category} · строк: {art.text.split('\n').length}</small></>}>
+export default function ArtModeration({ denied, onChanged }) {
+  const queue = useQueue('arts', 'pending', denied, onChanged), { item } = queue;
+  return <Queue queue={queue} tabs={TABS} label="Арты" entry={artEntry}>
     {/* A fresh form per art and after its name, category or author were saved. */}
-    {item && <Review key={[item.id, item.name, item.category, item.author].join('\n')} item={item} queue={queue}/>}
+    {item && <ArtReview key={[item.id, item.name, item.category, item.author, item.status].join('\n')} item={item} queue={queue}/>}
   </Queue>;
 }
 
-function Review({ item, queue: { busy, run } }) {
-  const [reason, setReason] = useState(''), [meta, setMeta] = useState({ name: item.name, category: item.category, author: item.author });
-  const act = (action, extra = {}) => run(() => catalogAPI(`/admin/arts/${item.id}`, { method: 'POST', body: { action, reason, ...extra } }));
-  const changed = ['name', 'category', 'author'].some(key => meta[key] !== item[key]);
-  return <section className="catalog-review">
+export function ArtReview({ item, queue: { busy, run } }) {
+  const [meta, setMeta] = useState({ name: item.name, category: item.category, author: item.author });
+  const send = (action, extra = {}) => catalogAPI(`/admin/arts/${item.id}`, { method: 'POST', body: { action, ...extra } });
+  const changed = ['name', 'category', 'author'].some((key) => meta[key] !== item[key]);
+  // Approving with corrections saves them first.
+  const decide = (action, reason = '') => run(async () => { if (changed && action === 'approve') await send('edit', meta); await send(action, { reason }); });
+  const [text, tone] = STATUS[item.status] || [item.status, 'neutral'];
+  const actions = item.status === 'pending' ? [
+    { id: 'approve', label: changed ? 'Сохранить и одобрить' : 'Одобрить', icon: 'check', tone: 'primary', key: 'a', run: () => decide('approve') },
+    { id: 'reject', label: 'Отклонить', icon: 'close', key: 'r', reason: { kind: 'arts', required: true }, run: (reason) => decide('reject', reason) }
+  ] : item.status === 'approved' ? [
+    { id: 'hide', label: 'Скрыть из библиотеки', icon: 'eyeOff', tone: 'danger', key: 'h', reason: { confirm: 'Скрыть' }, run: (reason) => decide('hide', reason) }
+  ] : [{ id: 'restore', label: 'Вернуть в библиотеку', icon: 'back', tone: 'primary', key: 'a', run: () => decide('restore') }];
+  const fields = item.status === 'rejected' || item.status === 'hidden' ? null : <MetaFields title={meta.name} author={meta.author} titleMax={60}
+    onTitle={(name) => setMeta({ ...meta, name })} onAuthor={(author) => setMeta({ ...meta, author })} changed={changed} busy={busy} onSave={() => run(() => send('edit', meta))}
+    extra={<label className="admin-inline"><span>Категория</span><select value={meta.category} onChange={(event) => setMeta({ ...meta, category: event.target.value })}>{ART_CATEGORIES.map((value) => <option key={value}>{value}</option>)}</select></label>}/>;
+  return <ReviewLayout badge="Готовый арт" title={item.name} fields={fields} status={{ text: text + reasonNote(item.reason), tone }} busy={busy} actions={actions}
+    meta={<>строк: {item.text.split('\n').length} · отправок из этого браузера: {item.related}{item.linked ? ' · автор в Telegram, бот сообщит о решении' : ''}</>}>
     <div className="art-review-preview"><ArtPreview art={item} canvas={DOTA_GRID}/></div>
-    <p className="catalog-muted">{STATUS[item.status]}{reasonNote(item.reason)}. Отправок артов из этого браузера: {item.related}.{item.linked ? ' Автор вошёл через Telegram — бот сообщит ему о решении.' : ''}</p>
-    {item.status !== 'rejected' && item.status !== 'hidden' && <form className="art-review-meta" onSubmit={event => { event.preventDefault(); act('edit', meta); }}>
-      <label>Название<input value={meta.name} maxLength={60} onChange={event => setMeta({ ...meta, name: event.target.value })}/></label>
-      <label>Категория<select value={meta.category} onChange={event => setMeta({ ...meta, category: event.target.value })}>{ART_CATEGORIES.map(value => <option key={value}>{value}</option>)}</select></label>
-      <label>Автор<input value={meta.author} maxLength={40} onChange={event => setMeta({ ...meta, author: event.target.value })}/></label>
-      <button className="catalog-button" disabled={busy || !changed}>Сохранить</button></form>}
-    {item.status === 'pending' && <><RejectReason kind="arts" value={reason} onChange={setReason}/>
-      <div className="catalog-actions"><button className="catalog-button primary" disabled={busy || changed} onClick={() => act('approve')}><Icon name="check"/>Одобрить</button>
-        <button className="catalog-button" disabled={busy || !reason.trim()} onClick={() => act('reject')}>Отклонить</button></div>
-      {changed && <p className="catalog-muted">Сначала сохрани изменения названия, категории или автора.</p>}</>}
-    {item.status === 'approved' && <><label>Причина <span className="catalog-muted">необязательно</span><textarea rows={2} value={reason} onChange={e => setReason(e.target.value)} maxLength={500}/></label>
-      <div className="catalog-actions"><button className="catalog-button danger" disabled={busy} onClick={() => act('hide')}>Скрыть из библиотеки</button></div></>}
-    {(item.status === 'hidden' || item.status === 'rejected') && <div className="catalog-actions"><button className="catalog-button primary" disabled={busy} onClick={() => act('restore')}>Вернуть в библиотеку</button></div>}
-  </section>;
+  </ReviewLayout>;
 }

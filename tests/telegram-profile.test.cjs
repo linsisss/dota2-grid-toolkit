@@ -19,6 +19,9 @@ test('hidden/missing Telegram photos produce a fallback, unsafe paths and non-im
 test('avatar cache belongs to the signed-in user and removing a photo clears the previous one',async t=>{
  const {CatalogStore}=await import('../server/catalog-store.mjs'),{Accounts}=await import('../server/accounts.mjs');const store=new CatalogStore(':memory:','test');t.after(()=>store.close());const accounts=new Accounts(store);
  const request=accounts.begin('ip','browser');accounts.candidate(request.id,{id:7,first_name:'Display name',username:'real_username'});accounts.setAvatar(7,Buffer.from('photo'));accounts.approve(request.id,7,true);const session=accounts.finish(request.id,request.verifier,'7');
- const user=accounts.user(session.session);assert.equal(user.username,'real_username');assert.match(user.avatar,/^\/api\/catalog\/auth\/avatar\?v=7-/);assert.equal(accounts.avatar({id:'8'}),undefined);
- accounts.setAvatar(7,null);assert.equal(accounts.user(session.session).avatar,null);
+ const user=accounts.user(session.session);assert.equal(user.username,'real_username');assert.equal(Buffer.from(accounts.avatar({id:'7'})).toString(),'photo');assert.equal(accounts.avatar({id:'8'}),undefined);
+ // The site shows the profile's pattern until its owner picks the Telegram photo (server/profiles.mjs).
+ assert.match(user.avatar,/\/avatar\?v=p$/);
+ await store.profiles.setAvatar(7,'telegram');assert.match(accounts.user(session.session).avatar,/\/avatar\?v=t[0-9a-f]+$/);
+ accounts.setAvatar(7,null);assert.equal(accounts.avatar({id:'7'}),undefined);assert.equal(store.profiles.avatar(user.profile).type,'image/svg+xml','the photo is gone: the pattern again');
 });

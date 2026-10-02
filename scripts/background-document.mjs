@@ -26,10 +26,11 @@ class ValidationError extends Error { constructor(message) { super(message); thi
 export function backgroundMeta(input) {
   const title = catalogText(input?.title, 60, 'Название', true);
   const author = catalogText(input?.author ?? '', 40, 'Автор');
+  const credit = catalogText(input?.credit ?? '', 60, 'Оригинал');
   const tags = input?.tags ?? [];
   if (!Array.isArray(tags) || tags.length > 3 || tags.some((tag) => !BACKGROUND_TAGS.includes(tag))) throw new ValidationError('Выбери до трёх тегов из списка.');
   if (!MENU_SIZES[input?.aspect]) throw new ValidationError('Неизвестный формат экрана.');
-  return { title, author, tags: [...new Set(tags)].sort(), aspect: input.aspect };
+  return { title, author, credit, tags: [...new Set(tags)].sort(), aspect: input.aspect };
 }
 
 // One request carries everything: [u32 meta length][meta JSON][u32 poster length][poster][video].

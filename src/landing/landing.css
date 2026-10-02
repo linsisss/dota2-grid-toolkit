@@ -87,9 +87,6 @@ svg { flex-shrink: 0; display: block; }
 .landing-primary:active { transform: translateY(0); }
 .landing-catalog { border: 1px solid #494152; background: #211e29; padding: 0 20px; min-height: 52px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; font-size: 15px; font-weight: 500; color: var(--lp-ink); white-space: nowrap; transition: background 180ms, border-color 180ms; }
 .landing-catalog:hover, .landing-catalog[aria-expanded='true'] { background: #2c2935; border-color: #81728f; }
-.landing-catalog.is-soon { cursor: default; color: #afa7bf; }
-.landing-catalog.is-soon:hover { background: #211e29; border-color: #494152; }
-.landing-catalog small { margin-left: -2px; padding: 1px 7px; border-radius: 999px; background: #c4b5ed24; color: #c4b5ed; font-size: 11px; font-weight: 500; }
 /* The tools under the two main buttons: smaller, three in a row. */
 /* Both rows share one width, the wider row's: each row's buttons stretch to it, so the edges line
    up whatever fonts the system draws them with. Narrow screens stack them (see the 520px query). */
@@ -98,19 +95,20 @@ svg { flex-shrink: 0; display: block; }
 .landing-tools { display: grid; grid-auto-flow: column; gap: 8px; }
 .landing-catalog.landing-tool { min-height: 40px; padding: 0 11px; gap: 7px; font-size: 13px; }
 .landing-tool svg { width: 16px; height: 16px; }
-.landing-tool small { font-size: 10px; padding: 1px 6px; }
 .catalog-status { flex-basis: 100%; margin: 0; padding: 10px 13px; background: var(--lp-panel); border-radius: 7px; font-size: 13px; line-height: 1.5; max-width: 42ch; animation: status-reveal 180ms var(--lp-ease); }
 @keyframes status-reveal { from { opacity: 0; transform: translateY(-4px); } }
-.landing-authors { display: flex; align-items: center; flex-wrap: nowrap; gap: 9px; margin-top: 32px; font-size: 12px; color: var(--lp-muted); white-space: nowrap; }
+.landing-authors { display: flex; align-items: center; flex-wrap: nowrap; gap: 11px; margin-top: 34px; font-size: 14px; color: var(--lp-muted); white-space: nowrap; }
 .author-credit { display: inline-flex; align-items: center; gap: 5px; }
-.landing-author-links { display: flex; align-items: center; gap: 7px; flex-wrap: nowrap; }
-.landing-author-links a { display: inline-flex; align-items: center; gap: 7px; background: var(--lp-panel); padding: 4px 11px 4px 4px; border-radius: 24px; color: var(--lp-ink); transition: background 160ms, transform 160ms; }
+.landing-author-links { display: flex; align-items: center; gap: 9px; flex-wrap: nowrap; }
+.landing-author-links a { display: inline-flex; align-items: center; gap: 9px; background: var(--lp-panel); padding: 5px 15px 5px 5px; border-radius: 26px; color: var(--lp-ink); font-weight: 500; transition: background 160ms, transform 160ms; }
 .landing-author-links a:hover { background: #383340; transform: translateY(-2px); }
-.landing-author-links img { width: 25px; height: 25px; border-radius: 50%; object-fit: cover; }
-.landing-support { display: inline-flex; align-items: center; gap: 7px; margin-top: 12px; padding: 6px 13px 6px 11px; border-radius: 24px; background: var(--lp-panel); color: var(--lp-ink); font-size: 12px; white-space: nowrap; transition: background 160ms, transform 160ms, color 160ms; }
-.landing-support svg { width: 15px; height: 15px; color: #f07a92; transition: transform 200ms; }
+.landing-author-links img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.landing-credit-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.landing-support { display: inline-flex; align-items: center; gap: 9px; padding: 10px 18px 10px 14px; border-radius: 26px; background: var(--lp-panel); color: var(--lp-ink); font-size: 14px; font-weight: 500; white-space: nowrap; transition: background 160ms, transform 160ms, color 160ms; }
+.landing-support svg { width: 18px; height: 18px; color: #c4b5ed; transition: transform 200ms; }
 .landing-support:hover { background: #383340; transform: translateY(-2px); }
 .landing-support:hover svg { transform: scale(1.15); }
+/* The users' chat and the news channel (src/Community.jsx) beside the support link, under it on a phone. */
 .landing-footer { display: flex; align-items: center; justify-content: space-between; gap: 24px; width: 100%; max-width: 1680px; margin: 0 auto; padding: 15px 5% 24px; color: var(--lp-muted); font-size: 12px; z-index: 2; }
 .landing-footer-source { display: flex; align-items: center; gap: 14px; }
 .landing-footer-source .version-button { font-size: 12px; }
@@ -319,10 +317,11 @@ svg { flex-shrink: 0; display: block; }
   .landing-actions { gap: 8px; }
   .landing-primary { font-size: 13px; padding: 0 13px; gap: 8px; }
   .landing-catalog { font-size: 13px; padding: 0 13px; gap: 8px; }
-  .landing-authors { margin-top: 28px; font-size: 11px; gap: 7px; }
-  .landing-author-links { gap: 5px; }
-  .landing-author-links a { gap: 5px; padding-right: 8px; }
-  .landing-author-links img { width: 22px; height: 22px; }
+  .landing-authors { margin-top: 30px; font-size: 13px; gap: 9px; }
+  .landing-author-links { gap: 7px; }
+  .landing-author-links a { gap: 7px; padding-right: 12px; }
+  .landing-author-links img { width: 28px; height: 28px; }
+  .landing-support { font-size: 13px; padding: 9px 15px 9px 12px; }
   .visual-portal { aspect-ratio: .83; }
   .visual-panorama { width: 53%; top: 110px; }
   .landing-panorama .landing-copy { max-width: 315px; }
@@ -346,9 +345,11 @@ svg { flex-shrink: 0; display: block; }
   .landing-primary { min-height: 50px; padding: 0 14px; font-size: 14px; gap: 8px; }
   .landing-primary svg, .landing-catalog svg { width: 18px; height: 18px; }
   .landing-catalog { min-height: 50px; font-size: 14px; padding: 0 14px; }
-  .landing-authors { margin-top: 27px !important; gap: 7px; font-size: 11px; }
-  .landing-author-links { gap: 5px; }
-  .landing-author-links a { gap: 5px; padding-right: 8px; }
+  .landing-authors { margin-top: 28px !important; gap: 8px; font-size: 13px; }
+  .landing-author-links { gap: 6px; }
+  .landing-author-links a { gap: 7px; padding-right: 11px; }
+  .landing-author-links img { width: 28px; height: 28px; }
+  .landing-support { font-size: 13px; padding: 9px 14px 9px 12px; }
   .landing-footer { padding: 24px; }
   .editor-visual { width: 100%; margin: 0; align-self: center; max-width: 580px; }
   .visual-edge { width: 120%; margin-left: 14%; margin-top: 9px; }

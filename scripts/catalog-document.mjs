@@ -38,12 +38,15 @@ export function normalizeCatalogGrid(input) {
   if (!heroes && !symbols) throw new ValidationError('В сетке пока нет героев или символов.');
   return { grid: { version: 3, configs: [{ config_name: catalogText(config.config_name, 200, 'Имя сетки'), categories }] }, stats: { categories: categories.length, heroes, symbols } };
 }
-// Title, author and tags: the same rules for a player's submission and an admin's correction.
+// Title, author, «по мотивам» and tags: the same rules for a player's submission and an admin's correction.
+// `author` signs a guest's work; a signed-in author is their profile (server/profiles.mjs) and `credit`
+// names whose work theirs is based on.
 export function catalogMeta(input) {
   const title = catalogText(input?.title, 80, 'Название', true);
   const author = catalogText(input?.author ?? '', 40, 'Автор');
+  const credit = catalogText(input?.credit ?? '', 60, 'Оригинал');
   if (!Array.isArray(input?.tags) || input.tags.length > 3 || input.tags.some(tag => !CATALOG_TAGS.includes(tag))) throw new ValidationError('Выбери до трёх тегов из списка.');
-  return { title, author, tags: [...new Set(input.tags)].sort() };
+  return { title, author, credit, tags: [...new Set(input.tags)].sort() };
 }
 export function catalogSubmission(input) {
   const meta = catalogMeta(input);

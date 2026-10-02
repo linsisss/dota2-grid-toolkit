@@ -139,14 +139,15 @@ test('profiles get Stratz and Dotabuff buttons that open the player\'s page', as
 test('a catalog font becomes Valve\'s font files with Valve\'s names inside', async () => {
   const [, , { readFont, dotaFontPack, fontCoverage, DOTA_FONT_FILES }] = await modules;
   const catalog = JSON.parse(readFileSync('data/dota-fonts.json', 'utf8'));
-  assert.ok(catalog.fonts.length >= 10);
+  assert.ok(catalog.fonts.length >= 4);
+  assert.ok(catalog.fonts.every((font) => font.license === 'SIL Open Font License 1.1'), 'only OFL fonts are shipped');
   for (const font of catalog.fonts) for (const face of font.files) {
     const read = readFont(bytes(`assets/dota-fonts/${font.id}/${face.file}`)), missing = fontCoverage(read);
     assert.deepEqual([missing.latin, missing.cyrillic], [[], []], `${font.family} ${face.weight} covers Latin and Cyrillic`);
     assert.equal(read.weight, face.weight);
   }
-  const rubik = catalog.fonts.find(font => font.id === 'rubik').files.map(face => readFont(bytes(`assets/dota-fonts/rubik/${face.file}`)));
-  const pack = dotaFontPack(rubik);
+  const monocraft = catalog.fonts.find(font => font.id === 'monocraft').files.map(face => readFont(bytes(`assets/dota-fonts/monocraft/${face.file}`)));
+  const pack = dotaFontPack(monocraft);
   assert.deepEqual(pack.map(file => file.name).sort(), [...DOTA_FONT_FILES].sort());
   const face = name => readFont(pack.find(file => file.name === name).data);
   const semibold = face('radiance-semibold.otf');
@@ -161,8 +162,8 @@ test('a catalog font becomes Valve\'s font files with Valve\'s names inside', as
     for (let i = 0; i < padded.length; i += 4) sum = (sum + view.getUint32(i)) >>> 0;
     assert.equal(sum, 0xb1b0afba, file.name);
   }
-  // The closest weight fills each slot: Rubik has 600, so the semibold file carries Rubik SemiBold's glyph data.
-  assert.equal(dotaFontPack(rubik, ['Reaver']).length, 5);
+  // Only the chosen families: Reaver's five files.
+  assert.equal(dotaFontPack(monocraft, ['Reaver']).length, 5);
   assert.throws(() => readFont(new TextEncoder().encode('wOF2 not really')), /WOFF/);
 });
 
@@ -226,27 +227,141 @@ test('blur and dim: σ in 1080p pixels scaled to the screen, a black veil, a zoo
   assert.deepEqual(menuLook({ blur: 7, dim: -1 }), menuLook({ blur: 1, dim: 0 }), 'clamped');
 });
 
-test('Windows installers: a PowerShell script with a BOM, started by .bat files, replacing only its own files', async () => {
-  const { backgroundInstaller, fontInstaller } = await import('../scripts/installer.mjs');
-  const text = (file) => typeof file.data === 'string' ? file.data : new TextDecoder().decode(file.data);
-  const background = backgroundInstaller({ file: 'pak02_dir.vpk', folder: 'dota_russian' });
-  assert.deepEqual(background.map((file) => file.name), ['gridstudio-background.ps1', 'Установить фон.bat', 'Удалить фон.bat']);
-  const script = background[0].data;
-  assert.deepEqual([...script.subarray(0, 3)], [0xef, 0xbb, 0xbf], 'PowerShell 5 needs the BOM for Russian text');
-  assert.doesNotMatch(text(background[0]).replace(/\r\n/g, ''), /\n/, 'CRLF line ends');
-  assert.match(text(background[0]), /\$file = 'pak02_dir\.vpk'; \$folder = 'dota_russian'/);
-  assert.match(text(background[0]), /libraryfolders\.vdf/);
-  assert.match(text(background[1]), /-File "%~dp0gridstudio-background\.ps1"\r\n/);
-  assert.match(text(background[2]), /gridstudio-background\.ps1" -Remove/);
-  assert.doesNotMatch(text(background[0]), /Invoke-WebRequest|DownloadString|Start-Process|iex /, 'it only copies files');
-  // Dota reads dota_russian only with Russian as the audio language: boot.vcfg gets it, the value
-  // before is kept and comes back on removal; the interface language is left alone.
-  assert.match(text(background[0]), /\$boot = Join-Path \$dota 'game\\dota\\cfg\\boot\.vcfg'/);
-  assert.match(text(background[0]), /Set-RussianAudio\r\n/);
-  assert.match(text(background[0]), /Restore-Audio\r\n/);
-  assert.doesNotMatch(text(background[0]), /UILanguage/);
-  const font = fontInstaller();
-  assert.deepEqual(font.map((file) => file.name), ['gridstudio-font.ps1', 'Установить шрифт.bat', 'Удалить шрифт.bat']);
-  assert.match(text(font[0]), /gridstudio-backup/);
-  assert.match(text(font[0]), /fontconfig/);
+test('Windows installers: the menu background and the font by a command that checks the downloaded file', async (t) => {
+  const { backgroundScript, backgroundRemoveScript, fontScript, fontRemoveScript, PACK_NAME, FONT_NAME } = await import('../scripts/installer.mjs');
+  // The background: the site keeps nothing; the address carries the pack's SHA-256 and size and the
+  // script finds that very file, checks it and installs it as the .bat did.
+  const sha256 = 'ab'.repeat(32);
+  assert.equal(PACK_NAME(sha256), 'gridstudio-background-abababab.vpk');
+  const script = backgroundScript({ sha256, size: 1234 }, { remove: 'https://gridstudio.me/api/catalog/install/bg-remove', language: 'ru' });
+  const remove = backgroundRemoveScript('ru');
+  for (const body of [script, remove]) {
+    assert.match(body, /^# GridStudio[^\n]*\n& \{\n\$ErrorActionPreference = 'Stop'\n/, 'its own scope');
+    assert.match(body, /libraryfolders\.vdf/);
+    assert.match(body, /\$boot = Join-Path \$dota 'game\\dota\\cfg\\boot\.vcfg'/);
+    assert.doesNotMatch(body, /UILanguage|Invoke-WebRequest|DownloadString|Start-Process/);
+    assert.doesNotMatch(body, /[‘’“”]/);
+  }
+  assert.match(script, /-Filter 'gridstudio-background-abababab\*\.vpk'/);
+  assert.match(script, /\.Length -ne 1234\)/);
+  assert.match(script, new RegExp(`Get-FileHash -LiteralPath \\$path -Algorithm SHA256\\)\\.Hash -eq '${sha256.toUpperCase()}'`));
+  assert.match(script, /shell:Downloads/);
+  assert.match(script, /OpenFileDialog/, 'else it asks for the file');
+  assert.match(script, /\$ProgressPreference = 'SilentlyContinue'/);
+  assert.match(script, /'game\\dota_russian'/);
+  assert.match(script, /Set-RussianAudio\n/);
+  assert.match(script, /irm https:\/\/gridstudio\.me\/api\/catalog\/install\/bg-remove \| iex/);
+  assert.match(remove, /Restore-Audio\n/);
+  assert.match(remove, /gridstudio-backup/);
+  assert.throws(() => backgroundScript({ sha256: 'x', size: 1 }));
+  // The font, the same way: the archive by its fingerprint, only fonts/<name>.otf|ttf out of it, the
+  // game's files kept once in panorama/fonts/gridstudio-backup, fontconfig's cache dropped.
+  assert.equal(FONT_NAME(sha256), 'gridstudio-font-abababab.zip');
+  const font = fontScript({ sha256, size: 4321 }, { remove: 'https://gridstudio.me/api/catalog/install/font-remove', language: 'ru' });
+  const fontRemove = fontRemoveScript('ru');
+  for (const body of [font, fontRemove]) {
+    assert.match(body, /^# GridStudio[^\n]*\n& \{\n\$ErrorActionPreference = 'Stop'\n/, 'its own scope');
+    assert.match(body, /libraryfolders\.vdf/);
+    assert.match(body, /'game\\dota\\panorama\\fonts'/);
+    assert.match(body, /gridstudio-backup/);
+    assert.match(body, /Join-Path \$env:TEMP 'fontconfig'/);
+    assert.doesNotMatch(body, /Invoke-WebRequest|DownloadString|Start-Process|\.bat/);
+    assert.doesNotMatch(body, /[‘’“”]/);
+  }
+  assert.match(font, /-Filter 'gridstudio-font-abababab\*\.zip'/);
+  assert.match(font, /\.Length -ne 4321\)/);
+  assert.match(font, /ZipFile\]::OpenRead\(\$pack\)/);
+  assert.match(font, /'\^fonts\/\[A-Za-z0-9\._-\]\+\\\.\(otf\|ttf\)\$'/, 'only font files, no paths');
+  assert.match(font, /if \(-not \(Test-Path -LiteralPath \$backup\)\)/, 'the first backup is kept');
+  assert.match(font, /irm https:\/\/gridstudio\.me\/api\/catalog\/install\/font-remove \| iex/);
+  assert.throws(() => fontScript({ sha256, size: 0 }));
+  // Served by the API from the address alone.
+  const [{ CatalogStore }, { createCatalogAPI }] = await Promise.all([import('../server/catalog-store.mjs'), import('../server/catalog-api.mjs')]);
+  const store = new CatalogStore(':memory:', 'test-bg');
+  const { server } = createCatalogAPI({ development: true, origin: 'http://127.0.0.1:4173', salt: 'test-bg', admins: new Set(), database: ':memory:' }, { store });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
+  const base = `http://127.0.0.1:${server.address().port}/api/catalog/install`;
+  assert.match(await (await fetch(`${base}/bg-${sha256}-1234-en`)).text(), /Background file: /);
+  assert.match(await (await fetch(`${base}/bg-${sha256}-1234`)).text(), /install\/bg-remove \| iex/);
+  assert.match(await (await fetch(`${base}/bg-remove`)).text(), /Restore-Audio/);
+  assert.match(await (await fetch(`${base}/font-${sha256}-4321-en`)).text(), /Font archive: /);
+  assert.match(await (await fetch(`${base}/font-${sha256}-4321`)).text(), /install\/font-remove \| iex/);
+  assert.match(await (await fetch(`${base}/font-remove-en`)).text(), /Dota fonts are back/);
 });
+
+test('grid by a PowerShell command: a script in its own scope that puts the grid into the folder of the account signed in to Steam', async () => {
+  const { gridScript, gridRestoreScript, installCommand, gridExpiredScript } = await import('../scripts/installer.mjs');
+  const grid = { version: 3, configs: [{ config_name: 'Мета «x»', categories: [{ category_name: "'@ #> \"$x\"\n", x: 1, y: 2, width: 3, height: 4, hero_ids: [1] }] }] };
+  const script = gridScript(JSON.stringify(grid, null, 2), { restore: 'https://gridstudio.me/api/catalog/install/restore', language: 'ru' });
+  const restore = gridRestoreScript('ru');
+  assert.equal(installCommand('https://gridstudio.me/api/catalog/install/AbCdEf0123456789'),
+    "[Net.ServicePointManager]::SecurityProtocol = 'Tls12'; irm https://gridstudio.me/api/catalog/install/AbCdEf0123456789 | iex");
+  for (const text of [script, restore]) {
+    assert.match(text, /^# GridStudio[^\n]*\n& \{\n\$ErrorActionPreference = 'Stop'\n/, 'its own scope: the PowerShell it runs in keeps its settings');
+    assert.match(text, /\n\}\n$/);
+    assert.match(text, /HKCU:\\Software\\Valve\\Steam\\ActiveProcess/, 'the account signed in now');
+    assert.match(text, /config\\loginusers\.vdf/, 'else the last one');
+    assert.match(text, /\$active \+= \[int64\]4294967296/, 'ActiveUser is a DWORD');
+    assert.match(text, /'userdata\\' \+ \$account \+ '\\570'/);
+    assert.match(text, /Get-Process -Name dota2/);
+    assert.doesNotMatch(text, /Invoke-WebRequest|DownloadString|Start-Process|Read-Host 'Нажми Enter/, 'nothing is downloaded or started; the console stays open by itself');
+    assert.doesNotMatch(text, /[‘’“”]/, 'PowerShell takes typographic quotes for its own');
+  }
+  // The grid on one line in a here-string (so nothing in it ends the string), its length checked on arrival.
+  const line = script.split('\n')[script.split('\n').indexOf("$grid = @'") + 1];
+  assert.deepEqual(JSON.parse(line), grid);
+  assert.match(script, new RegExp(`\\$grid\\.Length -ne ${line.length}\\)`));
+  assert.match(script, /\[IO\.File\]::WriteAllText\(\$dest, \$grid, \(New-Object System\.Text\.UTF8Encoding\(\$false\)\)\)/);
+  assert.match(script, /remote\\cfg/);
+  assert.match(script, /gridstudio-backup/);
+  assert.match(script, /irm https:\/\/gridstudio\.me\/api\/catalog\/install\/restore \| iex/, 'it says how to go back');
+  assert.match(restore, /Sort-Object Name \| Select-Object -Last 1/);
+  assert.doesNotMatch(restore, /\$grid = @'/);
+  assert.match(gridScript(JSON.stringify(grid), { language: 'en' }), /Done: /);
+  assert.match(gridExpiredScript('ru'), /устарела/);
+});
+
+test('the API keeps a grid for the command for a week and serves its script', async (t) => {
+  const [{ CatalogStore }, { createCatalogAPI }, { GRID_INSTALL_TTL }] = await Promise.all([
+    import('../server/catalog-store.mjs'), import('../server/catalog-api.mjs'), import('../server/grid-installs.mjs')]);
+  let now = 1_000_000;
+  const store = new CatalogStore(':memory:', 'test-install', () => now);
+  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-install', admins: new Set(), database: ':memory:' };
+  const { server } = createCatalogAPI(config, { store });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
+  const base = `http://127.0.0.1:${server.address().port}/api/catalog`;
+  const post = (body) => fetch(`${base}/install`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: config.origin }, body: JSON.stringify(body) });
+  const grid = { version: 3, configs: [{ config_name: 'Мета', categories: [{ category_name: 'КЕРРИ', x: 0, y: 0, width: 100, height: 100, hero_ids: [1, 2] }] }] };
+  const saved = await post({ grid, lang: 'ru' });
+  assert.equal(saved.status, 201);
+  const { id, address } = await saved.json();
+  assert.match(id, /^[A-Za-z0-9_-]{16}$/);
+  assert.equal(address, `${config.origin}/api/catalog/install/${id}`);
+  assert.equal((await (await post({ grid, lang: 'ru' })).json()).id, id, 'the same grid keeps its address');
+  const script = await fetch(`${base}/install/${id}`);
+  assert.equal(script.headers.get('content-type'), 'text/plain; charset=utf-8', 'PowerShell reads the page as UTF-8 only when told so');
+  const text = await script.text();
+  assert.match(text, /\{"_comment":"Сетка создана и скачана с gridstudio\.me","version":3,"configs":\[\{"config_name":"Мета"/, 'the site\'s note first');
+  assert.match(text, /install\/restore \| iex/);
+  assert.match(await (await fetch(`${base}/install/restore-en`)).text(), /Brought the previous grids back/);
+  assert.equal((await post({ grid: { configs: [] } })).status, 400, 'only a grid file');
+  now += GRID_INSTALL_TTL + 1;
+  assert.match(await (await fetch(`${base}/install/${id}`)).text(), /устарела/, 'after a week the address says so instead of failing');
+});
+
+test('every grid the site hands out carries its note first; reading a grid ignores it', async () => {
+  const { withGridNote, ensureGridNote, GRID_NOTE } = await import('../scripts/grid-note.mjs');
+  const grid = { version: 3, configs: [{ config_name: 'А', categories: [] }] };
+  const noted = withGridNote(grid);
+  assert.deepEqual(Object.keys(noted), ['_comment', 'version', 'configs']);
+  assert.equal(noted._comment, GRID_NOTE);
+  assert.deepEqual(Object.keys(withGridNote(noted, 'Grid made and downloaded at gridstudio.me')), ['_comment', 'version', 'configs'], 'replaced, not doubled');
+  assert.equal(ensureGridNote({ _comment: 'Grid made and downloaded at gridstudio.me', ...grid })._comment, 'Grid made and downloaded at gridstudio.me', 'the page\'s language is kept');
+  assert.equal(ensureGridNote({ _comment: 5, ...grid })._comment, GRID_NOTE);
+  assert.equal(grid._comment, undefined, 'the grid itself is not changed');
+  const C = await import('../scripts/core.mjs');
+  assert.doesNotThrow(() => (C.default || C).importDota(noted));
+});
+

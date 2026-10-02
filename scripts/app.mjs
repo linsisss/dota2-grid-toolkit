@@ -1,7 +1,7 @@
 /* Grid Studio: one canvas, one document, one history for all three workflows. */
 import C from './core.mjs';
 import { APP_VERSION } from './version.mjs';
-import { t, plural, tn, locale } from './i18n.mjs';
+import { t, plural, tn, locale, lang, translateMessage } from './i18n.mjs';
 import { placeTextArt } from './text-art.mjs';
 import { saveIndicator } from './save-status.mjs';
 import { steamFolderMarkup, mountSteamFolder } from './steam-folder.mjs';
@@ -23,6 +23,12 @@ import { guideLines, snapMove } from './smart-guides.mjs';
 import { ALIGN_ACTIONS, DISTRIBUTE_ACTIONS, alignIconSVG } from './align-icons.mjs';
 import { iconSVG } from './icons.mjs';
 import { applyMyBackground, hasMyBackground } from '../src/my-background.js';
+import { mountVideoGuide } from '../src/video-guide.js';
+import { slideIndicator } from './slide-indicator.mjs';
+import { wheelScrollsSideways } from './wheel-scroll.mjs';
+import { installCommand } from './installer.mjs';
+import { GRID_NOTE, withGridNote } from './grid-note.mjs';
+import { COMMUNITY, COMMUNITY_EVENT, rememberError } from './community.mjs';
 import {
   searchSymbols,
   categorySelection,
@@ -65,6 +71,8 @@ import { packGlyphs, packSymbols } from './dot-packing.mjs';
 import { gridBackground, onGridBackground, setGridBackground } from './grid-background.mjs';
 import { DOTA, TEXT_MODEL, foreignGlyphs, invisibleWarning, drawCategoryLabel, measureCategoryText, measureCategoryInk, measureCategoryWidth, glyphWidths, portraitSourceRect } from './dota-rendering.mjs';
 const ROTATE_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M8 22a10 10 0 1 1 16-9M19 7l5 6 5-5" fill="none" stroke="#10151a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 22a10 10 0 1 1 16-9M19 7l5 6 5-5" fill="none" stroke="#efeaf5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>')}") 16 16, grab`;
+// How much of the canvas stays on screen at least when it is moved away (updateZoom's room), px.
+const PAN_EDGE = 96;
 const IMAGE_METHOD_KEY = 'gridstudio.image-method';
 // «Контуры и точки» is the default again (1.6); a method the user picked is remembered.
 function readImageMethod() {
@@ -100,6 +108,10 @@ export function createStudio(projectStorage, initial) {
     snapshotKey = '',
     pickerGroupId = null,
     drawingOpen = false,
+    // The «Мета» window (src/MetaDialog.jsx): { mode: 'grid' | 'group' } or { mode: 'sort', id, name, heroIds }.
+    metaDialog = null,
+    // «Обычная или по мете?» when a group is added (src/StudioControls.jsx GroupChoice): the button's box.
+    groupChoice = null,
     contextMenu = null;
   let customCanvasFont = null;
   const PRESETS_KEY = 'dota-grid-studio.presets.v1';
@@ -160,7 +172,9 @@ export function createStudio(projectStorage, initial) {
     preview = false,
     showGrid = true,
     snap = false,
-    focused = true;
+    focused = true,
+    // The empty room around the canvas on each side (updateZoom), px.
+    panRoom = { x: 0, y: 0 };
   let clipboard = [],
     clipboardArtwork = [],
     imagePixels = null,
@@ -245,19 +259,35 @@ export function createStudio(projectStorage, initial) {
   } catch {
     customPresets = {};
   }
-  function toast(message, error = false) {
+  // With `report` (the work did not save, a file did not open — not a wrong action) an error goes into
+  // the note «Сообщить о баге» copies (scripts/community.mjs), offers to tell the chat and stays while
+  // the pointer is on it.
+  function toast(message, error = false, report = false) {
     clearTimeout(toastTimer);
-    $('toast').textContent = message;
-    $('toast').classList.toggle('error', error);
-    $('toast').hidden = false;
-    $('toast').classList.remove('leaving');
-    toastTimer = setTimeout(
-      () => {
-        $('toast').classList.add('leaving');
-        toastTimer = setTimeout(() => ($('toast').hidden = true), 180);
-      },
-      error ? 6500 : 3800
-    );
+    const node = $('toast');
+    node.textContent = message;
+    node.classList.toggle('error', error);
+    node.hidden = false;
+    node.classList.remove('leaving');
+    if (error && report) {
+      rememberError(message);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'toast-report';
+      button.textContent = t('Сообщить в чат');
+      button.onclick = () => { node.hidden = true; window.dispatchEvent(new CustomEvent(COMMUNITY_EVENT, { detail: { error: message } })); };
+      node.append(button);
+    }
+    const hide = (delay) => {
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        node.classList.add('leaving');
+        toastTimer = setTimeout(() => (node.hidden = true), 180);
+      }, delay);
+    };
+    node.onpointerenter = report ? () => clearTimeout(toastTimer) : null;
+    node.onpointerleave = report ? () => hide(2500) : null;
+    hide(report ? 10000 : error ? 6500 : 3800);
   }
   function renderSaveIndicator() {
     if (disposed) return;
@@ -298,13 +328,13 @@ export function createStudio(projectStorage, initial) {
         : result.recoveryOnly ? t('Работа сохранена в резервную копию. Скачай проект для надёжного хранения.')
         : !result.saved ? t('Не удалось сохранить работу в браузере. Скачай проект.') : '';
       setLocalSaveStatus(warning ? result.saved ? 'Сохранено в копии · открыть' : 'Не сохранено · скачать' : 'Изменения сохранены', Boolean(warning), warning);
-      if (warning && warning !== saveWarning) toast(warning, true);
+      if (warning && warning !== saveWarning) toast(warning, true, true);
       saveWarning = warning;
     }).catch(() => {
       if (!disposed && revision === saveRevision) {
         saveInFlight = false;
         setLocalSaveStatus('Не сохранено · скачать', true, t('Не удалось сохранить работу. Скачай проект.'));
-        toast(t('Не удалось сохранить работу. Скачай проект через меню сохранения.'), true);
+        toast(t('Не удалось сохранить работу. Скачай проект через меню сохранения.'), true, true);
       }
     });
   }
@@ -463,9 +493,18 @@ export function createStudio(projectStorage, initial) {
     canvas.style.height = workspace().h * zoom + 'px';
     $('stageWrap').style.width = workspace().w * zoom + 'px';
     $('stageWrap').style.height = workspace().h * zoom + 'px';
+    // Room around the canvas to move it anywhere, as far as PAN_EDGE of it still on screen (asked for
+    // on 2026-10-02: «двигать холст как угодно»). When the room changes (the window, a panel), the
+    // canvas keeps its place on screen; fitted, it sits in the middle.
+    const room = preview ? { x: 0, y: 0 } : { x: Math.max(0, viewport.clientWidth - PAN_EDGE), y: Math.max(0, viewport.clientHeight - PAN_EDGE) };
+    if (room.x !== panRoom.x || room.y !== panRoom.y) {
+      $('stageWrap').style.margin = preview ? '' : `${room.y}px ${room.x}px`;
+      if (!fit && !preview) { viewport.scrollLeft += room.x - panRoom.x; viewport.scrollTop += room.y - panRoom.y; }
+      panRoom = room;
+    }
     if (fit && !preview) {
-      viewport.scrollTop = 0;
-      viewport.scrollLeft = 0;
+      viewport.scrollLeft = room.x + (workspace().w * zoom - viewport.clientWidth) / 2;
+      viewport.scrollTop = room.y + (workspace().h * zoom - viewport.clientHeight) / 2;
     }
     draw();
   }
@@ -767,6 +806,8 @@ export function createStudio(projectStorage, initial) {
       for (const glyph of C.textGlyphs(e)) drawCategoryLabel(ctx, glyph.text, glyph.x, glyph.y);
     }
     ctx.restore();
+    // A meta group's numbers under its portraits and their captions (core metaLabels).
+    if (e.meta) for (const label of C.metaLabels(e)) drawCategoryLabel(ctx, label.text, label.x, label.y);
   }
   // Figma-style: several objects align to each other, a single object to the canvas.
   function alignSection(items) {
@@ -789,7 +830,8 @@ export function createStudio(projectStorage, initial) {
         .slice(0, 60)
         .map(([ch, n]) => `<option value="${esc(ch)}">${esc(ch)} · ${n}</option>`)
         .join('')}</select><label class="field-label" for="replaceTo">${t('На какой символ')}</label><input id="replaceTo" class="glyph-replace-to" value="${esc(brush)}" maxlength="8"><p class="hint">${t('Позиции символов не меняются. Отменить — Ctrl+Z.')}</p>`,
-      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="replaceGlyphs" class="button primary">${t('Заменить')}</button>`
+      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="replaceGlyphs" class="button primary">${t('Заменить')}</button>`,
+      '', { icon: 'replace', lead: t('Символов в выделении: {total}', { total }) }
     );
     const replace = () => {
       const to = $('replaceTo').value, from = $('replaceFrom').value;
@@ -964,6 +1006,15 @@ export function createStudio(projectStorage, initial) {
       }
     };
   }
+  // Parts arriving one after another, in the tour's look (styles/editor-motion.css): fields of a new
+  // selection, a list just opened. Only opacity and translate; nothing with reduced motion.
+  function staggerIn(nodes, { step = 30, distance = 8, max = 12 } = {}) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    [...nodes].slice(0, max).forEach((node, i) => node.animate?.(
+      [{ opacity: 0, translate: `0 ${distance}px` }, { opacity: 1, translate: '0 0' }],
+      { duration: 300, delay: i * step, easing: 'cubic-bezier(.2, .8, .2, 1)', fill: 'backwards' }
+    ));
+  }
   function renderInspector() {
     const signature = [...selected].join(',');
     const selectionChanged = signature !== inspectorSelection;
@@ -972,14 +1023,8 @@ export function createStudio(projectStorage, initial) {
     finishLiveEdit();
     if (selectionChanged) {
       $('inspectorContent').scrollTop = 0;
-      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-        $('inspectorContent').animate(
-          [
-            { opacity: 0.4, transform: 'translateY(5px)' },
-            { opacity: 1, transform: 'translateY(0)' }
-          ],
-          { duration: 180, easing: 'ease-out' }
-        );
+      // Once the new fields are in: they arrive one after another (styles/editor-motion.css).
+      queueMicrotask(() => { if (!disposed) staggerIn($('inspectorContent').children); });
     }
     inspectorSelection = signature;
     inspectorDocument = doc;
@@ -1030,7 +1075,7 @@ export function createStudio(projectStorage, initial) {
         items.every((item) => item.layer === artLayer.id) &&
         doc.entities.filter((item) => item.layer === artLayer.id).length === items.length;
     $('inspectorContent').innerHTML =
-      `<h3>${wholeArtwork ? (artLayer.group ? t('Группа') : t('ASCII-слой')) : items.length === 1 ? (e.type === 'heroes' ? t('Группа героев') : e.type === 'symbol' ? t('Символ') : t('Текст')) : t('Выделение объектов')}</h3>${wholeArtwork ? `<label class="field-label" for="artworkName">${t('Название слоя')}</label><input id="artworkName" value="${esc(artLayer.name)}" maxlength="200" ${locked ? 'disabled' : ''}>` : items.length === 1 ? `<label class="field-label" for="objectName">${e.type === 'heroes' ? t('Название группы') : t('Текст / символ')}</label><textarea id="objectName" rows="3" maxlength="5000" ${locked ? 'disabled' : ''}>${esc(e.type === 'heroes' ? e.name : e.text)}</textarea>` : `<p class="hint">${t('{count} объектов · перемещай и изменяй вместе', { count: items.length })}</p>`}<label class="field-label">${t('Позиция')}</label><div class="field-pair">${numericField('x', 'X', b.x, locked)}${numericField('y', 'Y', b.y, locked)}</div><label class="field-label">${t('Размер')}</label><div class="field-pair">${numericField('w', 'W', b.w, locked)}${numericField('h', 'H', b.h, locked)}</div>${rotatable ? `<label class="field-label">${t('Поворот расположения')}</label>${numericField('rotation', t('Угол, °'), C.selectionFrame(items).rotation, locked)}<p class="hint">${t('Символы остаются прямыми. Shift — шаг 15°. Быстрый поворот — правой кнопкой мыши.')}</p>` : ''}${alignSection(items)}<label class="field-label" for="objectLayer">${t('Слой')}</label><select id="objectLayer" ${locked ? 'disabled' : ''}>${doc.layers.map((l) => `<option value="${l.id}" ${l.id === e.layer ? 'selected' : ''}>${esc(C.layerName(l))}</option>`).join('')}</select><div class="selection-actions"><button class="icon-button" data-action="duplicate" title="${t('Дублировать (Ctrl+D)')}" aria-label="${t('Дублировать')}">${icon('copy')}</button><button class="icon-button" data-action="center" title="${t('По центру холста')}" aria-label="${t('По центру холста')}">${icon('align')}</button><button class="icon-button" data-action="flip" title="${t('Отразить позиции по горизонтали')}" aria-label="${t('Отразить позиции по горизонтали')}">${icon('flip')}</button><button class="icon-button" data-action="rotate" title="${rotatable ? t('Повернуть на 90°') : t('Повернуть расположение на 90°')}" aria-label="${rotatable ? t('Повернуть на 90 градусов') : t('Повернуть расположение на 90 градусов')}">${icon('rotate')}</button><button class="icon-button danger" data-action="delete" title="${t('Удалить (Delete)')}" aria-label="${t('Удалить')}">${icon('trash')}</button></div>${locked ? `<p class="hint">${t('Слой заблокирован или скрыт. Открой его в списке слоёв для редактирования.')}</p>` : ''}${items.length === 1 && e.type === 'heroes' ? `<div class="hero-chips">${e.heroIds.map((id, i) => `<span class="hero-chip" data-hero-order="${i}" tabindex="${locked ? -1 : 0}" role="group" aria-label="${esc(heroById.get(id)?.name || id)}: ${t('{n} из {total}', { n: i + 1, total: e.heroIds.length })}" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight">${heroById.has(id) ? `<img src="${heroById.get(id)?.thumbnail || `assets/heroes/${id}.webp`}" alt="">` : ''}${esc(heroById.get(id)?.name || '#' + id)}<button data-remove-hero="${i}" aria-label="${t('Убрать {hero}', { hero: esc(heroById.get(id)?.name || id) })}" ${locked ? 'disabled' : ''}>×</button></span>`).join('')}</div><button id="editGroupHeroes" class="button secondary full compact" ${locked ? 'disabled' : ''}>${t('+ Выбрать героев')}</button><p class="hint">${t('Перетаскивай портреты, чтобы менять порядок. С клавиатуры: выбери героя в списке и нажми Alt + ← / →. Всю группу можно двигать за название или свободное место; Shift сохраняет пропорции при изменении размера.')}</p>` : ''}`;
+      `<h3>${wholeArtwork ? (artLayer.group ? t('Группа') : t('ASCII-слой')) : items.length === 1 ? (e.type === 'heroes' ? t('Группа героев') : e.type === 'symbol' ? t('Символ') : t('Текст')) : t('Выделение объектов')}</h3>${wholeArtwork ? `<label class="field-label" for="artworkName">${t('Название слоя')}</label><input id="artworkName" value="${esc(artLayer.name)}" maxlength="200" ${locked ? 'disabled' : ''}>` : items.length === 1 ? `<label class="field-label" for="objectName">${e.type === 'heroes' ? t('Название группы') : t('Текст / символ')}</label><textarea id="objectName" rows="3" maxlength="5000" ${locked ? 'disabled' : ''}>${esc(e.type === 'heroes' ? e.name : e.text)}</textarea>` : `<p class="hint">${t('{count} объектов · перемещай и изменяй вместе', { count: items.length })}</p>`}<label class="field-label">${t('Позиция')}</label><div class="field-pair">${numericField('x', 'X', b.x, locked)}${numericField('y', 'Y', b.y, locked)}</div><label class="field-label">${t('Размер')}</label><div class="field-pair">${numericField('w', 'W', b.w, locked)}${numericField('h', 'H', b.h, locked)}</div>${rotatable ? `<label class="field-label">${t('Поворот расположения')}</label>${numericField('rotation', t('Угол, °'), C.selectionFrame(items).rotation, locked)}<p class="hint">${t('Символы остаются прямыми. Shift — шаг 15°. Быстрый поворот — правой кнопкой мыши.')}</p>` : ''}${alignSection(items)}<label class="field-label" for="objectLayer">${t('Слой')}</label><select id="objectLayer" ${locked ? 'disabled' : ''}>${doc.layers.map((l) => `<option value="${l.id}" ${l.id === e.layer ? 'selected' : ''}>${esc(C.layerName(l))}</option>`).join('')}</select><div class="selection-actions"><button class="icon-button" data-action="duplicate" title="${t('Дублировать (Ctrl+D)')}" aria-label="${t('Дублировать')}">${icon('copy')}</button><button class="icon-button" data-action="center" title="${t('По центру холста')}" aria-label="${t('По центру холста')}">${icon('align')}</button><button class="icon-button" data-action="flip" title="${t('Отразить позиции по горизонтали')}" aria-label="${t('Отразить позиции по горизонтали')}">${icon('flip')}</button><button class="icon-button" data-action="rotate" title="${rotatable ? t('Повернуть на 90°') : t('Повернуть расположение на 90°')}" aria-label="${rotatable ? t('Повернуть на 90 градусов') : t('Повернуть расположение на 90 градусов')}">${icon('rotate')}</button><button class="icon-button danger" data-action="delete" title="${t('Удалить (Delete)')}" aria-label="${t('Удалить')}">${icon('trash')}</button></div>${locked ? `<p class="hint">${t('Слой заблокирован или скрыт. Открой его в списке слоёв для редактирования.')}</p>` : ''}${items.length === 1 && e.type === 'heroes' ? `<div class="hero-chips">${e.heroIds.map((id, i) => `<span class="hero-chip" data-hero-order="${i}" tabindex="${locked ? -1 : 0}" role="group" aria-label="${esc(heroById.get(id)?.name || id)}: ${t('{n} из {total}', { n: i + 1, total: e.heroIds.length })}" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight">${heroById.has(id) ? `<img src="${heroById.get(id)?.thumbnail || `assets/heroes/${id}.webp`}" alt="">` : ''}${esc(heroById.get(id)?.name || '#' + id)}<button data-remove-hero="${i}" aria-label="${t('Убрать {hero}', { hero: esc(heroById.get(id)?.name || id) })}" ${locked ? 'disabled' : ''}>×</button></span>`).join('')}</div><button id="editGroupHeroes" class="button secondary full compact" ${locked ? 'disabled' : ''}>${t('+ Выбрать героев')}</button><button id="orderGroupMeta" class="button secondary full compact" ${locked || e.heroIds.length < 2 ? 'disabled' : ''}>${t('Упорядочить по мете')}</button><p class="hint">${t('Перетаскивай портреты, чтобы менять порядок. С клавиатуры: выбери героя в списке и нажми Alt + ← / →. Всю группу можно двигать за название или свободное место; Shift сохраняет пропорции при изменении размера.')}</p>` : ''}`;
     if (wholeArtwork && items.length === 1)
       $('artworkName').insertAdjacentHTML(
         'afterend',
@@ -1040,6 +1085,7 @@ export function createStudio(projectStorage, initial) {
       artLayer.name = value || t('Рисунок');
     });
     if ($('editGroupHeroes')) $('editGroupHeroes').onclick = () => openHeroPicker(e.id);
+    if ($('orderGroupMeta')) $('orderGroupMeta').onclick = () => openMeta(e.id);
     bindLiveText($('objectName'), (value) => {
       if (e.type === 'heroes') e.name = value;
       else {
@@ -1150,9 +1196,15 @@ export function createStudio(projectStorage, initial) {
   function renderLayers() {
     publishUI();
   }
-  function addGroup(
-    point = { x: 80 + doc.entities.filter((e) => e.type === 'heroes').length * 24, y: 110 }
-  ) {
+  // A place for a new w × h group (and `left` more for a meta group's captions) that covers nothing:
+  // down the canvas from the top, else the old cascade of 24 units.
+  function freeSpot(w, h, left = 0) {
+    const taken = doc.entities.map((e) => C.bounds([e], true));
+    const gap = 16, free = (x, y) => taken.every((b) => x - left - gap > b.x + b.w || x + w + gap < b.x || y - gap > b.y + b.h || y + h + gap < b.y);
+    for (const x of [Math.max(80, left), 640]) for (let y = 40; y + h <= workspace().h; y += 10) if (x + w <= workspace().w && free(x, y)) return { x, y };
+    return { x: 80 + doc.entities.filter((e) => e.type === 'heroes').length * 24, y: 110 };
+  }
+  function addGroup(point = freeSpot(340, 195 + DOTA.header)) {
     const layer = doc.layers.find((l) => l.id === 'heroes');
     if (layer.locked || !layer.visible) {
       toast(t('Открой и разблокируй слой «Герои».'), true);
@@ -1434,6 +1486,8 @@ export function createStudio(projectStorage, initial) {
       return;
     }
     if (tool === 'hand' || spaceDown || event.button === 1) {
+      // A canvas moved by hand stays where it was put; «Вписать» (0) brings it back.
+      fit = false;
       gesture = {
         pointerId: event.pointerId,
         type: 'pan',
@@ -1797,13 +1851,16 @@ export function createStudio(projectStorage, initial) {
     event.preventDefault();
     closeModal();
   });
-  function openModal(title, body, footer = '', view = '') {
+  // Every small window of the editor (src/window-kit.css, styles/editor-windows.css): an icon tile and a
+  // line under the title in the header, the body, the buttons at the bottom; `tone: 'danger'` reddens
+  // the tile (and a `.danger` main button).
+  function openModal(title, body, footer = '', view = '', { icon: mark = 'sparkle', lead = '', tone = '' } = {}) {
     exportGuideCleanup?.(); exportGuideCleanup = null;
     clearTimeout(modalCloseTimer);
     modal.classList.remove('closing');
     modal.dataset.view = view;
     $('modalContent').innerHTML =
-      `<div class="modal-header"><h2>${esc(title)}</h2><button class="icon-button" data-close aria-label="${t('Закрыть')}">${icon('close')}</button></div><div class="modal-body">${body}</div>${footer ? `<div class="modal-footer">${footer}</div>` : ''}`;
+      `<div class="modal-header"><span class="win-icon"${tone ? ` data-tone="${tone}"` : ''} aria-hidden="true">${icon(mark)}</span><div class="win-heading"><h2>${esc(title)}</h2>${lead ? `<p>${lead}</p>` : ''}</div><button class="icon-button win-close" data-close aria-label="${t('Закрыть')}">${icon('close')}</button></div><div class="modal-body">${body}</div>${footer ? `<div class="modal-footer">${footer}</div>` : ''}`;
     $('modalContent')
       .querySelectorAll('[data-close]')
       .forEach((b) => (b.onclick = closeModal));
@@ -1831,7 +1888,8 @@ export function createStudio(projectStorage, initial) {
     openModal(
       t('Переименовать сетку'),
       `<label class="field-label" for="projectNameInput">${t('Название сетки')}</label><input id="projectNameInput" value="${esc(config.name)}" maxlength="200">`,
-      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmName" class="button primary">${t('Сохранить')}</button>`
+      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmName" class="button primary">${t('Сохранить')}</button>`,
+      '', { icon: 'edit', lead: t('Это имя видно в списке сеток в Dota.') }
     );
     const apply = () => {
       const name = $('projectNameInput').value.trim();
@@ -1849,8 +1907,9 @@ export function createStudio(projectStorage, initial) {
   function openText(p = { x: 100, y: 100 }) {
     openModal(
       t('Добавить текст или ASCII'),
-      `<p>${t('Многострочный ASCII добавляется отдельным слоем.')}</p><textarea id="asciiText" rows="7" placeholder="${t('Текст или ASCII-арт…')}" maxlength="30000" aria-label="${t('Текст или ASCII-арт')}"></textarea><div class="text-mode"><label><input type="radio" name="asciiMode" value="lines" checked>${t('По строкам')}</label><label><input type="radio" name="asciiMode" value="symbols">${t('Каждый символ отдельно')}</label></div>`,
-      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmText" class="button primary">${t('Добавить на холст')}</button>`
+      `<textarea id="asciiText" rows="7" placeholder="${t('Текст или ASCII-арт…')}" maxlength="30000" aria-label="${t('Текст или ASCII-арт')}"></textarea><div class="text-mode choice-cards" role="radiogroup" aria-label="${t('Как добавить')}"><label class="choice-card"><input type="radio" name="asciiMode" value="lines" checked><span class="choice-icon">${icon('text')}</span><span><strong>${t('По строкам')}</strong><small>${t('Строка — одна категория: файл легче')}</small></span></label><label class="choice-card"><input type="radio" name="asciiMode" value="symbols"><span class="choice-icon">${icon('sparkle')}</span><span><strong>${t('Каждый символ отдельно')}</strong><small>${t('Любой символ можно двигать и менять')}</small></span></label></div>`,
+      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmText" class="button primary">${t('Добавить на холст')}</button>`,
+      'text', { icon: 'text', lead: t('Многострочный ASCII добавляется отдельным слоем.') }
     );
     $('confirmText').onclick = () => {
       const text = $('asciiText').value,
@@ -1928,7 +1987,8 @@ export function createStudio(projectStorage, initial) {
     openModal(
       t('Удалить сетку?'),
       `<p>${t('«{name}» исчезнет из этого файла. Остальные сетки не изменятся. Вернуть можно через Ctrl+Z.', { name: esc(config.name) })}</p>`,
-      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmDeleteGrid" class="button primary">${t('Удалить сетку')}</button>`
+      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmDeleteGrid" class="button primary danger">${t('Удалить сетку')}</button>`,
+      '', { icon: 'trash', tone: 'danger' }
     );
     $('confirmDeleteGrid').onclick = () => {
       if (gesture) finishGesture(null, true);
@@ -1943,6 +2003,24 @@ export function createStudio(projectStorage, initial) {
     };
     $('confirmDeleteGrid').focus();
   }
+  // «Мета» (src/MetaDialog.jsx): a new grid of the strongest heroes per position, or a group's heroes
+  // put in meta order (`groupId`).
+  function openMeta(request = null) {
+    groupChoice = null;
+    if (typeof request === 'number') {
+      const group = doc.entities.find((e) => e.id === request && e.type === 'heroes');
+      if (!group) return;
+      metaDialog = { mode: 'sort', id: group.id, name: group.name, heroIds: [...group.heroIds] };
+    } else metaDialog = { mode: request === 'group' ? 'group' : 'grid' };
+    publishUI();
+  }
+  // Every «add a group» button asks first: an ordinary group or a meta group (the user, 02.10.2026).
+  function chooseGroup(button) {
+    const box = button.getBoundingClientRect();
+    // From the canvas's tool dock the menu opens to its right, from other buttons under them.
+    groupChoice = { left: Math.round(box.left), top: Math.round(box.top), right: Math.round(box.right), bottom: Math.round(box.bottom), side: !!button.closest('.tool-dock') };
+    publishUI();
+  }
   function chooseTemplate(kind = 'blank') {
     if (doc.source.configs.length >= C.MAX_CONFIGS) {
       toast(t('В одном файле допускается до 100 сеток.'), true);
@@ -1952,8 +2030,9 @@ export function createStudio(projectStorage, initial) {
       kind === 'roles' ? t('Сетка по ролям') : kind === 'minimal' ? t('Мой пул героев') : t('Новая сетка');
     openModal(
       t('Новая сетка'),
-      `<p>${t('Добавится в {file} рядом с существующими сетками.', { file: esc(doc.fileName || 'hero_grid_config.json') })}</p><label class="field-label" for="newGridName">${t('Название сетки')}</label><input id="newGridName" maxlength="200" value="${esc(defaultName)}"><label class="field-label" for="newGridTemplate">${t('Начать с')}</label><select id="newGridTemplate"><option value="blank">${t('Пустая сетка')}</option><option value="roles">${t('Шаблон по ролям')}</option><option value="minimal">${t('Шаблон «Мой пул»')}</option></select>`,
-      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmNewGrid" class="button primary">${t('Создать сетку')}</button>`
+      `<label class="field-label" for="newGridName">${t('Название сетки')}</label><input id="newGridName" maxlength="200" value="${esc(defaultName)}"><label class="field-label" for="newGridTemplate">${t('Начать с')}</label><select id="newGridTemplate"><option value="blank">${t('Пустая сетка')}</option><option value="roles">${t('Шаблон по ролям')}</option><option value="minimal">${t('Шаблон «Мой пул»')}</option></select>`,
+      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmNewGrid" class="button primary">${t('Создать сетку')}</button>`,
+      '', { icon: 'files', lead: t('Добавится в {file} рядом с существующими сетками.', { file: esc(doc.fileName || 'hero_grid_config.json') }) }
     );
     $('newGridTemplate').value = kind;
     const create = () => {
@@ -2001,7 +2080,8 @@ export function createStudio(projectStorage, initial) {
   }
   async function openRecovery() {
     finishLiveEdit();
-    openModal(t('Версии проекта'), `<p role="status">${t('Читаем сохранённые версии…')}</p>`, `<button id="downloadCurrentProject" class="button primary">${t('Скачать текущий проект')}</button>`, 'versions');
+    openModal(t('Версии проекта'), `<p role="status" class="modal-loading">${t('Читаем сохранённые версии…')}</p>`, `<button id="downloadCurrentProject" class="button primary">${icon('download')}${t('Скачать текущий проект')}</button>`, 'versions',
+      { icon: 'history', lead: t('Перед восстановлением текущая работа сохраняется отдельной копией. Файл проекта содержит все сетки, слои и подложку.') });
     $('downloadCurrentProject').onclick = downloadProject;
     const records = await projectStorage.records();
     if (disposed || !modal.open || !$('downloadCurrentProject')) return;
@@ -2009,7 +2089,7 @@ export function createStudio(projectStorage, initial) {
     const unique = records.filter((record) => { if (seen.has(record.raw)) return false; seen.add(record.raw); return true; });
     const warning = saveIndicator(localSaveStatus, cloudSaveStatus).detail || saveWarning || initial.issue;
     $('modalContent').querySelector('.modal-body').innerHTML =
-      `<p>${t('Перед восстановлением текущая работа сохраняется отдельной копией. Файл проекта содержит все сетки, слои и подложку.')}</p>${warning ? `<p class="recovery-warning" role="status">${esc(warning)}</p>` : ''}<div class="recovery-list">${unique.length ? unique.map((record, i) => `<div class="recovery-row"><div><strong>${esc(record.name)}</strong><small>${record.savedAt ? esc(new Date(record.savedAt).toLocaleString(locale)) : t('Сохранение старой версии')} · ${esc(t(record.reason))} · ${esc(record.version)}</small></div><div class="recovery-actions"><button class="button secondary compact" data-recovery-download="${i}">${t('Скачать')}</button>${record.valid ? `<button class="button secondary compact" data-recovery-restore="${i}">${t('Восстановить')}</button>` : `<span class="recovery-warning">${t('Не удалось прочитать')}</span>`}</div></div>`).join('') : `<p class="hint">${t('Пока нет копий. Они появятся после первого изменения.')}</p>`}</div>`;
+      `${warning ? `<p class="recovery-warning" role="status">${esc(warning)}</p>` : ''}<div class="recovery-list">${unique.length ? unique.map((record, i) => `<div class="recovery-row"><span class="recovery-icon">${icon(i ? 'history' : 'check')}</span><div><strong>${esc(record.name)}</strong><small>${record.savedAt ? esc(new Date(record.savedAt).toLocaleString(locale)) : t('Сохранение старой версии')} · ${esc(t(record.reason))} · ${esc(record.version)}</small></div><div class="recovery-actions"><button class="button secondary compact" data-recovery-download="${i}">${t('Скачать')}</button>${record.valid ? `<button class="button secondary compact" data-recovery-restore="${i}">${t('Восстановить')}</button>` : `<span class="recovery-warning">${t('Не удалось прочитать')}</span>`}</div></div>`).join('') : `<p class="hint">${t('Пока нет копий. Они появятся после первого изменения.')}</p>`}</div>`;
     $('modalContent').querySelectorAll('[data-recovery-download]').forEach((button) => {
       button.onclick = () => download(unique[Number(button.dataset.recoveryDownload)].raw, `GridStudio-backup-${Date.now()}.gridstudio.json`);
     });
@@ -2020,7 +2100,7 @@ export function createStudio(projectStorage, initial) {
           const restored = await projectStorage.prepareRestore(unique[Number(button.dataset.recoveryRestore)].raw, doc);
           commit(() => { doc = restored; selected.clear(); }, t('Копия восстановлена. Отмена — Ctrl+Z'));
           closeModal();
-        } catch (error) { toast(error.message, true); button.disabled = false; }
+        } catch (error) { toast(error.message, true, true); button.disabled = false; }
       };
     });
   }
@@ -2042,17 +2122,40 @@ export function createStudio(projectStorage, initial) {
     const categories = output.configs[doc.configIndex].categories,
       issues = C.warnings(doc, 0);
     const heroCount = categories.reduce((n, c) => n + c.hero_ids.length, 0);
+    // How it gets into Dota: the file with the steps and the video (always first), or a PowerShell
+    // command (Windows): the grid is stored on the site for a week (server/grid-installs.mjs) and the
+    // command fetches a script that puts it into the folder of the account signed in to Steam.
+    const windows = /win/i.test(navigator.userAgentData?.platform || navigator.platform || '');
+    let method = 'file', command = null;
+    const restoreCommand = installCommand(`${location.origin}/api/catalog/install/${lang === 'en' ? 'restore-en' : 'restore'}`);
+    const grids = output.configs.length;
     openModal(
-      t('Скачать файл с сетками'),
-      // Sentences keep their markup in the dictionary (src/i18n/en/editor.js).
-      `<p>${t('Все сетки ({count}) и изменения в них сохранятся в одном JSON.', { count: output.configs.length })}</p><p class="hint">${t('Объекты и герои ниже — в выбранной сетке «{name}».', { name: esc(doc.name) })}</p><div class="export-summary"><div><strong id="exportCategoryCount">${categories.length}</strong>${t('КАТЕГОРИЙ')}</div><div><strong>${heroCount}</strong>${t('ГЕРОЕВ')}</div><div><strong>${output.configs.length}</strong>${t('СЕТОК В ФАЙЛЕ')}</div></div>${issues.length ? issues.map((w) => `<div class="export-warning">${esc(w)}</div>`).join('') : `<div class="export-ok">${icon('check')}${t('Объекты находятся внутри холста')}</div>`}<label class="check-row export-row-option"><input id="compactExportRows" type="checkbox" checked>${t('Склеивать символы одной линии в строки')}</label><p class="hint">${t('Символы одной линии становятся одной категорией — файл в разы легче. Строки собраны так, что рисунок стоит на месте и на экране выбора героя, и при любом разрешении. Без склейки каждый символ — отдельная категория.')}</p><details class="export-guide"><summary>${t('Как использовать в Dota 2')}</summary><ol><li>${t('Нажми «Скачать файл для DOTA» — браузер сохранит <strong>hero_grid_config.json</strong> в «Загрузки».')}<div class="export-name-note"><p>${t('<strong>Имя файла должно быть ровно <code>hero_grid_config.json</code></strong> — Dota 2 читает только его.')}</p><ul><li>${t('Если в «Загрузках» уже был такой файл, браузер назовёт новый <code>hero_grid_config (1).json</code>. Переименуй его: убери « (1)».')}</li><li>${t('Если Windows не показывает «.json» в именах, впиши при переименовании только <code>hero_grid_config</code>, иначе получится <code>hero_grid_config.json.json</code>.')}</li></ul></div></li><li>${t('Закрой Dota 2 и сделай резервную копию существующего <strong>hero_grid_config.json</strong>.')}</li><li>${t('Найди папку своего аккаунта:')}${steamFolderMarkup()}<p class="steam-folder-note">${t('Код друга — это ID аккаунта в Dota 2. Если Steam установлен в другую папку, укажи её выше.')}</p></li><li>${t('<strong>Замени старый файл новым:</strong> скопируй <strong>hero_grid_config.json</strong> в эту папку. Если Windows спросит про файл с таким же именем, выбери «Заменить файл в папке назначения». В папке должен остаться один <strong>hero_grid_config.json</strong>, файлы с другими именами Dota 2 не читает.')}</li><li>${t('Запусти Dota 2, открой «Герои» и выбери сетку в списке «Сортировка» внизу слева.')}</li></ol><p>${t('Если импортирован файл с несколькими сетками, остальные сетки сохранятся в экспорте.')}</p><p>${t('Отображение шрифта и портретов в игре может отличаться от превью.')}</p></details>`,
-      `<button id="shareCatalogGrid" class="button secondary">${t('Опубликовать в мастерскую')}</button><button id="downloadProject" class="button secondary">${t('Сохранить JSON проекта')}</button><button id="downloadDota" class="button primary">${t('Скачать файл для DOTA')}</button>`,
-      'export'
+      t('Скачать для Dota 2'),
+      `<div class="export-summary"><div>${icon('gauge')}<strong id="exportCategoryCount">${categories.length}</strong>${t('КАТЕГОРИЙ')}</div><div>${icon('heroes')}<strong>${heroCount}</strong>${t('ГЕРОЕВ')}</div><div>${icon('files')}<strong>${grids}</strong>${t('СЕТОК В ФАЙЛЕ')}</div></div>`
+      + (grids > 1 ? `<p class="hint export-summary-note">${t('Категории и герои — у открытой сетки «{name}».', { name: esc(doc.name) })}</p>` : '')
+      + `<div class="export-checks">${issues.length ? issues.map((w) => `<div class="export-warning">${esc(w)}</div>`).join('') : `<div class="export-ok">${icon('check')}${t('Объекты находятся внутри холста')}</div>`}<div id="exportWarnings"></div></div>`
+      + `<fieldset class="choice-cards export-methods"><legend>${t('Как поставить в Dota')}</legend>`
+      + `<label class="choice-card"><input type="radio" name="exportMethod" value="file"><span class="choice-icon">${icon('files')}</span><span><strong>${t('Файлом вручную')}</strong><small>${t('hero_grid_config.json и инструкция с видео')}</small></span></label>`
+      + `<label class="choice-card"><input type="radio" name="exportMethod" value="command"${windows ? '' : ' disabled'}><span class="choice-icon">${icon('terminal')}</span><span><strong>${t('Командой PowerShell')}</strong><small>${windows ? t('Одна команда сама положит сетку в папку твоего аккаунта Steam') : t('Только для Windows')}</small></span></label></fieldset>`
+      + `<section class="export-steps" data-method="command"><ol>`
+      + `<li>${t('Скопируй команду:')}<div class="export-command" data-state="busy"><code id="exportCommand">${t('Готовим команду…')}</code><button type="button" class="icon-button" data-copy-command aria-label="${t('Скопировать команду')}" disabled>${icon('copy')}</button></div></li>`
+      + `<li>${t('Открой PowerShell: нажми <kbd>Win</kbd>, набери <strong>PowerShell</strong> и нажми <kbd>Enter</kbd>.')}</li>`
+      + `<li>${t('Вставь команду правым кликом или <kbd>Ctrl</kbd> + <kbd>V</kbd> и нажми <kbd>Enter</kbd>. Она сама найдёт папку аккаунта, открытого сейчас в Steam, попросит закрыть Dota 2 и заменит сетки, а прежние сохранит копией.')}</li>`
+      + `<li>${t('Запусти Dota 2, открой «Герои» и выбери сетку в списке «Сортировка» внизу слева.')}</li></ol>`
+      + `<p class="hint">${t('Команда работает 7 дней: сетка хранится на сайте только для неё. Чтобы оставить свои сетки из Dota, сначала добавь их сюда: «Добавить из файла».')}</p>`
+      + `<p class="hint export-restore">${t('Вернуть прежние сетки:')} <code>${esc(restoreCommand)}</code><button type="button" class="icon-button" data-copy-restore aria-label="${t('Скопировать команду возврата')}">${icon('copy')}</button></p></section>`
+      + `<section class="export-steps export-guide" data-method="file"><div id="exportVideoGuide"></div><ol><li>${t('Нажми «Скачать hero_grid_config.json» — браузер сохранит файл в «Загрузки».')}<div class="export-name-note"><p>${t('<strong>Имя файла должно быть ровно <code>hero_grid_config.json</code></strong> — Dota 2 читает только его.')}</p><ul><li>${t('Если в «Загрузках» уже был такой файл, браузер назовёт новый <code>hero_grid_config (1).json</code>. Переименуй его: убери « (1)».')}</li><li>${t('Если Windows не показывает «.json» в именах, впиши при переименовании только <code>hero_grid_config</code>, иначе получится <code>hero_grid_config.json.json</code>.')}</li></ul></div></li><li>${t('Закрой Dota 2 и сделай резервную копию существующего <strong>hero_grid_config.json</strong>.')}</li><li>${t('Найди папку своего аккаунта:')}${steamFolderMarkup()}<p class="steam-folder-note">${t('Код друга — это ID аккаунта в Dota 2. Если Steam установлен в другую папку, укажи её выше.')}</p></li><li>${t('<strong>Замени старый файл новым:</strong> скопируй <strong>hero_grid_config.json</strong> в эту папку. Если Windows спросит про файл с таким же именем, выбери «Заменить файл в папке назначения». В папке должен остаться один <strong>hero_grid_config.json</strong>, файлы с другими именами Dota 2 не читает.')}</li><li>${t('Запусти Dota 2, открой «Герои» и выбери сетку в списке «Сортировка» внизу слева.')}</li></ol></section>`
+      + `<details class="export-more"><summary>${t('Дополнительно')}</summary><label class="check-row export-row-option"><input id="compactExportRows" type="checkbox" checked>${t('Склеивать символы одной линии в строки')}</label><p class="hint">${t('Символы одной линии становятся одной категорией — файл в разы легче. Строки собраны так, что рисунок стоит на месте и на экране выбора героя, и при любом разрешении. Без склейки каждый символ — отдельная категория.')}</p>`
+      + `<div class="export-project"><span><strong>${t('Файл проекта GridStudio')}</strong><small>${t('Слои, подложка и настройки — чтобы потом открыть в редакторе. Dota его не читает.')}</small></span><button id="downloadProject" class="button secondary compact">${icon('archive')}${t('Сохранить')}</button></div>`
+      + `<p class="hint">${t('Отображение шрифта и портретов в игре может отличаться от превью.')}</p></details>`,
+      `<button id="shareCatalogGrid" class="button secondary">${icon('workshop')}${t('Опубликовать в мастерскую')}</button><button id="downloadDota" class="button primary"></button>`,
+      'export', { icon: 'download', lead: grids > 1 ? t('В Dota попадут все сетки файла: {count}', { count: grids }) : t('В Dota попадёт сетка «{name}»', { name: esc(doc.name) }) }
     );
-    exportGuideCleanup = mountSteamFolder($('steamFolder'), icon);
+    // The steps, with the video guide above them (src/video-guide.js); both go when the window closes.
+    const stopSteamFolder = mountSteamFolder($('steamFolder'), icon), stopVideoGuide = mountVideoGuide($('exportVideoGuide'));
+    exportGuideCleanup = () => { stopSteamFolder?.(); stopVideoGuide(); };
     const exportCurrent = () => C.exportDota(doc, null, { compactRows: $('compactExportRows').checked, widths: pickWidths });
-    const exportWarnings = document.createElement('div');
-    $('compactExportRows').closest('label').before(exportWarnings);
+    const exportWarnings = $('exportWarnings');
     // The count and the load warning follow the option (rows make fewer categories).
     const showCount = () => {
       let count;
@@ -2062,15 +2165,75 @@ export function createStudio(projectStorage, initial) {
         ? `<div class="export-warning" role="alert">${t('Более 2 000 категорий: возможны лаги и вылет Dota 2.')}</div>`
         : '';
     };
-    $('compactExportRows').onchange = showCount;
+    $('compactExportRows').onchange = () => { showCount(); if (method === 'command') prepareCommand(); };
     exportWarnings.innerHTML = categories.length > 2000 ? `<div class="export-warning">${t('Более 2 000 категорий: возможны лаги и вылет Dota 2.')}</div>` : '';
+    // The chosen way shows its steps and names the main button.
+    const showMethod = (next) => {
+      method = next;
+      $('modalContent').querySelectorAll('[name="exportMethod"]').forEach((input) => { input.checked = input.value === method; });
+      $('modalContent').querySelectorAll('.export-steps').forEach((section) => {
+        section.hidden = section.dataset.method !== method;
+        if (section.hidden) section.querySelector('video')?.pause();
+      });
+      $('downloadDota').innerHTML = method === 'command' ? `${icon('copy')}${t('Скопировать команду')}` : `${icon('download')}${t('Скачать hero_grid_config.json')}`;
+      if (method === 'command') prepareCommand();
+    };
+    $('modalContent').querySelectorAll('[name="exportMethod"]').forEach((input) => { input.onchange = () => showMethod(input.value); });
+    const copyText = async (text, done) => {
+      try { await navigator.clipboard.writeText(text); toast(done); }
+      catch { toast(t('Не удалось скопировать. Выдели команду и скопируй вручную.'), true); }
+    };
+    $('modalContent').querySelector('[data-copy-restore]').onclick = () => copyText(restoreCommand, t('Команда возврата скопирована'));
+    $('modalContent').querySelector('[data-copy-command]').onclick = () => command && copyText(command.text, t('Команда скопирована: вставь её в PowerShell'));
+    // The grid goes to the site once per content: the same file keeps its command.
+    async function makeCommand(json) {
+      if (command?.json === json) return command.text;
+      const response = await fetch('/api/catalog/install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ grid: JSON.parse(json), lang }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(response.status === 413 ? t('Сетка слишком большая для команды. Скачай её файлом.') : translateMessage(result.error) || t('Не удалось связаться с сервером. Попробуй ещё раз.'));
+      command = { json, text: installCommand(result.address) };
+      return command.text;
+    }
+    // The command is ready as soon as the way is chosen (and again when the file changes); the
+    // newest request wins.
+    const commandBox = $('exportCommand').closest('.export-command');
+    let preparing = null;
+    function showCommand(text, state) {
+      commandBox.dataset.state = state;
+      $('exportCommand').textContent = text;
+      commandBox.querySelector('[data-copy-command]').disabled = state !== 'ready';
+    }
+    async function prepareCommand() {
+      let json;
+      try { json = JSON.stringify(withGridNote(exportCurrent(), t(GRID_NOTE))); } catch (error) { showCommand(error.message, 'error'); return null; }
+      if (command?.json === json) { showCommand(command.text, 'ready'); return command.text; }
+      showCommand(t('Готовим команду…'), 'busy');
+      const request = preparing = makeCommand(json);
+      try {
+        const text = await request;
+        if (preparing === request && modal.open) showCommand(text, 'ready');
+        return text;
+      } catch (error) {
+        if (preparing === request && modal.open) showCommand(error.message, 'error');
+        return null;
+      }
+    }
+    showMethod(method);
     $('downloadProject').onclick = downloadProject;
-    $('downloadDota').onclick = () => {
+    $('downloadDota').onclick = async (event) => {
       let output;
       try { output = exportCurrent(); } catch (error) { toast(error.message, true); return; }
-      download(JSON.stringify(output, null, 2), 'hero_grid_config.json');
-      closeModal();
-      toast(t('hero_grid_config.json скачан'));
+      if (method !== 'command') {
+        download(JSON.stringify(withGridNote(output, t(GRID_NOTE)), null, 2), 'hero_grid_config.json');
+        closeModal();
+        return toast(t('hero_grid_config.json скачан'));
+      }
+      const button = event.currentTarget;
+      button.disabled = true; button.setAttribute('aria-busy', 'true');
+      try {
+        const text = await prepareCommand();
+        if (text && modal.open) await copyText(text, t('Команда скопирована: вставь её в PowerShell'));
+      } finally { button.disabled = false; button.removeAttribute('aria-busy'); }
     };
     $('shareCatalogGrid').onclick = () => {
       try {
@@ -2096,8 +2259,9 @@ export function createStudio(projectStorage, initial) {
       const canAppend = current + count <= C.MAX_CONFIGS;
       openModal(
         t('Загрузить сетки'),
-        `<p>${t('Выбрано файлов: {files} · сеток: {grids}', { files: `<strong>${imported.length}</strong>`, grids: `<strong>${count}</strong>` })}</p><ul class="grid-import-files">${imported.map(({ name, doc: incoming }) => `<li><strong>${esc(name)}</strong><span>${C.configurations(incoming).map((grid) => esc(grid.name || t('Без названия'))).join(' · ')}</span></li>`).join('')}</ul>${repaired ? `<div class="export-warning">${t('Исправлены нулевые или отрицательные размеры {count} категорий. Позиции символов и пропорции рисунка сохранены. Для текста восстановлен блок 30 × 30; для героев — положительные размеры.', { count: repaired })}</div>` : ''}<fieldset class="grid-import-modes"><legend>${t('Как загрузить')}</legend><label class="grid-import-option"><input type="radio" name="gridImportMode" value="append" ${canAppend ? 'checked' : 'disabled'}><span><strong>${t('Добавить к текущим')}</strong><small>${canAppend ? t('Текущие {current} + выбранные {count} = {total} сеток. Текущая сетка останется открытой.', { current, count, total: current + count }) : t('Вместе получится больше 100 сеток. Открой выбранные файлы отдельно.')}</small></span></label><label class="grid-import-option"><input type="radio" name="gridImportMode" value="replace" ${canAppend ? '' : 'checked'}><span><strong>${t('Открыть вместо текущих')}</strong><small>${t('В файле будет {count} сеток. Замену можно отменить через Ctrl+Z.', { count })}</small></span></label></fieldset><p class="hint">${t('Сетки с одинаковыми именами сохранятся отдельно. Название и расширение файла не имеют значения.')}</p>`,
-        `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmGridImport" class="button primary">${t('Добавить сетки')}</button>`
+        `<ul class="grid-import-files">${imported.map(({ name, doc: incoming }) => `<li><strong>${esc(name)}</strong><span>${C.configurations(incoming).map((grid) => esc(grid.name || t('Без названия'))).join(' · ')}</span></li>`).join('')}</ul>${repaired ? `<div class="export-warning">${t('Исправлены нулевые или отрицательные размеры {count} категорий. Позиции символов и пропорции рисунка сохранены. Для текста восстановлен блок 30 × 30; для героев — положительные размеры.', { count: repaired })}</div>` : ''}<fieldset class="grid-import-modes choice-cards"><legend>${t('Как загрузить')}</legend><label class="grid-import-option choice-card"><input type="radio" name="gridImportMode" value="append" ${canAppend ? 'checked' : 'disabled'}><span class="choice-icon">${icon('plus')}</span><span><strong>${t('Добавить к текущим')}</strong><small>${canAppend ? t('Текущие {current} + выбранные {count} = {total} сеток. Текущая сетка останется открытой.', { current, count, total: current + count }) : t('Вместе получится больше 100 сеток. Открой выбранные файлы отдельно.')}</small></span></label><label class="grid-import-option choice-card"><input type="radio" name="gridImportMode" value="replace" ${canAppend ? '' : 'checked'}><span class="choice-icon">${icon('replace')}</span><span><strong>${t('Открыть вместо текущих')}</strong><small>${t('В файле будет {count} сеток. Замену можно отменить через Ctrl+Z.', { count })}</small></span></label></fieldset><p class="hint">${t('Сетки с одинаковыми именами сохранятся отдельно. Название и расширение файла не имеют значения.')}</p>`,
+        `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmGridImport" class="button primary">${t('Добавить сетки')}</button>`,
+        '', { icon: 'import', lead: t('Выбрано файлов: {files} · сеток: {grids}', { files: `<strong>${imported.length}</strong>`, grids: `<strong>${count}</strong>` }) }
       );
       const chosenMode = () => $('modalContent').querySelector('[name="gridImportMode"]:checked').value;
       const updateAction = () => {
@@ -2278,7 +2442,7 @@ export function createStudio(projectStorage, initial) {
     img.onerror = () => {
       URL.revokeObjectURL(url);
       if (disposed || request !== imageRequest) return;
-      toast(t('Не удалось прочитать изображение.'), true);
+      toast(t('Не удалось прочитать изображение.'), true, true);
     };
     img.src = url;
   }
@@ -2728,7 +2892,8 @@ export function createStudio(projectStorage, initial) {
         .join(
           ''
         )}</select><input id="charsetSearch" type="search" aria-label="${t('Поиск символов')}" placeholder="${t('Символ, название или U+…')}"><label class="check-row category-select-all"><input id="charsetSelectAll" type="checkbox">${t('Выбрать все символы')}</label><div id="charsetChoices" class="charset-choices" aria-label="${t('Символы выбранного стиля')}"></div><div class="charset-selection"><span>${t('Текущий набор')}</span><output id="charsetCurrent" dir="ltr"></output></div><p id="charsetStatus" class="hint" role="status">${t('Нажми на символ, чтобы выбрать его или снять выбор.')}</p>`,
-      `<button class="button primary" data-close>${t('Готово')}</button>`
+      `<button class="button primary" data-close>${t('Готово')}</button>`,
+      '', { icon: 'font', lead: t('Отметь символы, из которых будет собран рисунок.') }
     );
     const choices = () => searchSymbols(D.symbols, $('charsetSearch').value, $('charsetCategory').value);
     const render = () => {
@@ -2857,17 +3022,25 @@ export function createStudio(projectStorage, initial) {
       [t('Поворот с шагом 15°'), t('Shift + поворот')]
     ];
     openModal(
-      t('GridStudio {version} · Работа с холстом', { version: APP_VERSION }),
-      `<p>${t('Выбери группу на холсте и нажми «+» после последнего героя. В попапе можно искать героев и выбирать атрибут. Перетаскивай портреты внутри группы, чтобы менять их порядок; за название или свободное место перемещается вся группа. Esc отменяет перетаскивание, Ctrl+Z — готовую перестановку. На вкладке «Рисование» можно рисовать символами, а «ASCII-арты» превращают картинку или текст в редактируемый рисунок.')}</p><p>${t('Тяни объекты для перемещения. Любой угол выделения меняет размер. Удерживай <kbd>Shift</kbd>, чтобы сохранить пропорции. Для поворота текста тяни снаружи угла рамки или за круглую ручку; <kbd>Shift</kbd> задаёт шаг 15°. Точный угол можно ввести в свойствах. <kbd>Shift</kbd> + клик добавляет объект к выделению. Протяни рамку на пустом месте, чтобы выделить несколько объектов. <kbd>Alt</kbd> + клик выбирает весь слой рисунка. Двойной клик открывает редактирование текста.')}</p><h3>${t('Горячие клавиши')}</h3><div class="shortcuts-grid">${shortcuts.map(([text, key]) => `<div><span>${text}</span><kbd>${key}</kbd></div>`).join('')}</div><h3>${t('О сохранении')}</h3><p class="hint">${t('Проект сохраняется в этом браузере вместе со всеми сетками, слоями и подложкой. Перед обновлением сохраняется резервная копия. Нажми «Изменения сохранены» в шапке или «Версии проекта» в этой справке, чтобы скачать или восстановить сохранение. Очистка данных браузера удаляет локальные копии — для независимого хранения скачай файл проекта. Картинка конвертера и рисунок в отдельном окне сохранятся в проект только после добавления на холст.')}</p><p class="hint">${t('Превью приблизительное: файл Dota не хранит цвета и произвольные размеры шрифта. Поворот меняет расположение символов и сохраняется в Dota JSON. Можно загрузить локальный Radiance для более близкого отображения текста.')}</p><p><a class="source-link" href="https://github.com/linsisss/dota2-grid-toolkit" target="_blank" rel="noreferrer">${t('Исходный репозиторий ↗')}</a></p>`,
-      `<button id="helpTour" class="button secondary">${t('Обучение')}</button><button id="helpRecovery" class="button secondary">${t('Версии проекта')}</button><button class="button primary" data-close>${t('Всё понятно')}</button>`,
-      'help'
+      t('Работа с холстом'),
+      `<p>${t('Выбери группу на холсте и нажми «+» после последнего героя. В попапе можно искать героев и выбирать атрибут. Перетаскивай портреты внутри группы, чтобы менять их порядок; за название или свободное место перемещается вся группа. Esc отменяет перетаскивание, Ctrl+Z — готовую перестановку. На вкладке «Рисование» можно рисовать символами, а «ASCII-арты» превращают картинку или текст в редактируемый рисунок.')}</p><p>${t('Тяни объекты для перемещения. Любой угол выделения меняет размер. Удерживай <kbd>Shift</kbd>, чтобы сохранить пропорции. Для поворота текста тяни снаружи угла рамки или за круглую ручку; <kbd>Shift</kbd> задаёт шаг 15°. Точный угол можно ввести в свойствах. <kbd>Shift</kbd> + клик добавляет объект к выделению. Протяни рамку на пустом месте, чтобы выделить несколько объектов. <kbd>Alt</kbd> + клик выбирает весь слой рисунка. Двойной клик открывает редактирование текста.')}</p><h3>${t('Горячие клавиши')}</h3><div class="shortcuts-grid">${shortcuts.map(([text, key]) => `<div><span>${text}</span><kbd>${key}</kbd></div>`).join('')}</div><h3>${t('О сохранении')}</h3><p class="hint">${t('Проект сохраняется в этом браузере вместе со всеми сетками, слоями и подложкой. Перед обновлением сохраняется резервная копия. Нажми «Изменения сохранены» в шапке или «Версии проекта» в этой справке, чтобы скачать или восстановить сохранение. Очистка данных браузера удаляет локальные копии — для независимого хранения скачай файл проекта. Картинка конвертера и рисунок в отдельном окне сохранятся в проект только после добавления на холст.')}</p><p class="hint">${t('Превью приблизительное: файл Dota не хранит цвета и произвольные размеры шрифта. Поворот меняет расположение символов и сохраняется в Dota JSON. Можно загрузить локальный Radiance для более близкого отображения текста.')}</p><div class="help-community"><span class="help-community-icon">${icon('telegramLogo')}</span><div><strong>${t('Нашёл баг или есть идея?')}</strong><p>${t('Пиши в чат пользователей — отвечаем там же. Новости проекта — в канале.')}</p></div><div class="help-community-actions"><a class="button secondary" href="${COMMUNITY.chat}" target="_blank" rel="noreferrer">${icon('chat')}${t('Чат пользователей')}</a><a class="button secondary" href="${COMMUNITY.channel}" target="_blank" rel="noreferrer">${icon('news')}${t('Канал')}</a><button id="helpReport" type="button" class="button secondary">${icon('bug')}${t('Сообщить о баге')}</button></div></div><p><a class="source-link" href="https://github.com/linsisss/dota2-grid-toolkit" target="_blank" rel="noreferrer">${t('Исходный репозиторий ↗')}</a></p>`,
+      `<button id="helpTour" class="button secondary">${icon('sparkle')}${t('Обучение')}</button><button id="helpRecovery" class="button secondary">${icon('history')}${t('Версии проекта')}</button><button class="button primary" data-close>${t('Всё понятно')}</button>`,
+      'help', { icon: 'help', lead: `GridStudio ${esc(APP_VERSION)} · ${t('горячие клавиши и приёмы')}` }
     );
+    staggerIn(document.querySelectorAll('#modal .shortcuts-grid > div'), { step: 14, max: 40, distance: 6 });
     $('helpRecovery').onclick = openRecovery;
     // src/EditorTour.jsx listens for this and walks through the editor again.
     $('helpTour').onclick = () => { closeModal(); window.dispatchEvent(new CustomEvent('gridstudio:tour')); };
+    // «Чат и новости» with the report first (src/Community.jsx listens).
+    $('helpReport').onclick = () => { closeModal(); window.dispatchEvent(new CustomEvent(COMMUNITY_EVENT, { detail: { report: true } })); };
   }
 
   hydrateIcons();
+  // The mode tabs' underline and the dock's active tool glide to the new one (styles/editor-motion.css).
+  slideIndicator(document.querySelector('.mode-tabs'), '[aria-selected="true"]', { signal: abort.signal });
+  slideIndicator(document.querySelector('.tool-dock'), '.tool-button.active', { signal: abort.signal });
+  // The picture-to-ASCII styles scroll sideways; the mouse wheel moves them too.
+  wheelScrollsSideways($('imageStyles'), { signal: abort.signal });
   const focusButton = $('focusButton');
   function setFocus(next) {
     focused = next;
@@ -2894,9 +3067,9 @@ export function createStudio(projectStorage, initial) {
     invisibleWarned.add(field);
     toast(warning, true);
   });
-  $('dockAddGroup').onclick = () => {
+  $('dockAddGroup').onclick = (event) => {
     setMode('heroes');
-    addGroup();
+    chooseGroup(event.currentTarget);
   };
   document.querySelectorAll('[data-mode]').forEach((button) => {
     button.onclick = () => setMode(button.dataset.mode);
@@ -2923,6 +3096,7 @@ export function createStudio(projectStorage, initial) {
   $('drawingTools')
     .querySelectorAll('[data-tool]')
     .forEach((button) => (button.onclick = () => setTool(button.dataset.tool)));
+  slideIndicator($('drawingTools'), 'button.active', { signal: abort.signal });
   // Category keys stay Russian (data.mjs); the names are shown in the page's language.
   $('symbolCategory').innerHTML = Object.keys(D.symbols)
     .map((name) => `<option value="${esc(name)}">${esc(t(name))}</option>`)
@@ -2996,8 +3170,8 @@ export function createStudio(projectStorage, initial) {
     renderFrame();
     setTool('frame');
   };
-  $('addGroup').onclick = () => addGroup();
-  $('emptyAddGroup').onclick = () => addGroup();
+  $('addGroup').onclick = (event) => chooseGroup(event.currentTarget);
+  $('emptyAddGroup').onclick = (event) => chooseGroup(event.currentTarget);
   const templateRoles = () => chooseTemplate('roles');
   const templateMinimal = () => chooseTemplate('minimal');
   $('importButton').onclick = () => $('fileInput').click();
@@ -3094,10 +3268,10 @@ export function createStudio(projectStorage, initial) {
   $('snapToggle').setAttribute('aria-pressed', String(snap));
   $('zoomIn').onclick = () => zoomBy(1.2);
   $('zoomOut').onclick = () => zoomBy(1 / 1.2);
+  // Fitted and in the middle of the room again (updateZoom).
   $('fitButton').onclick = () => {
     fit = true;
     updateZoom();
-    viewport.scrollTo(0, 0);
   };
   $('helpButton').onclick = openHelp;
   $('saveState').onclick = openRecovery;
@@ -3250,7 +3424,8 @@ export function createStudio(projectStorage, initial) {
     openModal(
       t('Сохранить стиль'),
       `<label class="field-label" for="presetName">${t('Имя пресета')}</label><input id="presetName" value="${esc(t('Мой стиль'))}" maxlength="100">`,
-      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmPreset" class="button primary">${t('Сохранить')}</button>`
+      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmPreset" class="button primary">${t('Сохранить')}</button>`,
+      '', { icon: 'brush', lead: t('Настройки конвертации сохранятся как свой стиль.') }
     );
     $('confirmPreset').onclick = () => {
       const name = $('presetName').value.trim();
@@ -3289,16 +3464,44 @@ export function createStudio(projectStorage, initial) {
       draw();
       toast(t('Шрифт загружен для этой вкладки'));
     } catch {
-      toast(t('Не удалось загрузить шрифт.'), true);
+      toast(t('Не удалось загрузить шрифт.'), true, true);
     }
   };
   let dragDepth = 0;
   listen(document, 'dragover', (event) => event.preventDefault());
   listen(document, 'drop', (event) => event.preventDefault());
+  // The wheel moves the canvas (over it or the room around): it stays where it was put, as after a drag.
+  listen(viewport, 'wheel', (event) => {
+    if (!preview && !event.ctrlKey && !event.metaKey && !(BRUSH_TOOLS.has(tool) && event.target === canvas)) fit = false;
+  }, { passive: true });
+  // A drag in the empty room around the canvas moves it, with any tool.
+  listen(viewport, 'pointerdown', (event) => {
+    if (preview || event.target !== viewport || event.button !== 0) return;
+    const start = { x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop };
+    fit = false;
+    viewport.setPointerCapture(event.pointerId);
+    viewport.classList.add('room-panning');
+    const move = (next) => {
+      viewport.scrollLeft = start.left - (next.clientX - start.x);
+      viewport.scrollTop = start.top - (next.clientY - start.y);
+    };
+    const end = () => {
+      viewport.classList.remove('room-panning');
+      viewport.removeEventListener('pointermove', move);
+      viewport.removeEventListener('pointerup', end);
+      viewport.removeEventListener('pointercancel', end);
+    };
+    viewport.addEventListener('pointermove', move);
+    viewport.addEventListener('pointerup', end);
+    viewport.addEventListener('pointercancel', end);
+  });
   listen(viewport, 'dragenter', (event) => {
     event.preventDefault();
     dragDepth++;
-    if (event.dataTransfer.types.includes('Files')) $('dropOverlay').hidden = false;
+    if (!event.dataTransfer.types.includes('Files')) return;
+    // Over the part of the room on screen, wherever it is scrolled.
+    Object.assign($('dropOverlay').style, { inset: 'auto', left: viewport.scrollLeft + 'px', top: viewport.scrollTop + 'px', width: viewport.clientWidth + 'px', height: viewport.clientHeight + 'px' });
+    $('dropOverlay').hidden = false;
   });
   listen(viewport, 'dragleave', () => {
     dragDepth--;
@@ -3464,8 +3667,9 @@ export function createStudio(projectStorage, initial) {
     spaceDown = false;
     if (gesture) finishGesture(null, true);
   });
+  // A fitted canvas fits again; a moved one keeps its place while the room around it follows.
   const resizeObserver = new ResizeObserver(() => {
-    if (fit) updateZoom();
+    if (!preview) updateZoom();
   });
   resizeObserver.observe(viewport);
   const imageResizeObserver = new ResizeObserver(renderImagePreview);
@@ -3482,7 +3686,7 @@ export function createStudio(projectStorage, initial) {
   });
   if (initial.issue) {
     setLocalSaveStatus('Проверить версии проекта', true, initial.issue);
-    toast(initial.issue, true);
+    toast(initial.issue, true, true);
   }
   function openHeroPicker(id) {
     const group = doc.entities.find((e) => e.id === id && e.type === 'heroes');
@@ -3509,6 +3713,8 @@ export function createStudio(projectStorage, initial) {
     const next = {
       fileName: doc.fileName || 'hero_grid_config.json',
       drawingOpen,
+      metaDialog,
+      groupChoice,
       contextMenu,
       selectedCount: selected.size,
       editableCount: editableSelection().length,
@@ -3694,7 +3900,7 @@ export function createStudio(projectStorage, initial) {
         const outputDoc = target === null ? (pack ? packSymbols(doc, measure).doc : doc)
           : optimizeCategories(planOptimization(doc, measure, { pack, count: pickCount }), target).doc;
         const output = C.exportDota(outputDoc, null, { widths: pickWidths });
-        download(JSON.stringify(output, null, 2), 'hero_grid_config.json');
+        download(JSON.stringify(withGridNote(output, t(GRID_NOTE)), null, 2), 'hero_grid_config.json');
         toast(t('Оптимизированный JSON скачан'));
         return true;
       } catch (error) { toast(error.message, true); return false; }
@@ -3710,6 +3916,7 @@ export function createStudio(projectStorage, initial) {
       else if (action === 'redo') redo();
       else if (action === 'copy') copySelection();
       else if (action === 'paste') pasteSelection(anchor);
+      else if (action === 'add-meta-group') openMeta('group');
       else if (action === 'add-group') {
         setMode('heroes');
         addGroup(anchor);
@@ -3737,6 +3944,46 @@ export function createStudio(projectStorage, initial) {
         selected = new Set(result.items.map((item) => item.id));
       }, t('Арт добавлен'));
       if (done) setTool('select');
+      return done;
+    },
+    openMeta,
+    closeMeta: () => { metaDialog = null; publishUI(); },
+    chooseGroup,
+    closeGroupChoice: () => { groupChoice = null; publishUI(); },
+    // One meta group (core metaGroup) where there is room for it, its numbers and captions.
+    addMetaGroup: (name, heroIds, labels) => {
+      const layer = doc.layers.find((l) => l.id === 'heroes');
+      if (layer.locked || !layer.visible) { toast(t('Открой и разблокируй слой «Герои».'), true); return false; }
+      const measure = (text) => measureCategoryWidth(ctx, text).width;
+      const size = C.metaGroupSize(heroIds.length, 1.08), caption = Math.max(...C.META_CAPTIONS.map(measure)) + 20;
+      // The group, its title above and the two lines of numbers under it.
+      const { x, y } = freeSpot(size.w, size.h + DOTA.header + 40, Math.round(caption));
+      let added = null;
+      const done = commit(() => {
+        added = C.metaGroup(doc, { name, heroIds, labels, x, y, measure });
+        doc.entities.push(added);
+        selected = new Set([added.id]);
+      }, t('Группа по мете добавлена'));
+      if (done) { metaDialog = null; setMode('heroes'); setTool('select'); publishUI(); }
+      return done;
+    },
+    // A new grid in the file from the meta (core addMetaConfig); false when the file is full.
+    // `options`: the numbers under the portraits and the legend; their widths in the game's font.
+    addMetaGrid: (name, heading, groups, options = {}) => {
+      if (doc.source.configs.length >= C.MAX_CONFIGS) { toast(t('В одном файле допускается до 100 сеток.'), true); return false; }
+      const added = commit(() => {
+        doc = C.addMetaConfig(doc, name, heading, groups, { ...options, measure: (text) => measureCategoryWidth(ctx, text).width });
+        selected.clear(); pickerGroupId = null;
+      }, t('Сетка меты добавлена в файл'));
+      if (added) { metaDialog = null; resetGridView(); }
+      return added;
+    },
+    // The same heroes of a group in another order (scripts/hero-meta.mjs orderByMeta).
+    orderGroup: (groupId, heroIds) => {
+      const group = doc.entities.find((e) => e.id === groupId && e.type === 'heroes');
+      if (!group || !editable(group) || heroIds.length !== group.heroIds.length || [...heroIds].sort().join() !== [...group.heroIds].sort().join()) return false;
+      const done = commit(() => { group.heroIds = [...heroIds]; }, t('Герои упорядочены по мете'));
+      if (done) { metaDialog = null; publishUI(); }
       return done;
     },
     closeDrawing: () => {

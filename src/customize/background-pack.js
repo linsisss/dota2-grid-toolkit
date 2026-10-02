@@ -1,7 +1,7 @@
 import { GRID_DIM, menuBackgroundPack, menuEvent } from '../../scripts/menu-background.mjs';
 import { md5 } from '../../scripts/md5.mjs';
-import { backgroundInstaller } from '../../scripts/installer.mjs';
-import { buildZip } from '../../scripts/zip.mjs';
+import { PACK_NAME, installCommand } from '../../scripts/installer.mjs';
+import { lang } from '../../scripts/i18n.mjs';
 import dashboard from '../../assets/dota-menu/dashboard.xml?raw';
 import home from '../../assets/dota-menu/dashboard_page_home.xml?raw';
 import heroPage from '../../assets/dota-menu/dashboard_page_hero_new_v2.xml?raw';
@@ -12,7 +12,7 @@ import stratz from '../../assets/dota-menu/icons/stratz.svg?raw';
 import dotabuff from '../../assets/dota-menu/icons/dotabuff.svg?raw';
 
 // From a built WebM to the file the user saves: the pack (scripts/menu-background.mjs) for the
-// chosen Dota folder, alone or zipped with «Установить фон.bat». Shared by the builder and «Студия»
+// chosen Dota folder, alone or with a PowerShell command that installs it. Shared by the builder and «Студия»
 // (which keeps the WebM and packs it again in a moment instead of building).
 // Dota reads pak*_dir.vpk only from the folder of a real language, the one of its audio language
 // (game/dota_<language>): dota_english is never read, and invented ones (-language 123, the old
@@ -42,9 +42,15 @@ const gridOption = (grid, gridVideo) => grid?.mode === 'dim' ? { page: heroesPag
 export const packBackground = (video, { clean, hero = { mode: 'menu' }, event = true, profile = true, grid = { mode: 'menu' } }, heroVideo = null, gridVideo = null) => new Blob([menuBackgroundPack({ video, dashboard, home: clean ? home : null,
   hero: hero?.mode === 'off' ? null : { page: heroPage, video: hero?.mode === 'own' ? heroVideo : null }, event: event ? season : null,
   profile: profile ? { page: showcase, icons: { stratz, dotabuff } } : null, grid: gridOption(grid, gridVideo), md5 })], { type: 'application/octet-stream' });
+// «Командой PowerShell» (and the .bat installer's 'installer' of before): the pack under a name of
+// its own and the command whose address carries its SHA-256 and size, so the site keeps nothing
+// (scripts/installer.mjs backgroundScript) → { name, command, remove }; the bare pack → null.
+export const removeCommand = () => installCommand(`${location.origin}/api/catalog/install/bg-remove${lang === 'en' ? '-en' : ''}`);
 export async function downloadPack(pack, { folder, delivery }) {
   const target = folderOf(folder);
-  if (delivery !== 'installer') return saveFile(pack, target.file);
-  const files = [{ name: target.file, data: new Uint8Array(await pack.arrayBuffer()) }, ...backgroundInstaller(target)];
-  saveFile(await buildZip(files), 'gridstudio-background.zip');
+  if (delivery !== 'command' && delivery !== 'installer') { saveFile(pack, target.file); return null; }
+  const bytes = new Uint8Array(await pack.arrayBuffer());
+  const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  saveFile(pack, PACK_NAME(hash));
+  return { name: PACK_NAME(hash), command: installCommand(`${location.origin}/api/catalog/install/bg-${hash}-${bytes.length}${lang === 'en' ? '-en' : ''}`), remove: removeCommand() };
 }

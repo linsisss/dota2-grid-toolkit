@@ -26,5 +26,10 @@ export function editorRoute(request, response, next) {
     response.writeHead(308, { Location: `/background${query}` }); response.end(); return;
   }
   if (pathname === '/background') request.url = `/customize.html${query}`;
+  // «Гайды» (src/guides/).
+  if (pathname === '/guides/') {
+    response.writeHead(308, { Location: `/guides${query}` }); response.end(); return;
+  }
+  if (pathname === '/guides') request.url = `/guides.html${query}`;
   next();
 }

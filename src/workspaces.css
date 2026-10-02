@@ -9,12 +9,16 @@
 .workspace-sidebar nav button[aria-current=page] { color:#efeaf5; background:#2c2935; }
 .workspace-sidebar nav :is(a,button):hover { background:#211e29; color:#efeaf5; }
 .workspace-sidebar nav a:first-of-type { margin-top:22px; }
+/* The side menu's foot: «Нашёл баг или есть идея?» (src/Community.jsx) over the account and the language; on phones the menu is on top, so the header's chat link steps aside for the login button. */
+.workspace-sidebar-foot { display:grid; gap:12px; }
 .workspace-storage-note { color:#afa7bf; font-size:13px; padding:10px 12px; }
 .workspace-storage-note strong { color:#efeaf5; font-weight:500; }
 .workspace-storage-note .account-profile>span:last-child { min-width:0; overflow-wrap:anywhere; }
 .workspace-storage-note p { line-height:1.65; margin:10px 0; }
 .workspace-main { padding:42px clamp(24px,4vw,68px); min-width:0; }
 .files-heading { display:flex; justify-content:space-between; align-items:center; gap:24px; padding-bottom:28px; margin-bottom:28px; border-bottom:1px solid #383340; }
+/* Above the files: the «Создать» menu opens over the cards, whose rising-in animation puts each one in a layer of its own. */
+.files-heading { position:relative; z-index:10; }
 .files-heading>div:first-child { min-width:0; }
 .files-title { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:12px; }
 .files-heading h1 { font-size:32px; margin:0; }
@@ -69,7 +73,7 @@
 .workspace-back svg { width:19px; height:19px; }
 .workspace-loading { display:grid; place-content:center; height:100dvh; color:#efeaf5; background:#15141a; }
 @media(max-width:1100px) { .files-heading { align-items:flex-start; flex-direction:column; } .workspace-shell { grid-template-columns:190px minmax(0,1fr); } }
-@media(max-width:700px) { .workspace-topbar { padding:18px; align-items:flex-start; } .workspace-topbar>div { gap:10px; flex-direction:column-reverse; align-items:flex-end; } .workspace-topbar .account-button { font-size:13px; padding:8px 10px; } .workspace-shell { display:flex; flex-direction:column; } .workspace-sidebar { padding:16px 18px; border-right:0; border-bottom:1px solid #383340; gap:12px; } .workspace-sidebar nav { display:flex; flex-wrap:wrap; } .workspace-sidebar nav a, .workspace-sidebar nav a:first-of-type { margin:0; } .workspace-storage-note { padding:0 12px; } .workspace-main { padding:28px 20px; } .workspace-files { grid-template-columns:1fr; } .workspace-actions { width:100%; } .workspace-import-actions { width:100%; grid-template-columns:minmax(96px,1fr) max-content; } .workspace-actions .catalog-button { padding-inline:12px; font-size:13px; } .workspace-back span { display:none; } }
+@media(max-width:700px) { .workspace-topbar { padding:18px; align-items:flex-start; } .workspace-topbar>div { gap:14px; } .workspace-topbar .community-link { display:none; } .workspace-topbar .account-button { font-size:13px; padding:8px 10px; } .workspace-shell { display:flex; flex-direction:column; } .workspace-sidebar { padding:16px 18px; border-right:0; border-bottom:1px solid #383340; gap:12px; } .workspace-sidebar nav { display:flex; flex-wrap:wrap; } .workspace-sidebar nav a, .workspace-sidebar nav a:first-of-type { margin:0; } .workspace-storage-note { padding:0 12px; } .workspace-main { padding:28px 20px; } .workspace-files { grid-template-columns:1fr; } .workspace-actions { width:100%; } .workspace-import-actions { width:100%; grid-template-columns:minmax(96px,1fr) max-content; } .workspace-actions .catalog-button { padding-inline:12px; font-size:13px; } .workspace-back span { display:none; } }
 @media(prefers-reduced-motion:reduce) { .workspace-page * { transition:none!important; animation:none!important; } }
 
 /* «Создать»: a grid file or a menu background. */
@@ -105,9 +109,12 @@
 .workspace-publication.is-approved:hover { background:#8fd3a133; }
 .workspace-publication.is-rejected { background:#ffb4b91f; color:#ffb4b9; }
 .workspace-publication + .workspace-background-away { margin-left:0; }
-.workspace-sidebar nav button.is-soon { cursor:default; opacity:.6; }
-.workspace-sidebar nav button.is-soon:hover { background:none; color:#afa7bf; }
-.workspace-sidebar nav small { margin-left:auto; padding:1px 7px; border-radius:999px; background:#c4b5ed24; color:#c4b5ed; font-size:11px; }
 /* «Студия» cards show transparent pictures of the grids (WorkspacePreview.jsx); the ground comes from the preview switch. */
 .workspace-thumbnail { display:block; }
 .workspace-thumbnail img { display:block; width:100%; height:100%; object-fit:contain; user-select:none; }
+/* A background's PowerShell command after a download from the Studio (Workspaces.jsx CommandCopy). */
+.workspace-command { display:flex; align-items:center; gap:8px; margin:12px 0; }
+.workspace-command code { flex:1; min-width:0; margin:0; }
+/* The background's steps by hand after a download (BackgroundSteps.jsx). */
+.workspace-install ol { margin:0 0 14px; padding-left:20px; display:grid; gap:10px; }
+.workspace-install li { line-height:1.5; }

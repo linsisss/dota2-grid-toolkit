@@ -1,0 +1,149 @@
+/* The editor in the tour's look (src/EditorTour.jsx, styles/tour.css), asked for on 2026-10-02 after
+   the mode tabs still jumped: highlights glide to the new item (scripts/slide-indicator.mjs measures,
+   this draws), the picked icon pops, panels and lists arrive part by part, small surfaces — tooltips,
+   the toast — get the same dark glass with a lilac glow. Loaded last (src/main.jsx); only
+   opacity, translate, scale and rotate move (and the indicators' size); reduced motion keeps the look
+   and drops the motion. */
+:root {
+  --em-ease: cubic-bezier(.2, .8, .2, 1);
+  --em-spring: cubic-bezier(.3, 1.3, .45, 1);
+  --em-glass: radial-gradient(120% 90% at 0% 0%, #c4b5ed1c, transparent 60%), #1f1b27f5;
+  --em-gradient: linear-gradient(90deg, #8f7fd6, #c4b5ed 60%, #f0c987);
+}
+@keyframes em-pop { 0% { scale: .55; rotate: -18deg; opacity: .4; } 60% { scale: 1.12; rotate: 4deg; opacity: 1; } 100% { scale: 1; rotate: 0deg; } }
+@keyframes em-rise { from { opacity: 0; translate: 0 8px; } }
+@keyframes em-slide { from { opacity: 0; translate: -10px 0; } }
+@keyframes em-glass-in { from { opacity: 0; translate: 0 6px; scale: .96; } }
+@keyframes em-float { 50% { translate: 0 -4px; } }
+@keyframes em-blink { 0%, 100% { scale: 1 1; } 45%, 55% { scale: 1 .1; } }
+@keyframes em-tap { from { scale: .88; } }
+@keyframes em-dot { 0% { scale: .4; } 60% { scale: 1.5; } 100% { scale: 1; } }
+@keyframes em-ring { from { opacity: .7; scale: 1; } to { opacity: 0; scale: 2.6; } }
+
+/* The canvas moves freely in the room around it (scripts/app.mjs updateZoom): no scrollbars, the
+   empty room grabs. */
+#canvasViewport:not(.preview-mode *) { scrollbar-width: none; cursor: grab; }
+#canvasViewport::-webkit-scrollbar { display: none; }
+#canvasViewport.room-panning { cursor: grabbing; }
+#canvasViewport .stage-wrap { cursor: default; }
+
+/* Mode tabs: one gradient underline with a soft glow glides under the open mode; its icon pops. */
+.studio-navigation .mode-tabs[data-indicator] button::after { display: none; }
+.studio-navigation .mode-tabs[data-indicator]::before,
+.studio-navigation .mode-tabs[data-indicator]::after {
+  content: ''; display: block; position: absolute; left: 0; bottom: 0; right: auto; pointer-events: none;
+  width: var(--ind-w); translate: var(--ind-x) 0; transform: none; transition: none;
+}
+.studio-navigation .mode-tabs[data-indicator]::before { z-index: 2; height: 2px; border-radius: 2px; background: var(--em-gradient); box-shadow: 0 0 12px #c4b5ed99; }
+.studio-navigation .mode-tabs[data-indicator]::after { z-index: 0; height: 30px; background: radial-gradient(50% 100% at 50% 100%, #c4b5ed2e, transparent 72%); }
+.studio-navigation .mode-tabs[data-indicator='ready']::before,
+.studio-navigation .mode-tabs[data-indicator='ready']::after { transition: translate .48s var(--em-spring), width .36s var(--em-ease); }
+.studio-navigation .mode-tabs button { position: relative; z-index: 1; transition: color .25s ease; }
+.studio-navigation .mode-tabs button[aria-selected='true'] { color: #efeaf5; }
+.studio-navigation .mode-tabs button[aria-selected='true'] svg { color: var(--accent); }
+.studio-navigation .mode-tabs button:not([aria-selected='true']):hover { color: #d3cce0; }
+.studio-navigation .mode-tabs svg { transition: color .25s ease, translate .3s var(--em-ease), rotate .3s var(--em-ease); }
+
+/* The dock: the active tool's fill slides from tool to tool; the tool that takes it pops. */
+.editor-toolbar .tool-dock[data-indicator]::before {
+  content: ''; position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
+  width: var(--ind-w); height: var(--ind-h); translate: var(--ind-x) var(--ind-y); border-radius: 6px;
+  background: linear-gradient(180deg, #d7ccf7, #b8a6ea); box-shadow: 0 6px 18px -6px #c4b5edb3, inset 0 1px 0 #ffffff66;
+}
+.editor-toolbar .tool-dock[data-indicator='ready']::before { transition: translate .42s var(--em-spring), width .25s var(--em-ease), height .25s var(--em-ease); }
+.editor-toolbar .tool-dock[data-indicator] > * { position: relative; z-index: 1; }
+.editor-toolbar .tool-dock[data-indicator] .tool-button { transition: width 200ms ease, min-width 200ms ease, background-color 160ms ease, color 220ms ease; }
+.editor-toolbar .tool-dock[data-indicator] .tool-button.active,
+.editor-toolbar .tool-dock[data-indicator] .tool-button.active:hover { background: transparent; color: var(--accent-ink); }
+.editor-toolbar .tool-dock .tool-button:not(.active):hover { background: #ffffff14; }
+
+/* Drawing tools: the picked tool's frame slides across the grid. */
+.drawing-tools[data-indicator] { position: relative; }
+.drawing-tools[data-indicator]::before {
+  content: ''; position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; border-radius: 6px;
+  width: var(--ind-w); height: var(--ind-h); translate: var(--ind-x) var(--ind-y);
+  background: radial-gradient(circle at 50% 30%, #c4b5ed33, #c4b5ed12 70%); box-shadow: inset 0 0 0 1px var(--accent), 0 6px 18px -8px #c4b5ed99;
+}
+.drawing-tools[data-indicator='ready']::before { transition: translate .4s var(--em-spring), width .25s var(--em-ease), height .25s var(--em-ease); }
+.drawing-tools[data-indicator] > button { position: relative; z-index: 1; transition: color .2s ease, border-color .2s ease; }
+.drawing-tools[data-indicator] > button.active { background: transparent; border-color: transparent; }
+
+/* The left panel: its parts come in one after another each time it opens or changes mode; the
+   templates answer like the group choice (the icon tilts, the arrow leaves, the meta one shines). */
+.library-panel .project-templates button { position: relative; overflow: hidden; }
+.library-panel .project-templates button:hover { transform: none; translate: 3px 0; background: #ffffff0c; }
+.library-panel .template-icon { display: inline-grid; place-items: center; transition: scale .3s var(--em-ease), rotate .3s var(--em-ease), color .2s; }
+.library-panel .project-templates button:hover .template-icon { transform: none; scale: 1.18; rotate: -8deg; color: var(--accent); }
+.library-panel .project-templates button > span:last-child { transition: translate .3s var(--em-ease), color .2s; }
+.library-panel .project-templates button:hover > span:last-child { translate: 2px -2px; color: var(--accent); }
+.library-panel .project-templates button.is-meta .template-icon { color: #f0c987; }
+.library-panel .project-templates button.is-meta::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, #c4b5ed17 50%, transparent 70%); translate: -100% 0; pointer-events: none; }
+.library-panel .project-templates button.is-meta:hover::after { translate: 100% 0; transition: translate .7s ease; }
+.library-panel .create-group-card:hover { box-shadow: 0 12px 28px -14px #c4b5ed80; }
+
+/* Properties: their parts arrive in turn when the panel opens (the fields of a new selection in
+   scripts/app.mjs staggerIn); layers' eye and lock pop when they flip. */
+.layer-head .icon-swap { animation: em-pop .4s var(--em-spring); }
+.layer-section, .layer-item { transition: background-color .18s ease, color .18s ease; }
+
+/* Grid, snapping and the canvas controls: a switch that turns on pops its icon. */
+.canvas-controls .button.active svg { animation: em-pop .42s var(--em-spring); }
+.history-buttons .tool-button svg { transition: rotate .3s var(--em-ease), scale .2s var(--em-ease); }
+#undoButton:not(:disabled):active svg { rotate: -40deg; }
+#redoButton:not(:disabled):active svg { rotate: 40deg; }
+#previewButton:hover svg { animation: em-blink .5s ease; }
+.help-button svg { transition: rotate .45s var(--em-spring); }
+.help-button:hover svg { rotate: 14deg; }
+.save-state[data-state='saved'] .save-state-dot { animation: em-dot .45s var(--em-spring); }
+
+/* An empty canvas: its icon floats, the lines rise in turn. */
+.empty-canvas:not([hidden]) > * { animation: em-rise .5s var(--em-ease) both; }
+.empty-canvas:not([hidden]) > :nth-child(2) { animation-delay: 70ms; }
+.empty-canvas:not([hidden]) > :nth-child(3) { animation-delay: 130ms; }
+.empty-canvas:not([hidden]) > :nth-child(4) { animation-delay: 190ms; }
+.empty-canvas:not([hidden]) > [data-icon] svg { animation: em-float 3.6s ease-in-out .6s infinite; }
+
+/* Tooltips and the toast: the tour's glass; a toast's dot says whether all went well. */
+.studio-tooltip { border-color: #3d3747; border-radius: 10px; background: var(--em-glass); box-shadow: 0 14px 34px -12px #000e, inset 0 1px 0 #ffffff0f; }
+.studio-tooltip:popover-open { animation: em-glass-in .2s var(--em-ease); }
+.studio-tooltip kbd { background: #ffffff12; box-shadow: inset 0 0 0 1px #ffffff1c, inset 0 -1px 0 #00000059; border-radius: 5px; color: #efeaf5; }
+#toast.toast { display: flex; align-items: center; gap: 10px; padding: 11px 16px 11px 14px; border: 1px solid #3d3747; border-radius: 14px; background: var(--em-glass);
+  color: #efeaf5; font-size: 12.5px; box-shadow: 0 20px 50px -18px #000, inset 0 1px 0 #ffffff0f; backdrop-filter: blur(10px); }
+#toast.toast[hidden] { display: none; }
+#toast.toast::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+#toast.toast.error { border-color: #6b3d45; background: radial-gradient(120% 90% at 0% 0%, #ff7a8a1f, transparent 60%), #241a20f5; }
+#toast.toast.error::before { background: #ff8a95; box-shadow: 0 0 10px #ff8a95; }
+/* «Сообщить в чат» on a failure (scripts/app.mjs toast with `report`). */
+#toast.toast .toast-report { flex: none; margin-left: 4px; padding: 5px 10px; border: 1px solid #ff8a9540; border-radius: 9px; background: #ff8a9514; color: #ffc9cf;
+  font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer; transition: background-color .2s, border-color .2s; }
+#toast.toast .toast-report:hover { border-color: #ff8a9580; background: #ff8a9526; }
+#toast.toast:not(.leaving) { animation: em-glass-in .3s var(--em-spring); }
+#toast.toast:not(.leaving)::before { animation: em-dot .5s .1s var(--em-spring) both; }
+/* Leaving with its own centring kept (the old one replaced the transform and jumped right). */
+#toast.toast.leaving { animation: em-toast-out .18s ease-in forwards; }
+@keyframes em-toast-out { to { opacity: 0; translate: 0 6px; scale: .97; } }
+
+/* Windows have their own look: src/window-kit.css, styles/editor-windows.css. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .drawing-tools[data-indicator] > button.active { animation: em-tap .4s var(--em-spring); }
+  .studio-navigation .mode-tabs[data-indicator] button[aria-selected='true'] svg { animation: em-pop .5s var(--em-spring); }
+  .studio-navigation .mode-tabs button:not([aria-selected='true']):hover svg { translate: 0 -1px; rotate: -8deg; }
+  .editor-toolbar .tool-dock[data-indicator] .tool-button.active [data-icon] > svg { animation: em-pop .45s var(--em-spring); }
+  body.show-library .library-panel :is(.panel-intro, .mode-panel:not([hidden]) > *, .project-panel > *, .project-templates > *) { animation: em-slide .42s var(--em-ease) both; }
+  body.show-library .library-panel .mode-panel:not([hidden]) > :nth-child(2), body.show-library .library-panel :is(.project-panel, .project-templates) > :nth-child(2) { animation-delay: 45ms; }
+  body.show-library .library-panel .mode-panel:not([hidden]) > :nth-child(3), body.show-library .library-panel :is(.project-panel, .project-templates) > :nth-child(3) { animation-delay: 90ms; }
+  body.show-library .library-panel .mode-panel:not([hidden]) > :nth-child(4), body.show-library .library-panel :is(.project-panel, .project-templates) > :nth-child(4) { animation-delay: 135ms; }
+  body.show-library .library-panel .mode-panel:not([hidden]) > :nth-child(5), body.show-library .library-panel :is(.project-panel, .project-templates) > :nth-child(5) { animation-delay: 180ms; }
+  body.show-library .library-panel .mode-panel:not([hidden]) > :nth-child(6), body.show-library .library-panel :is(.project-panel, .project-templates) > :nth-child(6) { animation-delay: 225ms; }
+  body.show-library .library-panel .mode-panel:not([hidden]) > :nth-child(n+7) { animation-delay: 270ms; }
+  body:not(.focus-mode) .app-layout > .inspector-panel > * { animation: em-rise .42s var(--em-ease) both; }
+  body:not(.focus-mode) .app-layout > .inspector-panel > :nth-child(2) { animation-delay: 50ms; }
+  body:not(.focus-mode) .app-layout > .inspector-panel > :nth-child(3) { animation-delay: 100ms; }
+  body:not(.focus-mode) .app-layout > .inspector-panel > :nth-child(4) { animation-delay: 150ms; }
+  .layer-items > .layer-item { animation: em-rise .3s var(--em-ease) both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-navigation .mode-tabs[data-indicator]::before, .studio-navigation .mode-tabs[data-indicator]::after, .editor-toolbar .tool-dock[data-indicator]::before, .drawing-tools[data-indicator]::before { transition: none !important; }
+  .layer-head .icon-swap, .canvas-controls .button.active svg, #previewButton:hover svg, .save-state-dot, .empty-canvas > *, .empty-canvas svg, #toast.toast, #toast.toast::before, .studio-tooltip { animation: none !important; }
+}

@@ -213,25 +213,6 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .custom-fonts button[aria-checked=true] { border-color:var(--cat-accent); background:#2a2634; }
 .custom-fonts .custom-font-own { grid-column:1 / -1; display:flex; align-items:center; justify-content:center; gap:8px; border-style:dashed; font-size:14px; font-weight:500; }
 .custom-fonts .custom-font-own svg { width:16px; height:16px; color:var(--cat-accent); }
-.custom-try { display:flex; align-items:center; gap:16px; text-align:left; }
-.custom-try input { width:min(340px,45%)!important; margin:0!important; padding:9px 12px!important; font-size:14px!important; flex-shrink:0; }
-.custom-try span { flex:1; }
-
-.custom-game { position:absolute; inset:0; transition:opacity 200ms ease; background:#0b0c10 url('../../assets/backgrounds/dota-screen.webp') center/cover; color:#e6e9ee; container-type:inline-size; }
-.custom-game-bar { position:absolute; left:0; right:0; top:0; height:6.5%; display:flex; align-items:center; gap:4%; padding:0 4%; background:linear-gradient(#07080bf2,#07080bb8); font-size:1.7cqw; font-weight:600; letter-spacing:.14em; color:#d2d8e2; }
-.custom-game-bar span { margin-left:auto; font-size:1.9cqw; letter-spacing:.02em; }
-.custom-game-grid { position:absolute; left:9%; top:13%; width:78%; display:grid; grid-template-columns:1fr 1fr; gap:2cqw 4cqw; }
-.custom-game-category.is-own { grid-column:1 / -1; }
-.custom-game-category > span { display:block; color:#808fa6; text-transform:uppercase; letter-spacing:.18cqw; font-size:1.45cqw; font-weight:600; text-shadow:.18cqw .18cqw .36cqw #00000044; padding-left:.36cqw; margin-bottom:.5cqw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.custom-game-category > div { display:flex; gap:.45cqw; }
-.custom-game-category img { width:5.2cqw; aspect-ratio:71/94; object-fit:cover; border-radius:.2cqw; box-shadow:0 .2cqw .5cqw #0008; }
-.custom-game-category.is-own > span { color:#c9d2df; }
-.custom-game-chat { position:absolute; left:3%; bottom:4%; width:44%; padding:1.2cqw 1.5cqw; border-radius:.5cqw; background:#050608b8; font-size:1.35cqw; line-height:1.45; }
-.custom-game-chat p { margin:0; max-width:none; }
-.custom-game-chat i { font-style:normal; color:#9aa7b8; }
-.custom-game-chat b { color:#8fd18f; font-weight:600; }
-.custom-game-score { margin-top:.5cqw!important; color:#e8d49a; font-weight:600; font-size:1.6cqw; }
-
 /* Dota's main menu over the background (DotaMenu.jsx): pictures in 1080p pixels, scaled as a whole. */
 /* 2px past the screen and overlapping bar pieces: at fractional scales an edge that ends exactly
    on a pixel boundary is antialiased and lets the background through as a thin line. */
@@ -311,6 +292,12 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .custom-install ol { margin:0 0 14px; padding-left:20px; display:grid; gap:10px; }
 .custom-install code { background:#ffffff12; border-radius:4px; padding:1px 6px; font-size:13px; }
 .custom-install .catalog-muted { font-size:13px; }
+/* «Вернуть обычный шрифт»: the command and the way by hand, one under the other. */
+.custom-restore { display:grid; gap:22px; }
+.custom-restore section { display:grid; gap:10px; }
+.custom-restore h3 { margin:0; font-size:15px; font-weight:600; color:var(--cat-ink); }
+.custom-restore p { margin:0; }
+.custom-restore ol { margin:0; }
 .custom-safety { display:flex; align-items:flex-start; gap:10px; margin:16px 0 0; padding:12px 14px; border-radius:8px; background:#ffffff08; color:var(--cat-muted); font-size:13px; }
 .custom-safety svg { flex-shrink:0; width:18px; height:18px; margin-top:1px; color:#e8c77a; }
 .custom-safety b { color:var(--cat-ink); font-weight:500; }
@@ -352,8 +339,6 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
   .custom-screen { width:100%; height:auto; aspect-ratio:var(--ratio); }
   .custom-panel { border-left:0; border-top:1px solid var(--cat-line); }
   .custom-panel-body, .custom-panel-foot { padding-left:16px; padding-right:16px; }
-  .custom-try { flex-direction:column; align-items:stretch; }
-  .custom-try input { width:100%!important; }
 }
 @media (prefers-reduced-motion: reduce) {
   .custom-app *, .custom-app *::before, .custom-app *::after { transition:none!important; animation:none!important; }
@@ -398,3 +383,26 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .grid-pick-name b { overflow:hidden; font-weight:500; font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
 .grid-pick-name small { overflow:hidden; color:var(--cat-muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
 .grid-pick-none { justify-self:start; display:inline-flex; align-items:center; gap:6px; }
+
+/* The font preview (src/customize/FontScene.jsx): the menu and a match split by «/», each an SVG of the
+   1920×1080 scene — the plate, the game's own text per role, and the chosen font's text. */
+.font-scene { position: absolute; inset: 0; overflow: hidden; background: #0b0c10; outline: none; user-select: none; touch-action: none; }
+.font-scene:focus-visible { box-shadow: inset 0 0 0 2px var(--cat-accent, #c4b5ed); }
+.font-scene-game, .font-scene-menu { position: absolute; inset: 0; }
+.font-scene-menu, .font-scene-split i, .font-scene-handle { transition: clip-path .35s var(--ease, ease), left .35s var(--ease, ease), opacity .2s, scale .2s; }
+.font-scene.is-dragging :is(.font-scene-menu, .font-scene-split i, .font-scene-handle) { transition: none; }
+.font-scene-split.is-away .font-scene-handle { opacity: 0; pointer-events: none; }
+.font-scene-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.font-scene-layer.is-hidden { visibility: hidden; }
+.font-scene-text text { white-space: pre; filter: drop-shadow(0 1px 1.2px #000000d9); }
+.font-scene-hit { position: absolute; padding: 0; border: 0; border-radius: 6px; background: transparent; cursor: pointer; }
+.font-scene-hit:hover { box-shadow: 0 0 0 2px #c4b5ed99; }
+.font-scene-hit:focus-visible { outline: 2px solid #c4b5ed; outline-offset: 2px; }
+.font-scene-split { position: absolute; inset: 0; pointer-events: none; filter: drop-shadow(0 0 4px #000a); }
+.font-scene-split i { position: absolute; inset: 0; background: #c4b5ed; }
+.font-scene-handle { position: absolute; top: 50%; width: 34px; height: 34px; margin: -17px 0 0 -17px; padding: 0; border: 2px solid #c4b5ed; border-radius: 50%;
+  background: #1b1922e6; cursor: ew-resize; pointer-events: auto; box-shadow: 0 4px 14px #000a; }
+.font-scene-handle:hover { scale: 1.1; }
+.font-scene-handle span::before, .font-scene-handle span::after { content: ''; position: absolute; top: 50%; width: 0; height: 0; margin-top: -5px; border: 5px solid transparent; }
+.font-scene-handle span::before { left: 3px; border-right-color: #c4b5ed; }
+.font-scene-handle span::after { right: 3px; border-left-color: #c4b5ed; }

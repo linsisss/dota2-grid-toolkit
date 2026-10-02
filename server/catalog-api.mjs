@@ -14,9 +14,16 @@ import { ART_CATEGORIES, ART_LIMITS, artSubmission } from '../scripts/art-docume
 import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
 import { StudioBackgrounds } from './studio-backgrounds.mjs';
 import { pickSafeGrid, renderSpaceThumbnail } from './catalog-preview.mjs';
-import { PREVIEW_TEXT, backgroundPreviewImage, gridPreviewImage, previewTitle, sitePage, withPreview } from './link-preview.mjs';
+import { PREVIEW_TEXT, backgroundPreviewImage, gridPreviewImage, guidePreviewImage, previewTitle, sitePage, withPreview } from './link-preview.mjs';
 import { BACKGROUND_TAGS, BACKGROUND_LIMITS, backgroundMeta, unpackBackgroundUpload } from '../scripts/background-document.mjs';
 import { MENU_SIZES } from '../scripts/menu-background.mjs';
+import { HeroMeta } from './hero-meta.mjs';
+import { GRID_INSTALL_BYTES, GridInstalls } from './grid-installs.mjs';
+import { withGridNote } from '../scripts/grid-note.mjs';
+import { CatalogGuides } from './guides.mjs';
+import { guideAdminRoutes, guideRoutes } from './guides-api.mjs';
+import { adminJournal } from './admin-journal.mjs';
+import { NICK_LIMITS } from './profiles.mjs';
 
 const cookies = (request) => Object.fromEntries((request.headers.cookie || '').split(';').map(pair => {
   const at = pair.indexOf('='); return at < 0 ? ['', ''] : [pair.slice(0, at).trim(), pair.slice(at + 1)];
@@ -48,10 +55,14 @@ export function catalogConfig(env = process.env) {
   const botUsername = env.CATALOG_TELEGRAM_BOT_USERNAME || 'grid_studio_bot';
   if (!/^[A-Za-z0-9_]{5,32}$/.test(botUsername)) throw new Error('Неверное имя Telegram-бота.');
   return { development, origin, salt, admins: new Set(adminIds), unlimited: new Set(unlimitedIds), botUsername, steamApiKey: env.STEAM_WEB_API_KEY || '',
+    // STRATZ's key for the hero meta (server/hero-meta.mjs); without it the meta answers 503.
+    stratzToken: env.STRATZ_API_TOKEN || '',
     moderationUrl: `https://t.me/c/${moderationChat.slice(4)}/${moderationTopic}`,
     trustProxy: env.CATALOG_TRUST_PROXY === 'loopback', database: env.CATALOG_DB || '.catalog-data/catalog.sqlite',
     // Shared menu backgrounds' files, next to the database unless set.
     media: env.CATALOG_MEDIA || join(dirname(env.CATALOG_DB || '.catalog-data/catalog.sqlite'), 'backgrounds'),
+    // «Гайды»' uploads (server/guides.mjs), next to the database unless set.
+    guides: env.CATALOG_GUIDES || join(dirname(env.CATALOG_DB || '.catalog-data/catalog.sqlite'), 'guides'),
     // The built site (its pages get link previews for shared works): the release's dist unless set.
     site: env.CATALOG_SITE || fileURLToPath(new URL('../dist/', import.meta.url)) };
 }
@@ -86,12 +97,16 @@ function sendFile(request, response, { path, size }, type, cache) {
 // The landing's picture sizes (server/editor-showcase.mjs SHOWCASE_WIDTHS), kept here so the API
 // module does not load the canvas renderer until a picture is asked for.
 const LANDING_WIDTHS = [1440, 2160, 2880];
-export function createCatalogAPI(config, { store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null } = {}) {
+export function createCatalogAPI(config, { store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null, heroMeta = new HeroMeta({ token: config.stratzToken }) } = {}) {
   const accounts = new Accounts(store), arts = new CatalogArts(store);
   // Shared menu backgrounds keep files next to the database (config.media).
   let galleries = backgrounds;
   const gallery = () => (galleries ||= new CatalogBackgrounds(store, { dir: config.media || mkdtempSync(join(tmpdir(), 'gridstudio-backgrounds-')) }));
   store.unlimited = config.unlimited || new Set();
+  // «Гайды» (server/guides.mjs): uploads next to the database (config.guides); unused ones are swept hourly.
+  let guideStore = null;
+  const guides = () => (guideStore ||= new CatalogGuides(store, { dir: config.guides || mkdtempSync(join(tmpdir(), 'gridstudio-guides-')), salt: config.salt }));
+  setInterval(() => { try { guideStore?.cleanup(); } catch { /* Next hour. */ } }, 3_600_000).unref();
   let studios = null;
   const studio = () => (studios ||= new StudioBackgrounds(store));
   // Landing pictures (the grid opened in the editor) by work revision, up to 24 grids (~0.4 MB each
@@ -119,6 +134,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
     return previews.get(key);
   };
   const captcha = new CatalogCaptcha(store, config.salt);
+  const gridInstalls = new GridInstalls(store, config.salt);
   const signature = (value) => createHmac('sha256', config.salt).update(value).digest('base64url');
   const cookie = (name, value, age) => `${name}=${value}; Path=/api/catalog; HttpOnly; SameSite=Strict; Max-Age=${age}${config.development ? '' : '; Secure'}`;
   const token = request => /^Bearer ([A-Za-z0-9_-]{43})$/.exec(request.headers.authorization || '')?.[1] || '';
@@ -165,6 +181,54 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         store.rate(`steam:${ipHash}`, 20, 60_000);
         store.rate('steam:global', 300, 60_000);
         return send(200, await steamProfiles.resolve(url.searchParams.get('profile')));
+      }
+      // A grid for the PowerShell command (server/grid-installs.mjs): stored for a week, its script by address.
+      if (path === '/install' && method === 'POST') {
+        store.rate(`install:${ipHash}`, 60, 600_000);
+        const body = await readJSON(request, GRID_INSTALL_BYTES + 4096), saved = gridInstalls.save(body.grid, body.lang);
+        return send(201, { ...saved, address: `${config.origin}/api/catalog/install/${saved.id}` });
+      }
+      const installMatch = /^\/install\/([A-Za-z0-9_-]{1,96})$/.exec(path);
+      if (installMatch && method === 'GET') {
+        response.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+        return response.end(gridInstalls.script(installMatch[1], `${config.origin}/api/catalog/install/`));
+      }
+      // Creator profiles (server/profiles.mjs): one's own settings, and anyone's page and avatar.
+      if (path === '/profile' && method === 'GET') return send(200, store.profiles.own(requireUser().id));
+      if (path === '/profile' && method === 'PATCH') {
+        const member = requireUser(), body = await readJSON(request, 20_000);
+        store.rate(`profile:${member.id}`, 60, 3_600_000);
+        return send(200, store.profiles.update(member.id, { nickname: body.nickname, bio: body.bio, telegram: typeof body.telegram === 'boolean' ? body.telegram : undefined }));
+      }
+      // What one liked (asked for on 2026-10-02): only for oneself, on one's own profile page.
+      if (path === '/profile/likes' && method === 'GET') {
+        const member = requireUser();
+        response.setHeader('Cache-Control', 'no-store');
+        return send(200, { grids: store.liked(member.id), backgrounds: gallery().liked(member.id), guides: guides().liked(member.id) });
+      }
+      if (path === '/profile/avatar' && (method === 'PUT' || method === 'POST')) {
+        const member = requireUser();
+        store.rate(`profile-avatar:${member.id}`, 30, 3_600_000);
+        if (method === 'PUT') return send(200, await store.profiles.setAvatar(member.id, 'custom', await readBytes(request, NICK_LIMITS.avatar + 1024)));
+        return send(200, await store.profiles.setAvatar(member.id, (await readJSON(request)).mode));
+      }
+      // Following a creator from their profile: the bot writes about their new grids (as /works/:id/subscribe).
+      const followMatch = /^\/profiles\/([A-Za-z0-9_-]{12})\/subscribe$/.exec(path);
+      if (followMatch && method === 'PUT') {
+        const member = requireUser(), body = await readJSON(request);
+        if (typeof body.subscribed !== 'boolean') fail(400, 'Неверное значение подписки.');
+        store.rate(`subscribe:${member.id}`, 60, 60_000);
+        return send(200, store.follow(member.id, store.profiles.byKey(followMatch[1]).account, body.subscribed));
+      }
+      const profileMatch = /^\/profiles\/([A-Za-z0-9_-]{12})(\/avatar)?$/.exec(path);
+      if (profileMatch && method === 'GET') {
+        if (profileMatch[2]) {
+          const image = store.profiles.avatar(profileMatch[1]);
+          response.writeHead(200, { 'Content-Type': image.type, 'Content-Length': image.body.length, 'Cache-Control': url.searchParams.has('v') ? 'public, max-age=31536000, immutable' : 'public, max-age=300',
+            'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'", 'X-Content-Type-Options': 'nosniff' });
+          return response.end(image.body);
+        }
+        return send(200, creatorPage(profileMatch[1], user?.id || null));
       }
       if (path === '/auth/avatar' && method === 'GET') {
         const photo = accounts.avatar(requireUser());
@@ -224,6 +288,12 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         if (request.headers['sec-fetch-site'] === 'cross-site' || (request.headers.origin && request.headers.origin !== config.origin)) fail(403, 'Проверка доступна только на GridStudio.');
         return send(200, await captcha.issue(identity, url.searchParams.get('action')));
       }
+      // Hero meta from STRATZ for the editor's «Мета» (server/hero-meta.mjs); an hour in the browser.
+      if (path === '/meta' && method === 'GET') {
+        const meta = await heroMeta.get(url.searchParams.get('bracket') || '');
+        response.setHeader('Cache-Control', 'public, max-age=3600');
+        return send(200, meta);
+      }
       if (path === '/config' && method === 'GET') return send(200, { captcha: 'altcha', development: config.development, paused: store.paused(), tags: CATALOG_TAGS, limits: CATALOG_LIMITS,
         artCategories: ART_CATEGORIES, artLimits: ART_LIMITS, backgroundTags: BACKGROUND_TAGS, backgroundLimits: BACKGROUND_LIMITS, moderationUrl: config.moderationUrl });
       if (path === '/arts' && method === 'GET') {
@@ -280,9 +350,9 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       // The landing page's random well-liked grid. Never cached, so every visit draws again. The
       // picture is rendered only for grids that may be on the landing, once per revision.
       // A shared work's page with its link preview (nginx sends /workshop?id= and /background?background= here).
-      const page = /^\/page\/(workshop|customize)$/.exec(path);
+      const page = /^\/page\/(workshop|customize|guides)$/.exec(path);
       if (page && ['GET', 'HEAD'].includes(method)) {
-        const html = sitePage(config.site, page[1] === 'workshop' ? 'catalog' : 'customize');
+        const html = sitePage(config.site, { workshop: 'catalog', customize: 'customize', guides: 'guides' }[page[1]]);
         if (!html) fail(503, 'Страница временно недоступна.');
         let meta = null;
         try {
@@ -290,6 +360,11 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
             const item = store.publicItem(url.searchParams.get('id'));
             meta = { title: previewTitle(item), description: PREVIEW_TEXT.grid, url: `${config.origin}/workshop?id=${item.id}`,
               image: `${config.origin}/api/catalog/preview/work/${item.id}.jpg?revision=${item.revision}`, alt: `Сетка «${item.title}»` };
+          }
+          if (page[1] === 'guides' && /^[A-Za-z0-9_-]{12}$/.test(url.searchParams.get('id') || '')) {
+            const guide = guides().view(url.searchParams.get('id'));
+            if (guide.public) meta = { title: guide.author ? `${guide.title} — ${guide.author.name}` : guide.title, description: guide.excerpt || PREVIEW_TEXT.guide,
+              url: `${config.origin}/guides?id=${guide.id}`, image: `${config.origin}/api/catalog/preview/guide/${guide.id}.jpg?revision=${guide.revision}`, alt: `Гайд «${guide.title}»` };
           }
           const backgroundId = url.searchParams.get('background') || '';
           if (page[1] === 'customize' && /^[1-9]\d{0,12}$/.test(backgroundId)) {
@@ -301,10 +376,11 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' });
         return response.end(method === 'HEAD' ? undefined : meta ? withPreview(html, meta) : html);
       }
-      const preview = /^\/preview\/(?:work\/([0-9a-f-]{36})|background\/([1-9]\d{0,12}))\.jpg$/.exec(path);
+      const preview = /^\/preview\/(?:work\/([0-9a-f-]{36})|background\/([1-9]\d{0,12})|guide\/([A-Za-z0-9_-]{12}))\.jpg$/.exec(path);
       if (preview && method === 'GET') {
         let key, render;
         if (preview[1]) { const item = store.publicItem(preview[1]); key = `work:${item.id}:${item.revision}:${item.tags.join()}`; render = () => gridPreviewImage(item); }
+        else if (preview[3]) { const source = guides().preview(preview[3]); key = `guide:${preview[3]}:${source.revision}`; render = () => guidePreviewImage(source); }
         else {
           const row = gallery().get(Number(preview[2])); if (row?.status !== 'approved') fail(404, 'Фон не найден.');
           key = `background:${row.id}:${row.updated}:${row.tags}`; render = () => backgroundPreviewImage(row, { video: gallery().file(row.id, 'video'), poster: gallery().file(row.id, 'poster') });
@@ -318,7 +394,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         const item = store.landingWork(url.searchParams.get('except') || '');
         response.setHeader('Cache-Control', 'no-store');
         const src = (width) => `/api/catalog/landing.webp?id=${item.id}&revision=${item.revision}&w=${width}&v=${captures()}`;
-        return send(200, { item: item && { id: item.id, revision: item.revision, title: item.title, author: item.author, likes: item.likes,
+        return send(200, { item: item && { id: item.id, revision: item.revision, title: item.title, author: item.creator?.name || item.author, likes: item.likes,
           image: src(LANDING_WIDTHS[0]), srcset: LANDING_WIDTHS.map((width) => `${src(width)} ${width}w`).join(', ') } });
       }
       if (path === '/landing.webp' && method === 'GET') {
@@ -364,7 +440,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         }
         if (scope === 'works' && method === 'GET') {
           const item = store.publicItem(id, user?.id);
-          if (operation === 'download') { response.setHeader('Content-Disposition', 'attachment; filename="hero_grid_config.json"'); return send(200, pickSafeGrid(item.grid)); }
+          if (operation === 'download') { response.setHeader('Content-Disposition', 'attachment; filename="hero_grid_config.json"'); return send(200, withGridNote(pickSafeGrid(item.grid))); }
           if (!operation) return send(200, item);
         }
         if (scope === 'manage' && operation === 'claim' && method === 'POST') return send(200, accounts.claim(id, token(request), requireUser()));
@@ -384,14 +460,42 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
           return send(200, { reported: true });
         }
       }
+      // Who decided, for the audit log and the Telegram card.
+      const actorOf = (member) => JSON.stringify({ id: String(member.id), name: `${member.username ? `@${member.username}` : member.name} · сайт`.slice(0, 100) });
+      if (path.startsWith('/guides') && await guideRoutes({ request, response, url, path, method, send, user, requireUser, isAdmin, identity, guides, readJSON, readBytes, sendFile, actor: actorOf })) return;
       if (path.startsWith('/admin/')) {
         const member = requireAdmin();
         // Recorded in the audit log and shown on the Telegram moderation card.
         const actor = JSON.stringify({ id: String(member.id), name: `${member.username ? `@${member.username}` : member.name} · сайт`.slice(0, 100) });
         if (path === '/admin/session' && method === 'GET') return send(200, { admin: true });
+        // What waits for a decision in every section, for the panel's menu and «Входящие».
+        if (path === '/admin/summary' && method === 'GET') {
+          const table = (name) => !!store.get('SELECT 1 x FROM sqlite_master WHERE name=?', name);
+          const count = (sql) => store.get(sql).n;
+          return send(200, { paused: store.paused(), counts: {
+            works: { pending: count("SELECT count(*) n FROM works w JOIN revisions r ON r.id=COALESCE(w.draft_revision,w.public_revision) WHERE w.state='active' AND r.status='pending'"),
+              reports: count("SELECT count(*) n FROM works w WHERE w.state='active' AND EXISTS(SELECT 1 FROM reports WHERE work=w.id AND resolved=0)") },
+            arts: { pending: count("SELECT count(*) n FROM arts WHERE status='pending'"), reports: 0 },
+            backgrounds: table('backgrounds') ? { pending: count("SELECT count(*) n FROM backgrounds WHERE status='pending'"),
+              reports: count("SELECT count(*) n FROM backgrounds b WHERE b.status='approved' AND EXISTS(SELECT 1 FROM background_reports p WHERE p.background=b.id AND p.resolved=0)") } : { pending: 0, reports: 0 },
+            guides: (({ pending, reports }) => ({ pending, reports }))(guides().counts()) } });
+        }
+        // A creator's badges (scripts/profile-badges.mjs): give or take back one; recorded in «Журнал».
+        const badgeMatch = /^\/admin\/profiles\/([A-Za-z0-9_-]{12})\/badges$/.exec(path);
+        if (badgeMatch && method === 'POST') {
+          const body = await readJSON(request);
+          if (typeof body.on !== 'boolean') fail(400, 'Неверный запрос.');
+          const { account, changed } = store.profiles.setBadge(badgeMatch[1], body.badge, body.on);
+          if (changed) store.audit(`profile:${badgeMatch[1]}`, `badge-${body.on ? 'on' : 'off'}:${body.badge}`, actor);
+          return send(200, { badges: store.profiles.badges(account, creatorStats(account).likes) });
+        }
+        // Who decided what lately, on the site and in Telegram (server/admin-journal.mjs).
+        if (path === '/admin/journal' && method === 'GET') return send(200, adminJournal(store, { before: Number(url.searchParams.get('before')) || 0 }));
         const search = (url.searchParams.get('q') || '').trim().slice(0, 80);
+        if (path.startsWith('/admin/guides') && await guideAdminRoutes({ request, url, path, method, send, guides, readJSON, actor, search })) return;
         if (path === '/admin/works' && method === 'GET') return send(200, { ...store.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search),
           artsPending: store.get("SELECT count(*) n FROM arts WHERE status='pending'").n,
+          guidesPending: (({ pending, reports }) => pending + reports)(guides().counts()),
           backgroundsPending: (store.get("SELECT count(*) n FROM sqlite_master WHERE name='backgrounds'").n ? store.get("SELECT count(*) n FROM backgrounds WHERE status='pending'").n : 0)
             // Open reports on published backgrounds need a look too.
             + (store.get("SELECT count(*) n FROM sqlite_master WHERE name='background_reports'").n ? store.get("SELECT count(DISTINCT p.background) n FROM background_reports p JOIN backgrounds b ON b.id=p.background WHERE p.resolved=0 AND b.status='approved'").n : 0) });
@@ -412,13 +516,36 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       send(status, { error: status === 500 ? 'Не удалось сохранить данные. Попробуй ещё раз.' : error.message, ...(error.extra || {}) });
     }
   };
+  // A creator's page: the profile, their published grids, backgrounds and guides, and the likes they got
+  // on all of them.
+  // What a creator published and how many likes it got (their profile page, the like badges).
+  function creatorStats(account) {
+    const count = (sql) => store.get(sql, account).n;
+    gallery(); guides();  // their tables
+    return {
+      grids: count("SELECT count(*) n FROM works WHERE account=? AND state='active' AND public_revision IS NOT NULL"),
+      backgrounds: count("SELECT count(*) n FROM backgrounds WHERE account=? AND status='approved'"),
+      guides: count("SELECT count(*) n FROM guides WHERE account=? AND status='approved'"),
+      likes: store.profiles.likes(account, true)
+    };
+  }
+  function creatorPage(key, viewer) {
+    const row = store.profiles.byKey(key), account = row.account;
+    const grids = store.all("SELECT id FROM works WHERE account=? AND state='active' AND public_revision IS NOT NULL ORDER BY created DESC LIMIT 60", account)
+      .map(({ id }) => { const item = store.publicItem(id, viewer); delete item.grid; return item; });
+    const backgrounds = gallery().byAccount(account, viewer), guideCards = guides().byAccount(account), stats = creatorStats(account);
+    return { ...store.profiles.card(row), badges: store.profiles.badges(account, stats.likes), mine: viewer === account, stats, grids, backgrounds, guides: guideCards,
+      followable: viewer !== account, subscribed: !!(viewer && store.get('SELECT 1 x FROM subscriptions WHERE account=? AND author=?', viewer, account)) };
+  }
   const server = createServer(handler); server.requestTimeout = 15000; server.headersTimeout = 10000;
-  return { server, store, accounts, handler };
+  return { server, store, accounts, handler, gallery };
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const config = catalogConfig();
-  const { server, store } = createCatalogAPI(config);
+  const { server, store, gallery } = createCatalogAPI(config);
   const port = Number(process.env.CATALOG_PORT || 4174);
   server.listen(port, '127.0.0.1', () => console.log(`Catalog API: http://127.0.0.1:${port} (${config.development ? 'local testing; ALTCHA enabled' : 'production'})`));
+  // Backgrounds sent before fingerprints get theirs in the background (server/similarity.mjs).
+  setTimeout(() => gallery().fingerprintMissing().then((n) => n && console.log(`Отпечатки фонов: ${n}`), () => {}), 10_000).unref();
   for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => server.close(() => { store.close(); process.exit(0); }));
 }

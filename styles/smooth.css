@@ -1,0 +1,113 @@
+/* Smooth motion across the site (the user, 02.10.2026: every element animated «по примеру кнопки
+   Герои … smooth»): things grow out of where they come from, their parts arrive one after another,
+   what can be pressed rises a little and gives way when pressed, a trailing arrow steps forward.
+   Only opacity and the separate translate / scale properties move, so nothing is laid out again and
+   no element's own transform is touched. Loaded by useAppMotion (editor, Studio, workshop, builder);
+   the landing has its own. Exits stay as they were (.closing, .is-leaving, .leaving, .is-closing are
+   left alone: their code waits for them). Nothing moves with prefers-reduced-motion. */
+:root {
+  --smooth: cubic-bezier(.2, .8, .2, 1);
+  --smooth-quick: 180ms;
+  --smooth-calm: 420ms;
+}
+@keyframes smooth-pop { from { opacity: 0; scale: .94; translate: 0 -4px; } }
+@keyframes smooth-item { from { opacity: 0; translate: -8px 0; } }
+@keyframes smooth-rise { from { opacity: 0; translate: 0 12px; } }
+@keyframes smooth-dialog { from { opacity: 0; translate: 0 16px; scale: .965; } }
+@keyframes smooth-fade { from { opacity: 0; } }
+
+/* The place of each part in its group, for the one-after-another arrivals. */
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(1) { --smooth-i: 0; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(2) { --smooth-i: 1; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(3) { --smooth-i: 2; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(4) { --smooth-i: 3; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(5) { --smooth-i: 4; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(6) { --smooth-i: 5; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(7) { --smooth-i: 6; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(8) { --smooth-i: 7; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(9) { --smooth-i: 8; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(10) { --smooth-i: 9; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(11) { --smooth-i: 10; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(12) { --smooth-i: 11; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(13) { --smooth-i: 12; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(14) { --smooth-i: 13; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(15) { --smooth-i: 14; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(16) { --smooth-i: 15; }
+:is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu, .catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards, .custom-panel-body, .catalog-install) > :nth-child(n+17) { --smooth-i: 16; }
+:is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open] > :nth-child(1) { --smooth-d: 0; }
+:is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open] > :nth-child(2) { --smooth-d: 1; }
+:is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open] > :nth-child(3) { --smooth-d: 2; }
+:is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open] > :nth-child(4) { --smooth-d: 3; }
+:is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open] > :nth-child(5) { --smooth-d: 4; }
+:is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open] > :nth-child(6) { --smooth-d: 5; }
+:is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open] > :nth-child(n+7) { --smooth-d: 6; }
+
+/* Buttons: a pixel up on hover, a little in when pressed; the main one glows. */
+:root :is(.button, .catalog-button, .account-button, .workspace-create, .workspace-import, .custom-foot-links a, .grid-choice) {
+  transition-property: translate, scale, transform, background, background-color, border-color, color, box-shadow, opacity, filter, outline-color;
+  transition-duration: var(--smooth-quick);
+  transition-timing-function: var(--smooth);
+}
+:root :is(.button, .catalog-button, .account-button, .workspace-create, .grid-choice):not(:disabled):not([aria-disabled='true']):hover { translate: 0 -1px; }
+:root :is(.button, .catalog-button, .account-button, .workspace-create, .grid-choice):not(:disabled):not([aria-disabled='true']):active { translate: 0; scale: .97; transition-duration: 90ms; }
+:root :is(.button.primary, .catalog-button.primary):not(:disabled):hover { box-shadow: 0 10px 26px -12px #c4b5edcc; }
+/* Round icon buttons and the tool dock: the icon itself leans in. */
+:root :is(.icon-button, .catalog-icon) > svg, :root .tool-button [data-icon] > svg { transition: scale var(--smooth-quick) var(--smooth), rotate var(--smooth-quick) var(--smooth); }
+:root :is(.icon-button, .catalog-icon):not(:disabled):hover > svg, :root .tool-button:not(:disabled):hover [data-icon] > svg { scale: 1.1; }
+:root :is(.icon-button, .catalog-icon):not(:disabled):active > svg { scale: .9; }
+/* A trailing arrow steps forward, a leading «back» arrow steps back. */
+:root :is(.button, .catalog-button, .catalog-link, .custom-links a, .catalog-nav nav a, .workspace-sidebar nav a, .grid-choice-change) > svg:last-child:not(:first-child) { transition: translate .25s var(--smooth); }
+:root :is(.button, .catalog-button, .catalog-link, .custom-links a, .catalog-nav nav a, .workspace-sidebar nav a, .grid-choice):hover > svg:last-child:not(:first-child),
+:root .grid-choice:hover .grid-choice-change > svg { translate: 3px 0; }
+:root :is(.catalog-back, .workspace-back) > svg:first-child { transition: translate .25s var(--smooth); }
+:root :is(.catalog-back, .workspace-back):hover > svg:first-child { translate: -3px 0; }
+/* Text links: the underline grows in. */
+:root .catalog-link { text-decoration-color: transparent; transition: text-decoration-color .2s ease, color .2s ease; }
+:root .catalog-link:hover { text-decoration-color: currentColor; }
+
+/* Fields: the edge and the glow ease in on focus. */
+:root :is(input:not([type='range']):not([type='checkbox']):not([type='radio']), textarea, select) {
+  transition: border-color .2s ease, box-shadow .25s ease, background-color .2s ease;
+}
+
+/* Menus grow out of where they were opened, their items slide in one after another. */
+:root :is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu) { transform-origin: top left; animation: smooth-pop .26s var(--smooth) both; }
+:root :is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu) > * { animation: smooth-item .3s var(--smooth) both; animation-delay: calc(40ms + var(--smooth-i, 0) * 22ms); }
+
+/* Windows rise into place over a fading backdrop; header, body and footer follow each other. */
+:root :is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open]:not(.closing):not(.is-leaving):not(.leaving) { animation: smooth-dialog .34s var(--smooth) both; }
+:root :is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open]:not(.closing):not(.is-leaving):not(.leaving)::backdrop { animation: smooth-fade .3s ease both; }
+:root :is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open]:not(.closing):not(.is-leaving):not(.leaving) > * { animation: smooth-rise .4s var(--smooth) both; animation-delay: calc(50ms + var(--smooth-d, 0) * 45ms); }
+
+/* Cards (the workshop, its backgrounds, the Studio, the grid picker, the editor's quick cards) come in
+   one after another; on hover the picture lifts and its image draws a little closer. */
+:root :is(.catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards) { animation: none; }
+:root :is(.catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards) > * { animation: smooth-rise .5s var(--smooth) both; animation-delay: calc(var(--smooth-i, 0) * 38ms); }
+:root :is(.catalog-card-art, .background-card-picture, .workspace-file-preview, .grid-pick-picture) {
+  transition: translate .35s var(--smooth), box-shadow .35s var(--smooth), outline-color .15s ease-out;
+}
+:root :is(.catalog-card, .background-card, .workspace-file, .grid-pick):hover :is(.catalog-card-art, .background-card-picture, .workspace-file-preview, .grid-pick-picture) {
+  translate: 0 -3px; box-shadow: 0 18px 36px -20px #000d;
+}
+:root :is(.catalog-card-art, .background-card-picture, .workspace-file-preview, .grid-pick-picture) :is(img, canvas, video) { transition: scale .6s var(--smooth); }
+:root :is(.catalog-card, .background-card, .workspace-file, .grid-pick):hover :is(.catalog-card-art, .background-card-picture, .workspace-file-preview, .grid-pick-picture) :is(img, canvas, video) { scale: 1.035; }
+:root :is(.quick-card, .create-group-card, .custom-file-card) { transition: translate .25s var(--smooth), border-color .2s ease, background-color .2s ease, box-shadow .3s var(--smooth); }
+:root :is(.quick-card, .create-group-card):hover { translate: 0 -2px; box-shadow: 0 14px 30px -18px #000c; }
+
+/* Pages open in order: the heading, the bar under it, the filters, then the content. */
+:root :is(.catalog-heading, .files-heading) { animation: smooth-rise .55s var(--smooth) both; }
+:root :is(.catalog-toolbar, .workspace-search) { animation: smooth-rise .55s var(--smooth) both; animation-delay: 70ms; }
+:root :is(.catalog-filters, .background-filters) { animation: smooth-rise .55s var(--smooth) both; animation-delay: 130ms; }
+:root .workspace-sidebar { animation: smooth-fade .5s ease both; }
+/* The builder's settings arrive section by section; the install steps one after another. */
+:root :is(.custom-panel-body, .catalog-install) > * { animation: smooth-rise .5s var(--smooth) both; animation-delay: calc(80ms + var(--smooth-i, 0) * 45ms); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root :is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu), :root :is(.canvas-context-menu, .workspace-create-menu, .grid-file-menu) > *,
+  :root :is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open], :root :is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open]::backdrop, :root :is(.modal, .catalog-dialog, .art-dialog, .drawing-dialog, .hero-picker, .artwork-optimizer)[open] > *,
+  :root :is(.catalog-grid, .background-grid, .workspace-files, .grid-pick-list, .quick-cards) > *, :root :is(.catalog-heading, .files-heading, .catalog-toolbar, .workspace-search, .catalog-filters, .background-filters, .workspace-sidebar),
+  :root :is(.custom-panel-body, .catalog-install) > * { animation: none; }
+  :root :is(.button, .catalog-button, .account-button, .workspace-create, .grid-choice):hover,
+  :root :is(.quick-card, .create-group-card):hover,
+  :root :is(.catalog-card, .background-card, .workspace-file, .grid-pick):hover :is(.catalog-card-art, .background-card-picture, .workspace-file-preview, .grid-pick-picture) { translate: none; }
+}

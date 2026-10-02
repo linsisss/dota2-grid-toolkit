@@ -19,13 +19,17 @@ export class Accounts {
     // them without the document. Older rows get it on their next save.
     if (!store.all('PRAGMA table_info(workspaces)').some((column) => column.name === 'grids')) store.db.exec('ALTER TABLE workspaces ADD COLUMN grids TEXT');
     this.thumbnails = new Map();
+    // Every account has a creator profile; ones signed in before profiles get a generated nickname here.
+    store.profiles.ensureAll();
   }
+  // The signed-in account: its Telegram id and name (the server's), and its profile — the nickname and
+  // avatar the site shows for it (server/profiles.mjs).
   user(session) {
     if (!session || !/^[\w-]{43}$/.test(session)) return null;
-    const user = this.store.get('SELECT a.id,a.name,a.username,p.version FROM account_sessions s JOIN accounts a ON a.id=s.account LEFT JOIN account_avatars p ON p.account=a.id WHERE s.hash=? AND s.expires>?', digest(session), this.store.now());
+    const user = this.store.get('SELECT a.id,a.name,a.username FROM account_sessions s JOIN accounts a ON a.id=s.account WHERE s.hash=? AND s.expires>?', digest(session), this.store.now());
     if (!user) return null;
-    const { version, ...profile } = user;
-    return { ...profile, avatar: version ? `/api/catalog/auth/avatar?v=${user.id}-${version}` : null };
+    const creator = this.store.profiles.creator(user.id);
+    return { ...user, nickname: creator.name, profile: creator.key, avatar: creator.avatar };
   }
   setAvatar(id, image) {
     if (!image) return this.store.run('DELETE FROM account_avatars WHERE account=?', String(id));
@@ -80,7 +84,7 @@ export class Accounts {
       if (oldSession) this.logout(oldSession);
       const session = secret(); this.store.run('INSERT INTO account_sessions VALUES(?,?,?)', digest(session), user.id, this.store.now() + SESSION_AGE * 1000);
       this.store.run("UPDATE login_requests SET state='consumed',verifier='' WHERE id=?", id);
-      return { user, session };
+      return { user: this.user(session), session };
     });
   }
   logout(session) { if (session) this.store.run('DELETE FROM account_sessions WHERE hash=?', digest(session)); }

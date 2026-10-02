@@ -93,7 +93,10 @@ test('HTTP login cookies, anonymous publication, claims and edit/like/workspace 
   const finish=await call('/auth/finish','POST',{id:begin.body.id,userId:'7'}); assert.equal(finish.status,200);
   assert.equal((await call('/auth/me')).body.user.id,'7');
   accounts.setAvatar(7,Buffer.from('private-photo'));
-  assert.match((await call('/auth/me')).body.user.avatar,/^\/api\/catalog\/auth\/avatar\?v=7-/);
+  // The site shows the profile's avatar (a pattern unless its owner picks the Telegram photo); the photo
+  // itself is the owner's own, behind their session.
+  const me=(await call('/auth/me')).body.user;
+  assert.match(me.avatar,/^\/api\/catalog\/profiles\/[A-Za-z0-9_-]{12}\/avatar\?v=p$/); assert.match(me.nickname,/^[A-Z][a-z]+[A-Z][a-z]+\d*$/);
   const photo=await fetch(base+'/auth/avatar',{headers:{Cookie:cookie}});
   assert.equal(photo.status,200);assert.equal(photo.headers.get('content-type'),'image/png');assert.equal(photo.headers.get('cache-control'),'no-store');assert.equal(await photo.text(),'private-photo');
   assert.equal((await fetch(base+'/auth/avatar')).status,401);

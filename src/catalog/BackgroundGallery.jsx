@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { BACKGROUND_SCREENS, BACKGROUND_TAGS, deviceScreen } from '../../scripts/background-document.mjs';
 import { isAdultWork, SensitiveArt, useAdultConfirmed } from './Sensitive.jsx';
 import { catalogAPI } from './api.js';
+import { CreatorName } from './Creator.jsx';
 import { locale, t } from '../../scripts/i18n.mjs';
 
 // Shared menu backgrounds (server/catalog-backgrounds.mjs): the workshop's «Фоны» lists them with
@@ -68,7 +69,7 @@ export function BackgroundCard({ item, children, poster = null, playable = true,
       <img src={poster || backgroundMedia(item.id, 'poster.jpg')} alt="" loading="lazy"/>
       <video ref={video} muted loop playsInline preload="none"/>
     </div></SensitiveArt>
-    <div className="background-card-info"><div><h3 title={item.title}>{item.title}</h3><p>{item.author || t('Без подписи')}</p></div>{children}</div>
+    <div className="background-card-info"><div><h3 title={item.title}>{item.title}</h3><p><CreatorName item={item}/></p></div>{children}</div>
     <div className="background-card-meta"><span>{item.aspect}{item.seconds ? ` · ${seconds(item.seconds)}` : ''}</span><span>{item.tags.map((tag) => t(tag)).join(', ')}</span></div>
     {footer}
   </article>;

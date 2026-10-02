@@ -1,0 +1,15 @@
+import { createRoot } from 'react-dom/client';
+import GuidesApp from './GuidesApp.jsx';
+import { followTitle, languageReady } from '../../scripts/i18n.mjs';
+import '../../styles/site.css';
+import '../catalog/catalog.css';
+import './guides.css';
+import '../site-kit.css';
+import { SITE_SLIDES, autoSlides } from '../../scripts/slide-indicator.mjs';
+import { watchErrors } from '../../scripts/community.mjs';
+// «Гайды» (src/guides/GuidesApp.jsx). Drawn once the language is settled (scripts/i18n.mjs).
+languageReady(() => import('../i18n/en/common.js'), () => import('../i18n/en/server.js'), () => import('../i18n/en/catalog.js'),
+  () => import('../i18n/en/guides.js')).then(() => { followTitle(); createRoot(document.getElementById('catalog-root')).render(<GuidesApp/>); });
+autoSlides(document.body, SITE_SLIDES);
+// Errors nothing caught go into the note «Сообщить о баге» copies (scripts/community.mjs).
+watchErrors();

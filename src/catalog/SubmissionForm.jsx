@@ -5,24 +5,28 @@ import { foreignNoticeable, foreignSample, gridForeignGlyphs } from '../../scrip
 import { useAccount } from './Account.jsx';
 import { Captcha, Icon, Notice, Stats, rich, useCatalogConfig } from './Common.jsx';
 import { catalogAPI, CATALOG_PATH, RULES_PATH, forgetWork, managementLink, rememberWork } from './api.js';
+import { CreditField } from './Creator.jsx';
 import { locale, t } from '../../scripts/i18n.mjs';
 
 export default function SubmissionForm({ grid, existing, token, onSaved }) {
   const auth = useAccount();
   const [intent] = useState(() => ({ id: crypto.randomUUID(), token: btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '') }));
   const [title, setTitle] = useState(existing?.title || grid.configs[0].config_name.slice(0, 80));
-  const [author, setAuthor] = useState(existing?.author || ''), [tags, setTags] = useState(existing?.tags?.filter(tag => CATALOG_TAGS.includes(tag)) || []);
+  const [author, setAuthor] = useState(existing?.author || ''), [credit, setCredit] = useState(existing?.credit || ''), [tags, setTags] = useState(existing?.tags?.filter(tag => CATALOG_TAGS.includes(tag)) || []);
   const [captcha, setCaptcha] = useState(''), [reset, setReset] = useState(0), [busy, setBusy] = useState(false);
   const [error, setError] = useState(''), [duplicate, setDuplicate] = useState(''), [result, setResult] = useState(null);
   const { config, error: configError } = useCatalogConfig();
   const stats = normalizeCatalogGrid(grid).stats, foreign = gridForeignGlyphs(grid);
   const [copied, setCopied] = useState(false);
+  // A signed-in author's grid is signed by their creator profile (src/catalog/Creator.jsx); instead of
+  // «Автор» they can say whose work it is based on.
+  const signed = existing ? !!existing.creator : !!auth.user, nickname = existing?.creator?.name || auth.user?.nickname || '';
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError(''); setDuplicate('');
     try {
       if (!existing) rememberWork({ id: intent.id, token: intent.token, title });
       const saved = await catalogAPI(existing ? `/manage/${existing.id}` : '/works', { method: existing ? 'PATCH' : 'POST', token,
-        body: { title, author, tags, grid, captcha, ...(existing ? { revision: existing.revision } : { requestId: intent.id, managementToken: intent.token }) } });
+        body: { title, ...(signed ? { credit } : { author }), tags, grid, captcha, ...(existing ? { revision: existing.revision } : { requestId: intent.id, managementToken: intent.token }) } });
       const managementToken = saved.managementToken || token || intent.token;
       const stored = rememberWork({ id: saved.id, token: managementToken, title });
       const linked = existing ? !!existing.linked : !!auth.user;
@@ -40,7 +44,8 @@ export default function SubmissionForm({ grid, existing, token, onSaved }) {
     <div className="catalog-submit-preview"><GridPreview grid={grid} title={title} large/><Stats stats={stats}/><p className="catalog-muted">{t('Публикуется только эта сетка. Остальные сетки файла, скрытые слои и подложка остаются у тебя. Превью показывает область 1193 × 593.')}</p>{stats.categories > 2000 && <Notice>{t('Больше 2 000 категорий: возможны просадки FPS и вылеты Dota. Перед отправкой можно сократить сетку через «Оптимизация».')}</Notice>}
       {foreignNoticeable(foreign) && <Notice>{t('{count} символов нет в шрифте Dota ({sample}): в игре они выглядят иначе, чем на превью. Заменить их можно в редакторе: правая кнопка мыши → «Заменить символы…».', { count: foreign.count.toLocaleString(locale), sample: foreignSample(foreign) })}</Notice>}</div>
     <div className="catalog-form-fields"><label>{t('Название')}<input value={title} onChange={event => setTitle(event.target.value)} maxLength={80} required autoFocus placeholder={t('Как называется твоя сетка')}/></label>
-      <label>{t('Автор')} <span className="catalog-muted">{t('необязательно')}</span><input value={author} onChange={event => setAuthor(event.target.value)} maxLength={40} placeholder={t('Никнейм')} autoComplete="nickname"/></label>
+      {signed ? <CreditField value={credit} onChange={setCredit} nickname={nickname}/>
+        : <label>{t('Автор')} <span className="catalog-muted">{t('необязательно')}</span><input value={author} onChange={event => setAuthor(event.target.value)} maxLength={40} placeholder={t('Никнейм')} autoComplete="nickname"/></label>}
       <fieldset><legend>{t('Теги')} <span className="catalog-muted">{t('до трёх')}</span></legend><div className="catalog-tags">{CATALOG_TAGS.map(tag => <button type="button" key={tag} aria-pressed={tags.includes(tag)} disabled={!tags.includes(tag) && tags.length === 3} onClick={() => setTags(tags.includes(tag) ? tags.filter(x => x !== tag) : [...tags, tag])}>{t(tag)}</button>)}</div></fieldset>
       <p className="catalog-muted">{rich(t('После нажатия кнопки сетка попадает на проверку. После проверки она станет доступна для всех пользователей сайта. Отправляя сетку, ты принимаешь {rules}.'), { rules: <a className="catalog-inline-link" href={RULES_PATH} target="_blank" rel="noreferrer">{t('правила мастерской')}</a> })}</p>
       {!auth.user && <Notice>{t('Публикация без входа доступна. Чтобы изменять сетку после одобрения, понадобится привязать Telegram. Сохрани ссылку управления: браузер может со временем удалить локальные данные.')} <button type="button" className="catalog-link" onClick={() => auth.requestLogin()}>{t('Войти через Telegram')}</button></Notice>}

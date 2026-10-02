@@ -1,18 +1,24 @@
-import { t, translateMessage } from '../../scripts/i18n.mjs';
+import { lang, t, translateMessage } from '../../scripts/i18n.mjs';
+import { installCommand } from '../../scripts/installer.mjs';
+import { GRID_NOTE, withGridNote } from '../../scripts/grid-note.mjs';
 // The workshop lives at /workshop; nginx sends the former /catalog links there with their query and #hash.
 export const CATALOG_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'catalog.html' : 'workshop'}`;
 export const RULES_PATH = `${CATALOG_PATH}?rules`;
 // Dota customization (menu background, font): /background (/customize until 1.6.3, which now
 // redirects), customize.html on static hosting.
 export const CUSTOMIZE_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'customize.html' : 'background'}`;
+export const FONT_PATH = `${CUSTOMIZE_PATH}?tab=font`;
 export const EDITOR_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY || 'editor'}`;
 // The file list itself; plain EDITOR_PATH reopens the file this tab last edited.
 export const STUDIO_PATH = `${EDITOR_PATH}?files=1`;
-export async function catalogAPI(path, { method = 'GET', body, token, signal } = {}) {
+// «Гайды» (src/guides/), guides.html on static hosting.
+export const GUIDES_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'guides.html' : 'guides'}`;
+// `raw`: a file sent as it is (application/octet-stream), e.g. a profile picture.
+export async function catalogAPI(path, { method = 'GET', body, raw, token, signal } = {}) {
   let response;
   try { response = await fetch(`/api/catalog${path}`, { method, credentials: 'same-origin', referrerPolicy: 'no-referrer',
-    headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    ...(body ? { body: JSON.stringify(body) } : {}), signal: signal || AbortSignal.timeout(15000) }); }
+    headers: { ...(body ? { 'Content-Type': 'application/json' } : raw ? { 'Content-Type': 'application/octet-stream' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    ...(body ? { body: JSON.stringify(body) } : raw ? { body: raw } : {}), signal: signal || AbortSignal.timeout(raw ? 60000 : 15000) }); }
   catch (error) { if (signal?.aborted) throw error; throw new Error(t('Нет связи с мастерской. Проверь подключение и попробуй ещё раз.')); }
   let value;
   try { value = await response.json(); } catch { throw new Error(t('Мастерская сейчас недоступна. Редактор и скачивание файла продолжают работать.')); }
@@ -33,9 +39,17 @@ export function managementLink(id, token) {
 // Made to hold on the hero-pick screen first (pick-safe.js, loaded on the first download).
 export async function downloadGrid(grid) {
   const safe = await import('./pick-safe.js').then(({ pickSafeGrid }) => pickSafeGrid(grid)).catch(() => grid);
-  const url = URL.createObjectURL(new Blob([JSON.stringify(safe, null, 2)], { type: 'application/json' }));
+  const url = URL.createObjectURL(new Blob([JSON.stringify(withGridNote(safe, t(GRID_NOTE)), null, 2)], { type: 'application/json' }));
   const a = document.createElement('a'); a.href = url; a.download = 'hero_grid_config.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+// The same grid by a PowerShell command (server/grid-installs.mjs, scripts/installer.mjs): stored on
+// the site for a week; → the command that puts it into the folder of the account signed in to Steam.
+export async function gridInstallCommand(grid) {
+  const safe = await import('./pick-safe.js').then(({ pickSafeGrid }) => pickSafeGrid(grid)).catch(() => grid);
+  const result = await catalogAPI('/install', { method: 'POST', body: { grid: withGridNote(safe, t(GRID_NOTE)), lang } });
+  return installCommand(result.address);
+}
+export const gridRestoreCommand = () => installCommand(`${location.origin}/api/catalog/install/${lang === 'en' ? 'restore-en' : 'restore'}`);
 // Which own submission this tab opened in the editor, so publishing can update it in place.
 const EDITING_KEY = 'gridstudio.catalog.editing.v1';
 export function rememberEditing(id) { try { sessionStorage.setItem(EDITING_KEY, id); } catch { /* Only the preselection is lost. */ } }

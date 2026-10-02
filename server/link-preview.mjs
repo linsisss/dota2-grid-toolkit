@@ -13,6 +13,7 @@ export const PREVIEW_SIZE = [1200, 630];
 export const PREVIEW_TEXT = {
   grid: 'Переходи и поставь эту сетку в Dota 2 за пару кликов! А ещё можно создать свои, либо отредактировать чужие.',
   background: 'Переходи и поставь этот фон в Dota 2 за пару кликов! А ещё можно создать свои, либо отредактировать чужие.',
+  guide: 'Гайд на GridStudio: как оформить Dota 2 под себя.',
 };
 let fonts = false;
 const font = () => { if (!fonts) { GlobalFonts.registerFromPath(new URL('../assets/dota-fonts/montserrat/montserrat-700.ttf', import.meta.url).pathname, 'PreviewMontserrat'); fonts = true; } };
@@ -94,3 +95,40 @@ export async function backgroundPreviewImage(row, files) {
     if (JSON.parse(row.tags || '[]').includes('18+')) adult(context, width, height);
   });
 }
+
+// A guide (server/guides.mjs): its cover darkened under the title, or the site's lilac without one;
+// «Гайд» and its section above the title. Also the picture of its Telegram moderation card.
+export async function guidePreviewImage({ title, section, author, cover: coverFile }) {
+  const picture = coverFile ? await loadImage(readFileSync(coverFile)).catch(() => null) : null;
+  return jpeg((context, width, height) => {
+    if (picture) {
+      cover(context, picture, width, height);
+      const shade = context.createLinearGradient(0, height * 0.25, 0, height);
+      shade.addColorStop(0, '#0f0e1300'); shade.addColorStop(1, '#0f0e13f2');
+      context.fillStyle = shade; context.fillRect(0, 0, width, height);
+    } else {
+      const glow = context.createRadialGradient(width * 0.15, 0, 0, width * 0.15, 0, width);
+      glow.addColorStop(0, '#c4b5ed55'); glow.addColorStop(1, '#0f0e1300');
+      context.fillStyle = glow; context.fillRect(0, 0, width, height);
+    }
+    font();
+    context.textBaseline = 'alphabetic'; context.textAlign = 'left';
+    // The title on at most two lines, cut with «…».
+    context.fillStyle = '#f4f1fa'; context.font = '58px PreviewMontserrat';
+    const words = String(title || '').split(/\s+/), lines = [''];
+    for (const word of words) {
+      const next = lines.at(-1) ? `${lines.at(-1)} ${word}` : word;
+      if (context.measureText(next).width <= width - 128 || !lines.at(-1)) lines[lines.length - 1] = next;
+      else if (lines.length < 2) lines.push(word);
+      else { lines[1] = `${lines[1]}…`; break; }
+    }
+    while (context.measureText(lines.at(-1)).width > width - 128 && lines.at(-1).length > 2) lines[lines.length - 1] = `${lines.at(-1).slice(0, -2)}…`;
+    // From the bottom: the author, the title's last line above it, «ГАЙД · раздел» over the first.
+    const last = height - (author ? 112 : 64), first = last - (lines.length - 1) * 70;
+    lines.forEach((line, i) => context.fillText(line, 64, first + i * 70));
+    context.fillStyle = '#c4b5ed'; context.font = '28px PreviewMontserrat';
+    context.fillText(`Гайд${section ? ` · ${section}` : ''}`.toUpperCase(), 64, first - 74);
+    if (author) { context.fillStyle = '#afa7bf'; context.font = '28px PreviewMontserrat'; context.fillText(author, 64, height - 56); }
+  });
+}
+

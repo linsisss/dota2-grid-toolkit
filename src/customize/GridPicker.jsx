@@ -6,6 +6,7 @@ import { openWorkspaceRegistry, cloudWorkspaceId } from '../../scripts/workspace
 import { freshThumbnails, makeThumbnails, readThumbnails } from '../../scripts/workspace-thumbnails.mjs';
 import { readWorkspacePreview, workspaceGridPreview } from '../../scripts/workspace-preview.mjs';
 import { t } from '../../scripts/i18n.mjs';
+import { creatorText } from '../catalog/Creator.jsx';
 
 // The hero grid shown over the background on the builder's «Сетка героев» tab, so one can see
 // whether the background swallows it: any grid of the user's «Студия» files (each file can hold
@@ -90,7 +91,7 @@ export function GridPicker({ chosen, onChoose, onClose }) {
   const [files, setFiles] = useState(null), [works, setWorks] = useState(null);
   useEffect(() => { studioFiles().then(setFiles); popular().then(setWorks); }, []);
   const pick = (value) => { onChoose(value); onClose(); };
-  return <Modal title={t('Какую сетку показать')} onClose={onClose} size="lg"><div className="grid-picker">
+  return <Modal title={t('Какую сетку показать')} icon="grid" onClose={onClose} size="lg"><div className="grid-picker">
     <p className="catalog-muted">{t('Сетка ляжет поверх фона, как в Dota на странице «Герои», — так видно, не сливается ли она с фоном. В файл фона она не попадает.')}</p>
     <h3>{t('Мои сетки')}</h3>
     {files === null ? <p className="catalog-muted">{t('Загружаем…')}</p> : files.length ? <div className="grid-pick-list">{files.map((item) => <StudioGrids key={item.id} item={item} chosen={chosen} onChoose={pick}/>)}</div>
@@ -100,7 +101,7 @@ export function GridPicker({ chosen, onChoose, onClose }) {
       const on = chosen?.kind === 'workshop' && chosen.id === work.id;
       return <button key={work.id} type="button" className={`grid-pick${on ? ' is-chosen' : ''}`} aria-pressed={on} onClick={() => pick({ kind: 'workshop', id: work.id, revision: work.revision, name: work.title })}>
         <span className="grid-pick-picture"><GridPreview id={work.id} revision={work.revision} title={work.title}/></span>
-        <span className="grid-pick-name"><b>{work.title}</b><small>{work.author || t('мастерская')}</small></span>
+        <span className="grid-pick-name"><b>{work.title}</b><small>{creatorText(work, t('мастерская'))}</small></span>
       </button>;
     })}</div>}
     <button type="button" className="catalog-link grid-pick-none" onClick={() => pick({ kind: 'none' })}><Icon name="close"/>{t('Без сетки')}</button>

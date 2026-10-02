@@ -80,6 +80,7 @@ function TextArtDialog({ editor, canvas, close }) {
   return (
     <dialog ref={ref} className="art-dialog text-art-dialog" aria-labelledby="textArtTitle" onCancel={close}>
       <header className="art-dialog-heading">
+        <span className="win-icon" aria-hidden="true"><Icon name="font"/></span>
         <div><h2 id="textArtTitle">{t('Текст в ASCII')}</h2><span>{t('Надпись из символов и точек — как её покажет Dota')}</span></div>
         <button className="icon-button" aria-label={t('Закрыть')} onClick={close}>×</button>
       </header>

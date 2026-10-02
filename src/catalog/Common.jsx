@@ -1,23 +1,35 @@
 import { Fragment, useEffect, useId, useRef, useState } from 'react';
 import { catalogAPI, CATALOG_PATH } from './api.js';
 import { locale, t } from '../../scripts/i18n.mjs';
+import { rememberError } from '../../scripts/community.mjs';
+import { ReportButton } from '../Community.jsx';
 // The shared Lucide icons (src/Icon.jsx); catalog pages import them from here, and this file uses
 // them too (so an import, not only a re-export).
 import { Icon } from '../Icon.jsx';
+import '../window-kit.css';
 export { Icon };
 // A pill whose thumb slides to the chosen option: the workshop's «Сетки / Фоны», the studio's filter.
+// A value that is none of the options (something chosen outside the switch) leaves no item lit.
 export function SegmentSwitch({ label, value, options, onChange }) {
-  const index = Math.max(0, options.findIndex(([id]) => id === value));
-  return <div className="workshop-switch" role="tablist" aria-label={label} style={{ '--index': index, '--count': options.length }}>
+  const found = options.findIndex(([id]) => id === value), index = Math.max(0, found);
+  return <div className={`workshop-switch${found < 0 ? ' is-none' : ''}`} role="tablist" aria-label={label} style={{ '--index': index, '--count': options.length }}>
     <span className="workshop-switch-thumb" aria-hidden="true"/>{options.map(([id, text]) => <button key={id} role="tab" aria-selected={value === id} onClick={() => onChange(id)}>{text}</button>)}</div>;
 }
 export function Brand() { return <a className="catalog-brand" href="./" aria-label={t('GridStudio, главная')}><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m5 4 23 24M5 18v10h10M18 4h10v10"/></svg><span>GRID<span>STUDIO</span></span></a>; }
 export function Stats({ stats }) { return <dl className="catalog-stats"><div><dt>{t('Герои')}</dt><dd>{stats.heroes}</dd></div><div><dt>{t('Символы')}</dt><dd>{(stats.symbols || 0).toLocaleString(locale)}</dd></div><div><dt>{t('Категории')}</dt><dd>{stats.categories.toLocaleString(locale)}</dd></div></dl>; }
-export function Notice({ children, error = false }) { return <p className={`catalog-notice${error ? ' is-error' : ''}`} role={error ? 'alert' : 'status'}>{children}</p>; }
+// An error notice with `report` (a failure to save, open or build — not a wrong field) goes into the
+// note «Сообщить о баге» copies (scripts/community.mjs) and offers to tell the chat about it.
+const noticeText = (node) => [...(node?.childNodes || [])].filter((child) => !child.matches?.('button, a')).map((child) => child.textContent).join(' ');
+export function Notice({ children, error = false, report = false }) {
+  const ref = useRef(null);
+  useEffect(() => { if (error && report) rememberError(noticeText(ref.current)); });
+  return <p ref={ref} className={`catalog-notice${error ? ' is-error' : ''}`} role={error ? 'alert' : 'status'}>{children}{error && report && <ReportButton error={() => noticeText(ref.current)}/>}</p>;
+}
 // Windows are sized to their content: sm for forms and confirmations, md for a grid preview,
-// lg for the publication form. Closing through the window (×, Escape, backdrop) animates out;
+// lg for the publication form. The header carries an icon tile (`icon`, red with `tone: 'danger'`)
+// and a line under the title (`lead`), as every window of the site (src/window-kit.css). Closing through the window (×, Escape, backdrop) animates out;
 // callers that unmount it directly after saving simply remove it.
-export function Modal({ title, onClose, children, size = 'sm' }) {
+export function Modal({ title, onClose, children, size = 'sm', icon = 'sparkle', lead = null, tone = '' }) {
   const ref = useRef(null), heading = useId(), closing = useRef(false), [leaving, setLeaving] = useState(false);
   useEffect(() => {
     const previous = document.activeElement, node = ref.current;
@@ -43,7 +55,9 @@ export function Modal({ title, onClose, children, size = 'sm' }) {
       const box = ref.current.getBoundingClientRect();
       if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) close();
     }}>
-    <header className="catalog-dialog-header"><h2 id={heading}>{title}</h2><button className="catalog-icon catalog-dialog-close" onClick={close} aria-label={t('Закрыть')}><Icon name="close"/></button></header>{children}
+    <header className="catalog-dialog-header"><span className="win-icon" data-tone={tone || undefined} aria-hidden="true"><Icon name={icon}/></span>
+      <div className="win-heading"><h2 id={heading}>{title}</h2>{lead && <p>{lead}</p>}</div>
+      <button className="catalog-icon catalog-dialog-close win-close" onClick={close} aria-label={t('Закрыть')}><Icon name="close"/></button></header>{children}
   </dialog>;
 }
 export function Captcha({ config, onToken, action = 'submit', reset = 0, hideSuccess = false }) {

@@ -1,0 +1,120 @@
+/* The editor's side panels — the mode panel on the left (Сетка героев / Рисование / ASCII-арты) and
+   Свойства with the layers on the right — in the windows' look (src/window-kit.css), asked for on
+   2026-10-02: the same glass and corner glow, a header with an icon tile, the title and a line
+   under it, small-capital section heads, deep fields that glow on focus, glass buttons and a glowing
+   main one, cards for templates, layers and tools. Loaded last (src/main.jsx); layouts stay theirs. */
+.app-layout > :is(.library-panel, .inspector-panel) {
+  border: 1px solid #ffffff12; border-radius: 18px; color: var(--win-ink);
+  background: radial-gradient(130% 38% at 0% 0%, #c4b5ed14, transparent 60%), var(--win-bg);
+  box-shadow: 0 24px 60px -24px #000d, 0 0 0 1px #00000040, inset 0 1px 0 #ffffff0d;
+}
+body.show-library .app-layout > .library-panel { border-radius: 18px; }
+:is(.library-panel, .inspector-panel) { scrollbar-width: thin; scrollbar-color: #ffffff24 transparent; }
+
+/* Headers: the tile, the title and its line on the glow. */
+.app-layout > .library-panel .panel-intro { padding: 18px 84px 16px 18px; border-bottom: 1px solid #ffffff10; background: var(--win-head); }
+.panel-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.panel-heading .win-icon, .inspector-title .win-icon { width: 38px; height: 38px; border-radius: 12px; }
+.panel-heading .win-icon svg, .inspector-title .win-icon svg { width: 19px; height: 19px; }
+.app-layout > .library-panel .panel-heading h1 { margin: 0; color: var(--win-ink); font-size: 18px; font-weight: 650; letter-spacing: -.01em; line-height: 1.25; }
+.app-layout > .library-panel .panel-heading .panel-lead { display: block; margin: 2px 0 0; color: var(--win-muted); font-size: 12px; line-height: 1.4; }
+.app-layout > .library-panel #libraryDismiss { top: 20px; right: 14px; z-index: 2; display: flex; gap: 2px; }
+.app-layout > .library-panel #libraryDismiss :is(.panel-pin, .panel-dismiss) { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border-radius: 9px; color: var(--win-muted); transition: background-color .2s, color .2s, rotate .35s var(--win-spring); }
+.app-layout > .library-panel #libraryDismiss :is(.panel-pin, .panel-dismiss):hover { background: #ffffff10; color: var(--win-ink); }
+.app-layout > .library-panel #libraryDismiss .panel-dismiss:hover { rotate: 90deg; }
+.app-layout > .library-panel #libraryDismiss .panel-pin[aria-pressed='true'] { color: var(--win-accent); background: #c4b5ed1f; }
+.app-layout > .inspector-panel .inspector-title { display: flex; align-items: center; gap: 12px; padding: 18px 18px 16px; border-bottom: 1px solid #ffffff10; background: var(--win-head); }
+.app-layout > .inspector-panel .inspector-title h2 { flex: 1; margin: 0; color: var(--win-ink); font-size: 18px; font-weight: 650; letter-spacing: -.01em; }
+.app-layout > :is(.library-panel, .inspector-panel) .count-badge { padding: 3px 9px; border: 0; border-radius: 99px; background: #ffffff0d; box-shadow: inset 0 0 0 1px #ffffff14; color: var(--win-muted); font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Section heads as small capitals; text and labels calm. */
+.app-layout > :is(.library-panel, .inspector-panel) :is(.section-heading, .eyebrow) { color: var(--win-muted); font-size: 11px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+.app-layout > :is(.library-panel, .inspector-panel) .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.app-layout > .inspector-panel .inspector-content h3 { margin: 0 0 12px; color: var(--win-ink); font-size: 15px; font-weight: 650; letter-spacing: -.005em; }
+.app-layout > :is(.library-panel, .inspector-panel) :is(.field-label, .range-label, .check-row) { color: var(--win-text); }
+.app-layout > :is(.library-panel, .inspector-panel) .hint { color: var(--win-muted); line-height: 1.5; }
+.app-layout > :is(.library-panel, .inspector-panel) .range-label output { color: var(--win-accent); font-variant-numeric: tabular-nums; }
+
+/* Fields: deep, rounded, a soft glow instead of the ring. */
+.app-layout > :is(.library-panel, .inspector-panel) :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']), select, textarea),
+.app-layout > :is(.library-panel, .inspector-panel) :is(.input-unit, .number-field:not(.input-unit *)) {
+  border: 1px solid #ffffff17; border-radius: 10px; background-color: var(--win-field); color: var(--win-ink); transition: border-color .2s, box-shadow .2s, background-color .2s;
+}
+.app-layout > :is(.library-panel, .inspector-panel) :is(.input-unit, .number-field) > input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']) { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.app-layout > :is(.library-panel, .inspector-panel) :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']), select, textarea, .input-unit):hover { border-color: #ffffff26; }
+.app-layout > :is(.library-panel, .inspector-panel) :is(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']), select, textarea):focus-visible,
+.app-layout > :is(.library-panel, .inspector-panel) :is(.input-unit, .number-field):focus-within { outline: none; border-color: #c4b5ed99; box-shadow: 0 0 0 4px #c4b5ed1f; background-color: #18141f; }
+.app-layout > :is(.library-panel, .inspector-panel) :is(.input-unit, .number-field) > input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):focus-visible { border: 0; box-shadow: none; background: transparent; }
+.app-layout > :is(.library-panel, .inspector-panel) :is(.input-unit, .number-field) :is(span:not(.number-step-buttons), .unit) { color: var(--win-muted); }
+.app-layout > :is(.library-panel, .inspector-panel) input[type='checkbox'] { accent-color: var(--win-accent); }
+.app-layout > :is(.library-panel, .inspector-panel) input[type='range'] { accent-color: var(--win-accent); }
+
+/* Buttons: glass, the main one glowing like the windows'. */
+.app-layout > :is(.library-panel, .inspector-panel) .button.secondary { border: 1px solid #ffffff14; border-radius: 10px; background: #ffffff0a; color: var(--win-ink); }
+.app-layout > :is(.library-panel, .inspector-panel) .button.secondary:not(:disabled):hover { background: #ffffff14; border-color: #ffffff22; }
+.app-layout > :is(.library-panel, .inspector-panel) .button.primary:not(:disabled) { border-color: transparent; border-radius: 10px; background: linear-gradient(180deg, #d4c8f5, #bba9ec); color: #231b35; box-shadow: 0 12px 26px -14px #c4b5edcc, inset 0 1px 0 #ffffff59; }
+.app-layout > :is(.library-panel, .inspector-panel) .button :is([data-icon] svg, svg) { width: 16px; height: 16px; }
+.app-layout > .inspector-panel .icon-button { border-radius: 9px; transition: background-color .2s, color .2s; }
+.app-layout > .inspector-panel .icon-button:not(:disabled):hover { background: #ffffff10; color: var(--win-ink); }
+
+/* Breathing room under the headers and between a field row and its buttons. */
+.app-layout > .inspector-panel .inspector-content { padding-top: 16px; }
+.app-layout > .library-panel #panel-heroes .project-panel { padding-top: 16px; }
+.app-layout > :is(.library-panel, .inspector-panel) :is(.field-pair, .canvas-size-error) + .button { margin-top: 8px; }
+.app-layout > .inspector-panel .layers-panel > .section-heading { background: var(--win-bg); }
+.app-layout > .library-panel .ascii-library-heading :is(h2, h3) { color: var(--win-muted); font-size: 11px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+
+/* Layers: each layer a card; its objects inside; adding a group as a dashed card. */
+.app-layout > .inspector-panel .layers-panel { border-top: 1px solid #ffffff10; }
+.app-layout > .inspector-panel .layer-section { margin-bottom: 6px; border-radius: 12px; }
+.app-layout > .inspector-panel .layer-head { border: 1px solid #ffffff10; border-radius: 12px; background: #ffffff05; transition: border-color .2s, background-color .2s; }
+.app-layout > .inspector-panel .layer-head:hover { border-color: #ffffff1f; background: #ffffff0a; }
+.app-layout > .inspector-panel .layer-section.selected > .layer-head { border-color: #c4b5ed66; background: radial-gradient(120% 140% at 0% 0%, #c4b5ed1f, transparent 60%), #ffffff06; }
+.app-layout > .inspector-panel .layer-section.hidden-layer > .layer-head { opacity: .6; }
+.app-layout > .inspector-panel .layer-item { border-radius: 9px; color: var(--win-text); }
+.app-layout > .inspector-panel .layer-item:hover { background: #ffffff0a; color: var(--win-ink); }
+.app-layout > .inspector-panel .layer-item.selected { background: #c4b5ed1f; color: var(--win-ink); box-shadow: inset 2px 0 0 var(--win-accent); }
+.app-layout > .inspector-panel .layer-head .icon-button.off { color: #8d84a0; }
+.app-layout > .inspector-panel #addGroup { border: 1px dashed #c4b5ed4d; border-radius: 12px; background: #c4b5ed0a; color: var(--win-ink); transition: background-color .2s, border-color .2s, translate .25s var(--win-ease); }
+.app-layout > .inspector-panel #addGroup:hover { border-color: #c4b5ed99; background: #c4b5ed17; translate: 0 -1px; }
+.app-layout > .inspector-panel #addGroup [data-icon] svg { color: var(--win-accent); transition: rotate .35s var(--win-spring); }
+.app-layout > .inspector-panel #addGroup:hover [data-icon] svg { rotate: 90deg; }
+.app-layout > .inspector-panel :is(.hero-chip, .selection-actions .icon-button) { border-radius: 9px; }
+
+/* Сетка героев: the counters, the new group as a card with its tile, templates with tiles. */
+.app-layout > .library-panel .project-overview strong { color: var(--win-ink); font-weight: 650; }
+.app-layout > .library-panel .create-group-card { border: 1px solid #c4b5ed33; border-radius: 14px; background: radial-gradient(120% 140% at 0% 0%, #c4b5ed1c, transparent 60%), #ffffff06; }
+.app-layout > .library-panel .create-group-card:hover { border-color: #c4b5ed80; background: radial-gradient(120% 140% at 0% 0%, #c4b5ed2b, transparent 60%), #ffffff08; }
+.app-layout > .library-panel .create-group-icon { width: 34px; height: 34px; border-radius: 11px; color: var(--win-accent); background: #c4b5ed24; box-shadow: inset 0 0 0 1px #c4b5ed40; }
+.app-layout > .library-panel .project-templates button { border: 1px solid transparent; border-radius: 12px; }
+.app-layout > .library-panel .project-templates button:hover { border-color: #ffffff14; }
+.app-layout > .library-panel .template-icon { width: 34px; height: 34px; border-radius: 11px; background: #ffffff0d; box-shadow: inset 0 0 0 1px #ffffff12; }
+.app-layout > .library-panel .project-templates button.is-meta .template-icon { background: radial-gradient(circle at 50% 45%, #f0b34a33, #c4b5ed14 70%); box-shadow: inset 0 0 0 1px #c4b5ed33; }
+.app-layout > .library-panel .project-note { border-radius: 12px; border-color: #ffffff12; background: #ffffff04; }
+.app-layout > .library-panel .project-note kbd { border-radius: 7px; background: #ffffff0d; box-shadow: inset 0 0 0 1px #ffffff1c, inset 0 -2px 0 #00000059; border: 0; color: var(--win-ink); }
+
+/* Рисование: tool tiles and symbol tiles as small glass squares. */
+.app-layout > .library-panel .drawing-tools > button { border: 1px solid #ffffff0d; border-radius: 10px; background: #ffffff05; color: var(--win-text); }
+.app-layout > .library-panel .drawing-tools > button:not(.active):hover { border-color: #ffffff22; background: #ffffff0d; color: var(--win-ink); }
+.app-layout > .library-panel .drawing-tools[data-indicator] > button.active { border-color: transparent; background: transparent; color: var(--win-accent); }
+.app-layout > .library-panel .drawing-tools[data-indicator]::before { border-radius: 10px; }
+.app-layout > .library-panel :is(.symbol-library, .draft-symbols) button { border: 1px solid #ffffff0a; border-radius: 8px; background: #ffffff06; transition: background-color .15s, border-color .15s, scale .2s var(--win-spring); }
+.app-layout > .library-panel :is(.symbol-library, .draft-symbols) button:hover { border-color: #ffffff26; background: #ffffff10; scale: 1.08; }
+.app-layout > .library-panel :is(.symbol-library, .draft-symbols) button.active { border-color: var(--win-accent); background: #c4b5ed24; box-shadow: 0 6px 14px -8px #c4b5edcc; }
+.app-layout > .library-panel #brushPreview { border-radius: 10px; }
+.app-layout > .library-panel .reference-preview { border-radius: 12px; overflow: hidden; }
+
+/* ASCII-арты: the two sources as dashed glass cards with tiles; the library's cards. */
+.app-layout > .library-panel .image-upload { border: 1px dashed #c4b5ed40; border-radius: 14px; background: radial-gradient(120% 140% at 50% 0%, #c4b5ed12, transparent 65%), #ffffff04;
+  transition: border-color .2s, background-color .2s, translate .25s var(--win-ease); }
+.app-layout > .library-panel .image-upload:hover { border-color: #c4b5ed99; background: radial-gradient(120% 140% at 50% 0%, #c4b5ed24, transparent 65%), #ffffff06; translate: 0 -1px; }
+.app-layout > .library-panel .image-upload > svg, .app-layout > .library-panel .image-upload [data-icon] svg { color: var(--win-accent); transition: scale .3s var(--win-spring), rotate .3s var(--win-ease); }
+.app-layout > .library-panel .image-upload:hover > svg, .app-layout > .library-panel .image-upload:hover [data-icon] svg { scale: 1.12; rotate: -6deg; }
+.app-layout > .library-panel .art-card { border: 1px solid #ffffff10; border-radius: 12px; overflow: hidden; background: #ffffff05; transition: border-color .2s, translate .25s var(--win-ease), box-shadow .25s; }
+.app-layout > .library-panel .art-card:hover { border-color: #c4b5ed66; translate: 0 -2px; box-shadow: 0 14px 28px -18px #c4b5edaa; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel-heading .win-icon { animation: win-pop .5s var(--win-spring) both; }
+  body:not(.focus-mode) .inspector-title .win-icon { animation: win-pop .5s 60ms var(--win-spring) both; }
+  .app-layout > .inspector-panel .layer-section { animation: win-rise .35s var(--win-ease) both; }
+}

@@ -16,11 +16,7 @@ export default {
   '1193 × 593 — твой холст': '1193 × 593 — your canvas',
   'Смотреть сетки и фоны': 'Browse grids and backgrounds',
   'Фон меню Dota': 'Dota menu background',
-  'Шрифты для Dota — скоро': 'Fonts for Dota — coming soon',
   'Шрифты': 'Fonts',
-  'скоро': 'soon',
-  'Гайды по оформлению профиля — скоро': 'Profile design guides — coming soon',
-  'Гайды': 'Guides',
   'Проект на GitHub': 'Project on GitHub',
 
   // StageArtwork.jsx: the random workshop grid

@@ -1,0 +1,50 @@
+/* «Чат и новости» (src/Community.jsx, src/CommunityDialog.jsx): the headers' link, the Studio's side
+   card, «Сообщить в чат» after an error, and the window's own parts on top of the support window's
+   cards (src/support.css). The logo takes the site's lilac, not Telegram's blue. */
+.community-link { display: inline-flex; align-items: center; gap: 8px; color: inherit; font-size: 14px; white-space: nowrap; text-decoration: none; transition: color .2s; }
+.community-link svg { flex: none; color: #c4b5ed; transition: scale .25s cubic-bezier(.3, 1.4, .5, 1), rotate .25s; }
+.community-link:hover { color: #c4b5ed; }
+.community-link:hover svg { scale: 1.12; rotate: -8deg; }
+@media (max-width: 760px) {
+  .community-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .community-link svg { width: 20px; height: 20px; }
+}
+
+.community-side { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 10px 10px 12px; border: 1px solid #c4b5ed29;
+  border-radius: 14px; background: radial-gradient(120% 140% at 0% 0%, #c4b5ed17, transparent 60%), #ffffff05; color: #efeaf5; text-decoration: none;
+  transition: border-color .2s, background-color .2s, translate .25s cubic-bezier(.2, .8, .2, 1); }
+.community-side:hover { border-color: #c4b5ed66; translate: 0 -1px; }
+.community-side-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: #c4b5ed1f; box-shadow: inset 0 0 0 1px #c4b5ed33; color: #c4b5ed; }
+.community-side strong { display: block; font-size: 13px; font-weight: 600; line-height: 1.3; }
+.community-side small { display: block; margin-top: 2px; color: #afa7bf; font-size: 12px; }
+.community-side > svg:last-child { color: #8f879d; transition: translate .25s, color .2s; }
+.community-side:hover > svg:last-child { color: #c4b5ed; translate: 2px 0; }
+
+.catalog-notice .community-report-link { margin-left: 10px; }
+
+/* The window. */
+.community .community-card + .community-card { margin-top: -2px; }
+.community .community-logo { color: #c4b5ed; }
+.community-report { padding: 14px; border: 1px solid #ffffff10; border-radius: 16px; background: #ffffff05; }
+.community-report.is-error { border-color: #ff8a9533; background: radial-gradient(120% 120% at 0% 0%, #ff7a8a14, transparent 60%), #ffffff05; }
+.community-text { margin: 0; color: var(--win-text, #cfc8dc); font-size: 13px; line-height: 1.55; }
+.community-error { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 10px 12px; border-radius: 12px; background: #2a1c22; color: #f3c4ca; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+.community-error svg { flex: none; margin-top: 1px; color: #ff8a95; }
+.community-report-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.community-report-actions .catalog-button { text-decoration: none; }
+.community-copied { display: inline-flex; align-items: center; gap: 6px; color: #a6e3bd; font-size: 12.5px; }
+.community-copied.is-failed { color: #f3cf96; }
+/* The note's disclosure looks the same on the site and in the editor (whose details have rules of their own). */
+.community .community-note { margin: 0; padding: 0; border: 0; color: inherit; }
+.community .community-note > summary { display: inline-flex; align-items: center; gap: 8px; width: fit-content; margin: 0; list-style: none; color: var(--win-muted, #9d95ab);
+  font-size: 12.5px; cursor: pointer; }
+.community .community-note > summary::-webkit-details-marker { display: none; }
+.community .community-note > summary::before { content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 1px 2px; border: 0;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; rotate: -45deg; transform: none; transition: rotate .16s ease; }
+.community .community-note[open] > summary::before { rotate: 45deg; }
+.community .community-note > summary:hover { color: var(--win-accent, #c4b5ed); }
+.community-note pre { margin: 8px 0 0; padding: 10px 12px; max-height: 180px; overflow: auto; border: 1px solid #ffffff12; border-radius: 12px; background: #15121b;
+  color: var(--win-text, #cfc8dc); font: 11.5px/1.55 ui-monospace, 'SF Mono', Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; user-select: all; }
+@media (prefers-reduced-motion: no-preference) {
+  .community-copied:not(:empty) { animation: win-rise .3s var(--win-ease, ease) both; }
+}

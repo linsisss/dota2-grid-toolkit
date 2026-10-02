@@ -14,6 +14,8 @@ import { AsciiLibrary } from './AsciiLibrary.jsx';
 import { TextArtButton } from './TextArtDialog.jsx';
 import { CanvasContextMenu, DockLabels, Tooltips } from './EditorActions.jsx';
 import { ArtworkOptimizer } from './ArtworkOptimizer.jsx';
+import { MetaDialog } from './MetaDialog.jsx';
+import metaMedal from '../assets/ranks/rank8.webp?url';
 import { ZoomFields } from './ZoomFields.jsx';
 import EditorCatalog from './catalog/EditorCatalog.jsx';
 import { t, tn, plural, locale, translateMessage } from '../scripts/i18n.mjs';
@@ -44,6 +46,20 @@ function Plus() {
   return <Icon name="plus" />;
 }
 
+// The mode panel's header, as the windows' (styles/editor-panels.css): a tile, the title and a line.
+const LIBRARY_HEADINGS = {
+  heroes: ['grid', 'Сетка героев', 'Группы, шаблоны и мета'],
+  draw: ['brush', 'Рисование', 'Кисть, фигуры и рамки'],
+  image: ['image', 'ASCII-арты', 'Картинки, текст и готовые арты']
+};
+function LibraryHeading({ mode }) {
+  const [icon, title, lead] = LIBRARY_HEADINGS[mode] || LIBRARY_HEADINGS.heroes;
+  return <>
+    <span className="win-icon" key={mode} aria-hidden="true"><Icon name={icon} /></span>
+    <div className="win-heading"><h1>{t(title)}</h1><p className="panel-lead">{t(lead)}</p></div>
+  </>;
+}
+
 function ProjectPanel({ editor, state }) {
   const [before, after] = t('Нажми {plus} на группе, чтобы выбрать героев.').split('{plus}');
   return (
@@ -58,7 +74,7 @@ function ProjectPanel({ editor, state }) {
           <span>{plural(state.heroes, ['герой', 'героя', 'героев'], ['hero', 'heroes'])}</span>
         </div>
       </div>
-      <button className="create-group-card" onClick={editor.addGroup}>
+      <button className="create-group-card" onClick={(event) => editor.chooseGroup(event.currentTarget)}>
         <span className="create-group-icon">
           <Plus />
         </span>
@@ -78,6 +94,14 @@ function ProjectPanel({ editor, state }) {
           <span>
             <strong>{t('По ролям')}</strong>
             <small>{t('Пять групп по позициям')}</small>
+          </span>
+          <span>↗</span>
+        </button>
+        <button className="is-meta" onClick={() => editor.openMeta()}>
+          <span className="template-icon">↯</span>
+          <span>
+            <strong>{t('По мете')}</strong>
+            <small>{t('Сильные герои позиций · STRATZ')}</small>
           </span>
           <span>↗</span>
         </button>
@@ -282,6 +306,7 @@ function HeroPicker({ editor, group }) {
       }}
     >
       <div className="picker-heading">
+        <span className="win-icon" aria-hidden="true"><Icon name="heroes"/></span>
         <div>
           <span className="eyebrow">{t('ГЕРОИ')}</span>
           <h2 id="heroPickerTitle">{t('Выбор героев')}</h2>
@@ -396,6 +421,51 @@ function HeroPicker({ editor, group }) {
   );
 }
 
+// «Обычная или по мете?» when a group is added (scripts/app.mjs chooseGroup): beside the button that
+// asked, two ways — an empty group, or the meta window for one position (MetaDialog, «group»). It grows
+// out of the button with a pointer at it, its options come in one after another, it fades away when
+// left (outside click, Esc); ↑ / ↓ move between the options. No motion with prefers-reduced-motion.
+function GroupChoice({ editor, anchor }) {
+  const menu = useRef(null), [closing, setClosing] = useState(false), [place, setPlace] = useState(null);
+  const close = () => { setClosing(true); setTimeout(() => editor.closeGroupChoice(), window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 140); };
+  useLayoutEffect(() => {
+    const node = menu.current, box = node.getBoundingClientRect();
+    // Right of a button in the canvas's tool dock, else under it; inside the window.
+    const side = anchor.side;
+    const left = Math.max(8, Math.min(window.innerWidth - box.width - 8, side ? anchor.right + 12 : anchor.left));
+    const top = Math.max(8, Math.min(window.innerHeight - box.height - 8, side ? anchor.top - 6 : anchor.bottom + 10));
+    const middle = side ? (anchor.top + anchor.bottom) / 2 - top : (anchor.left + anchor.right) / 2 - left;
+    setPlace({ left, top, side, middle: Math.max(18, Math.min((side ? box.height : box.width) - 18, middle)) });
+    const outside = (event) => { if (!node.contains(event.target)) close(); };
+    const escape = (event) => { if (event.key === 'Escape') { event.stopPropagation(); close(); } };
+    setTimeout(() => document.addEventListener('pointerdown', outside, true));
+    document.addEventListener('keydown', escape, true);
+    return () => { document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', escape, true); };
+  }, [anchor]);
+  // The first option takes the focus once the menu is placed (a hidden element cannot have it).
+  useEffect(() => { if (place) menu.current.querySelector('[role=menuitem]')?.focus({ preventScroll: true }); }, [!!place]);
+  const move = (event) => {
+    const items = [...menu.current.querySelectorAll('[role=menuitem]')], at = items.indexOf(document.activeElement);
+    const next = { ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: items.length - 1 }[event.key];
+    if (next === undefined) return;
+    event.preventDefault();
+    items[(next + items.length) % items.length].focus();
+  };
+  return <div ref={menu} className={`group-choice${place?.side ? ' is-side' : ''}${closing ? ' is-closing' : ''}`} role="menu" aria-label={t('Какую группу добавить')} onKeyDown={move}
+    style={place ? { left: place.left, top: place.top, '--pointer': `${place.middle}px` } : { visibility: 'hidden' }}>
+    <span className="group-choice-pointer" aria-hidden="true"/>
+    <p className="group-choice-title">{t('Новая группа героев')}</p>
+    <button type="button" role="menuitem" className="group-choice-item" style={{ '--i': 0 }} onClick={() => { editor.closeGroupChoice(); editor.addGroup(); }}>
+      <span className="group-choice-icon"><Icon name="groupPlus"/></span>
+      <span className="group-choice-text"><strong>{t('Обычная группа')}</strong><small>{t('Пустая — героев выбираешь сам')}</small></span>
+      <Icon name="chevronRight"/></button>
+    <button type="button" role="menuitem" className="group-choice-item is-meta" style={{ '--i': 1 }} onClick={() => editor.openMeta('group')}>
+      <span className="group-choice-icon"><img src={metaMedal} alt=""/></span>
+      <span className="group-choice-text"><strong>{t('Группа по мете')}<em>STRATZ</em></strong><small>{t('Сильные герои позиции с пикрейтом и винрейтом')}</small></span>
+      <Icon name="chevronRight"/></button>
+  </div>;
+}
+
 export function StudioControls({ editor, panel: openPanel = null }) {
   const state = useSyncExternalStore(editor.subscribe, editor.getSnapshot);
   const [panel, setPanel] = useState(openPanel);
@@ -479,7 +549,7 @@ export function StudioControls({ editor, panel: openPanel = null }) {
   return (
     <>
       <StudioPortal targetId="libraryTitle">
-        {state.mode === 'draw' ? t('Рисование') : state.mode === 'image' ? t('ASCII-арты') : t('Сетка героев')}
+        <LibraryHeading mode={state.mode} />
       </StudioPortal>
       <StudioPortal targetId="gridFilePanel">
         <GridFilePanel editor={editor} state={state} />
@@ -591,6 +661,8 @@ export function StudioControls({ editor, panel: openPanel = null }) {
       <EditorCatalog editor={editor}/>
       {state.picker && <HeroPicker key={state.picker.id} editor={editor} group={state.picker} />}
       {optimization && <ArtworkOptimizer editor={editor} source={optimization} onClose={() => setOptimization(null)} />}
+      {state.metaDialog && <MetaDialog editor={editor} request={state.metaDialog}/>}
+      {state.groupChoice && <GroupChoice editor={editor} anchor={state.groupChoice}/>}
       {state.drawingOpen && (
         <DrawingDialog
           editor={editor}

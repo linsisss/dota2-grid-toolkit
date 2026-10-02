@@ -63,6 +63,8 @@ CI `test.yml` проверяет push/PR без сборки. `build.yml` соз
 
 Аккаунт участника: `justkiddingxd`. Upstream: https://github.com/linsisss/dota2-grid-toolkit.
 
+С 02.10.2026 у `justkiddingxd` есть право записи в upstream: готовый выпуск (только по слову пользователя) пушится прямо в `main` вместе с тегом `vVERSION` (`git push upstream HEAD:main`, `git push upstream vVERSION`), без fork и Pull Request. Ниже — порядок, которым выпуски шли до этого.
+
 Без прав на запись: fork → ветка `codex/release-VERSION` → commit/push в свой fork → Pull Request в upstream. Владелец проверяет PR и делает merge. Сам Approve не добавляет коммиты в основную ветку; вклад учитывается после merge с корректным авторством. Email коммитов должен быть привязан к GitHub-аккаунту, можно использовать его GitHub noreply email. При squash проверить сохранение автора. Contributor — не то же самое, что collaborator с правом push.
 
 Нельзя угадывать email/учётные данные, форсировать push, перезаписывать main или автоматически сливать PR. До первой публикации проверить аутентификацию `justkiddingxd`, создать/найти fork, получить актуальный upstream и сравнить историю. Текущая локальная ветка исторически называется `feat/unified-grid-studio`; автоматически не переименовывалась. В upstream уже есть новые коммиты, поэтому нельзя считать локальный origin/main актуальным.

@@ -1,10 +1,11 @@
 import { Fragment, useEffect, useState } from 'react';
 import { Brand, Icon, Modal } from '../catalog/Common.jsx';
-import { CATALOG_PATH, STUDIO_PATH } from '../catalog/api.js';
+import { CATALOG_PATH, GUIDES_PATH, STUDIO_PATH } from '../catalog/api.js';
 import { useLanguage } from '../useLanguage.js';
 import { useAppMotion } from '../useAppMotion.js';
 import { t } from '../../scripts/i18n.mjs';
 import LanguageSwitch from '../LanguageSwitch.jsx';
+import { CommunityLink } from '../Community.jsx';
 import MenuBackground from './MenuBackground.jsx';
 import FontPicker from './FontPicker.jsx';
 
@@ -43,7 +44,7 @@ export function CopyField({ value }) {
 }
 // Installation steps plus the honest part about changing game files.
 export function InstallWindow({ title, children, onClose }) {
-  return <Modal title={title} onClose={onClose} size="md"><div className="custom-install">{children}
+  return <Modal title={title} icon="download" onClose={onClose} size="md"><div className="custom-install">{children}
     <p className="custom-safety"><Icon name="alert" size={18}/><span><b>{t('Это безопасно?')}</b> {t('Это изменение файлов игры. Банов за шрифты и фоны меню не известно: они ничего не дают в игре. Но правила Steam изменение файлов формально не разрешают, так что решение за тобой. Всё возвращается проверкой целостности файлов в Steam.')}</span></p>
   </div></Modal>;
 }
@@ -62,7 +63,7 @@ export default function CustomizeApp() {
   return <div className="catalog-page custom-app">
     <header className="custom-top">
       <Brand/>
-      <nav className="custom-links"><a href={CATALOG_PATH}>{t('Мастерская')}</a><a href={STUDIO_PATH}>{t('Студия')}<Icon name="arrow"/></a><LanguageSwitch/></nav>
+      <nav className="custom-links"><CommunityLink/><a href={CATALOG_PATH}>{t('Мастерская')}</a><a href={GUIDES_PATH}>{t('Гайды')}</a><a href={STUDIO_PATH}>{t('Студия')}<Icon name="arrow"/></a><LanguageSwitch/></nav>
     </header>
     {PAGE === 'font' ? <FontPicker/> : <MenuBackground preset={preset} studioItem={ITEM} onRemove={() => setPreset(null)}/>}
   </div>;

@@ -72,8 +72,9 @@ export function ArtworkOptimizer({ editor, source, onClose }) {
   }, []);
   return <dialog className="artwork-optimizer" ref={dialog} aria-labelledby="optimizeTitle"
     onCancel={(e) => { e.preventDefault(); onClose(); }}>
-    <header className="modal-header"><h2 id="optimizeTitle">{t('Оптимизация категорий')}</h2>
-      <button className="icon-button" aria-label={t('Закрыть оптимизацию')} onClick={onClose}><Icon name="close" /></button></header>
+    <header className="modal-header"><span className="win-icon" aria-hidden="true"><Icon name="gauge"/></span>
+      <div className="win-heading"><h2 id="optimizeTitle">{t('Оптимизация категорий')}</h2><p>{t('Меньше категорий — легче сетка в Dota')}</p></div>
+      <button className="icon-button win-close" aria-label={t('Закрыть оптимизацию')} onClick={onClose}><Icon name="close" /></button></header>
     <div className="optimizer-body">
       <p>{t('При скачивании символы одной линии и так объединяются в строки — со сдвигом меньше полпикселя экрана, в игре это не видно. Если категорий всё ещё много, упакуй точки или сократи детали.')}</p>
       <div className="optimizer-stats" role="status" aria-live="polite">

@@ -1,3 +1,4 @@
+import { Icon } from './Icon.jsx';
 import { NumberInput } from './NumberInput.jsx';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import C from '../scripts/core.mjs';
@@ -475,6 +476,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
       }}
     >
       <header className="drawing-heading">
+        <span className="win-icon" aria-hidden="true"><Icon name="brush"/></span>
         <div>
           <span className="eyebrow">{t('РИСОВАНИЕ')}</span>
           <h2 id="drawingTitle">{t('Новый рисунок')}</h2>

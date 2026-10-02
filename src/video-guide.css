@@ -1,0 +1,74 @@
+/* The video guides' player (src/video-guide.js): the site's dark ground and lilac accent, in the
+   workshop's windows and the editor's alike. */
+.vg { --vg-ink:#efeaf5; --vg-muted:#afa7bf; --vg-accent:#c4b5ed; --vg-line:#ffffff1c; margin:0 0 18px; color:var(--vg-ink); font-size:14px; line-height:1.4; }
+.vg-stage { position:relative; aspect-ratio:16 / 9; overflow:hidden; border:1px solid var(--vg-line); border-radius:12px; background:#0b0a10; outline:none; isolation:isolate; }
+.vg-stage:focus-visible { box-shadow:0 0 0 2px var(--vg-accent); }
+.vg-stage:fullscreen { border:0; border-radius:0; aspect-ratio:auto; }
+.vg-video { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:#0b0a10; cursor:pointer; }
+.vg-icon { width:20px; height:20px; display:block; }
+.vg-icon-play *, .vg-icon-pause * { fill:currentColor; }
+
+/* Before the first press: the poster, dimmed, with one big button. */
+.vg-start { position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; border:0; padding:0; color:inherit; font:inherit; cursor:pointer;
+  background:radial-gradient(ellipse at center, #0b0a10a6 0%, #0b0a10e0 100%); transition:background .25s; }
+.vg-start:hover { background:radial-gradient(ellipse at center, #0b0a1080 0%, #0b0a10cc 100%); }
+.vg-start-disc { display:grid; place-items:center; width:68px; height:68px; border-radius:50%; background:var(--vg-accent); color:#16131f; box-shadow:0 10px 40px -8px #c4b5ed99; transition:transform .25s cubic-bezier(.2,.8,.2,1); }
+.vg-start-disc .vg-icon { width:28px; height:28px; transform:translateX(2px); }
+.vg-start:hover .vg-start-disc { transform:scale(1.08); }
+.vg-start-text { display:grid; gap:2px; text-align:center; text-shadow:0 1px 8px #000; }
+.vg-start-text b { font-size:16px; font-weight:600; }
+.vg-start-text small { color:var(--vg-muted); font-size:13px; font-variant-numeric:tabular-nums; }
+.vg.is-started .vg-start { display:none; }
+
+.vg-spinner { position:absolute; left:50%; top:50%; width:42px; height:42px; margin:-21px; border:3px solid #ffffff2e; border-top-color:var(--vg-accent); border-radius:50%; opacity:0; pointer-events:none; animation:vg-spin .8s linear infinite; transition:opacity .2s; }
+.vg.is-waiting .vg-spinner { opacity:1; }
+@keyframes vg-spin { to { transform:rotate(360deg); } }
+.vg-message { position:absolute; inset:auto 16px 72px; z-index:3; padding:10px 14px; border-radius:8px; background:#2a1d24ee; color:#ffd7de; font-size:13px; }
+.vg-message a { color:inherit; }
+
+/* The controls: the timeline in chapters over a bar of buttons, on a shade from the bottom. */
+.vg-controls { position:absolute; inset:auto 0 0; z-index:1; padding:28px 12px 8px; background:linear-gradient(transparent, #07060bd9 70%); opacity:0; transform:translateY(6px); transition:opacity .25s, transform .25s; }
+.vg.is-started .vg-controls { opacity:1; transform:none; }
+.vg.is-started.is-playing.is-idle .vg-controls { opacity:0; transform:translateY(6px); }
+.vg.is-playing.is-idle .vg-stage, .vg.is-playing.is-idle .vg-video { cursor:none; }
+.vg-track { position:relative; display:flex; align-items:center; height:18px; cursor:pointer; touch-action:none; outline:none; }
+.vg-track:focus-visible .vg-segments { box-shadow:0 0 0 2px var(--vg-accent); border-radius:3px; }
+.vg-segments { display:flex; gap:3px; width:100%; }
+.vg-segment { position:relative; height:4px; overflow:hidden; border-radius:2px; background:#ffffff2e; transition:height .15s; }
+.vg-track:hover .vg-segment { height:6px; }
+.vg-segment i { position:absolute; inset:0 auto 0 0; width:0; }
+.vg-loaded { background:#ffffff3d; }
+.vg-played { background:var(--vg-accent); }
+.vg-tip { position:absolute; bottom:22px; transform:translateX(-50%); display:grid; gap:1px; padding:6px 9px; border-radius:7px; background:#16131fee; border:1px solid var(--vg-line); white-space:nowrap; text-align:center; pointer-events:none; }
+.vg-tip b { font-size:12px; font-weight:600; }
+.vg-tip span { color:var(--vg-muted); font-size:11px; font-variant-numeric:tabular-nums; }
+.vg-bar { display:flex; align-items:center; gap:4px; margin-top:4px; }
+.vg-button { display:grid; place-items:center; min-width:34px; height:34px; padding:0 8px; border:0; border-radius:8px; background:none; color:var(--vg-ink); font:inherit; font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; cursor:pointer; }
+.vg-button:hover { background:#ffffff1a; }
+.vg-button:focus-visible { outline:2px solid var(--vg-accent); outline-offset:-2px; }
+.vg-time { margin:0 6px; color:var(--vg-muted); font-size:13px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.vg-now { color:var(--vg-ink); }
+.vg-chapter { flex:1; min-width:0; overflow:hidden; color:var(--vg-ink); font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
+.vg-chapter:not(:empty)::before { content:'·'; margin-right:8px; color:var(--vg-muted); }
+
+/* The chapters under the video: where to jump to. One row of equal tiles, the time over the title,
+   so a narrow window never leaves one chapter alone on a second line (2026-10-02); on a phone the row
+   scrolls sideways. */
+.vg-chapters { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0, 1fr); gap:6px; margin:10px 0 0; padding:0; list-style:none; }
+.vg-chapters li { min-width:0; margin:0; padding:0; }
+.vg-chapters button { display:grid; align-content:start; gap:2px; width:100%; height:100%; padding:7px 10px 8px; border:1px solid var(--vg-line); border-radius:10px; background:none;
+  color:var(--vg-muted); font:inherit; font-size:12.5px; line-height:1.3; text-align:left; cursor:pointer; transition:color .15s, border-color .15s, background .15s; }
+.vg-chapters button span { font-size:11.5px; font-variant-numeric:tabular-nums; opacity:.8; }
+.vg-chapters button:hover { color:var(--vg-ink); border-color:#ffffff33; }
+.vg-chapters button[aria-current] { color:var(--vg-accent); border-color:#77678f; background:#c4b5ed1a; }
+
+@media (max-width: 560px) {
+  .vg-chapter, .vg-speed { display:none; }
+  .vg-chapters { grid-auto-columns:minmax(116px, 1fr); overflow-x:auto; scroll-snap-type:x proximity; scrollbar-width:none; }
+  .vg-chapters::-webkit-scrollbar { display:none; }
+  .vg-chapters li { scroll-snap-align:start; }
+  .vg-start-disc { width:56px; height:56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vg-start, .vg-start-disc, .vg-controls, .vg-segment, .vg-chapters button { transition:none; }
+}

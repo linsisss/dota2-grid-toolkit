@@ -29,7 +29,7 @@ export function ArtSubmission({ onClose }) {
     } catch (problem) { setError(translateMessage(problem.message)); setReset(value => value + 1); }
     finally { setBusy(false); }
   }
-  return <Modal title={t('Предложить арт')} size={sent ? 'sm' : 'lg'} onClose={onClose}>
+  return <Modal title={t('Предложить арт')} icon="art" size={sent ? 'sm' : 'lg'} onClose={onClose}>
     {sent ? <div className="catalog-receipt art-receipt"><span className="catalog-receipt-mark"><Icon name="check"/></span><h3>{t('Арт на проверке')}</h3>
       <p>{t('После одобрения «{name}» появится в «Готовых артах» у всех пользователей.', { name: art.name })}{auth.user ? ` ${t('Бот напишет тебе в Telegram, когда его одобрят.')}` : ''}</p>
       <div className="catalog-actions"><button type="button" className="catalog-button primary" onClick={onClose}>{t('Готово')}</button>

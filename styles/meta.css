@@ -1,0 +1,151 @@
+/* «Мета» (src/MetaDialog.jsx): the editor's dark dialog, a header with a soft lilac glow, the choices
+   as tiles (rank medals, position icons from the game), a size switch with a sliding thumb, and a
+   preview whose heroes come in one by one. Motion stops with prefers-reduced-motion. */
+.meta-dialog {
+  --meta-accent: #c4b5ed; --meta-ink: #efeaf5; --meta-muted: #afa7bf; --meta-line: #ffffff14; --meta-ease: cubic-bezier(.2, .8, .2, 1);
+  width: min(980px, calc(100vw - 32px)); max-height: calc(100dvh - 32px);
+  background: #1d1a24; color: var(--meta-ink); border: 1px solid #383340;
+  border-radius: 16px; padding: 0; overflow-y: auto; box-shadow: 0 30px 80px -20px #000e;
+}
+.meta-dialog[open] { animation: meta-dialog-in .34s var(--meta-ease); }
+.meta-dialog::backdrop { background: #08060dc4; backdrop-filter: blur(3px); }
+.meta-dialog[open]::backdrop { animation: meta-fade .3s ease; }
+@keyframes meta-dialog-in { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+@keyframes meta-fade { from { opacity: 0; } }
+
+.meta-header { position: relative; display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: start; padding: 22px 22px 16px 24px; overflow: hidden;
+  background: radial-gradient(120% 140% at 0% 0%, #c4b5ed24 0%, transparent 55%), linear-gradient(180deg, #ffffff06, transparent); border-bottom: 1px solid var(--meta-line); }
+.meta-header h2 { margin: 2px 0 4px; font-size: 20px; font-weight: 650; letter-spacing: -.01em; }
+.meta-header p { margin: 0; max-width: 72ch; color: var(--meta-muted); font-size: 13px; line-height: 1.5; }
+.meta-header-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: #c4b5ed1f; color: var(--meta-accent); box-shadow: inset 0 0 0 1px #c4b5ed33; }
+.meta-header-icon svg { width: 20px; height: 20px; animation: meta-twinkle 3.2s ease-in-out infinite; }
+@keyframes meta-twinkle { 50% { transform: rotate(-10deg) scale(1.12); opacity: .8; } }
+
+.meta-body { display: grid; gap: 18px; padding: 18px 24px 8px; }
+.meta-section { display: grid; gap: 10px; }
+.meta-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; }
+.meta-section-head > span:first-child { color: var(--meta-muted); font-size: 11px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+
+/* Tiles: ranks with their medals, positions with their icons. */
+.meta-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.meta-tile { position: relative; display: grid; justify-items: center; gap: 6px; min-width: 0; padding: 12px 8px 10px; border: 1px solid var(--meta-line); border-radius: 12px;
+  background: #ffffff05; color: var(--meta-muted); font: inherit; cursor: pointer; transition: transform .22s var(--meta-ease), border-color .2s, background .2s, color .2s, box-shadow .25s; }
+.meta-tile:hover { transform: translateY(-2px); border-color: #ffffff2e; color: var(--meta-ink); background: #ffffff0a; }
+.meta-tile[aria-checked='true'] { border-color: #a99bd6; color: var(--meta-ink); background: linear-gradient(180deg, #c4b5ed1f, #c4b5ed0a); box-shadow: 0 10px 30px -14px #c4b5ed80, inset 0 0 0 1px #c4b5ed40; }
+.meta-tile:focus-visible { outline: 2px solid var(--meta-accent); outline-offset: 2px; }
+.meta-tile-name { max-width: 100%; overflow: hidden; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.meta-tile small { color: var(--meta-muted); font-size: 11px; }
+.meta-medals { display: flex; justify-content: center; height: 60px; }
+.meta-medals img { width: 60px; height: 60px; filter: saturate(.55) brightness(.8); transition: transform .3s var(--meta-ease), filter .3s; }
+.meta-medals img + img { margin-left: -22px; }
+.meta-medals.is-3 img { width: 52px; height: 52px; margin-top: 4px; }
+.meta-medals.is-3 img + img { margin-left: -28px; }
+.meta-rank:hover .meta-medals img { filter: saturate(.85) brightness(.95); }
+.meta-rank[aria-checked='true'] .meta-medals img { filter: drop-shadow(0 6px 14px #c4b5ed55); transform: scale(1.08); }
+.meta-rank[aria-checked='true'] .meta-medals img + img { transform: scale(1.08) translateX(2px); }
+.meta-position-icon { width: 30px; height: 30px; background: currentColor; -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; transition: transform .3s var(--meta-ease), color .2s; }
+.meta-position[aria-checked='true'] .meta-position-icon { color: var(--meta-accent); transform: scale(1.1); }
+
+/* How many heroes: a switch whose thumb slides to the choice. */
+.meta-size-field { display: inline-flex; align-items: center; gap: 10px; color: var(--meta-muted); font-size: 12px; }
+.meta-size { position: relative; display: grid; grid-template-columns: repeat(var(--count), 44px); padding: 3px; border: 1px solid var(--meta-line); border-radius: 99px; background: #ffffff06; isolation: isolate; }
+.meta-size-thumb { position: absolute; z-index: -1; inset: 3px auto 3px 3px; width: 44px; border-radius: 99px; background: #c4b5ed2e; box-shadow: inset 0 0 0 1px #c4b5ed55; transform: translateX(calc(var(--index) * 100%)); transition: transform .3s var(--meta-ease); }
+.meta-size button { height: 28px; border: 0; border-radius: 99px; background: none; color: var(--meta-muted); font: inherit; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; transition: color .2s; }
+.meta-size button[aria-checked='true'] { color: var(--meta-ink); }
+
+/* The preview: what the group or the grid will be. */
+.meta-preview { display: grid; gap: 10px; min-height: 150px; }
+.meta-group { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--meta-line); border-radius: 12px; background: #15131b; }
+.meta-group h3 { margin: 0; color: var(--meta-muted); font-size: 11px; font-weight: 650; letter-spacing: .08em; }
+.meta-row { display: flex; align-items: flex-end; gap: 12px; }
+.meta-captions { display: grid; gap: 1px; text-align: right; }
+.meta-captions small { color: var(--meta-muted); font-size: 10px; line-height: 1.35; letter-spacing: .08em; }
+.meta-heroes { display: grid; grid-template-columns: repeat(10, minmax(0, 66px)); gap: 7px; }
+.meta-order { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 7px; padding: 12px 14px; border: 1px solid var(--meta-line); border-radius: 12px; background: #15131b; }
+.meta-hero { display: grid; gap: 1px; min-width: 0; text-align: center; animation: meta-hero-in .45s var(--meta-ease) both; animation-delay: calc(var(--i, 0) * 30ms); }
+@keyframes meta-hero-in { from { opacity: 0; transform: translateY(10px) scale(.94); } }
+.meta-hero-card { display: block; aspect-ratio: 43 / 75; margin-bottom: 3px; overflow: hidden; border-radius: 6px; background: #202831; box-shadow: 0 6px 16px -10px #000; }
+.meta-hero-card img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .35s var(--meta-ease); }
+.meta-hero:hover .meta-hero-card img { transform: scale(1.06); }
+.meta-hero small { color: var(--meta-muted); font-size: 10.5px; line-height: 1.35; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.meta-hero small + small { color: var(--meta-ink); font-weight: 600; }
+.meta-hero.is-dim { opacity: .45; }
+.meta-note { margin: 0; padding: 10px 12px; border-radius: 10px; background: #c4b5ed12; color: var(--meta-muted); font-size: 13px; }
+.meta-error { display: flex; align-items: center; gap: 8px; margin: 0; padding: 12px 14px; border-radius: 10px; background: #ff6b8a14; color: #ffb3c1; }
+.meta-error svg { width: 16px; height: 16px; flex: none; }
+
+/* While STRATZ answers: a shimmer in the shape of the heroes. */
+.meta-shimmer { display: grid; gap: 10px; }
+.meta-shimmer .meta-hero { animation: none; }
+.meta-shimmer .meta-hero-card, .meta-shimmer small, .meta-shimmer-title { background: linear-gradient(100deg, #ffffff08 30%, #ffffff17 50%, #ffffff08 70%) 0 0 / 300% 100%; animation: meta-shimmer 1.3s linear infinite; box-shadow: none; }
+.meta-shimmer small { display: block; height: 8px; margin: 3px 6px 0; border-radius: 4px; }
+.meta-shimmer-title { display: block; width: 90px; height: 10px; border-radius: 4px; }
+@keyframes meta-shimmer { from { background-position: 100% 0; } to { background-position: -50% 0; } }
+
+/* STRATZ's credit and the week of the data on the footer's left. */
+.meta-footer { display: flex; align-items: center; gap: 8px; padding: 16px 24px 20px; }
+.meta-source { display: grid; gap: 2px; margin: 0 auto 0 0; font-size: 12px; color: var(--meta-muted); }
+.meta-source a { justify-self: start; color: var(--meta-accent); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 760px) {
+  .meta-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .meta-heroes { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .meta-section-head { flex-wrap: wrap; }
+  .meta-footer { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .meta-dialog[open], .meta-dialog[open]::backdrop, .meta-hero, .meta-header-icon svg, .meta-shimmer * { animation: none; }
+  .meta-tile, .meta-size-thumb, .meta-medals img, .meta-position-icon, .meta-hero-card img { transition: none; }
+}
+
+/* «Обычная или по мете?» beside the button that adds a group (StudioControls GroupChoice): it grows
+   out of the button (a pointer at it), the options slide in one after the other, the meta one with
+   the Immortal medal and a STRATZ tag; it fades away when left. */
+.group-choice {
+  --gc-ease: cubic-bezier(.2, .8, .2, 1);
+  position: fixed; z-index: 60; display: grid; gap: 4px; width: 318px; padding: 8px;
+  border: 1px solid #3d3747; border-radius: 16px; color: #efeaf5;
+  background: radial-gradient(120% 90% at 0% 0%, #c4b5ed14, transparent 60%), #1f1b27f2;
+  box-shadow: 0 24px 60px -18px #000e, 0 0 0 1px #00000040, inset 0 1px 0 #ffffff0d; backdrop-filter: blur(12px);
+  transform-origin: 0 var(--pointer, 30px); animation: gc-in .28s var(--gc-ease);
+}
+.group-choice:not(.is-side) { transform-origin: var(--pointer, 30px) 0; animation-name: gc-in-down; }
+.group-choice.is-closing { animation: gc-out .14s ease-in forwards; pointer-events: none; }
+@keyframes gc-in { from { opacity: 0; transform: translateX(-8px) scale(.94); } }
+@keyframes gc-in-down { from { opacity: 0; transform: translateY(-8px) scale(.94); } }
+@keyframes gc-out { to { opacity: 0; transform: scale(.96); } }
+/* The pointer: a little rotated square on the side that faces the button. */
+.group-choice-pointer { position: absolute; width: 12px; height: 12px; background: #1f1b27; border: solid #3d3747; border-width: 0 0 1px 1px; }
+.group-choice.is-side .group-choice-pointer { left: -7px; top: calc(var(--pointer) - 6px); transform: rotate(45deg); }
+.group-choice:not(.is-side) .group-choice-pointer { top: -7px; left: calc(var(--pointer) - 6px); transform: rotate(135deg); }
+.group-choice-title { margin: 2px 8px 4px; color: #afa7bf; font-size: 11px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; animation: gc-item .3s var(--gc-ease) both; }
+
+.group-choice-item {
+  position: relative; display: grid; grid-template-columns: 44px 1fr 16px; align-items: center; gap: 12px; padding: 10px; border: 1px solid transparent; border-radius: 12px;
+  background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; overflow: hidden;
+  animation: gc-item .34s var(--gc-ease) both; animation-delay: calc(50ms + var(--i) * 60ms);
+  transition: background .2s, border-color .2s, transform .2s var(--gc-ease);
+}
+@keyframes gc-item { from { opacity: 0; transform: translateX(-10px); } }
+.group-choice-item:hover, .group-choice-item:focus-visible { background: #ffffff0c; border-color: #ffffff14; outline: none; }
+.group-choice-item:focus-visible { box-shadow: 0 0 0 2px #c4b5ed80; }
+.group-choice-item:active { transform: scale(.985); }
+.group-choice-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #ffffff0d; box-shadow: inset 0 0 0 1px #ffffff12; color: #efeaf5; transition: transform .3s var(--gc-ease), background .2s; }
+.group-choice-icon svg { width: 22px; height: 22px; }
+.group-choice-icon img { width: 40px; height: 40px; filter: drop-shadow(0 4px 10px #f0a04055); }
+.group-choice-item:hover .group-choice-icon { transform: scale(1.08) rotate(-4deg); }
+.group-choice-text { display: grid; gap: 2px; min-width: 0; }
+.group-choice-text strong { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 650; }
+.group-choice-text em { padding: 1px 6px; border-radius: 99px; background: #c4b5ed24; color: #c4b5ed; font-size: 10px; font-style: normal; font-weight: 700; letter-spacing: .06em; }
+.group-choice-text small { color: #afa7bf; font-size: 12px; line-height: 1.35; }
+.group-choice-item > svg:last-child { width: 16px; height: 16px; color: #afa7bf; opacity: 0; transform: translateX(-6px); transition: opacity .2s, transform .25s var(--gc-ease); }
+.group-choice-item:hover > svg:last-child, .group-choice-item:focus-visible > svg:last-child { opacity: 1; transform: none; }
+/* The meta one: a lilac glow behind its medal, a sweep of light on hover. */
+.group-choice-item.is-meta .group-choice-icon { background: radial-gradient(circle at 50% 45%, #f0b34a2e, #c4b5ed14 70%); box-shadow: inset 0 0 0 1px #c4b5ed33; }
+.group-choice-item.is-meta::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, #c4b5ed14 50%, transparent 70%); transform: translateX(-100%); pointer-events: none; }
+.group-choice-item.is-meta:hover::after { transform: translateX(100%); transition: transform .7s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .group-choice, .group-choice-title, .group-choice-item { animation: none; }
+  .group-choice-item, .group-choice-icon, .group-choice-item > svg:last-child { transition: none; }
+  .group-choice-item.is-meta:hover::after { transition: none; }
+}

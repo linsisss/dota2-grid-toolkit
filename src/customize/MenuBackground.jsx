@@ -3,10 +3,11 @@ import { createPortal } from 'react-dom';
 import { Icon, Modal, Notice, SegmentSwitch } from '../catalog/Common.jsx';
 import { GRID_DIM, MENU_FRAME, MENU_FRAME_ZOOM, MENU_LIMITS, MENU_SIZES, fitPiece, framePlacement, mediaKind, menuFrame, menuLook } from '../../scripts/menu-background.mjs';
 import menuMeta from '../../assets/dota-menu/meta.json';
-import { SEASON_EVENT, downloadPack, folderOf, packBackground } from './background-pack.js';
+import { SEASON_EVENT, downloadPack, folderOf, packBackground, removeCommand } from './background-pack.js';
 import { getBackground } from '../../scripts/background-library.mjs';
 import { markPublished, pullRecipes, rememberDownload, saveBuiltBackground } from '../studio-backgrounds.js';
 import { CopyField, Field, InstallWindow, Segmented, rich } from './CustomizeApp.jsx';
+import { BackgroundSteps } from './BackgroundSteps.jsx';
 import DotaMenu from './DotaMenu.jsx';
 import DotaHeroPage from './DotaHeroPage.jsx';
 import DotaGridPage from './DotaGridPage.jsx';
@@ -16,7 +17,6 @@ import { ShareBackground } from './ShareBackground.jsx';
 import profilePreview from '../../assets/dota-menu/ui/profile-preview.webp';
 import { backgroundMedia } from '../catalog/BackgroundGallery.jsx';
 import { CATALOG_PATH, STUDIO_PATH, catalogAPI } from '../catalog/api.js';
-import { installerNames } from '../../scripts/installer.mjs';
 import { lang, locale, t } from '../../scripts/i18n.mjs';
 
 // The main-menu background, made entirely in the browser: the file becomes a WebM
@@ -49,31 +49,20 @@ const LEADS = () => ({
   grid: t('Страница «Герои» с твоей сеткой: чтобы сетка не сливалась с фоном. Собирается в тот же файл, что и главное меню.'),
   hero: t('На странице героя — «Герои» → «Снаряжение», за моделью героя. Собирается в тот же файл, что и главное меню.')
 });
-// How the result is handed over: the bare pack, or a zip with a Windows installer next to it.
-export const DELIVERY = () => [['file', t('Только файл')], ['installer', t('С установщиком')]];
+// How the result is handed over: the bare file, or with a PowerShell command that installs it
+// (background-pack.js downloadPack; the font: FontPicker.jsx).
+export const DELIVERY = () => [['file', t('Только файл')], ['command', t('Командой PowerShell')]];
 const megabytes = (bytes) => (bytes / 1_000_000).toLocaleString(locale, { maximumFractionDigits: 1 });
 // A file's size for people: kilobytes under a megabyte, so a small picture is not «0 МБ».
 const fileSize = (bytes) => bytes < 1_000_000 ? t('{size} КБ', { size: Math.max(1, Math.round(bytes / 1000)) }) : t('{size} МБ', { size: megabytes(bytes) });
 const tooBig = (bytes) => t('Файл {size} МБ, а можно до {limit} МБ.', { size: megabytes(bytes), limit: megabytes(MENU_LIMITS.bytes) });
-// A file's name in quotes, as the steps write it: «Установить фон.bat».
-const quoted = (name) => t('«{name}»', { name });
 
 function Sources({ onClose }) {
-  return <Modal title={t('Где взять фон')} onClose={onClose} size="md"><div className="custom-install custom-sources">
+  return <Modal title={t('Где взять фон')} icon="image" onClose={onClose} size="md"><div className="custom-install custom-sources">
     <p>{rich(t('{link}: их можно взять и поменять здесь.'), { link: <a className="catalog-link" href={`${CATALOG_PATH}?backgrounds`}>{t('Готовые фоны пользователей — в мастерской')}</a> })}</p>
     <ul>{SOURCES().map((source) => <li key={source.name}><a href={source.url} target="_blank" rel="noreferrer"><b>{source.name}</b><span>{source.note}</span><Icon name="external"/></a></li>)}</ul>
     <p className="catalog-muted">{t('Лучше всего смотрятся короткие зацикленные ролики в 1080p: видео длиннее 30 секунд обрежется. Скачанный файл перетащи на экран слева. Обои на этих сайтах — чужие работы: бери их для своего фона, а не для продажи.')}</p>
   </div></Modal>;
-}
-
-export function InstallerSteps({ what, run, remove, extra = null }) {
-  return <><ol>
-    <li>{t('Распакуй скачанный архив в любую папку.')}</li>
-    <li>{rich(t('Запусти {run}. Установщик сам найдёт Dota 2 через Steam, закрыть игру он попросит сам. Если не найдёт, спросит папку {folder}.'), { run: <b>{quoted(run)}</b>, folder: <code>dota 2 beta</code> })}</li>
-    <li>{t('Если Windows покажет «Система Windows защитила ваш компьютер»: «Подробнее» → «Выполнить в любом случае». Так она реагирует на любой скачанный .bat; установщик только копирует файлы — его можно открыть блокнотом и прочитать.')}</li>
-    {extra}
-    <li>{t('Запусти Dota 2.')}</li>
-  </ol><p className="catalog-muted">{t('Убрать {what}: {remove} из той же папки — вернёт всё как было.', { what, remove: quoted(remove) })}</p></>;
 }
 
 // Which Dota update the menu files come from (scripts/check-dota-menu.mjs watches for new ones).
@@ -82,24 +71,21 @@ function MenuVersion() {
   return <p className="catalog-muted">{t('Файлы меню — от обновления Dota {date}.', { date: updateDate(menuMeta.date) })}</p>;
 }
 
-// How to install. Dota reads mods only from the folder of its audio language, so the file goes to
-// game/dota_russian (background-pack.js FOLDERS) and the audio language must be Russian: the
-// installer sets it, by hand it is Dota's settings. An English Dota keeps its English interface.
-function Install({ folder, delivery, onClose }) {
-  const target = folderOf(folder), english = target.client === 'english', names = installerNames('background');
+// How to install: the command (it also makes Russian the audio language), or by hand (BackgroundSteps).
+function Install({ folder, delivery, handed, onClose }) {
+  const target = folderOf(folder), english = target.client === 'english';
   const voice = english ? t('Интерфейс останется английским, а герои без русского пакета озвучки — с английскими голосами.') : '';
-  if (delivery === 'installer') return <InstallWindow title={t('Как установить фон')} onClose={onClose}>
-    <InstallerSteps what={t('фон')} run={names.install} remove={names.remove} extra={<li>{t('Установщик сам поставит в Dota русский язык озвучки: только с ним Dota читает папку с фоном.')} {voice} {t('Если в параметрах запуска Dota есть -language (кроме -language russian), убери его.')}</li>}/>
-    <MenuVersion/>
-  </InstallWindow>;
-  const code = { game: <code>game</code>, folder: <code>{target.folder}</code>, file: <code>{target.file}</code> };
-  return <InstallWindow title={t('Как установить фон')} onClose={onClose}><ol>
-    <li>{rich(t('В Steam: Dota 2 → «Свойства» → «Установленные файлы» → «Обзор». Откроется папка {folder}.'), { folder: <code>dota 2 beta</code> })}</li>
-    <li>{english ? rich(t('Зайди в {game} и создай там папку {folder}, если её нет. Папки для английского Dota не читает — моды берёт только из папки языка озвучки.'), code) : rich(t('Зайди в {game} → {folder}. Если такой папки нет, создай её.'), code)}</li>
-    <li>{rich(t('Положи туда скачанный {file}.'), code)}{!english && <> {rich(t('{file} рядом — это сама озвучка, его не трогай.'), { file: <code>pak01_dir.vpk</code> })}</>}</li>
-    <li>{english ? t('В настройках Dota поставь русский язык озвучки.') : t('Если озвучка в игре не русская, поставь в настройках Dota русский язык озвучки.')} {voice} {t('Если в параметрах запуска Dota есть -language (кроме -language russian), убери его.')}</li>
+  // The command of the pack just saved (its name and fingerprint are in it); before a build, a word on it.
+  if (delivery === 'command') return <InstallWindow title={t('Как установить фон')} onClose={onClose}><ol>
+    <li>{handed ? rich(t('Фон скачан как {file} — не переименовывай его.'), { file: <code>{handed.name}</code> }) : t('Собери фон: файл скачается сам, а здесь появится команда для него.')}</li>
+    {handed && <li>{t('Скопируй команду:')}<CopyField value={handed.command}/></li>}
+    <li>{rich(t('Открой PowerShell ({key}, набери PowerShell, {enter}), вставь команду и нажми {enter}.'), { key: <kbd>Win</kbd>, enter: <kbd>Enter</kbd> })}</li>
+    <li>{t('Она сама найдёт скачанный файл и Dota через Steam, попросит закрыть игру, положит фон в dota_russian и включит русскую озвучку: только с ней Dota читает папку с фоном.')} {voice}</li>
     <li>{t('Перезапусти Dota 2.')}</li>
-  </ol><p className="catalog-muted">{rich(t('Убрать фон: удали {file}.'), code)} {t('После крупного обновления Dota меню может смениться: если фон пропал или что-то в меню пропало, удали файл и собери фон здесь заново.')}</p><MenuVersion/></InstallWindow>;
+  </ol><p className="catalog-muted">{t('Убрать фон — вставь в PowerShell:')}</p><CopyField value={handed?.remove || removeCommand()}/>
+    <MenuVersion/></InstallWindow>;
+  return <InstallWindow title={t('Как установить фон')} onClose={onClose}><BackgroundSteps target={target}>
+    {t('После крупного обновления Dota меню может смениться: если фон пропал или что-то в меню пропало, удали файл и собери фон здесь заново.')}</BackgroundSteps><MenuVersion/></InstallWindow>;
 }
 
 // Blur, dim and, once there is a picture, its zoom (menuFrame, 100 to MENU_FRAME_ZOOM × 100 %): one
@@ -206,14 +192,16 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
   const [blur, setBlur] = useState(0), [dim, setDim] = useState(0), [frame, setFrame] = useState(MENU_FRAME), [framing, setFraming] = useState(null);
   const [clean, setClean] = useState(false), [seasonButton, setSeasonButton] = useState(true), [profileLinks, setProfileLinks] = useState(true), [folder, setFolder] = useState(lang === 'en' ? 'english' : 'russian'), [delivery, setDelivery] = useState('file');
   const [duration, setDuration] = useState(0), [piece, setPiece] = useState({ start: 0, end: 0 }), [crossfade, setCrossfade] = useState(0);
-  const [mediaRatio, setMediaRatio] = useState(0), [progress, setProgress] = useState(null), [result, setResult] = useState(null), [error, setError] = useState(''), [install, setInstall] = useState(false), [sources, setSources] = useState(false), [share, setShare] = useState(false), [dragging, setDragging] = useState(false), [fetching, setFetching] = useState(null);
-  const input = useRef(null), running = useRef(null), shownGuide = useRef(false), playhead = useRef(null);
+  const [mediaRatio, setMediaRatio] = useState(0), [progress, setProgress] = useState(null), [result, setResult] = useState(null), [error, setErrorText] = useState(''), [failed, setFailed] = useState(false), [install, setInstall] = useState(false), [handed, setHanded] = useState(null), [sources, setSources] = useState(false), [share, setShare] = useState(false), [dragging, setDragging] = useState(false), [fetching, setFetching] = useState(null);
+  const input = useRef(null), running = useRef(null), playhead = useRef(null);
   // What the file is (for the studio recipe), the studio background being changed, the recipe whose
   // piece and crossfade wait for the video's length, and an own file the user is asked to choose.
   const [origin, setOrigin] = useState(null), [pick, setPick] = useState(preset), [studio, setStudio] = useState(null), [wanted, setWanted] = useState(null), [note, setNote] = useState('');
   // The second pages: the mode of each and, for 'own', a file of its own (useOwnBackground); under the
   // grid, how much darker for 'dim' (a percent of GRID_DIM.max) and the grid shown in the preview.
   const [page, setPage] = useState('menu'), [heroMode, setHeroMode] = useState('menu'), [gridMode, setGridMode] = useState('menu'), [gridDim, setGridDim] = useState(55), [picking, setPicking] = useState(false);
+  // A failure (the pack did not build or load) offers «Сообщить в чат»; a wrong file does not.
+  const setError = (message, failure = false) => { setErrorText(message); setFailed(failure); };
   const heroOwn = useOwnBackground(setError), gridOwn = useOwnBackground(setError), preview = usePreviewGrid(page === 'grid');
   const studioId = useRef(null), pending = useRef(null), saving = useRef(null);
   useEffect(() => { setPick(preset); }, [preset]);
@@ -232,7 +220,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
       if (stopped) return;
       if (!record) return setError(t('Этого фона нет в студии: возможно, его удалили.'));
       const recipe = record.recipe;
-      setAspect(recipe.aspect); setFit(recipe.fit); setBlur(recipe.blur); setDim(recipe.dim); setClean(recipe.clean); setSeasonButton(recipe.event ?? true); setProfileLinks(recipe.profile ?? true); setFolder(folderOf(recipe.folder).client); setDelivery(recipe.delivery); setFrame(menuFrame(recipe.frame));
+      setAspect(recipe.aspect); setFit(recipe.fit); setBlur(recipe.blur); setDim(recipe.dim); setClean(recipe.clean); setSeasonButton(recipe.event ?? true); setProfileLinks(recipe.profile ?? true); setFolder(folderOf(recipe.folder).client); setDelivery(recipe.delivery === 'installer' ? 'command' : recipe.delivery); setFrame(menuFrame(recipe.frame));
       pending.current = recipe; studioId.current = record.id; setStudio({ id: record.id, name: record.name, saved: false });
       const hero = recipe.hero || { mode: 'menu' }, grid = recipe.grid || { mode: 'menu' };
       setHeroMode(hero.mode);
@@ -263,7 +251,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
         if (total) setFetching({ title: item.title, progress: received / total });
       }
       await choose(new File(parts, `${item.title}.webm`, { type: 'video/webm' }), { kind: 'workshop', id: item.id, title: item.title });
-    })().catch((problem) => { if (!controller.signal.aborted) setError(problem.message); })
+    })().catch((problem) => { if (!controller.signal.aborted) setError(problem.message, true); })
       .finally(() => { if (!controller.signal.aborted) setFetching(null); });
     return () => controller.abort();
   }, [pick]);
@@ -292,11 +280,13 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
     studioId.current = null; pending.current = null; setStudio(null); setWanted(null); setNote(''); setOrigin(null);
     onRemove?.();
   }
-  // The pack as it is, or zipped with «Установить фон.bat» (background-pack.js); the studio copy
-  // remembers the folder and the way.
+  // The pack as it is, or under a name of its own with its PowerShell command (background-pack.js);
+  // the install window opens after every download, with the command or the steps by hand. The studio
+  // copy remembers the folder and the way.
   async function download(pack) {
-    await downloadPack(pack, { folder, delivery });
+    const given = await downloadPack(pack, { folder, delivery });
     if (studioId.current) rememberDownload(studioId.current, { folder, delivery }).catch(() => {});
+    setHanded(given); setInstall(true);
   }
   // `publish`: built for «Опубликовать в мастерскую» — the publish window opens instead of the
   // download and the install guide.
@@ -328,9 +318,8 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
         heroUrl: url(heroEncoded?.video), gridUrl: url(gridEncoded?.video) });
       if (publish) return setShare(true);
       await download(blob);
-      if (!shownGuide.current) { shownGuide.current = true; setInstall(true); }
     } catch (e) {
-      if (!controller.signal.aborted) setError(e?.message || t('Не получилось собрать фон. Попробуй другой файл.'));
+      if (!controller.signal.aborted) setError(e?.message || t('Не получилось собрать фон. Попробуй другой файл.'), true);
     } finally { if (running.current === controller) running.current = null; setProgress(null); }
   }
   const video = kind?.type === 'video', shown = result?.url || source;
@@ -460,15 +449,15 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
         {/* The language of the user's Dota, on one line: the file goes to dota_russian either way;
             an English Dota needs a word on why. */}
         <div className="custom-field"><div className="custom-inline"><span className="custom-label">{t('Язык Dota')}</span><Segmented label={t('Язык Dota')} value={target.client} onChange={setFolder} options={[['russian', 'Русский'], ['english', 'English']]}/></div>
-          {target.client === 'english' && <p className="custom-hint">{t('Файл тоже ляжет в dota_russian: моды Dota читает только из папки языка озвучки. Установщик включит русскую озвучку, интерфейс останется английским.')}</p>}</div>
+          {target.client === 'english' && <p className="custom-hint">{t('Файл тоже ляжет в dota_russian: моды Dota читает только из папки языка озвучки. Команда PowerShell включит русскую озвучку, интерфейс останется английским.')}</p>}</div>
         </>}
       </div>
       <footer className="custom-panel-foot">
-        {error && <Notice error>{error}</Notice>}
-        <Segmented label={t('Что скачать')} value={delivery} onChange={setDelivery} options={DELIVERY()}/>
+        {error && <Notice error report={failed}>{error}</Notice>}
+        <Segmented label={t('Что скачать')} value={delivery} onChange={(value) => { setDelivery(value); setHanded(null); }} options={DELIVERY()}/>
         {progress !== null ? <div className="custom-progress" role="status"><span style={{ width: `${Math.round(progress * 100)}%` }}/><b>{t('Собираем фон… {percent}%', { percent: Math.round(progress * 100) })}</b>
           <button type="button" className="catalog-icon" aria-label={t('Отменить')} onClick={() => running.current?.abort()}><Icon name="close"/></button></div>
-          : result ? <button className="catalog-button primary" title={`${t('{codec} · {seconds} с', { codec: result.codec.toUpperCase(), seconds: Math.round(result.seconds) })}${result.trimmed ? t(', обрезано') : ''}`} onClick={() => download(result.blob)}><Icon name="download"/>{delivery === 'installer' ? t('Скачать с установщиком') : t('Скачать {file}', { file: target.file })}<span className="custom-size">{fileSize(result.blob.size)}</span></button>
+          : result ? <button className="catalog-button primary" title={`${t('{codec} · {seconds} с', { codec: result.codec.toUpperCase(), seconds: Math.round(result.seconds) })}${result.trimmed ? t(', обрезано') : ''}`} onClick={() => download(result.blob)}><Icon name="download"/>{delivery === 'command' ? t('Скачать и получить команду') : t('Скачать {file}', { file: target.file })}<span className="custom-size">{fileSize(result.blob.size)}</span></button>
           : <button className="catalog-button primary" disabled={!file} onClick={() => build()}>{t('Собрать фон')}</button>}
         {/* Publishing takes the built video; without one, the button builds it first. */}
         <div className="custom-foot-row"><button type="button" className="catalog-link custom-publish" disabled={!file || progress !== null || !!fetching} onClick={() => result ? setShare(true) : build({ publish: true })}><Icon name="upload"/>{t('Опубликовать в мастерскую')}</button>
@@ -476,7 +465,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
             <button type="button" className="catalog-link" onClick={() => setInstall(true)}>{t('Как установить')}</button></span></div>
       </footer>
     </aside>
-    {install && <Install folder={folder} delivery={delivery} onClose={() => setInstall(false)}/>}
+    {install && <Install folder={folder} delivery={delivery} handed={delivery === 'command' ? handed : null} onClose={() => setInstall(false)}/>}
     {sources && <Sources onClose={() => setSources(false)}/>}
     {picking && <GridPicker chosen={preview.choice} onChoose={preview.choose} onClose={() => setPicking(false)}/>}
     {share && result && <ShareBackground video={result.webm} aspect={result.aspect} onSent={(published) => saving.current?.then((record) => markPublished(record.id, published)).catch(() => {})} onClose={() => setShare(false)}/>}

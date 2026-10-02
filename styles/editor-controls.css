@@ -496,6 +496,28 @@ details[open] > summary::before {
 .export-guide > ol {
   padding-top: 14px;
 }
+/* The video guide (src/video-guide.js) above the steps: the window widens while the guide is open,
+   so the recording's small text reads without full screen. */
+dialog:has(.export-guide[open]) {
+  width: min(920px, calc(100vw - 32px));
+}
+.export-guide > #exportVideoGuide {
+  padding-top: 14px;
+}
+.export-guide-video {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: #c4b5ed1a;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+.export-guide-video svg { width: 11px; height: 11px; }
+.export-guide-video svg * { fill: currentColor; }
 /* The exact file name: the step people miss. */
 .export-guide .export-name-note {
   margin: 10px 0 0;

@@ -30,7 +30,9 @@
 .changelog-release ul { margin: 0; padding-left: 18px; }
 .changelog-release li { margin: 4px 0; }
 .changelog-release li ul { margin-top: 4px; color: var(--ch-muted); }
-.changelog-dialog > footer { padding: 14px 24px; border-top: 1px solid var(--ch-line); font-size: 13px; }
+.changelog-dialog > footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 18px; padding: 14px 24px; border-top: 1px solid var(--ch-line); font-size: 13px; }
+/* The news channel (scripts/community.mjs). */
+.changelog-dialog > footer .changelog-channel { display: inline-flex; align-items: center; gap: 7px; }
 .changelog-dialog > footer a { color: var(--ch-accent); }
 
 /* Motion: the window rises in over a fading backdrop and sinks away on close; the releases come in one

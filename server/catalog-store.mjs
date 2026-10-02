@@ -3,6 +3,8 @@ import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { catalogMeta, catalogSubmission, CATALOG_LIMITS } from '../scripts/catalog-document.mjs';
+import { Similarity } from './similarity.mjs';
+import { Profiles } from './profiles.mjs';
 
 export class CatalogError extends Error {
   constructor(status, message, extra = {}) { super(message); this.status = status; this.extra = extra; }
@@ -71,6 +73,12 @@ export class CatalogStore {
     if (!this.all('PRAGMA table_info(audit)').some(c => c.name === 'actor')) this.run('ALTER TABLE audit ADD COLUMN actor TEXT');
     // Before 1.6.1 authors could like their own grids; like() refuses that now and the old ones go.
     this.removeSelfLikes('likes', 'work', 'works');
+    // Near copies of grids and backgrounds for the moderators (server/similarity.mjs).
+    this.similarity = new Similarity(this);
+    // Creator profiles (server/profiles.mjs): the nickname and avatar shown for an account.
+    this.profiles = new Profiles(this);
+    // «Оригинал / по мотивам»: whose work a signed-in author's grid is based on (their own nickname is the author).
+    if (!this.all('PRAGMA table_info(revisions)').some(c => c.name === 'credit')) this.run("ALTER TABLE revisions ADD COLUMN credit TEXT NOT NULL DEFAULT ''");
   }
   close() { this.db.close(); }
   // An author signed in with Telegram hears from the bot why a submission was rejected, once.
@@ -146,8 +154,11 @@ export class CatalogStore {
     if (this.get("SELECT count(*) n FROM revisions WHERE status='pending'").n >= 5000) fail(503, 'Очередь проверки заполнена. Попробуй позже.');
   }
   revision(id) { return this.get('SELECT * FROM revisions WHERE id=?', id); }
+  // A signed-in author's work shows their profile (`creator`: key, nickname, avatar) and `credit`;
+  // `author` is a guest's signature.
   view(work, revision, withGrid = true) {
-    return { id: work.id, revision: revision.id, title: revision.title, author: revision.author,
+    return { id: work.id, revision: revision.id, title: revision.title, author: revision.author, credit: revision.credit || '',
+      ...(work.account ? { creator: this.profiles.creator(work.account) } : {}),
       tags: JSON.parse(revision.tags), stats: JSON.parse(revision.stats), featured: !!work.featured,
       created: work.created, updated: revision.created, status: revision.status, reason: revision.reason,
       ...(withGrid ? { grid: JSON.parse(revision.grid) } : {}) };
@@ -191,9 +202,15 @@ export class CatalogStore {
         this.run('INSERT INTO works(id,owner,browser,ip,created,account) VALUES(?,?,?,?,?,?)', id, digest(managementToken), identity.browser, identity.ip, this.now(), account);
         work = this.get('SELECT * FROM works WHERE id=?', id);
       }
-      if (work.draft_revision && work.draft_revision !== work.public_revision) this.run('DELETE FROM revisions WHERE id=?', work.draft_revision);
-      const revision = Number(this.run('INSERT INTO revisions(work,title,author,tags,grid,stats,hash,status,created) VALUES(?,?,?,?,?,?,?,?,?)',
-        id, value.title, value.author, JSON.stringify(value.tags), JSON.stringify(value.grid), JSON.stringify(value.stats), hash, 'pending', this.now()).lastInsertRowid);
+      if (work.draft_revision && work.draft_revision !== work.public_revision) {
+        this.run('DELETE FROM revisions WHERE id=?', work.draft_revision);
+        this.run("DELETE FROM fingerprints WHERE kind='grid' AND id=?", work.draft_revision);
+      }
+      // A signed-in author is their profile: no signature, only «по мотивам».
+      const signed = !!work.account;
+      const revision = Number(this.run('INSERT INTO revisions(work,title,author,credit,tags,grid,stats,hash,status,created) VALUES(?,?,?,?,?,?,?,?,?,?)',
+        id, value.title, signed ? '' : value.author, value.credit, JSON.stringify(value.tags), JSON.stringify(value.grid), JSON.stringify(value.stats), hash, 'pending', this.now()).lastInsertRowid);
+      this.similarity.rememberGrid(revision, value.grid);
       this.run('UPDATE works SET draft_revision=? WHERE id=?', revision, id);
       this.audit(id, 'submit');
       return { id, revision, status: 'pending', ...(managementToken ? { managementToken } : {}) };
@@ -214,10 +231,16 @@ export class CatalogStore {
     if (!row) fail(404, 'Сетка не найдена или ещё не опубликована.');
     return row;
   }
+  // The published grids an account liked, the latest like first (its own «Понравилось», server/catalog-api.mjs).
+  liked(account, limit = 200) {
+    return this.all(`SELECT w.id FROM likes l JOIN works w ON w.id=l.work WHERE l.account=? AND w.state='active' AND w.public_revision IS NOT NULL
+      ORDER BY l.created DESC, w.id LIMIT ?`, account, limit).map(({ id }) => { const item = this.publicItem(id, account); delete item.grid; return item; });
+  }
   publicItem(id, account = null) {
     const work = this.get("SELECT * FROM works WHERE id=? AND state='active' AND public_revision IS NOT NULL", id);
     if (!work) fail(404, 'Сетка не найдена или ещё не опубликована.');
-    return { ...this.view(work, this.revision(work.public_revision)), likes: this.get('SELECT count(*) n FROM likes WHERE work=?', id).n,
+    // A signed-in author's old signature stays private: their profile is the author now.
+    return { ...this.view(work, this.revision(work.public_revision)), ...(work.account ? { author: '' } : {}), likes: this.get('SELECT count(*) n FROM likes WHERE work=?', id).n,
       liked: !!(account && this.get('SELECT work FROM likes WHERE work=? AND account=?', id, account)), mine: !!(account && work.account === account),
       ...this.following(work, account) };
   }
@@ -231,9 +254,14 @@ export class CatalogStore {
     if (!work) fail(404, 'Сетка не найдена или ещё не опубликована.');
     if (!work.account) fail(409, 'Автор этой сетки не входил через Telegram, поэтому подписаться на него пока нельзя.');
     if (work.account === account) fail(400, 'Это твоя сетка.');
-    if (subscribed) this.run('INSERT OR IGNORE INTO subscriptions VALUES(?,?,?)', account, work.account, this.now());
-    else this.run('DELETE FROM subscriptions WHERE account=? AND author=?', account, work.account);
-    return this.following(work, account);
+    return this.follow(account, work.account, subscribed);
+  }
+  // Following an author's Telegram account (a grid's page or their profile) → { followable, subscribed }.
+  follow(account, author, subscribed) {
+    if (author === account) fail(400, 'Это твой профиль.');
+    if (subscribed) this.run('INSERT OR IGNORE INTO subscriptions VALUES(?,?,?)', account, author, this.now());
+    else this.run('DELETE FROM subscriptions WHERE account=? AND author=?', account, author);
+    return { followable: true, subscribed: !!subscribed };
   }
   // The landing page shows a random well-liked grid: public, not 18+, no open reports, at
   // least LANDING_LIKES likes. except: the grid this browser saw last time, skipped while there
@@ -246,7 +274,12 @@ export class CatalogStore {
   landingEligible(id) { return !!this.get(`SELECT 1 x ${LANDING_FROM} AND w.id=?`, LANDING_LIKES, id); }
   list({ query = '', tag = '', popular = false, page = 0, account = null } = {}) {
     const clauses = ["w.state='active'", 'w.public_revision IS NOT NULL'], args = [];
-    if (query) { clauses.push('(unicode_lower(r.title) LIKE ? ESCAPE \'!\' OR unicode_lower(r.author) LIKE ? ESCAPE \'!\')'); const q = `%${query.toLowerCase().replace(/[!%_]/g, c => `!${c}`)}%`; args.push(q, q); }
+    if (query) {
+      // The title, a guest's signature or a signed-in author's nickname.
+      const q = `%${query.toLowerCase().replace(/[!%_]/g, c => `!${c}`)}%`, accounts = this.profiles.matching(query);
+      clauses.push(`(unicode_lower(r.title) LIKE ? ESCAPE '!' OR (w.account IS NULL AND unicode_lower(r.author) LIKE ? ESCAPE '!')${accounts.length ? ` OR w.account IN (${accounts.map(() => '?').join(',')})` : ''})`);
+      args.push(q, q, ...accounts);
+    }
     if (tag) { clauses.push('EXISTS (SELECT 1 FROM json_each(r.tags) WHERE value=?)'); args.push(tag); }
     const from = `FROM works w JOIN revisions r ON r.id=w.public_revision WHERE ${clauses.join(' AND ')}`;
     const total = this.get(`SELECT count(*) n ${from}`, ...args).n;
@@ -276,20 +309,25 @@ export class CatalogStore {
     const filters = { pending: "w.state='active' AND r.status='pending'", reports: "w.state='active' AND EXISTS(SELECT 1 FROM reports WHERE work=w.id AND resolved=0)",
       published: "w.state='active' AND w.public_revision IS NOT NULL", blocked: "w.state='blocked'" };
     const query = where => `FROM works w JOIN revisions r ON r.id=COALESCE(w.draft_revision,w.public_revision) WHERE ${where}`;
-    const match = search ? " AND (unicode_lower(r.title) LIKE ? ESCAPE '!' OR unicode_lower(r.author) LIKE ? ESCAPE '!')" : '';
-    const args = search ? Array(2).fill(`%${search.toLowerCase().replace(/[!%_]/g, c => `!${c}`)}%`) : [];
+    // A creator's nickname finds their works too.
+    const creators = search ? this.profiles.matching(search) : [];
+    const match = search ? ` AND (unicode_lower(r.title) LIKE ? ESCAPE '!' OR unicode_lower(r.author) LIKE ? ESCAPE '!'${creators.length ? ` OR w.account IN (${creators.map(() => '?').join(',')})` : ''})` : '';
+    const args = search ? [...Array(2).fill(`%${search.toLowerCase().replace(/[!%_]/g, c => `!${c}`)}%`), ...creators] : [];
     const from = query((filters[filter] || filters.pending) + match);
     const counts = Object.fromEntries(Object.entries(filters).map(([name, where]) => [name, this.get(`SELECT count(*) n ${query(where)}`).n]));
     return { paused: this.paused(), counts, total: this.get(`SELECT count(*) n ${from}`, ...args).n,
       items: this.all(`SELECT w.id ${from} ORDER BY r.created ASC LIMIT 20 OFFSET ?`, ...args, page * 20).map(({ id }) => {
         const work = this.get('SELECT * FROM works WHERE id=?', id), rev = this.revision(work.draft_revision || work.public_revision);
+        const reports = this.all('SELECT id,reason,created FROM reports WHERE work=? AND resolved=0', id);
         return { ...this.view(work, rev), blocked: work.state === 'blocked', linked: !!work.account,
-          published: work.public_revision ? this.view(work, this.revision(work.public_revision)) : null,
-          reports: this.all('SELECT id,reason,created FROM reports WHERE work=? AND resolved=0', id),
+          published: work.public_revision ? this.view(work, this.revision(work.public_revision)) : null, reports,
+          // A version to check, or a reported grid: the published works it looks like (the page loads
+          // an original's grid to compare from /works/<id>).
+          similar: rev.status === 'pending' || reports.length ? this.similarity.similarGrids(rev.id, work) : [],
           related: this.get("SELECT count(*) n FROM works WHERE browser=? AND state='active'", work.browser).n };
       }) };
   }
-  moderate(id, { action, revision, reason = '', featured = false, blockIP = false, title, author, tags }, { transaction = true, actor = null } = {}) {
+  moderate(id, { action, revision, reason = '', featured = false, blockIP = false, title, author, credit, tags }, { transaction = true, actor = null } = {}) {
     const apply = () => {
       const work = this.get("SELECT * FROM works WHERE id=? AND state!='deleted'", id);
       if (!work) fail(404, 'Заявка не найдена.');
@@ -297,9 +335,10 @@ export class CatalogStore {
       // the grid's own name follows the title so a download matches the gallery.
       if (action === 'edit') {
         if (!revision || ![work.public_revision, work.draft_revision].includes(revision)) fail(409, 'Версия уже изменилась. Обнови страницу.');
-        const meta = catalogMeta({ title, author, tags }), grid = JSON.parse(this.revision(revision).grid);
+        // A signed-in author's work is signed by their profile: only the credit («по мотивам») is edited.
+        const current = this.revision(revision), meta = catalogMeta({ title, author: work.account ? '' : author, credit: credit ?? current.credit, tags }), grid = JSON.parse(current.grid);
         grid.configs[0].config_name = meta.title;
-        this.run('UPDATE revisions SET title=?,author=?,tags=?,grid=? WHERE id=?', meta.title, meta.author, JSON.stringify(meta.tags), JSON.stringify(grid), revision);
+        this.run('UPDATE revisions SET title=?,author=?,credit=?,tags=?,grid=? WHERE id=?', meta.title, meta.author, meta.credit, JSON.stringify(meta.tags), JSON.stringify(grid), revision);
         this.audit(id, action, actor);
         return meta;
       }

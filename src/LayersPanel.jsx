@@ -63,7 +63,7 @@ export function LayersPanel({ editor, layers }) {
                 aria-pressed={layer.visible}
                 onClick={() => editor.toggleLayer(layer.id, 'visible')}
               >
-                <Icon name={layer.visible ? 'eye' : 'eyeOff'} />
+                <Icon key={layer.visible ? 'eye' : 'eyeOff'} className="icon-swap" name={layer.visible ? 'eye' : 'eyeOff'} />
               </button>
               <button
                 className={`icon-button ${layer.locked ? 'off' : ''}`}
@@ -72,7 +72,7 @@ export function LayersPanel({ editor, layers }) {
                 aria-pressed={layer.locked}
                 onClick={() => editor.toggleLayer(layer.id, 'locked')}
               >
-                <Icon name={layer.locked ? 'lock' : 'unlock'} />
+                <Icon key={layer.locked ? 'lock' : 'unlock'} className="icon-swap" name={layer.locked ? 'lock' : 'unlock'} />
               </button>
               {art && (
                 <button

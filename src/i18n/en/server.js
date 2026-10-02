@@ -14,7 +14,6 @@ const messages = {
   'Неверная настройка архива.': 'Invalid archive setting.',
   'Проверка доступна только на GridStudio.': 'The check only works on GridStudio.',
   'Неизвестный тег.': 'Unknown tag.',
-  'Неизвестный формат экрана.': 'Unknown screen format.',
   'Неверное значение лайка.': 'Invalid like value.',
   'Неверное значение подписки.': 'Invalid subscription value.',
   'Страница временно недоступна.': 'The page is temporarily unavailable.',
@@ -107,6 +106,12 @@ const messages = {
   'В арте есть служебные символы. Скопируй его заново как обычный текст.': 'The art has control characters. Copy it again as plain text.',
   'Вставь арт: в нём пока нет символов.': 'Paste the art: it has no symbols yet.',
 
+  // server/hero-meta.mjs: the hero meta from STRATZ.
+  'STRATZ вернул пустой ответ.': 'STRATZ returned an empty answer.',
+  'STRATZ не отвечает. Попробуй позже.': 'STRATZ is not answering. Try again later.',
+  'Неизвестная группа рангов.': 'Unknown rank group.',
+  'Мета пока недоступна.': 'The meta is not available yet.',
+
   // scripts/background-document.mjs and scripts/studio-background.mjs: backgrounds.
   'Неизвестный формат экрана.': 'Unknown screen format.',
   'Не удалось прочитать загрузку. Собери фон заново.': 'Couldn’t read the upload. Build the background again.',
@@ -120,18 +125,104 @@ const messages = {
   "В вашем фоне недостаточно деталей для публикации. Это не значит, что он плохой, просто мы не можем пропускать каждую заявку в мастерскую.": "Your background doesn’t have enough detail to be published. It doesn’t mean your background is bad, we just can’t let every submission into the Workshop.",
   "Ваш фон слишком низкого качества. Попробуйте найти качество лучше, либо загрузите другой.": "Your background is too low in quality. Try to find a better quality one, or upload another one.",
   'Нарушение правил': 'Breaks the rules',
+  // server/grid-installs.mjs
+  'Это не файл сеток Dota.': 'This is not a Dota grid file.',
+  'Сетка слишком большая для команды. Скачай её файлом.': 'The grid is too big for the command. Download it as a file.',
+  // «Гайды» (server/guides.mjs, scripts/guide-document.mjs)
+  'В гайде до 20 роликов YouTube.': 'A guide can have up to 20 YouTube videos.',
+  'В гайде до 60 картинок, видео и файлов.': 'A guide can have up to 60 pictures, videos and files.',
+  'В гайде пока почти ничего нет: добавь текст или картинки.': 'There’s almost nothing in the guide yet: add text or pictures.',
+  'В тексте есть элемент, который гайд не поддерживает.': 'The text has an element guides don’t support.',
+  'В файле нет видео.': 'The file has no video.',
+  'Версия гайда не найдена.': 'Guide version not found.',
+  'Видео больше 4K.': 'The video is larger than 4K.',
+  'Видео длиннее 15 минут.': 'The video is longer than 15 minutes.',
+  'Видео в H.265 браузеры не показывают. Сохрани его в H.264 (MP4) или WebM.': 'Browsers don’t show H.265 video. Save it as H.264 (MP4) or WebM.',
+  'Браузеры не покажут это видео. Сохрани его в H.264 (MP4) или WebM.': 'Browsers won’t show this video. Save it as H.264 (MP4) or WebM.',
+  'Вложение вставлено не тем блоком.': 'The attachment is in the wrong kind of block.',
+  'Вложение гайда повреждено.': 'A guide attachment is damaged.',
+  'Гайд изменён в другой вкладке. Обнови страницу.': 'The guide was changed in another tab. Reload the page.',
+  'Гайд не найден.': 'Guide not found.',
+  'Гайд скрыт модератором.': 'The guide was hidden by a moderator.',
+  'Гайд слишком большой: раздели его на несколько.': 'The guide is too big: split it into several.',
+  'Гайд слишком длинный: до 60 000 символов.': 'The guide is too long: up to 60,000 characters.',
+  'Гайд уже проверен или изменён. Обнови список.': 'The guide was already reviewed or changed. Refresh the list.',
+  'Жалоба уже рассмотрена.': 'The report was already handled.',
+  'Загрузка не найдена.': 'Upload not found.',
+  'Картинка слишком большая: до 60 мегапикселей.': 'The picture is too big: up to 60 megapixels.',
+  'Комментарии для тебя временно ограничены.': 'Commenting is temporarily restricted for you.',
+  'Комментарий до 2000 символов.': 'A comment can be up to 2,000 characters.',
+  'Комментарий не найден.': 'Comment not found.',
+  'Комментарий, на который ты отвечаешь, удалён.': 'The comment you’re replying to was deleted.',
+  'Место для твоих вложений закончилось (1 ГБ). Удали ненужные черновики.': 'You’re out of space for attachments (1 GB). Delete drafts you don’t need.',
+  'На сегодня жалоб достаточно.': 'That’s enough reports for today.',
+  'На сегодня комментариев достаточно.': 'That’s enough comments for today.',
+  'Назови гайд: от 3 символов.': 'Give the guide a title: 3 characters or more.',
+  'Напиши комментарий.': 'Write a comment.',
+  'Напиши, что не так.': 'Say what’s wrong.',
+  'Не удалось прочитать видео.': 'Couldn’t read the video.',
+  'Не удалось прочитать картинку.': 'Couldn’t read the picture.',
+  'Неверная часть файла.': 'Wrong part of the file.',
+  'Неверное оформление текста.': 'Wrong text formatting.',
+  'Неверный лайк.': 'Invalid like.',
+  'Неизвестный тип вложения.': 'Unknown attachment type.',
+  'Нет изменений для проверки.': 'Nothing new to review.',
+  'Нет фото.': 'No photo.',
+  'Одно из вложений не загружено или удалено. Добавь его ещё раз.': 'One of the attachments isn’t uploaded or was deleted. Add it again.',
+  'Отправка временно ограничена.': 'Sending is temporarily restricted.',
+  'Очередь проверки заполнена. Попробуй позже.': 'The review queue is full. Try again later.',
+  'Причина до 500 символов.': 'The reason can be up to 500 characters.',
+  'Приём временно приостановлен. Попробуй позже.': 'Submissions are paused for now. Try again later.',
+  'Свой гайд лайкнуть нельзя.': 'You can’t like your own guide.',
+  'Слишком глубокая вложенность списков и цитат.': 'Lists and quotes are nested too deep.',
+  'Слишком часто. Подожди минуту.': 'Too often. Wait a minute.',
+  'Ссылка на YouTube повреждена.': 'The YouTube link is damaged.',
+  'Такой файл в гайд не добавить: программы и скрипты нельзя.': 'This file can’t go into a guide: no programs or scripts.',
+  'Текст гайда повреждён.': 'The guide’s text is damaged.',
+  'Удалить можно свой комментарий или комментарий к своему гайду.': 'You can delete your own comments and comments on your guide.',
+  'Файл больше, чем было заявлено.': 'The file is bigger than stated.',
+  'Файл загружен не до конца.': 'The file isn’t fully uploaded.',
+  'Файл не найден.': 'File not found.',
+  'Файл пустой.': 'The file is empty.',
+  'Файл уже загружен.': 'The file is already uploaded.',
+  'Хранилище гайдов заполнено. Попробуй позже.': 'Guide storage is full. Try again later.',
+  'Части файла пришли не по порядку. Загрузи его ещё раз.': 'Parts of the file arrived out of order. Upload it again.',
+  'Это не видео MP4 или WebM.': 'This isn’t an MP4 or WebM video.',
+  'Это не картинка PNG, JPEG, WebP или GIF.': 'This isn’t a PNG, JPEG, WebP or GIF picture.',
+  // Creator profiles (server/profiles.mjs).
+  'В нике можно буквы, цифры и знаки _ . -, без пробелов.': 'A nickname may have letters, digits and _ . -, no spaces.',
+  'В нике нужна хотя бы одна буква.': 'A nickname needs at least one letter.',
+  'Ник не может начинаться или заканчиваться знаком.': 'A nickname can’t start or end with a sign.',
+  'Такой ник занят сайтом. Выбери другой.': 'This nickname is reserved by the site. Pick another one.',
+  'Этот ник уже занят.': 'This nickname is already taken.',
+  'Не удалось создать профиль. Попробуй ещё раз.': 'Couldn’t create the profile. Try again.',
+  'Профиль не найден.': 'Profile not found.',
+  'Выбери картинку.': 'Pick a picture.',
+  'Картинка больше 5 МБ.': 'The picture is larger than 5 MB.',
+  'Картинка слишком большая.': 'The picture is too large.',
+  'Фото из Telegram нет: оно появится после следующего входа, если в Telegram есть фото профиля.': 'There’s no Telegram photo: it appears after your next sign-in if your Telegram profile has one.',
+  'Неизвестная аватарка.': 'Unknown avatar.',
+  'Такой значок не выдаётся вручную.': 'This badge isn’t given by hand.',
+  'Фото профиля недоступно.': 'The profile photo isn’t available.',
 };
 export default messages;
 
 // The field names of catalogText's messages (scripts/catalog-document.mjs and its users).
-const FIELDS = { 'Название': 'Title', 'Автор': 'Author', 'Причина жалобы': 'Report reason', 'Причина': 'Reason', 'Название категории': 'Category name', 'Имя сетки': 'Grid name', 'Имя файла': 'File name', 'Арт': 'Art' };
+const FIELDS = { 'Название': 'Title', 'Автор': 'Author', 'Оригинал': 'Based on', 'Причина жалобы': 'Report reason', 'Причина': 'Reason', 'Название категории': 'Category name', 'Имя сетки': 'Grid name', 'Имя файла': 'File name', 'Арт': 'Art' };
 // The groups of symbols Dota does not show (scripts/dota-rendering.mjs invisibleWarning).
 const GLYPHS = { 'брайль': 'Braille', 'символы рамок': 'box-drawing characters', 'блоки ▀█░': 'blocks ▀█░' };
 // 12 000 (ru-RU, a no-break space) → 12,000.
 const number = (text) => Number(text.replace(/\s/g, '')).toLocaleString('en-US');
 
+// «5 октября» (ru-RU, day and month) → «October 5».
+const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const day = (text) => { const [, d, m] = /^(\d+) (\S+)$/.exec(text) || []; const month = MONTHS.indexOf(m); return month < 0 ? text : new Date(2000, month, Number(d)).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }); };
 // Messages made with numbers and names; a replacement is a string with $1… or a function.
 const own = [
+  [/^Ник — от (\d+) до (\d+) символов\.$/, 'A nickname is $1 to $2 characters long.'],
+  [/^Описание — до (\d+) символов\.$/, 'The description is up to $1 characters.'],
+  [/^Описание — до (\d+) строк\.$/, 'The description is up to $1 lines.'],
+  [/^Ник можно менять раз в неделю\. Следующая смена — (.+)\.$/, (whole, at) => `You can change your nickname once a week. Next change: ${day(at)}.`],
   [/^Файл больше ([\d.]+) МБ\.$/, 'The file is larger than $1 MB.'],
   [/^Видео больше ([\d.]+) МБ\.$/, 'The video is larger than $1 MB.'],
   [/^Размер видео (\d+)×(\d+), а для (\S+) нужен (\d+)×(\d+)\.$/, 'The video is $1×$2, but $3 needs $4×$5.'],
@@ -145,6 +236,10 @@ const own = [
   [/^В студии уже (\d+) фонов\. Удали ненужные\.$/, 'Your Studio already has $1 backgrounds. Delete the ones you don’t need.'],
   [/^В сетке должно быть от 1 до (\d+) категорий\. Используй оптимизацию перед публикацией\.$/, 'A grid must have 1 to $1 categories. Use optimization before publishing.'],
   [/^Сетка слишком сложная: максимум (\d+) портретов\.$/, 'The grid is too complex: at most $1 portraits.'],
+  [/^Название до (\d+) символов\.$/, 'The title can be up to $1 characters.'],
+  [/^За сутки можно загрузить (\d+) файлов\.$/, 'You can upload $1 files a day.'],
+  [/^За сутки можно начать (\d+) гайдов\.$/, 'You can start $1 guides a day.'],
+  [/^За сутки можно отправить на проверку (\d+) версий\.$/, 'You can send $1 versions for review a day.'],
   [/^В арте (\d+) строк, максимум (\d+)\.$/, 'The art has $1 lines; the maximum is $2.'],
   [/^Самая длинная строка — (\d+) символов, максимум (\d+)\.$/, 'The longest line has $1 symbols; the maximum is $2.'],
   [/^(.+): допустимо до ([\d\s]+) символов\.$/, (whole, field, max) => `${FIELDS[field] || field}: up to ${number(max)} characters.`],

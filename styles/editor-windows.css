@@ -1,0 +1,195 @@
+/* The editor's windows in the site's window look (src/window-kit.css): the small ones from
+   scripts/app.mjs openModal (#modal), hero choice, drawing, ASCII art, text in ASCII, picture in ASCII
+   and category optimization. Loaded last (src/main.jsx), so the kit's look wins over the older
+   per-window styles; layouts stay theirs. */
+:is(#modal, .drawing-dialog, .hero-picker, .art-dialog, .artwork-optimizer, .image-dialog) {
+  border: 1px solid var(--win-line); border-radius: 20px; background: var(--win-glass); box-shadow: var(--win-shadow); color: var(--win-ink);
+}
+:is(#modal, .drawing-dialog, .hero-picker, .art-dialog, .artwork-optimizer, .image-dialog)::backdrop { background: #08060dc4; backdrop-filter: blur(5px); }
+
+/* Headers: the tile, the title and its line on the glow. */
+:is(#modal, .artwork-optimizer) .modal-header,
+:is(#modal, .artwork-optimizer)[data-view] .modal-header {
+  display: flex; align-items: flex-start; gap: 14px; padding: 20px 16px 16px 22px; border-bottom: 1px solid #ffffff12; background: var(--win-head);
+}
+:is(.picker-heading, .drawing-heading, .art-dialog-heading, .image-dialog-header) { background: var(--win-head); border-bottom: 1px solid #ffffff12; }
+.picker-heading { justify-content: flex-start; align-items: flex-start; gap: 16px; }
+.picker-heading > div, .art-dialog-heading > div { flex: 1; min-width: 0; }
+.picker-heading .win-icon { width: 48px; height: 48px; border-radius: 15px; margin-top: 4px; }
+.picker-heading .win-icon svg { width: 24px; height: 24px; }
+.picker-heading h2 { font-size: 26px; letter-spacing: -.02em; }
+.art-dialog-heading { justify-content: flex-start; gap: 14px; }
+.drawing-heading { gap: 14px; }
+:is(.picker-close, .art-dialog-heading .icon-button) { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 10px;
+  background: #ffffff0a; color: var(--win-muted); font-size: 20px; line-height: 1; transition: background-color .2s, color .2s, rotate .35s var(--win-spring); }
+:is(.picker-close, .art-dialog-heading .icon-button):hover { background: #ffffff16; color: var(--win-ink); rotate: 90deg; }
+
+/* Bodies of the small windows: calm text, labels as small capitals, deep fields that glow on focus. */
+#modal:not([data-view='help']) .modal-body { padding: 18px 22px 10px; color: var(--win-text); font-size: 13.5px; line-height: 1.6; }
+#modal .modal-body > p { margin: 0 0 14px; }
+#modal .modal-body .hint { color: var(--win-muted); }
+#modal .modal-body .field-label { display: block; margin: 16px 0 8px; color: var(--win-muted); font-size: 11px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+#modal .modal-body > .field-label:first-child { margin-top: 2px; }
+#modal :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select) {
+  box-sizing: border-box; padding-block: 11px; padding-inline-start: 13px; border: 1px solid #ffffff17; border-radius: 12px;
+  background-color: var(--win-field); color: var(--win-ink); font-size: 14px; transition: border-color .2s, box-shadow .2s, background-color .2s;
+}
+#modal :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea) { padding-inline-end: 13px; }
+#modal .modal-body > :is(input, textarea, select) { width: 100%; }
+#modal :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select):hover { border-color: #ffffff26; }
+#modal :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select):focus,
+#modal :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select):focus-visible { outline: none; border-color: #c4b5ed99; box-shadow: 0 0 0 4px #c4b5ed1f; background-color: #18141f; }
+#modal textarea { min-height: 150px; resize: vertical; line-height: 1.5; }
+#modal textarea::placeholder, #modal input::placeholder { color: #8d84a0; }
+#modal .glyph-replace-to { font-size: 22px; text-align: center; }
+#modal .modal-loading { color: var(--win-muted); animation: win-breathe 1.4s ease-in-out infinite; }
+@keyframes win-breathe { 50% { opacity: .45; } }
+#modal .text-mode.choice-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 14px 0 6px; }
+#modal .grid-import-modes.choice-cards { margin: 16px 0 6px; }
+#modal .grid-import-option.choice-card { display: grid; }
+#modal .grid-import-files { display: grid; gap: 6px; margin: 0 0 6px; padding: 0; list-style: none; }
+#modal .grid-import-files li { padding: 10px 12px; border-radius: 12px; background: #ffffff06; box-shadow: inset 0 0 0 1px #ffffff10; }
+#modal .grid-import-files strong { display: block; color: var(--win-ink); }
+#modal .grid-import-files span { color: var(--win-muted); font-size: 12px; }
+#modal .check-row { color: var(--win-text); }
+#modal kbd, .artwork-optimizer kbd { border: 0; border-radius: 7px; background: #ffffff0d; box-shadow: inset 0 0 0 1px #ffffff1c, inset 0 -2px 0 #00000059; color: var(--win-ink); }
+
+/* Download: three counters as cards with their icons, an all-clear chip, warnings as amber cards. */
+#modal .export-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 8px 0 14px; }
+#modal .export-summary > div { position: relative; display: grid; align-content: start; padding: 14px 14px 12px; border: 1px solid #ffffff12; border-radius: 14px;
+  background: radial-gradient(120% 120% at 0% 0%, #c4b5ed14, transparent 60%), #ffffff05; color: var(--win-muted); font-size: 10.5px; font-weight: 650; letter-spacing: .08em; }
+#modal .export-summary > div > svg { position: absolute; top: 14px; right: 14px; width: 18px; height: 18px; color: #c4b5ed99; }
+#modal .export-summary strong { margin: 0 0 4px; color: var(--win-ink); font-size: 26px; font-weight: 650; letter-spacing: -.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+#modal .export-ok { display: inline-flex; align-items: center; gap: 7px; margin: 0 0 14px; padding: 6px 12px 6px 9px; border-radius: 99px; background: #7fd1a01a; box-shadow: inset 0 0 0 1px #7fd1a033; color: #a6e3bd; font-size: 12px; }
+#modal .export-ok svg { width: 15px; height: 15px; }
+:is(#modal, .artwork-optimizer) .export-warning { padding: 10px 14px; border: 0; border-radius: 12px; background: #f0b34a14; box-shadow: inset 0 0 0 1px #f0b34a40; color: #f3cf96; font-size: 12.5px; }
+#modal .export-guide { border-radius: 14px; }
+#modal .export-guide-video { white-space: nowrap; }
+
+/* The download window, as steps: what goes into Dota, how to put it there (installer or file), the
+   chosen way's numbered steps, the rare options folded under «Дополнительно». */
+/* One width for both ways, so switching them does not resize the window. */
+#modal[data-view='export'] { width: min(900px, calc(100vw - 24px)); }
+#modal .export-summary-note { margin: -6px 0 12px; }
+#modal .export-checks { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 6px; }
+#modal .export-checks > * { margin: 0; }
+#modal .export-checks #exportWarnings:empty { display: none; }
+#modal .export-methods { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 18px 0 14px; }
+#modal .export-methods > legend { grid-column: 1 / -1; }
+#modal .export-steps[hidden] { display: none !important; }
+#modal .export-steps { margin: 0; padding: 16px 16px 14px; border: 1px solid #ffffff10; border-radius: 16px; background: #ffffff04; font-size: 14px; line-height: 1.55; color: var(--win-text); }
+#modal .export-steps.export-guide { margin-top: 0; }
+#modal .export-steps > ol { counter-reset: step; display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+#modal .export-steps > #exportVideoGuide + ol { margin-top: 16px; }
+#modal .export-steps > ol > li { counter-increment: step; position: relative; margin: 0; padding: 2px 0 0 38px; }
+#modal .export-steps > ol > li::before { content: counter(step); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  background: #c4b5ed24; box-shadow: inset 0 0 0 1px #c4b5ed40; color: var(--win-accent); font-size: 12.5px; font-weight: 700; }
+#modal .export-steps > ol > li strong { color: var(--win-ink); }
+#modal .export-steps > .hint, #modal .export-steps > p { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid #ffffff0d; font-size: 12.5px; }
+/* The PowerShell command once made, and the restore one: code to copy with a button beside it. */
+#modal .export-command { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding: 6px 6px 6px 12px; border-radius: 12px; background: var(--win-field); box-shadow: inset 0 0 0 1px #c4b5ed40; }
+#modal .export-command[data-state='busy'] code { color: var(--win-muted); animation: win-breathe 1.4s ease-in-out infinite; }
+#modal .export-command[data-state='error'] { box-shadow: inset 0 0 0 1px #ff8a9560; }
+#modal .export-command[data-state='error'] code { color: #ffb1b8; font-family: inherit; }
+#modal .export-command code, #modal .export-restore code { flex: 1; min-width: 0; padding: 0; background: none; color: var(--win-accent); font: 12.5px/1.5 ui-monospace, 'SF Mono', Consolas, monospace; overflow-wrap: anywhere; user-select: all; }
+#modal .export-restore { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
+#modal .export-restore code { flex: 1 1 260px; padding: 6px 10px; border-radius: 10px; background: var(--win-field); box-shadow: inset 0 0 0 1px #ffffff12; color: var(--win-text); }
+#modal :is(.export-command, .export-restore) .icon-button { flex: none; width: 32px; height: 32px; border-radius: 9px; }
+#modal .export-steps kbd { padding: 1px 7px; font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1.6; }
+#modal .export-more { margin-top: 14px; border: 1px solid #ffffff10; border-radius: 14px; background: #ffffff03; }
+#modal .export-more > summary { display: flex; align-items: center; min-height: 44px; padding: 0 14px; color: var(--win-text); font-size: 13.5px; font-weight: 600; }
+#modal .export-more > summary:hover { color: var(--win-ink); }
+#modal .export-more[open] > summary { border-bottom: 1px solid #ffffff0d; }
+#modal .export-more > :not(summary) { margin-inline: 14px; }
+#modal .export-more > .check-row { margin-top: 12px; }
+#modal .export-more > :last-child { margin-bottom: 14px; }
+#modal .export-project { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding: 12px; border-radius: 12px; background: #ffffff06; box-shadow: inset 0 0 0 1px #ffffff10; }
+#modal .export-project > span { display: grid; gap: 2px; min-width: 0; }
+#modal .export-project strong { color: var(--win-ink); font-size: 13.5px; }
+#modal .export-project small { color: var(--win-muted); font-size: 12px; line-height: 1.4; }
+#modal .export-project .button { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; font-size: 13px; }
+#modal .export-project .button svg { width: 15px; height: 15px; }
+#modal[data-view='export'] .modal-footer { display: flex; justify-content: space-between; }
+#modal[data-view='export'] .modal-footer .button.primary { min-width: 230px; }
+@media (max-width: 700px) {
+  #modal .export-methods { grid-template-columns: 1fr; }
+  #modal[data-view='export'] .modal-footer { flex-direction: column-reverse; align-items: stretch; }
+  #modal .export-project { flex-direction: column; align-items: stretch; }
+}
+
+/* Versions: each saved copy as a card, the newest one lit. */
+#modal .recovery-list { display: grid; gap: 8px; margin-top: 2px; }
+#modal .recovery-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px; border: 1px solid #ffffff12; border-radius: 14px; background: #ffffff05;
+  transition: border-color .2s, background-color .2s; }
+#modal .recovery-row:hover { border-color: #ffffff22; background: #ffffff0a; }
+#modal .recovery-row:first-child { border-color: #c4b5ed4d; background: radial-gradient(120% 140% at 0% 0%, #c4b5ed1a, transparent 60%), #ffffff05; }
+#modal .recovery-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: #ffffff0d; box-shadow: inset 0 0 0 1px #ffffff12; color: var(--win-muted); }
+#modal .recovery-row:first-child .recovery-icon { color: var(--win-accent); background: #c4b5ed24; box-shadow: inset 0 0 0 1px #c4b5ed40; }
+#modal .recovery-icon svg { width: 18px; height: 18px; }
+#modal .recovery-row small { margin-top: 3px; }
+#modal .recovery-actions { display: flex; gap: 6px; }
+#modal .recovery-warning { color: #f3cf96; }
+@media (max-width: 600px) {
+  #modal .recovery-row { grid-template-columns: auto minmax(0, 1fr); }
+  #modal .recovery-actions { grid-column: 1 / -1; }
+}
+
+/* Help: shortcut rows light up under the pointer. */
+#modal .shortcuts-grid > div { margin: 0 -8px; padding: 4px 8px; border-radius: 9px; transition: background-color .15s; }
+#modal .shortcuts-grid > div:hover { background: #ffffff08; }
+
+/* Footers: a darker strip; buttons with their icons, the main one glowing (red when it deletes). */
+:is(#modal, .artwork-optimizer) .modal-footer {
+  display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 10px; padding: 16px 22px 20px;
+  border-top: 1px solid #ffffff0f; background: linear-gradient(180deg, transparent, #0000001f);
+}
+#modal[data-view='text'] { width: min(580px, calc(100vw - 24px)); }
+@media (max-width: 700px) { #modal .text-mode.choice-cards { grid-template-columns: 1fr; } }
+:is(#modal, .artwork-optimizer) .modal-footer .button,
+:is(.picker-footer, .drawing-footer, .art-dialog-footer) .button:not(.compact) {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 9px 18px; border-radius: 12px; font-size: 13.5px; font-weight: 600;
+}
+:is(#modal, .artwork-optimizer) .modal-footer .button svg { flex: none; width: 16px; height: 16px; }
+:is(#modal, .artwork-optimizer, .hero-picker, .drawing-dialog, .art-dialog) :is(.modal-footer, .picker-footer, .drawing-footer, .art-dialog-footer, .text-art-footer) .button.primary:not(:disabled) {
+  border-color: transparent; background: linear-gradient(180deg, #d4c8f5, #bba9ec); color: #231b35; box-shadow: 0 12px 28px -12px #c4b5edcc, inset 0 1px 0 #ffffff59;
+}
+#modal .modal-footer .button.primary.danger { background: linear-gradient(180deg, #ffa3ab, #f0808c); color: #2a0f14; box-shadow: 0 12px 28px -12px #ff8a95cc, inset 0 1px 0 #ffffff59; }
+:is(#modal, .artwork-optimizer) .modal-footer .button.secondary { border: 1px solid #ffffff14; background: #ffffff0a; color: var(--win-ink); }
+:is(#modal, .artwork-optimizer) .modal-footer .button.secondary:hover { background: #ffffff14; }
+:is(.picker-footer, .drawing-footer, .art-dialog-footer) { border-top: 1px solid #ffffff0f; background: linear-gradient(180deg, transparent, #0000001f); }
+
+/* Optimization: its counters as the download's cards. */
+.artwork-optimizer .optimizer-stats > span { border-radius: 14px; background: radial-gradient(120% 120% at 0% 0%, #c4b5ed14, transparent 60%), #ffffff05; box-shadow: inset 0 0 0 1px #ffffff12; }
+.artwork-optimizer .optimizer-comparison canvas { border-radius: 12px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The body's parts arrive one after another each time a window opens or its body changes. */
+  #modal[open]:not([data-view='help']) .modal-body > * { animation: win-rise .42s var(--win-ease) both; }
+  #modal[open] .modal-body > :nth-child(2) { animation-delay: 50ms; }
+  #modal[open] .modal-body > :nth-child(3) { animation-delay: 100ms; }
+  #modal[open] .modal-body > :nth-child(4) { animation-delay: 150ms; }
+  #modal[open] .modal-body > :nth-child(5) { animation-delay: 200ms; }
+  #modal[open] .modal-body > :nth-child(n+6) { animation-delay: 250ms; }
+  #modal[open] :is(.export-summary, .recovery-list, .choice-cards) > * { animation: win-rise .42s var(--win-ease) both; }
+  #modal[open] :is(.export-summary, .recovery-list, .choice-cards) > :nth-child(2) { animation-delay: 140ms; }
+  #modal[open] :is(.export-summary, .recovery-list, .choice-cards) > :nth-child(3) { animation-delay: 200ms; }
+  #modal[open] :is(.export-summary, .recovery-list, .choice-cards) > :nth-child(n+4) { animation-delay: 260ms; }
+  #modal .export-ok svg { animation: win-pop .5s .3s var(--win-spring) both; }
+}
+@media (prefers-reduced-motion: reduce) { #modal .modal-loading { animation: none; } }
+
+/* «Помощь»: where to send a bug or an idea (scripts/community.mjs) — a card under the tips. */
+#modal .help-community { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; align-items: center; margin: 18px 0 14px; padding: 14px;
+  border: 1px solid #c4b5ed29; border-radius: 16px; background: radial-gradient(120% 140% at 0% 0%, #c4b5ed17, transparent 60%), #ffffff05; }
+#modal .help-community-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: #c4b5ed1f; box-shadow: inset 0 0 0 1px #c4b5ed33; color: #c4b5ed; }
+#modal .help-community-icon svg { width: 22px; height: 22px; }
+#modal .help-community strong { color: var(--win-ink); font-size: 14px; font-weight: 650; }
+#modal .help-community p { margin: 2px 0 0; color: var(--win-muted); font-size: 12.5px; line-height: 1.5; }
+#modal .help-community-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+#modal .help-community-actions .button { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; }
+#modal .help-community-actions svg { width: 16px; height: 16px; }
+
+/* The video guide's chapters keep their own list look inside the steps: the older .export-guide ol/li
+   rules (styles/editor-controls.css) indented them and spaced their rows apart. */
+#modal .export-guide .vg-chapters { margin: 10px 0 0; padding: 0; }
+#modal .export-guide .vg-chapters > li { margin: 0; padding: 0; }

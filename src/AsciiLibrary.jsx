@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import catalog from '../data/ascii-arts.json';
 import { ArtPreview } from './ArtPreview.jsx';
+import { Icon } from './Icon.jsx';
 import { ArtSubmission } from './ArtSubmission.jsx';
 import { catalogAPI } from './catalog/api.js';
 import { t } from '../scripts/i18n.mjs';
@@ -23,6 +24,7 @@ function ArtDialog({ art, editor, canvas, close }) {
   return (
     <dialog ref={ref} className="art-dialog" aria-labelledby="artDialogTitle" onCancel={close}>
       <header className="art-dialog-heading">
+        <span className="win-icon" aria-hidden="true"><Icon name="art"/></span>
         <div>
           <h2 id="artDialogTitle">{artName(art)}</h2>
           <span>{[art.category && t(art.category), art.author, art.player && t('от пользователей')].filter(Boolean).join(' · ')}</span>

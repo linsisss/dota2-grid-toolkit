@@ -1,0 +1,132 @@
+/* The whole site in the editor's look (asked for on 2026-10-02: «сделай теперь в таком стиле весь
+   сайт»; the editor: styles/editor-*.css, the windows: src/window-kit.css). Glass surfaces with a
+   lilac glow in the corner, icon tiles beside page titles, cards for works and files, a glowing main
+   button and glass ones beside it, deep fields that glow on focus, highlights that glide to the
+   chosen tab (scripts/slide-indicator.mjs autoSlides). Imported by every page (src/main.jsx,
+   src/catalog/main.jsx, src/customize/main.jsx, src/landing/home.jsx and main.jsx); the Studio and
+   the workshop come in later chunks, so every rule starts with :root to win whatever the order.
+   Layouts stay the pages' own. Reduced motion keeps the look and drops the motion. */
+
+@import './window-kit.css';
+
+/* Buttons: glass, the main one glowing. */
+:root .catalog-button { border-color: #ffffff14; border-radius: 12px; background: #ffffff0a; transition: background-color .2s, border-color .2s, box-shadow .25s, color .2s; }
+:root .catalog-button:not(:disabled):hover { border-color: #ffffff26; background: #ffffff14; }
+:root .catalog-button.primary { border-color: transparent; background: linear-gradient(180deg, #d4c8f5, #bba9ec); color: #231b35; box-shadow: 0 12px 28px -14px #c4b5edcc, inset 0 1px 0 #ffffff59; }
+:root .catalog-button.primary:not(:disabled):hover { background: linear-gradient(180deg, #ddd3f8, #c6b6f0); box-shadow: 0 16px 34px -14px #c4b5ede6, inset 0 1px 0 #ffffff66; }
+:root .catalog-button.primary:disabled { background: #c4b5ed2e; color: #efeaf599; box-shadow: none; }
+:root .catalog-button.danger:not(:disabled):hover { background: #43303a; border-color: #8a5e68; }
+:root .landing-primary { border-radius: 12px; background: linear-gradient(180deg, #d4c8f5, #bba9ec); box-shadow: 0 14px 30px -14px #c4b5edcc, inset 0 1px 0 #ffffff59; }
+:root .landing-primary:hover { background: linear-gradient(180deg, #ddd3f8, #c6b6f0); box-shadow: 0 18px 38px -14px #c4b5ede6, inset 0 1px 0 #ffffff66; }
+:root .landing-catalog { border-color: #ffffff17; border-radius: 12px; background: #ffffff0a; }
+:root .landing-catalog:hover, :root .landing-catalog[aria-expanded='true'] { border-color: #c4b5ed55; background: #ffffff12; }
+:root .landing-support, :root .stage-caption { border: 1px solid #ffffff12; background: #ffffff08; backdrop-filter: blur(8px); }
+:root .landing-support:hover, :root .stage-caption:hover { border-color: #c4b5ed55; background: #ffffff10; }
+
+/* Switches: a deep track and a glass thumb with a lilac edge. */
+:root :is(.workshop-switch, .custom-seg) { border-color: #ffffff14; background: #15121b; box-shadow: inset 0 1px 3px #0006; }
+:root .workshop-switch { border-radius: 13px; }
+:root :is(.workshop-switch-thumb, .custom-seg-thumb) { background: linear-gradient(180deg, #3b3449, #2e2939); box-shadow: inset 0 0 0 1px #c4b5ed45, 0 8px 18px -10px #c4b5ed99; }
+:root .custom-toggle input:checked { background: linear-gradient(180deg, #d4c8f5, #bba9ec); box-shadow: 0 6px 16px -8px #c4b5edcc; }
+:root .custom-toggle input { transition: background-color .2s, box-shadow .2s; }
+
+/* Tabs, previews' backgrounds and the Studio's menu: the chosen one's glass pill glides to it. */
+:root :is(.catalog-tabs, .catalog-background-switch, .workspace-sidebar nav)[data-indicator] { position: relative; }
+:root :is(.catalog-tabs, .catalog-background-switch, .workspace-sidebar nav)[data-indicator]::before {
+  content: ''; position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
+  width: var(--ind-w); height: var(--ind-h); translate: var(--ind-x) var(--ind-y); border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff14, #ffffff08); box-shadow: inset 0 0 0 1px #c4b5ed45, 0 8px 20px -12px #c4b5ed99;
+}
+:root .catalog-background-switch[data-indicator]::before { border-radius: 6px; }
+:root :is(.catalog-tabs, .catalog-background-switch, .workspace-sidebar nav)[data-indicator='ready']::before { transition: translate .42s cubic-bezier(.3, 1.3, .45, 1), width .3s cubic-bezier(.2, .8, .2, 1), height .3s cubic-bezier(.2, .8, .2, 1); }
+:root :is(.catalog-tabs, .catalog-background-switch, .workspace-sidebar nav)[data-indicator] > :is(button, a) { position: relative; z-index: 1; }
+:root .catalog-tabs[data-indicator] button[aria-pressed=true], :root .catalog-background-switch[data-indicator] button[aria-pressed=true],
+:root .workspace-sidebar nav[data-indicator] [aria-current=page] { background: transparent; }
+:root .catalog-tabs[data-indicator] button::after { display: none; }
+:root .workspace-sidebar nav [aria-current=page] svg { color: var(--cat-accent, #c4b5ed); }
+:root .workspace-sidebar nav :is(a, button) { border-radius: 10px; transition: background-color .2s, color .2s; }
+:root .workspace-sidebar nav :is(a, button):not([aria-current=page]):hover { background: #ffffff08; }
+
+/* Tags: glass pills, the chosen ones lit. */
+:root .catalog-tags :is(button, span) { border-color: #ffffff14; background: #ffffff06; transition: background-color .2s, border-color .2s, color .2s, box-shadow .25s; }
+:root .catalog-tags button:hover { border-color: #ffffff2a; background: #ffffff0d; color: #efeaf5; }
+:root .catalog-tags button[aria-pressed=true] { border-color: #c4b5ed80; background: radial-gradient(120% 140% at 0% 0%, #c4b5ed2b, transparent 70%), #c4b5ed12; color: #efeaf5; box-shadow: 0 6px 16px -10px #c4b5edcc; }
+
+/* Fields: deep, rounded, a soft glow instead of the ring. */
+:root :is(.catalog-page, .catalog-dialog) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), textarea, select) {
+  border-color: #ffffff17; border-radius: 12px; background-color: #15121b; transition: border-color .2s, box-shadow .2s, background-color .2s;
+}
+:root :is(.catalog-page, .catalog-dialog) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), textarea, select):focus-visible { outline: none; border-color: #c4b5ed99; box-shadow: 0 0 0 4px #c4b5ed1f; }
+:root :is(.catalog-search, .workspace-search) { min-height: 44px; padding: 0 14px; border: 1px solid #ffffff14; border-radius: 12px; background: #15121b; transition: border-color .2s, box-shadow .2s; }
+:root :is(.catalog-search, .workspace-search):hover { border-color: #ffffff26; }
+:root :is(.catalog-search, .workspace-search):focus-within { outline: none; border-color: #c4b5ed99; box-shadow: 0 0 0 4px #c4b5ed1f; }
+:root :is(.catalog-search, .workspace-search) svg { color: var(--cat-accent, #c4b5ed); }
+
+/* Page titles with their tile. */
+:root .catalog-title, :root .files-title { align-items: center; }
+:root .win-icon.page-icon { width: 52px; height: 52px; border-radius: 16px; }
+:root .win-icon.page-icon svg { width: 26px; height: 26px; }
+:root .catalog-title h1, :root .files-title h1 { margin-bottom: 0; }
+:root .catalog-heading p, :root .files-heading p { margin-top: 10px; }
+
+/* Works, backgrounds and files as cards: glass under the picture, lit at the edge on hover. */
+:root :is(.catalog-card, .background-card, .workspace-file) {
+  padding: 10px 10px 12px; border: 1px solid #ffffff0d; border-radius: 18px;
+  background: radial-gradient(120% 60% at 0% 0%, #c4b5ed0d, transparent 60%), #1b1922;
+  transition: border-color .25s, box-shadow .3s, background-color .25s;
+}
+:root :is(.catalog-card, .background-card, .workspace-file):hover { border-color: #c4b5ed40; box-shadow: 0 24px 46px -30px #c4b5ed80; }
+:root .catalog-card-art, :root .workspace-file-preview, :root .background-card-picture { border-radius: 12px; }
+:root .catalog-card-art:hover, :root .workspace-file-preview:hover:not(:disabled) { outline: none; }
+:root :is(.catalog-card-info, .background-card-info) { margin-inline: 4px; }
+:root :is(.catalog-card-meta, .background-card-meta) { margin-inline: 4px; }
+:root .workspace-file-info { margin-inline: 4px; }
+:root .catalog-grid { gap: 24px; }
+:root .workspace-files { gap: 22px; }
+
+/* A work's page: its numbers as cards, the side as glass. */
+:root .catalog-stats { gap: 10px; }
+:root .catalog-stats > div { flex: 1; min-width: 0; padding: 12px 14px; border: 1px solid #ffffff10; border-radius: 14px; background: radial-gradient(120% 120% at 0% 0%, #c4b5ed14, transparent 60%), #ffffff05; }
+:root .catalog-stats dd { font-weight: 650; }
+
+/* Empty pages: a glowing tile that floats. */
+:root :is(.workspace-empty, .catalog-empty) > svg { box-sizing: border-box; width: 72px; height: 72px; margin-bottom: 22px; padding: 20px; border-radius: 22px; color: var(--cat-accent, #c4b5ed);
+  background: radial-gradient(circle at 30% 25%, #c4b5ed40, #c4b5ed12 70%); box-shadow: inset 0 0 0 1px #c4b5ed3d, 0 16px 36px -16px #c4b5ed80; }
+
+/* Notices and the Studio's storage note: glass with a lilac or red edge. */
+:root .catalog-notice { border: 1px solid #c4b5ed33; border-radius: 12px; background: radial-gradient(120% 140% at 0% 0%, #c4b5ed17, transparent 60%), #ffffff06; }
+:root .catalog-notice.is-error { border-color: #ff8a9555; background: radial-gradient(120% 140% at 0% 0%, #ff8a951c, transparent 60%), #2a1d24; }
+:root .workspace-storage-note { padding: 14px; border: 1px solid #ffffff10; border-radius: 14px; background: #ffffff05; }
+
+/* The background builder: the panel as the editor's, its file and source cards lit. */
+:root .custom-panel { border-left-color: #ffffff12; background: radial-gradient(130% 30% at 0% 0%, #c4b5ed12, transparent 60%), #1b1922; }
+:root .custom-panel-foot { border-top-color: #ffffff0f; background: linear-gradient(180deg, transparent, #0000001f); }
+:root .custom-file-empty { border-color: #c4b5ed40; border-radius: 12px; background: radial-gradient(120% 140% at 50% 0%, #c4b5ed12, transparent 65%), #ffffff04; }
+:root .custom-file-empty:hover { border-color: #c4b5ed99; background: radial-gradient(120% 140% at 50% 0%, #c4b5ed24, transparent 65%), #ffffff06; }
+:root .custom-file-card { border-color: #ffffff14; border-radius: 12px; background: #ffffff06; }
+:root .custom-drop-sources a { border-color: #ffffff17; background: #ffffff0a; backdrop-filter: blur(6px); }
+:root .custom-drop-sources a:hover { border-color: #c4b5ed80; background: #c4b5ed1a; }
+
+/* «Что нового»: the site's window glass. */
+:root .changelog-dialog { border: 1px solid var(--win-line, #3d3747); border-radius: 20px; background: var(--win-glass); box-shadow: var(--win-shadow); }
+:root .changelog-dialog::backdrop { background: #08060dc4; backdrop-filter: blur(5px); }
+
+:root .catalog-dialog kbd { padding: 0 6px; border-radius: 6px; background: #ffffff0d; box-shadow: inset 0 0 0 1px #ffffff1c, inset 0 -2px 0 #00000059; color: #efeaf5; font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1.6; }
+/* Windows of the site: their glass over the pages' own surface (src/window-kit.css). */
+:root .catalog-dialog { border-color: var(--win-line); border-radius: 20px; background: var(--win-glass); box-shadow: var(--win-shadow); }
+
+@media (prefers-reduced-motion: no-preference) {
+  :root .page-icon { animation: win-pop .55s 80ms var(--win-spring) both; }
+  :root :is(.workspace-empty, .catalog-empty) > svg { animation: site-float 3.6s ease-in-out .6s infinite; }
+  :root .catalog-stats > div { animation: win-rise .45s var(--win-ease) both; }
+  :root .catalog-stats > div:nth-child(2) { animation-delay: 60ms; }
+  :root .catalog-stats > div:nth-child(3) { animation-delay: 120ms; }
+}
+@keyframes site-float { 50% { translate: 0 -5px; } }
+@media (max-width: 760px) {
+  :root .win-icon.page-icon { width: 42px; height: 42px; border-radius: 13px; }
+  :root .win-icon.page-icon svg { width: 21px; height: 21px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root :is(.catalog-tabs, .catalog-background-switch, .workspace-sidebar nav)[data-indicator]::before { transition: none !important; }
+}

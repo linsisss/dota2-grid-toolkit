@@ -54,4 +54,4 @@
 
 ## Источники
 
-Код свой (MIT). Идеи: Xu, Zhang, Wong — Structure-based ASCII Art (2010) и работа о пропорциональных шрифтах (2015); XDoG — Winnemöller et al. (2012); подходы Chafa, Acerola ASCII shader и Alex Harri «ASCII characters are not pixels» изучены, код не заимствован.
+Код свой (GPL-3.0). Идеи: Xu, Zhang, Wong — Structure-based ASCII Art (2010) и работа о пропорциональных шрифтах (2015); XDoG — Winnemöller et al. (2012); подходы Chafa, Acerola ASCII shader и Alex Harri «ASCII characters are not pixels» изучены, код не заимствован.

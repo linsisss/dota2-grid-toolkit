@@ -257,6 +257,9 @@ dialog.catalog-dialog:focus { outline:none; }
 :is(.catalog-page,.catalog-dialog) :is(input,textarea,select) { transition:border-color 120ms ease,box-shadow 120ms ease; }
 
 /* Installation guide: numbered steps and the Steam folder finder shared with the editor's export. */
+/* The video guide above the steps (src/VideoGuide.jsx), in line with them. */
+.catalog-install-video { padding:18px 22px 4px; }
+.catalog-install-video .vg { margin:0; }
 .catalog-install { list-style:none; counter-reset:step; margin:0; padding:10px 22px 24px; display:flex; flex-direction:column; gap:22px; }
 .catalog-install>li { counter-increment:step; position:relative; padding-left:40px; line-height:1.55; }
 .catalog-install>li::before { content:counter(step); position:absolute; left:0; top:-1px; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:#c4b5ed1f; color:var(--cat-accent); font-size:13px; font-weight:600; }
@@ -381,3 +384,152 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 .background-card-actions .catalog-icon svg { width:17px; height:17px; }
 .catalog-background-switch button:disabled { opacity:.45; cursor:default; }
 .background-card-actions .catalog-button { min-height:36px; padding:0 14px; font-size:14px; }
+/* «Как установить» (src/catalog/InstallGuide.jsx): the way chosen as in the editor's download window —
+   cards for the file and the PowerShell command, then only the chosen way's steps. */
+.catalog-install-guide .install-methods { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 18px 22px 0; }
+.catalog-install-guide .install-methods > legend { grid-column: 1 / -1; }
+.catalog-install-guide .catalog-install-video { padding-top: 14px; }
+.catalog-install.is-command { padding-top: 18px; }
+.catalog-install .catalog-install-command { margin-top: 10px; padding: 9px 12px; border-radius: 10px; font-size: 12.5px; background: #15121b; }
+.catalog-install-copy { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 10px; }
+.catalog-install-copy .catalog-button { display: inline-flex; align-items: center; gap: 8px; }
+.catalog-install-copy [data-state='ready'] { color: #a6e3bd; }
+.catalog-install-copy [data-state='error'] { color: #ffb1b8; }
+.catalog-install kbd { padding: 0 6px; border-radius: 6px; background: #ffffff0d; box-shadow: inset 0 0 0 1px #ffffff1c, inset 0 -2px 0 #00000059; font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1.6; white-space: nowrap; }
+.catalog-install-notes { display: grid; gap: 10px; margin: 0 22px 22px; padding-top: 14px; border-top: 1px solid #ffffff0d; color: var(--cat-muted); font-size: 13px; line-height: 1.55; }
+.catalog-install-notes p { margin: 0; }
+.catalog-install-notes a { color: var(--cat-accent); text-decoration: underline; text-underline-offset: 3px; }
+.catalog-install-notes .catalog-icon { vertical-align: middle; width: 28px; height: 28px; }
+@media (max-width: 560px) { .catalog-install-guide .install-methods { grid-template-columns: 1fr; margin-inline: 18px; } .catalog-install-notes { margin-inline: 18px; } }
+@media (prefers-reduced-motion: no-preference) {
+  .catalog-install-guide > :not(.install-methods) { animation: win-rise .35s var(--win-ease) both; }
+}
+.catalog-install-command { display: block; margin: 10px 0 0; padding: 8px 12px; border-radius: 10px; background: #15121b; box-shadow: inset 0 0 0 1px #c4b5ed40; color: #c4b5ed;
+  font: 12.5px/1.5 ui-monospace, 'SF Mono', Consolas, monospace; overflow-wrap: anywhere; user-select: all; }
+.catalog-install-command.is-small { display: inline; margin: 0 4px 0 0; padding: 2px 8px; box-shadow: inset 0 0 0 1px #ffffff14; color: var(--cat-ink); font-size: 11.5px; }
+.catalog-install-command[data-state='busy'] { color: var(--cat-muted); animation: catalog-command-wait 1.4s ease-in-out infinite; }
+.catalog-install-command[data-state='error'] { box-shadow: inset 0 0 0 1px #ff8a9560; color: #ffb1b8; font-family: inherit; }
+@keyframes catalog-command-wait { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .catalog-install-command[data-state='busy'] { animation: none; } }
+
+
+/* Creator profiles (src/catalog/Creator.jsx, CreatorProfile.jsx, ProfileSettings.jsx): a signed-in
+   author's name with their avatar opens their profile; the profile page; its settings. */
+.creator-name { display:inline-flex; align-items:center; gap:7px; max-width:100%; min-width:0; vertical-align:middle; color:inherit; }
+.creator-name img { flex:none; width:20px; height:20px; border-radius:50%; object-fit:cover; background:#2a2633; box-shadow:0 0 0 1px #ffffff1a; }
+.creator-name > span:not(.badge-icons) { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.creator-name:hover > span:not(.badge-icons) { color:var(--cat-ink); text-decoration:underline; text-underline-offset:3px; text-decoration-color:#c4b5ed80; }
+.creator-credit { color:var(--cat-muted); }
+.catalog-card-info > div { min-width:0; }
+.catalog-card-actions { flex:none; }
+.catalog-card-info p, .background-card-info p { display:flex; align-items:center; min-width:0; white-space:nowrap; }
+.catalog-card-info p .creator-credit, .background-card-info p .creator-credit { overflow:hidden; text-overflow:ellipsis; white-space:pre; }
+/* The name and its badges stay whole; «по мотивам» is cut first. */
+:is(.catalog-card-info, .background-card-info) p .creator-name { flex-shrink:0; }
+:is(.catalog-card-info, .background-card-info) p .creator-credit { min-width:0; }
+.creator-credit-note { display:block; margin-top:6px; font-size:13px; font-weight:400; }
+
+.creator-head { display:grid; grid-template-columns:112px minmax(0,1fr) auto; gap:28px; align-items:start; margin-bottom:34px; padding:28px; border:1px solid var(--cat-line); border-radius:14px; background:linear-gradient(135deg,#221e2b,#18161e 70%); }
+.creator-avatar { width:112px; height:112px; border-radius:50%; object-fit:cover; background:#2a2633; box-shadow:0 0 0 1px #ffffff1f, 0 18px 40px -22px #c4b5ed80; }
+.creator-about { min-width:0; }
+.creator-about h1 { margin:4px 0 10px!important; overflow-wrap:anywhere; }
+.creator-facts { display:flex; flex-wrap:wrap; gap:8px 20px; margin:0; color:var(--cat-muted); font-size:14px; }
+.creator-facts > * { display:inline-flex; align-items:center; gap:7px; }
+.creator-facts a:hover { color:var(--cat-ink); }
+.creator-side-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
+/* Profile badges (src/catalog/Badges.jsx): a pill each, its own colour. */
+.profile-badges { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px; padding:0; list-style:none; }
+.profile-badge { --badge:#c4b5ed; display:inline-flex; align-items:center; gap:6px; padding:4px 11px 4px 9px; border-radius:99px; background:color-mix(in srgb, var(--badge) 14%, #15131b);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--badge) 45%, transparent); color:color-mix(in srgb, var(--badge) 88%, #fff); font-size:13px; font-weight:600; line-height:18px; white-space:nowrap; cursor:default; }
+.profile-badge svg { flex:none; width:15px; height:15px; }
+:is(.profile-badge, .badge-icon).is-developer { --badge:#a78bfa; }
+:is(.profile-badge, .badge-icon).is-bughunter { --badge:#5fd39a; }
+:is(.profile-badge, .badge-icon).is-idea { --badge:#f3c46d; }
+:is(.profile-badge, .badge-icon).is-sponsor { --badge:#f78fb3; }
+:is(.profile-badge, .badge-icon).is-likes100 { --badge:#e9a3c9; }
+.badge-icon.is-likes500 { --badge:#ffcf5a; }
+.profile-badge.is-likes100 svg * { fill:currentColor; fill-opacity:.35; }
+.profile-badge.is-likes500 { --badge:#ffcf5a; background:linear-gradient(120deg, #3b2c0e, #2a1f0b 60%, #3d2d0c); box-shadow:inset 0 0 0 1px #ffcf5a80, 0 0 18px -6px #ffcf5a99; }
+/* Small badge icons after a nickname (BadgeIcons). */
+.badge-icons { display:inline-flex; align-items:center; gap:3px; margin-left:6px; flex:none; vertical-align:middle; }
+.badge-icon { --badge:#c4b5ed; display:inline-grid; place-items:center; width:18px; height:18px; border-radius:50%; background:color-mix(in srgb, var(--badge) 20%, #15131b);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--badge) 50%, transparent); color:color-mix(in srgb, var(--badge) 90%, #fff); cursor:default; }
+.badge-icon svg { width:11px; height:11px; }
+.badge-icon.is-likes500 { background:radial-gradient(circle at 35% 30%, #5a4414, #2a1f0b); box-shadow:inset 0 0 0 1px #ffcf5a99, 0 0 8px -2px #ffcf5a88; }
+.creator-side .catalog-subscribe { justify-items:inherit; text-align:inherit; max-width:280px; }
+.creator-side { text-align:right; }
+@media(max-width:900px) { .creator-side { text-align:left; } }
+.badge-editor { display:grid; gap:14px; padding-top:14px; }
+.badge-editor-list { display:grid; gap:8px; }
+.badge-editor-item { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:4px 14px; width:100%; padding:12px 14px; border:1px solid var(--cat-line); border-radius:12px;
+  background:#ffffff06; color:var(--cat-ink); font:inherit; text-align:left; cursor:pointer; transition:border-color .2s, background .2s; }
+.badge-editor-item:hover:not(:disabled) { border-color:#ffffff33; background:#ffffff0d; }
+.badge-editor-item.is-on { border-color:#c4b5ed80; background:#c4b5ed14; }
+.badge-editor-item small { color:var(--cat-muted); font-size:13px; }
+.badge-editor-state { display:inline-flex; align-items:center; gap:5px; color:var(--cat-muted); font-size:13px; font-weight:600; }
+.badge-editor-item.is-on .badge-editor-state { color:#a6e3bd; }
+.badge-editor p { margin:0; font-size:13px; }
+@media(max-width:560px) { .badge-editor-item { grid-template-columns:1fr auto; } .badge-editor-item small { grid-column:1 / -1; grid-row:2; } }
+.creator-bio { margin:16px 0 0!important; white-space:pre-line; overflow-wrap:anywhere; line-height:1.6; }
+.creator-side { display:grid; gap:16px; justify-items:end; }
+.creator-stats { display:grid; grid-template-columns:repeat(4,auto); gap:4px 26px; margin:0; font-variant-numeric:tabular-nums; }
+.creator-stats div { display:grid; gap:2px; }
+.creator-stats dt { color:var(--cat-muted); font-size:12px; }
+.creator-stats dd { display:flex; align-items:center; gap:7px; margin:0; font-size:24px; line-height:1.2; }
+.creator-stats .is-likes dd { color:#d5b6f2; }
+.creator-stats .is-likes svg * { fill:#755383; }
+.creator-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:26px; }
+.creator-toolbar .workshop-switch button { min-width:118px; }
+.creator-empty { padding:40px 0; }
+.workshop-switch.is-none .workshop-switch-thumb { opacity:0; }
+.creator-toolbar .workshop-switch { margin-right:auto; }
+.creator-liked-tab { gap:8px; }
+.creator-liked-tab svg { color:#d5b6f2; }
+:root .creator-liked-tab.is-active, :root .creator-liked-tab.is-active:not(:disabled):hover { border-color:#c4b5ed80; background:#2f2840; color:var(--cat-ink); box-shadow:0 10px 26px -16px #c4b5edaa; }
+.creator-liked-tab.is-active svg * { fill:#755383; }
+.creator-liked-tab .catalog-count { display:inline-block; min-width:20px; padding:1px 6px; border-radius:9px; background:#ffffff14; color:var(--cat-muted); font-size:11px; font-variant-numeric:tabular-nums; }
+.creator-liked-head { display:flex; align-items:center; justify-content:space-between; gap:12px 20px; flex-wrap:wrap; margin-bottom:22px; }
+.creator-private { display:inline-flex; align-items:center; gap:6px; margin:0; font-size:13px; }
+.creator-more { margin-top:24px; }
+.creator-guides { margin-top:0; }
+.creator-guides .guide-card { color:var(--gd-text); }
+
+.account-profile > div { min-width:0; }
+.account-profile > div p { margin:2px 0 0; font-size:14px; }
+/* The account's dropdown (AccountButton): grows from the button, right-aligned under it. */
+@keyframes account-menu-in { from { opacity:0; transform:translateY(-6px) scale(.97); } }
+.account-wrap { position:relative; min-width:0; }
+.account-chevron { flex:none; margin-left:-2px; color:var(--cat-muted, #afa7bf); transition:rotate .2s cubic-bezier(.2,.8,.2,1); }
+.account-button[aria-expanded=true] .account-chevron { rotate:180deg; }
+.account-wrap .account-menu { position:absolute; right:0; top:calc(100% + 8px); z-index:60; display:grid; gap:2px; width:300px; max-width:calc(100vw - 24px); padding:6px;
+  border:1px solid #3a3444; border-radius:14px; background:linear-gradient(180deg,#24202d,#1c1a23); box-shadow:0 22px 48px -10px #000c, 0 0 0 1px #ffffff08 inset;
+  color:#efeaf5; font-size:14px; line-height:1.4; transform-origin:top right; animation:account-menu-in .18s cubic-bezier(.2,.8,.2,1) both; }
+.account-wrap .account-menu-head { display:flex; align-items:center; gap:12px; padding:10px 10px 12px; min-width:0; }
+.account-wrap .account-menu-head .account-avatar { width:40px; height:40px; }
+.account-wrap .account-menu-head span { display:grid; min-width:0; }
+.account-wrap .account-menu-head b { overflow:hidden; font-size:16px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.account-wrap .account-menu-head small { overflow:hidden; color:#afa7bf; font-size:12.5px; text-overflow:ellipsis; white-space:nowrap; }
+.account-wrap .account-menu :is(a,button)[role=menuitem]:not(.catalog-link) { display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px; border:0; border-radius:9px; background:none;
+  color:#efeaf5; font:inherit; font-size:14px; text-align:left; text-decoration:none; cursor:pointer; transition:background .14s ease, color .14s ease; }
+.account-wrap .account-menu :is(a,button)[role=menuitem]:not(.catalog-link):is(:hover,:focus-visible) { background:#2f2a3a; outline:none; }
+.account-wrap .account-menu :is(a,button)[role=menuitem] svg { flex:none; width:18px; height:18px; color:#c4b5ed; }
+.account-wrap .account-menu hr { margin:4px 6px; border:0; border-top:1px solid #ffffff14; }
+.account-wrap .account-menu-note { display:flex; align-items:center; gap:7px; max-width:none; margin:2px 12px 6px; color:#afa7bf; font-size:12.5px; line-height:1.45; }
+.account-wrap .account-menu-note svg { flex:none; animation:account-spin 1s linear infinite; }
+@keyframes account-spin { to { rotate:360deg; } }
+.account-wrap .account-menu-error { display:grid; gap:4px; justify-items:start; margin:2px 6px 6px; padding:8px 10px; border-radius:9px; background:#3a1f26; color:#ffc9d2; font-size:13px; }
+.account-wrap .account-menu .account-menu-out:not(:disabled):is(:hover,:focus-visible) { background:#3a1f26; color:#ffd5dc; }
+.account-wrap .account-menu .account-menu-out:not(:disabled):is(:hover,:focus-visible) svg { color:#ff9fb0; }
+@media(prefers-reduced-motion:reduce) { .account-wrap .account-menu, .account-chevron, .account-wrap .account-menu-note svg { animation:none; transition:none; } }
+.profile-settings { display:grid; gap:14px; padding-top:14px; }
+.profile-settings label { display:block; }
+.profile-settings .catalog-check { margin-top:4px; font-weight:400; }
+.profile-settings .catalog-actions { flex-wrap:wrap; align-items:center; margin-top:6px; }
+.profile-settings .catalog-actions .catalog-link { margin-right:auto; }
+.profile-avatar-row { display:flex; align-items:center; gap:20px; margin-bottom:6px; }
+.profile-avatar { flex:none; width:72px; height:72px; border-radius:50%; object-fit:cover; background:#2a2633; box-shadow:0 0 0 1px #ffffff1f; }
+.profile-avatar-choices { display:flex; flex-wrap:wrap; gap:8px; }
+.profile-avatar-choices .catalog-button[aria-pressed=true] { border-color:#c4b5ed; background:#2f2840; }
+.profile-hint { margin:-8px 0 0!important; font-size:13px; }
+@media(max-width:900px) { .creator-head { grid-template-columns:88px minmax(0,1fr); gap:20px; padding:22px; } .creator-avatar { width:88px; height:88px; } .creator-side { grid-column:1/-1; justify-items:start; } }
+@media(max-width:560px) { .creator-liked-tab { flex:1; justify-content:center; } .creator-head { grid-template-columns:1fr; } .creator-stats { grid-template-columns:repeat(2,auto); gap:12px 28px; } .creator-toolbar .workshop-switch { width:100%; } .creator-toolbar .workshop-switch button { min-width:0; flex:1; font-size:13px; } .profile-avatar-row { flex-direction:column; align-items:flex-start; } }

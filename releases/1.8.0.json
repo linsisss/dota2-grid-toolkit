@@ -12,16 +12,19 @@
         },
         {
           "text": "Ник вместо @username: всем, кто входил через Telegram, выдан ник из двух слов",
-          "children": ["Свой ник, описание, аватарка и показ Telegram — в «Настройках профиля»; ник меняется раз в неделю"]
+          "children": ["Свой ник ставится в «Настройках профиля», менять его можно раз в неделю"]
         },
+        "Аватарка на выбор: узор, фото из Telegram или своя картинка",
+        "Описание профиля и переключатель «Показывать мой Telegram» — без него @username нигде не виден",
         {
           "text": "Значки: «Разработчик», «Bug Hunter», «Идейный вдохновитель», «Поддержавший», «100 лайков» и «500 лайков»",
-          "children": ["Видны в профиле и иконками рядом с ником; после доната напиши @dissonance — и получишь «Поддержавший»"]
+          "children": ["«100 лайков» и «500 лайков» появляются сами, остальные выдают админы — бот напишет о новом значке"]
         },
+        "Значки видны в профиле и иконками рядом с ником — на карточках, в гайдах и комментариях",
         "«Понравилось» в своём профиле — всё с твоим лайком в одном месте, видно только тебе",
         "На автора можно подписаться прямо из профиля — бот пришлёт его новые сетки",
         "Автор сетки или фона после входа — ник профиля, а вместо поля «Автор» — «Оригинал / по мотивам»",
-        "Меню аккаунта выпадает из кнопки с ником"
+        "Меню аккаунта выпадает из кнопки с ником: «Мой профиль», «Понравилось», «Настройки профиля»"
       ]
     },
     {
@@ -29,25 +32,38 @@
       "changes": [
         {
           "text": "Новый раздел «Гайды» — как оформить профиль, минипрофиль и не только",
-          "children": ["Писать можно после входа через Telegram, каждый гайд проверяет модератор"]
+          "children": ["Разделы на старте — «Профили» и «Минипрофили»"]
         },
-        "Редактор гайдов: картинки и GIF, видео, YouTube и файлы для скачивания; черновик сохраняется сам",
-        "Лайки и комментарии с ответами веткой",
+        {
+          "text": "Писать может каждый после входа через Telegram, каждый гайд и каждую правку проверяет модератор",
+          "children": ["Бот напишет, когда гайд опубликован или почему его отклонили"]
+        },
+        "Визуальный редактор: заголовки, списки, цитаты, спойлеры, код и ссылки",
+        "В гайд можно вставить картинки и GIF, видео до 50 МБ, YouTube и файлы для скачивания — кнопкой, перетаскиванием или Ctrl + V",
+        "Черновик сохраняется в аккаунт сам, писать можно с любого устройства; есть предпросмотр и выбор обложки",
+        "Страница гайда: оглавление с подсветкой текущего раздела, лайк и «Поделиться» всегда на виду",
+        "Лайки и комментарии: ответы собираются веткой, свои комментарии и комментарии под своим гайдом можно удалить",
+        "«Мои гайды» — черновики, гайды на проверке и опубликованные",
+        "Ссылка на гайд в мессенджере показывает обложку, название и начало текста",
         "Пометка «Модификация файлов» объясняет, чем может обернуться замена файлов игры и как всё вернуть"
       ]
     },
     {
       "title": "Шрифт",
       "changes": [
+        "Шрифты для Dota — больше не «скоро»: кнопка «Шрифты» на главной и в «Студии»",
         {
-          "text": "Шрифты для Dota — больше не «скоро»: 10 бесплатных шрифтов с русскими буквами или свой .ttf/.otf",
+          "text": "10 бесплатных шрифтов с русскими буквами, у большинства несколько начертаний, или свой .ttf/.otf",
           "children": ["Audex, Bebas Neue, Comic Relief, Cormorant Unicase, Correction Tape, Divagon, Libre Franklin, Monocraft, Oswald и Playfair Display"]
         },
         {
           "text": "Превью на настоящих экранах игры — главное меню и матч, черту между ними можно тянуть",
           "children": ["В матче Tab открывает таблицу счёта, клик по золоту — магазин"]
         },
-        "Установка командой PowerShell и «Вернуть обычный шрифт» под кнопкой скачивания"
+        "Надписи в превью стоят как в Dota: размеры из файлов игры, ники с многоточием, золото сжимается, если не влезает",
+        "Можно заменить только текст, только заголовки или только цифры",
+        "Установка командой PowerShell: сама найдёт архив и Dota и сохранит родные шрифты",
+        "«Вернуть обычный шрифт» под кнопкой скачивания — командой или проверкой целостности в Steam"
       ]
     },
     {
@@ -57,16 +73,29 @@
           "text": "Мета от STRATZ: группа по мете и шаблон «По мете» — сильные герои каждой позиции с пикрейтом и винрейтом",
           "children": ["Ранг и 5, 8 или 10 героев на выбор; у любой группы — «Упорядочить по мете»"]
         },
+        "Окно меты — с медалями рангов и иконками позиций из игры",
+        "«Добавить группу» спрашивает: обычная или по мете; новые группы встают на свободное место, а не поверх других",
         {
           "text": "Установка сетки командой PowerShell: сама найдёт папку аккаунта Steam и положит туда сетку",
           "children": ["Прежние сетки сохраняются копией, вернуть их — второй командой"]
         },
-        "Окно «Экспортировать» понятнее: «Файлом вручную» или «Командой PowerShell» и шаги выбранного способа",
-        "Видеогайд по установке сетки с главами — в окне скачивания и в мастерской",
-        "Холст двигается куда угодно: колесом, пробелом с перетаскиванием или средней кнопкой",
-        "Новое обучение: подсветка перелетает от шага к шагу, свойства и шаблоны открываются сами",
+        {
+          "text": "Окно «Экспортировать» понятнее: что попадёт в Dota, выбор «Файлом вручную» или «Командой PowerShell» и шаги способа",
+          "children": ["Склейка строк и файл проекта — в «Дополнительно»"]
+        },
+        "Видеогайд по установке сетки: главы, скорость, полный экран",
+        {
+          "text": "Холст двигается куда угодно: колесом, пробелом с перетаскиванием или средней кнопкой",
+          "children": ["«Вписать» (0) возвращает его в центр"]
+        },
+        {
+          "text": "Новое обучение: подсветка перелетает от шага к шагу, свойства и шаблоны открываются сами",
+          "children": ["В конце — «Сетка по мете» или чистый холст"]
+        },
         "Полоса стилей в «Изображении в ASCII» листается колесом мыши",
-        "«Чат и новости» в шапке редактора"
+        "Новый вид панелей «Свойства» и режимов; выбранный инструмент плавно переезжает",
+        "«Чат и новости» в шапке редактора",
+        "Исправлено: уведомление при исчезновении отъезжало вправо"
       ]
     },
     {
@@ -74,6 +103,7 @@
       "changes": [
         "«Как установить» — с выбором «Файлом вручную» или «Командой PowerShell» и видеогайдом",
         "Ник и значки автора на карточках сеток и фонов",
+        "Поиск находит работы и по нику автора",
         "В каждой скачанной сетке первой строкой — что она создана на gridstudio.me"
       ]
     },
@@ -94,9 +124,15 @@
           "text": "«Чат и новости» — чат пользователей и канал с новостями в одном окне",
           "children": ["«Сообщить о баге» сразу копирует справку для разработчиков — останется вставить в сообщение"]
         },
-        "«Поддержать разработку»: DonationAlerts и криптовалюта — адрес копируется по клику, QR-код при наведении",
-        "Новый вид всего сайта и редактора: тёмное стекло, плавные анимации, окна в одном стиле",
-        "Одно окно жалобы для сеток, фонов, гайдов и комментариев — частые причины одной кнопкой"
+        "У сообщений о сбоях — кнопка «Сообщить в чат»",
+        {
+          "text": "«Поддержать разработку»: DonationAlerts и криптовалюта — адрес копируется по клику, QR-код при наведении",
+          "children": ["После доната напиши @dissonance — и получишь значок «Поддержавший»"]
+        },
+        "Новый вид всего сайта: карточки из тёмного стекла, плавные анимации",
+        "Все окна сайта и редактора — в одном стиле",
+        "Одно окно жалобы для сеток, фонов, гайдов и комментариев — частые причины одной кнопкой",
+        "Блок с авторами, поддержкой и чатом на главной стал крупнее"
       ]
     }
   ],
@@ -111,16 +147,19 @@
           },
           {
             "text": "A nickname instead of the @username: everyone who signed in with Telegram got a two-word nickname",
-            "children": ["Your own nickname, description, avatar and Telegram display are in «Profile settings»; the nickname changes once a week"]
+            "children": ["Set your own in «Profile settings»; it can change once a week"]
           },
+          "An avatar of your choice: a pattern, the Telegram photo or your own picture",
+          "A profile description and the «Show my Telegram» switch — without it the @username is hidden everywhere",
           {
             "text": "Badges: Developer, Bug Hunter, Idea maker, Supporter, 100 likes and 500 likes",
-            "children": ["Shown in the profile and as icons next to the nickname; after donating, message @dissonance to get Supporter"]
+            "children": ["100 and 500 likes come by themselves, admins give the rest — the bot tells you about a new badge"]
           },
+          "Badges show in the profile and as icons next to the nickname — on cards, in guides and comments",
           "«Liked» on your profile — everything you liked in one place, only you can see it",
           "Follow a creator right from their profile — the bot sends their new grids",
           "A signed-in author's grid or background is signed by the profile nickname, and «Author» became «Original / based on»",
-          "The account menu drops down from the nickname button"
+          "The account menu drops down from the nickname button: «My profile», «Liked», «Profile settings»"
         ]
       },
       {
@@ -128,25 +167,38 @@
         "changes": [
           {
             "text": "A new «Guides» section — how to style your profile, mini-profile and more",
-            "children": ["Write one after signing in with Telegram; a moderator checks every guide"]
+            "children": ["The first sections are «Profiles» and «Mini-profiles»"]
           },
-          "A guide editor: pictures and GIFs, video, YouTube and files to download; the draft saves itself",
-          "Likes and comments with threaded replies",
+          {
+            "text": "Anyone signed in with Telegram can write one; a moderator checks every guide and every edit",
+            "children": ["The bot tells you when a guide is published or why it was turned down"]
+          },
+          "A visual editor: headings, lists, quotes, spoilers, code and links",
+          "Pictures and GIFs, video up to 50 MB, YouTube and files to download — with a button, drag and drop or Ctrl + V",
+          "The draft saves to your account by itself, so you can write from any device; there's a preview and a cover of your choice",
+          "A guide's page: contents with the current section lit, the like and «Share» always in view",
+          "Likes and comments: replies gather in a thread; delete your own comments and the ones under your guide",
+          "«My guides» — drafts, guides in review and published ones",
+          "A link to a guide in a messenger shows the cover, the title and the start of the text",
           "The «Game file mods» mark explains what changing the game's files may lead to and how to undo it"
         ]
       },
       {
         "title": "Font",
         "changes": [
+          "Fonts for Dota are no longer «soon»: the «Fonts» button on the home page and in the Studio",
           {
-            "text": "Fonts for Dota are no longer «soon»: 10 free fonts with Cyrillic, or your own .ttf/.otf",
+            "text": "10 free fonts with Cyrillic, most in several weights, or your own .ttf/.otf",
             "children": ["Audex, Bebas Neue, Comic Relief, Cormorant Unicase, Correction Tape, Divagon, Libre Franklin, Monocraft, Oswald and Playfair Display"]
           },
           {
             "text": "A preview on real game screens — the main menu and a match, with a draggable line between them",
             "children": ["In the match, Tab opens the scoreboard and a click on the gold opens the shop"]
           },
-          "Install with a PowerShell command, and «Restore the default font» under the download button"
+          "The preview lays text out like Dota: sizes from the game's files, nicknames with an ellipsis, gold squeezed when it doesn't fit",
+          "Replace only the text, only the headings or only the numbers",
+          "Install with a PowerShell command: it finds the archive and Dota and keeps the original fonts",
+          "«Restore the default font» under the download button — with a command or Steam's file check"
         ]
       },
       {
@@ -156,16 +208,29 @@
             "text": "Meta from STRATZ: a meta group and the «By meta» template — the strongest heroes of each position with pick and win rates",
             "children": ["Pick the rank and 5, 8 or 10 heroes; any group can be «Sorted by meta»"]
           },
+          "The meta window has the game's rank medals and position icons",
+          "«Add group» asks: a regular one or by meta; new groups go to free space instead of on top of others",
           {
             "text": "Install a grid with a PowerShell command: it finds your Steam account folder and puts the grid there",
             "children": ["Your previous grids are kept as a copy; a second command brings them back"]
           },
-          "A clearer «Export» window: «File by hand» or «PowerShell command» and the steps of the chosen way",
-          "A video guide to installing a grid, with chapters — in the download window and in the workshop",
-          "Move the canvas anywhere: with the wheel, space and drag, or the middle button",
-          "A new tour: the highlight flies from step to step, properties and templates open by themselves",
+          {
+            "text": "A clearer «Export» window: what goes into Dota, «File by hand» or «PowerShell command», and the steps of the chosen way",
+            "children": ["Row merging and the project file are under «More»"]
+          },
+          "A video guide to installing a grid: chapters, speed, full screen",
+          {
+            "text": "Move the canvas anywhere: with the wheel, space and drag, or the middle button",
+            "children": ["«Fit» (0) brings it back to the centre"]
+          },
+          {
+            "text": "A new tour: the highlight flies from step to step, properties and templates open by themselves",
+            "children": ["It ends with «Grid by meta» or an empty canvas"]
+          },
           "The style strip in «Image to ASCII» scrolls with the mouse wheel",
-          "«Chat and news» in the editor header"
+          "A new look for the «Properties» and mode panels; the chosen tool glides into place",
+          "«Chat and news» in the editor header",
+          "Fixed: a notification slid to the right as it disappeared"
         ]
       },
       {
@@ -173,6 +238,7 @@
         "changes": [
           "«How to install» lets you choose «File by hand» or «PowerShell command» and has the video guide",
           "The author's nickname and badges on grid and background cards",
+          "Search finds works by the author's nickname too",
           "Every downloaded grid says on its first line that it was made on gridstudio.me"
         ]
       },
@@ -193,9 +259,15 @@
             "text": "«Chat and news» — the users' chat and the news channel in one window",
             "children": ["«Report a bug» copies a note for the developers right away — just paste it into your message"]
           },
-          "«Support development»: DonationAlerts and crypto — the address copies on a click, the QR code shows on hover",
-          "A new look for the whole site and editor: dark glass, smooth animations, windows in one style",
-          "One report window for grids, backgrounds, guides and comments — common reasons in one click"
+          "Error messages have a «Report in chat» button",
+          {
+            "text": "«Support development»: DonationAlerts and crypto — the address copies on a click, the QR code shows on hover",
+            "children": ["After donating, message @dissonance to get the Supporter badge"]
+          },
+          "A new look for the whole site: dark glass cards, smooth animations",
+          "All windows of the site and the editor in one style",
+          "One report window for grids, backgrounds, guides and comments — common reasons in one click",
+          "The authors, support and chat block on the home page is bigger"
         ]
       }
     ]

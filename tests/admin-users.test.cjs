@@ -24,7 +24,7 @@ test('admin users: everyone who signed in with Telegram, their profile and Teleg
   assert.equal(all.all, 3); assert.equal(all.total, 3);
   const a = all.items.find((user) => user.id === '1201');
   assert.equal(a.profile.nickname, 'Совушка'); assert.equal(a.telegram.username, 'anna_tg'); assert.equal(a.telegram.name, 'Анна'); assert.equal(a.telegram.shown, true);
-  assert.equal(a.works.grids, 1); assert.equal(a.blocked, 0);
+  assert.equal(a.works.grids, 1); assert.equal(a.blocked, 0); assert.equal(a.came.source, 'unknown', 'signed in before sources were kept'); assert.equal(a.online, false);
   const b = all.items.find((user) => user.id === '1202');
   assert.equal(b.telegram.username, ''); assert.equal(b.telegram.shown, false); assert.ok(b.blocked > Date.now());
   for (const [q, id] of [['совуш', '1201'], ['@anna', '1201'], ['анна', '1201'], ['1202', '1202'], ['BOB', '1202']]) {

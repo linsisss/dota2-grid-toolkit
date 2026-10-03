@@ -5,6 +5,7 @@ import { profilePath } from './Creator.jsx';
 import ProfileSettings from './ProfileSettings.jsx';
 import { attachGuestWorkspaces, openWorkspaceRegistry } from '../../scripts/workspaces.mjs';
 import { t } from '../../scripts/i18n.mjs';
+import { signupSource } from '../site-stats.js';
 
 const Context = createContext(null);
 const AUTH_RECHECK = 5 * 60_000;
@@ -72,7 +73,7 @@ function LoginDialog({ telegramWindow, reason, onClose, onSuccess }) {
         try { const result = await catalogAPI(`/auth/status?id=${value.id}`, { signal: controller.signal }); if (!active) return;
           if (result.state === 'approved') {
             setFinishing(true);
-            await catalogAPI('/auth/finish', { method: 'POST', body: { id: value.id, userId: result.user.id }, signal: controller.signal });
+            await catalogAPI('/auth/finish', { method: 'POST', body: { id: value.id, userId: result.user.id, source: signupSource() }, signal: controller.signal });
             if (active) await onSuccess(); return;
           }
           timer = setTimeout(poll, 2000);

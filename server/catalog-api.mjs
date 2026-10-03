@@ -16,7 +16,7 @@ import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
 import { StudioBackgrounds } from './studio-backgrounds.mjs';
 import { pickSafeGrid, renderSpaceThumbnail } from './catalog-preview.mjs';
 import { pageMeta, tabOf } from '../scripts/og-pages.mjs';
-import { SiteStats } from './site-stats.mjs';
+import { STAT_ROBOT, SiteStats } from './site-stats.mjs';
 import { adminUsers } from './admin-users.mjs';
 import { InstallPacks, PACK_LIMITS } from './install-packs.mjs';
 import { PREVIEW_TEXT, authorOf, backgroundPreviewImage, gridPreviewImage, guidePreviewImage, previewTitle, profilePreviewImage, sitePage, withPreview } from './link-preview.mjs';
@@ -197,10 +197,16 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         return send(200, await steamProfiles.resolve(url.searchParams.get('profile')));
       }
       // The site's statistics (server/site-stats.mjs): a page shown or an action done, from the pages.
+      // The visitor: the page's own random id (src/site-stats.js; kept as its HMAC), else the browser cookie.
+      // Robots and programs are not counted: no User-Agent, or one that says so (the page itself skips
+      // browsers driven by a program).
       if (path === '/hit' && method === 'POST') {
-        const body = await readJSON(request, 2_000);
-        if (body.page) stats.visit(String(body.page), identity.browser, { account: user?.id || null, referrer: body.referrer, mobile: body.mobile === true, lang: body.lang });
-        if (['grid-export', 'background-pack', 'font-pack'].includes(body.event)) stats.event(body.event, identity.browser);
+        const body = await readJSON(request, 2_000), agent = String(request.headers['user-agent'] || '');
+        if (agent && !STAT_ROBOT.test(agent)) {
+          const who = /^[A-Za-z0-9_-]{22}$/.test(String(body.visitor || '')) ? store.identity('visitor', body.visitor) : identity.browser;
+          if (body.page) stats.visit(String(body.page), who, { account: user?.id || null, referrer: body.referrer, mobile: body.mobile === true, lang: body.lang, ping: body.ping === true });
+          if (['grid-export', 'background-pack', 'font-pack'].includes(body.event)) stats.event(body.event, who);
+        }
         response.writeHead(204); return response.end();
       }
       // A background's or font's pack for its PowerShell command (server/install-packs.mjs): sent in parts,
@@ -303,8 +309,11 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       if (path === '/auth/finish' && method === 'POST') {
         const login = loginCookie(), body = await readJSON(request);
         if (body.id !== login.id) fail(409, 'Попытка входа изменилась.');
+        // A first sign-in makes the account: where it came from is kept once (server/site-stats.mjs signup).
+        const fresh = !store.get('SELECT 1 x FROM accounts WHERE id=?', String(body.userId));
         const result = accounts.finish(login.id, login.verifier, body.userId, session);
         stats.event('login', result.user?.id);
+        if (fresh && result.user) stats.signup(result.user.id, body.source, /^[A-Za-z0-9_-]{22}$/.test(String(body.source?.visitor || '')) ? store.identity('visitor', body.source.visitor) : identity.browser);
         setCookie(cookie('gs_account', result.session, SESSION_AGE)); setCookie(cookie('gs_login', '', 0));
         return send(200, { user: result.user });
       }
@@ -615,8 +624,10 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         if (path === '/admin/journal' && method === 'GET') return send(200, adminJournal(store, { before: Number(url.searchParams.get('before')) || 0 }));
         // «Статистика» (server/site-stats.mjs): visits, sign-ups, downloads and activity for 7, 30, 90 or 365 days.
         if (path === '/admin/stats' && method === 'GET') return send(200, stats.report(Number(url.searchParams.get('days')) || 30));
+        if (path === '/admin/stats/live' && method === 'GET') return send(200, stats.live());
         // «Пользователи» (server/admin-users.mjs): everyone who signed in with Telegram, their profile and Telegram.
-        if (path === '/admin/users' && method === 'GET') return send(200, adminUsers(store, { q: url.searchParams.get('q') || '', sort: url.searchParams.get('sort') || 'new', offset: Number(url.searchParams.get('offset')) || 0 }));
+        if (path === '/admin/users' && method === 'GET') return send(200, adminUsers(store, stats, { q: url.searchParams.get('q') || '', sort: url.searchParams.get('sort') || 'new',
+          offset: Number(url.searchParams.get('offset')) || 0, source: url.searchParams.get('source') || '' }));
         const search = (url.searchParams.get('q') || '').trim().slice(0, 80);
         if (path.startsWith('/admin/guides') && await guideAdminRoutes({ request, url, path, method, send, guides, readJSON, actor, search })) return;
         if (path === '/admin/works' && method === 'GET') return send(200, { ...store.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search),

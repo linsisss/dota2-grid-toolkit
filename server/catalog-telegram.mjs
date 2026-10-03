@@ -1,8 +1,8 @@
 import { Telegram, MediaSource } from 'puregram';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { loadEnvFile } from 'node:process';
-import { resolve } from 'node:path';
+import { basename, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { CatalogStore } from './catalog-store.mjs';
@@ -16,6 +16,7 @@ import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
 import { telegramAvatar } from './telegram-profile.mjs';
 import { CatalogGuides } from './guides.mjs';
 import { guidePreviewImage } from './link-preview.mjs';
+import { FAQ, faqEdit, faqResults } from './telegram-faq.mjs';
 
 export const MODERATION_CHAT = '-1004309207941', MODERATION_TOPIC = 6;
 export function telegramConfig(env = process.env) {
@@ -432,6 +433,41 @@ export class CatalogTelegram {
     }
     this.queue.sync(); await this.refreshCards();
   }
+  // The quick answers' pictures as Telegram files (an inline answer takes no outside link): each is sent
+  // once, silently, to the moderation topic and deleted at once (the user's choice, 2026-10-03); its
+  // file_id is kept with the file's hash, so a changed picture goes up again. Failures retry in 10 minutes.
+  async faqMedia() {
+    if (this.faqFiles && !this.faqRetryAt) return this.faqFiles;
+    if (this.faqRetryAt > Date.now()) return this.faqFiles;
+    const files = {}; let failed = false;
+    for (const entry of FAQ.filter((item) => item.image)) {
+      try {
+        const bytes = readFileSync(new URL(`../${entry.image.file}`, import.meta.url)), hash = createHash('sha256').update(bytes).digest('hex').slice(0, 16);
+        const saved = JSON.parse(this.queue.setting(`faq-media:${entry.id}`) || 'null');
+        if (saved?.hash === hash) { files[entry.id] = saved.file; continue; }
+        const message = await this.api.sendPhoto({ chat_id: this.config.chatId, message_thread_id: this.config.topicId, disable_notification: true,
+          photo: MediaSource.buffer(bytes, { filename: basename(entry.image.file) }) });
+        await this.api.deleteMessage({ chat_id: this.config.chatId, message_id: message.message_id }).catch(() => this.log('Быстрые ответы: картинку загрузил, но удалить из топика не смог.'));
+        const file = message.photo?.at(-1)?.file_id;
+        if (!file) throw new Error('no file_id');
+        this.queue.set(`faq-media:${entry.id}`, JSON.stringify({ hash, file })); files[entry.id] = file;
+      } catch (error) { failed = true; this.log(`Быстрые ответы: картинка «${entry.id}» не загрузилась (${errorCode(error) || String(error?.message || '').slice(0, 100)}).`); }
+    }
+    this.faqRetryAt = failed ? Date.now() + 600_000 : 0;
+    return this.faqFiles = files;
+  }
+  // Quick answers for the chat (server/telegram-faq.mjs): `@бот вопрос` lists them, a chosen one gets its
+  // custom emoji by an edit. Not cached (cache_time 0): a cached answer brings no chosen_inline_result.
+  async inlineQuery(query) {
+    try { await this.api.answerInlineQuery({ inline_query_id: query.id, results: faqResults(query.query, this.config.origin, this.faqFiles || {}), cache_time: 0 }); }
+    catch (error) { this.log(`Быстрые ответы: не удалось ответить (${errorCode(error) || 'нет связи'} ${String(error?.description || error?.message || '').slice(0, 200)}).`); }
+  }
+  async chosenInline(chosen) {
+    const edit = chosen.inline_message_id ? faqEdit(chosen.result_id, this.config.origin, this.faqFiles || {}) : null;
+    if (!edit) return;
+    try { await this.api.editMessageText({ inline_message_id: chosen.inline_message_id, ...edit }); }
+    catch (error) { this.log(`Быстрые ответы: не удалось добавить иконки (${errorCode(error) || 'нет связи'} ${String(error?.description || error?.message || '').slice(0, 200)}).`); }
+  }
   async loginMessage(message) {
     const match = /^\/start(?:@\w+)? login_([\w-]{32})$/.exec(message.text || '');
     if (!match || message.chat?.type !== 'private' || message.from?.is_bot || message.chat.id !== message.from?.id) return;
@@ -476,9 +512,9 @@ export class CatalogTelegram {
     try {
       while (!signal.aborted) {
         if (leaseLost || !this.queue.lease(this.owner)) throw new Error('Процесс потерял право обрабатывать очередь.');
-        await this.deliverOne(); await this.refreshCards(); await this.deliverAuthorNotices(); await this.deliverArtNotices(); await this.deliverGuideNotices(); await this.deliverRejectNotices(); await this.deliverBadgeNotices(); await this.deliverNotifications();
+        await this.faqMedia(); await this.deliverOne(); await this.refreshCards(); await this.deliverAuthorNotices(); await this.deliverArtNotices(); await this.deliverGuideNotices(); await this.deliverRejectNotices(); await this.deliverBadgeNotices(); await this.deliverNotifications();
         let updates;
-        try { updates = await this.api.getUpdates({ offset: Number(this.queue.setting('offset') || 0), timeout: 10, limit: 20, allowed_updates: ['callback_query', 'message'] }); }
+        try { updates = await this.api.getUpdates({ offset: Number(this.queue.setting('offset') || 0), timeout: 10, limit: 20, allowed_updates: ['callback_query', 'message', 'inline_query', 'chosen_inline_result'] }); }
         catch (error) {
           if (errorCode(error) === 409) throw new Error('У этого бота уже запущен другой getUpdates-процесс. Останови дубликат.');
           this.log('Telegram недоступен. Очередь сохранена; повтор через 10 секунд.');
@@ -488,6 +524,8 @@ export class CatalogTelegram {
           if (signal.aborted) break;
           if (update.callback_query) await this.callback(update.callback_query);
           if (update.message) await this.loginMessage(update.message);
+          if (update.inline_query) await this.inlineQuery(update.inline_query);
+          if (update.chosen_inline_result) await this.chosenInline(update.chosen_inline_result);
           this.queue.set('offset', update.update_id + 1);
         }
       }

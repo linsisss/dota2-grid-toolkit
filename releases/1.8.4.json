@@ -1,0 +1,29 @@
+{
+  "version": "1.8.4",
+  "date": "2026-10-03",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.4",
+  "sections": [
+    {
+      "title": "Бот",
+      "changes": [
+        {
+          "text": "Быстрые ответы в чате: напишите @grid_studio_bot и начните вопрос — бот предложит готовый ответ с картинкой и кнопками",
+          "children": ["Пока три: несколько сеток в одном файле, что написать вместо «не работает» и что делать, если фон не появился"]
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Bot",
+        "changes": [
+          {
+            "text": "Quick answers in the chat: type @grid_studio_bot and start a question — the bot offers a ready answer with a picture and buttons",
+            "children": ["Three so far: several grids in one file, what to write instead of “it doesn’t work”, and what to do when the background doesn’t show"]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -48,6 +48,8 @@ export default defineConfig({
         cpSync('tools', 'dist/tools', { recursive: true });
         // Link preview pictures (Open Graph) need a stable address.
         cpSync('assets/og', 'dist/assets/og', { recursive: true });
+        // Pictures of the bot's quick answers (server/telegram-faq.mjs).
+        cpSync('assets/faq', 'dist/assets/faq', { recursive: true });
       }
     }
   ]

@@ -8,6 +8,7 @@
 // horizontalRule, and the media: image, video, file (an upload's id — the server knows its type, size
 // and name) and youtube (a video id). Inline: text with marks bold, italic, underline, strike, code,
 // spoiler and link (http, https, tg or a path of this site), and hardBreak.
+import { hasLink } from './comment-links.mjs';
 
 export const GUIDE_LIMITS = Object.freeze({
   title: 120, summary: 280, text: 60_000, nodes: 6000, depth: 8, media: 60, alt: 200, href: 2000,
@@ -190,5 +191,6 @@ export function cleanComment(value) {
     .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
   if (!text) throw new GuideDocumentError('Напиши комментарий.');
   if (text.length > GUIDE_LIMITS.comment) throw new GuideDocumentError('Комментарий до 2000 символов.');
+  if (hasLink(text)) throw new GuideDocumentError('Ссылки в комментариях запрещены — так мы защищаем аккаунты от фишинга.');
   return text;
 }

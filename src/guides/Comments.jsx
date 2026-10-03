@@ -8,13 +8,11 @@ import { Author, ago } from './GuideParts.jsx';
 // Comments (asked for on 2026-10-02 under guides, on 2026-10-03 under grids and backgrounds): published
 // at once, threads oldest first, 50 at a time. Replies sit under the comment that started their thread,
 // one step in; a reply to a reply names whom it answers. The commenter, the author of what is commented
-// and admins delete; others report. Addresses in a comment become links (never markup: the text is
-// plain). `api`: load(offset) → { items, more, total }, add({ body, reply }) → item, remove(id);
+// and admins delete; others report. The text is plain and never a link: links are refused on the server
+// (scripts/comment-links.mjs, asked for on 2026-10-03), and older comments' addresses stay text. `api`: load(offset) → { items, more, total }, add({ body, reply }) → item, remove(id);
 // `Report`: the report window for a comment ({ comment, onClose }); `id`: what is commented (reloads);
 // `authorLabel`: the crown's words by the comments of what is commented's author («Автор гайда»). A link
 // to #comment-<id> (the bot's messages about comments) scrolls to that comment and lights it up.
-const LINK = /(https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]])/g;
-const linked = (text) => text.split(LINK).map((part, i) => (i % 2 ? <a key={i} href={part} target="_blank" rel="noopener noreferrer nofollow ugc">{part}</a> : part));
 
 function Comment({ item, nested, onReply, onRemove, onReport, flash, authorLabel }) {
   const [confirm, setConfirm] = useState(false);
@@ -24,7 +22,7 @@ function Comment({ item, nested, onReply, onRemove, onReport, flash, authorLabel
   return <div id={`comment-${item.id}`} className={`guide-comment${flash ? ' is-new' : ''}`}>
     <Author author={item.author} crown={item.byAuthor ? authorLabel : ''}><small>{ago(item.created)}</small></Author>
     {answers && <a className="guide-comment-reply" href={`#comment-${item.reply.id}`}><Icon name="reply" size={13}/>{item.reply.name ? t('в ответ {name}', { name: item.reply.name }) : t('в ответ на удалённый')}</a>}
-    <p className="guide-comment-body">{linked(item.body)}</p>
+    <p className="guide-comment-body">{item.body}</p>
     <div className="guide-comment-actions">
       <button type="button" onClick={() => onReply(item)}>{t('Ответить')}</button>
       {item.removable && (confirm ? <><button type="button" className="is-danger" onClick={() => onRemove(item)}>{t('Точно удалить')}</button><button type="button" onClick={() => setConfirm(false)}>{t('Отмена')}</button></>

@@ -1,0 +1,29 @@
+{
+  "version": "1.8.6",
+  "date": "2026-10-03",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.6",
+  "sections": [
+    {
+      "title": "Безопасность",
+      "changes": [
+        {
+          "text": "Ссылки в комментариях запрещены — так мы защищаем аккаунты от фишинга",
+          "children": ["Под гайдами, сетками и фонами, в любом виде; ссылки в старых комментариях больше не кликабельны"]
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Security",
+        "changes": [
+          {
+            "text": "Links are not allowed in comments — this protects accounts from phishing",
+            "children": ["Under guides, grids and backgrounds, in any form; links in older comments are no longer clickable"]
+          }
+        ]
+      }
+    ]
+  }
+}

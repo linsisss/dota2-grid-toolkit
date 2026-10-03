@@ -152,6 +152,7 @@ const messages = {
   'Картинка слишком большая: до 60 мегапикселей.': 'The picture is too big: up to 60 megapixels.',
   'Комментарии для тебя временно ограничены.': 'Commenting is temporarily restricted for you.',
   'Комментарий до 2000 символов.': 'A comment can be up to 2,000 characters.',
+  'Ссылки в комментариях запрещены — так мы защищаем аккаунты от фишинга.': 'Links are not allowed in comments — this protects accounts from phishing.',
   'Комментарий не найден.': 'Comment not found.',
   'Комментарий, на который ты отвечаешь, удалён.': 'The comment you’re replying to was deleted.',
   'Место для твоих вложений закончилось (1 ГБ). Удали ненужные черновики.': 'You’re out of space for attachments (1 GB). Delete drafts you don’t need.',

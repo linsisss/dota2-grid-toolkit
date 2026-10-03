@@ -35,7 +35,7 @@ const ICON_NAMES = {
   // «Поддержать разработку» (src/SupportDialog.jsx)
   support: 'coffee', qr: 'qr-code', card: 'credit-card', wallet: 'wallet', files: 'files', gauge: 'gauge', history: 'history', languages: 'languages',
   // Profile badges (scripts/profile-badges.mjs) and the admins' «Значки»
-  badgeDev: 'code-xml', badgeIdea: 'lightbulb', badgeSponsor: 'hand-heart', trophy: 'trophy', award: 'award',
+  badgeDev: 'code-xml', badgeIdea: 'lightbulb', badgeSponsor: 'hand-heart', trophy: 'trophy', award: 'award', crown: 'crown',
   // Editor tools
   cursor: 'mouse-pointer-2', hand: 'hand', lasso: 'lasso', pen: 'brush', text: 'type', eyedropper: 'pipette', rect: 'square',
   eraser: 'eraser', undo: 'undo-2', redo: 'redo-2', gridLines: 'grid-3x3', magnet: 'magnet', fit: 'scan',

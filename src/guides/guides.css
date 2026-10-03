@@ -33,6 +33,8 @@
 .guide-author small { color: var(--gd-muted); font-size: 12px; }
 .guide-author-line { display: flex; align-items: center; min-width: 0; }
 .guide-author-line .badge-icons { margin-left: 5px; }
+/* The author of what is commented: a crown by the name (Comments.jsx). */
+.guide-author-crown { display: inline-flex; flex: none; margin-left: 5px; color: #f3c46d; filter: drop-shadow(0 0 6px #f5b94a59); }
 .guide-author-name:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #c4b5ed80; }
 .guide-state { display: flex !important; align-items: center; gap: 6px; font-size: 13px !important; -webkit-line-clamp: unset !important; }
 .guide-state.is-ok { color: #a6e3bd !important; }

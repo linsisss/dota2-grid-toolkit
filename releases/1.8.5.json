@@ -1,0 +1,55 @@
+{
+  "version": "1.8.5",
+  "date": "2026-10-03",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.5",
+  "sections": [
+    {
+      "title": "Гайды",
+      "changes": [
+        {
+          "text": "У автора гайда в комментариях коронка рядом с ником — сразу видно, кто отвечает",
+          "children": ["Так же у автора сетки и фона в их комментариях"]
+        }
+      ]
+    },
+    {
+      "title": "Профили",
+      "changes": [
+        {
+          "text": "Бот пишет о новых комментариях к вашим гайдам, сеткам и фонам и об ответах на ваши комментарии",
+          "children": ["В сообщении цитата и ссылка прямо на комментарий"]
+        },
+        {
+          "text": "В «Настройках профиля» можно выключить любые сообщения бота",
+          "children": ["Или кнопкой «Не присылать такие» прямо в сообщении"]
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Guides",
+        "changes": [
+          {
+            "text": "A guide’s author has a crown by their name in the comments — you see at once who is answering",
+            "children": ["The same for a grid’s or background’s author in their comments"]
+          }
+        ]
+      },
+      {
+        "title": "Profiles",
+        "changes": [
+          {
+            "text": "The bot tells you about new comments on your guides, grids and backgrounds and about replies to your comments",
+            "children": ["The message quotes the comment and links right to it"]
+          },
+          {
+            "text": "Any of the bot’s messages can be switched off in the profile settings",
+            "children": ["Or with «Don’t send these» right in the message"]
+          }
+        ]
+      }
+    ]
+  }
+}

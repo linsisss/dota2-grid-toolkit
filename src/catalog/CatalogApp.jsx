@@ -12,7 +12,7 @@ import WorkCard from './WorkCard.jsx';
 import { CreatorName } from './Creator.jsx';
 import CreatorProfile from './CreatorProfile.jsx';
 import ItemComments from './ItemComments.jsx';
-import { BackgroundCommentsButton } from './BackgroundComments.jsx';
+import { BackgroundCommentsButton, BackgroundCommentsWindow } from './BackgroundComments.jsx';
 import ReportDialog from './ReportDialog.jsx';
 import Moderation from './Moderation.jsx';
 import Rules from './Rules.jsx';
@@ -95,7 +95,15 @@ function Backgrounds({ mine, onMine, auth }) {
   const [tag, setTag] = useState(''), [aspect, setAspect] = useState(''), [query, setQuery] = useState(''), [sort, setSort] = useState('popular'), [report, setReport] = useState(null);
   const { items, total, aspects, error, more, update } = useBackgrounds({ tag, query, sort, aspect });
   const pick = (value) => { setSort(value); onMine(false); };
+  // ?comments=<id> (the bot's message about a comment): that background's comments open at once.
+  const [linked, setLinked] = useState(null);
+  useEffect(() => {
+    const id = Number(new URLSearchParams(location.search).get('comments'));
+    if (Number.isInteger(id) && id > 0) catalogAPI(`/backgrounds/${id}`).then(setLinked, () => {});
+  }, []);
+  const closeLinked = () => { setLinked(null); const url = new URL(location.href); url.searchParams.delete('comments'); url.hash = ''; history.replaceState(history.state, '', url); };
   return <>
+    {linked && <BackgroundCommentsWindow item={linked} onClose={closeLinked} onCount={(comments) => update(linked.id, { comments })}/>}
     <div className="catalog-toolbar"><div className="catalog-tabs" aria-label={t('Подборка')}><button aria-pressed={!mine && sort === 'popular'} onClick={() => pick('popular')}>{t('Популярные')}</button><button aria-pressed={!mine && sort === 'week'} onClick={() => pick('week')}>{t('За неделю')}</button><button aria-pressed={!mine && sort === 'new'} onClick={() => pick('new')}>{t('Новые')}</button><button aria-pressed={mine} onClick={() => onMine(true)}>{t('Мои публикации')}</button></div>
       {!mine && <label className="catalog-search"><Icon name="search"/><input aria-label={t('Поиск фонов')} placeholder={t('Название или автор')} value={query} maxLength={80} onChange={e => setQuery(e.target.value)}/></label>}</div>
     {mine ? <OwnedBackgrounds auth={auth}/> : <>

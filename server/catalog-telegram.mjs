@@ -9,6 +9,7 @@ import { CatalogStore } from './catalog-store.mjs';
 import { catalogConfig } from './catalog-api.mjs';
 import { TelegramQueue } from './catalog-telegram-store.mjs';
 import { badgeOf } from '../scripts/profile-badges.mjs';
+import { NOTIFICATIONS } from '../scripts/profile-notifications.mjs';
 import { rejectReasons } from '../scripts/reject-reasons.mjs';
 import { renderCatalogPreview, renderArtPreview, renderComparison } from './catalog-preview.mjs';
 import { Accounts } from './accounts.mjs';
@@ -257,9 +258,11 @@ export class CatalogTelegram {
     }
   }
   // One private message from an outbox row. Players who signed in pressed Start, so the bot may
-  // write to them; blocked or deleted chats fail for good, 429 waits. False stops the round.
-  async direct(table, key, note, message) {
+  // write to them; blocked or deleted chats fail for good, 429 waits. False stops the round. `kind`: the
+  // switch in «Настройки профиля» (scripts/profile-notifications.mjs) — switched off, nothing is sent.
+  async direct(table, key, note, message, kind) {
     const set = (change, ...args) => this.store.run(`UPDATE ${table} SET ${change} WHERE ${key}=?`, ...args, note[key]);
+    if (kind && !this.store.profiles.wants(note.account, kind)) { set("state='muted'"); return true; }
     try {
       await this.api.sendMessage({ chat_id: note.account, parse_mode: 'HTML', link_preview_options: { is_disabled: true }, ...message });
       set("state='sent'");
@@ -297,7 +300,7 @@ export class CatalogTelegram {
       const author = this.store.profiles.creator(work.account);
       if (!await this.direct('notifications', 'id', note, {
         text: `${work.what} от <b>${escape(author?.name || 'автора')}</b>: <a href="${escape(work.url)}">«${escape(work.title)}»</a>`,
-        reply_markup: { inline_keyboard: [[{ text: work.open, url: work.url }], [{ text: 'Отписаться от автора', callback_data: `sub:off:p:${author.key}` }]] } })) return;
+        reply_markup: { inline_keyboard: [[{ text: work.open, url: work.url }], [{ text: 'Отписаться от автора', callback_data: `sub:off:p:${author.key}` }]] } }, 'follows')) return;
     }
   }
   // The author's own grid or its update was approved, on the site or in the moderation topic.
@@ -314,7 +317,7 @@ export class CatalogTelegram {
       if (!await this.direct('author_notices', 'revision', note, {
         text: note.first ? `${reviewEmoji('approve')} Твоя сетка ${link} одобрена и опубликована в мастерской.`
           : `${reviewEmoji('approve')} Изменения в сетке ${link} одобрены — в мастерской уже новая версия.`,
-        reply_markup: { inline_keyboard: [[{ text: 'Открыть в мастерской', url }]] } })) return;
+        reply_markup: { inline_keyboard: [[{ text: 'Открыть в мастерской', url }]] } }, 'review')) return;
     }
   }
   // A player's art was approved; it is now in every editor's library.
@@ -328,7 +331,7 @@ export class CatalogTelegram {
       const url = `${this.config.origin}/editor`;
       if (!await this.direct('art_notices', 'art', note, {
         text: `${reviewEmoji('approve')} Твой арт <b>«${escape(art.name)}»</b> одобрен и появился в «Готовых артах» редактора.`,
-        reply_markup: { inline_keyboard: [[{ text: 'Открыть редактор', url }]] } })) return;
+        reply_markup: { inline_keyboard: [[{ text: 'Открыть редактор', url }]] } }, 'review')) return;
     }
   }
   // A guide or its edit was published («Гайды», server/guides.mjs).
@@ -343,7 +346,7 @@ export class CatalogTelegram {
       const url = `${this.config.origin}/guides?id=${guide.id}`, link = `<a href="${escape(url)}">«${escape(guide.title)}»</a>`;
       if (!await this.direct('guide_notices', 'revision', note, {
         text: note.first ? `${reviewEmoji('approve')} Твой гайд ${link} одобрен и опубликован в «Гайдах».` : `${reviewEmoji('approve')} Изменения в гайде ${link} одобрены — уже опубликованы.`,
-        reply_markup: { inline_keyboard: [[{ text: 'Открыть гайд', url }]] } })) return;
+        reply_markup: { inline_keyboard: [[{ text: 'Открыть гайд', url }]] } }, 'review')) return;
     }
   }
   // An admin gave a profile badge (server/profiles.mjs setBadge): one message per badge; taken back
@@ -357,7 +360,7 @@ export class CatalogTelegram {
       const url = `${this.config.origin}/workshop?creator=${this.store.profiles.ensure(note.account).key}`;
       if (!await this.direct('badge_notices', 'rowid', note, {
         text: `🏅 На GridStudio тебе выдали значок <b>«${escape(badge.label)}»</b>.\n\n${escape(badge.hint)}. Значок виден в профиле рядом с ником.`,
-        reply_markup: { inline_keyboard: [[{ text: 'Открыть профиль', url }]] } })) return;
+        reply_markup: { inline_keyboard: [[{ text: 'Открыть профиль', url }]] } }, 'badges')) return;
     }
   }
   // A grid version, background or art was rejected, on the site or in the moderation topic: the author
@@ -367,8 +370,46 @@ export class CatalogTelegram {
     for (const note of due) {
       const message = this.rejectMessage(note);
       if (!message) { this.store.run("UPDATE reject_notices SET state='dropped' WHERE id=?", note.id); continue; }
-      if (!await this.direct('reject_notices', 'id', note, message)) return;
+      if (!await this.direct('reject_notices', 'id', note, message, 'review')) return;
     }
+  }
+  // A new comment under one's guide, grid or background, or a reply to one's comment
+  // (server/comment-notices.mjs): who wrote and what, a link to it. Deleted since, or the work is gone: nothing.
+  async deliverCommentNotices(limit = 20) {
+    if (!this.store.get("SELECT 1 x FROM sqlite_master WHERE name='comment_notices'")) return;
+    const due = this.store.all("SELECT * FROM comment_notices WHERE state='queued' AND next_at<=? ORDER BY id LIMIT ?", this.store.now(), limit);
+    for (const note of due) {
+      const message = this.commentMessage(note);
+      if (!message) { this.store.run("UPDATE comment_notices SET state='dropped' WHERE id=?", note.id); continue; }
+      if (!await this.direct('comment_notices', 'id', note, message, note.reason === 'reply' ? 'replies' : 'comments')) return;
+    }
+  }
+  commentMessage(note) {
+    const origin = this.config.origin, guide = note.kind === 'guide';
+    const comment = this.store.get(`SELECT account, body, state FROM ${guide ? 'guide_comments' : 'item_comments'} WHERE id=?`, note.comment);
+    if (!comment || comment.state !== 'visible') return null;
+    const target = guide ? this.store.get("SELECT g.id, r.title FROM guides g JOIN guide_revisions r ON r.id=g.public_revision WHERE g.id=? AND g.status='approved'", note.item)
+      : note.kind === 'work' ? this.store.get("SELECT w.id, r.title FROM works w JOIN revisions r ON r.id=w.public_revision WHERE w.id=? AND w.state='active'", note.item)
+      : this.store.get("SELECT id, title FROM backgrounds WHERE id=? AND status='approved'", Number(note.item));
+    if (!target) return null;
+    const url = guide ? `${origin}/guides?id=${target.id}#comment-${note.comment}` : note.kind === 'work' ? `${origin}/workshop?id=${target.id}#comment-${note.comment}`
+      : `${origin}/workshop?backgrounds&comments=${target.id}#comment-${note.comment}`;
+    const [mine, whose] = { guide: ['твоему гайду', 'гайду'], work: ['твоей сетке', 'сетке'], background: ['твоему фону', 'фону'] }[note.kind];
+    const who = escape(this.store.profiles.creator(comment.account)?.name || 'Пользователь'), title = escape(target.title);
+    const body = comment.body.length > 400 ? `${comment.body.slice(0, 400).trimEnd()}…` : comment.body;
+    const head = note.reason === 'reply' ? `💬 <b>${who}</b> — ответ на твой комментарий к ${whose} «${title}»:` : `💬 Новый комментарий к ${mine} «${title}» от <b>${who}</b>:`;
+    return { text: `${head}\n<blockquote>${escape(body)}</blockquote>`,
+      reply_markup: { inline_keyboard: [[{ text: 'Открыть и ответить', url }], [{ text: 'Не присылать такие', callback_data: `nt:off:${note.reason === 'reply' ? 'replies' : 'comments'}` }]] } };
+  }
+  // «Не присылать такие» under a message: that kind is switched off, as in «Настройки профиля».
+  async notificationCallback(query) {
+    const answer = (text) => this.api.answerCallbackQuery({ callback_query_id: query.id, text, show_alert: false }).catch(() => {});
+    const match = /^nt:off:(\w+)$/.exec(query.data || ''), m = query.message, kind = NOTIFICATIONS.find((item) => item.id === match?.[1]);
+    if (!kind || m?.chat.type !== 'private' || m.chat.id !== query.from?.id || m.from?.id !== this.botId || query.from.is_bot) return answer('Эта кнопка работает только в личном чате с ботом.');
+    this.store.profiles.update(String(query.from.id), { notifications: { [kind.id]: false } });
+    await answer(`Больше не пришлю: «${kind.label}». Включить снова можно в настройках профиля на сайте.`);
+    const open = m.reply_markup?.inline_keyboard?.[0];
+    await this.api.editMessageReplyMarkup({ chat_id: m.chat.id, message_id: m.message_id, reply_markup: { inline_keyboard: open ? [open] : [] } }).catch(() => {});
   }
   rejectMessage(note) {
     const origin = this.config.origin;
@@ -398,6 +439,7 @@ export class CatalogTelegram {
   async callback(query) {
     if (query.data?.startsWith('login:')) return this.loginCallback(query);
     if (query.data?.startsWith('sub:')) return this.subscriptionCallback(query);
+    if (query.data?.startsWith('nt:')) return this.notificationCallback(query);
     const answer = text => this.api.answerCallbackQuery({ callback_query_id: query.id, text, show_alert: true }).catch(() => {});
     // gs:<action>:<job>, gs:rj:<reason code>:<job> (a rejection with that reason), gs:back:<job>.
     const parsed = /^gs:(?:(approve|reject|keep|hide|back)|rj:([a-z])):([a-f0-9]{24})$/.exec(query.data || '');
@@ -512,7 +554,7 @@ export class CatalogTelegram {
     try {
       while (!signal.aborted) {
         if (leaseLost || !this.queue.lease(this.owner)) throw new Error('Процесс потерял право обрабатывать очередь.');
-        await this.faqMedia(); await this.deliverOne(); await this.refreshCards(); await this.deliverAuthorNotices(); await this.deliverArtNotices(); await this.deliverGuideNotices(); await this.deliverRejectNotices(); await this.deliverBadgeNotices(); await this.deliverNotifications();
+        await this.faqMedia(); await this.deliverOne(); await this.refreshCards(); await this.deliverAuthorNotices(); await this.deliverArtNotices(); await this.deliverGuideNotices(); await this.deliverRejectNotices(); await this.deliverBadgeNotices(); await this.deliverCommentNotices(); await this.deliverNotifications();
         let updates;
         try { updates = await this.api.getUpdates({ offset: Number(this.queue.setting('offset') || 0), timeout: 10, limit: 20, allowed_updates: ['callback_query', 'message', 'inline_query', 'chosen_inline_result'] }); }
         catch (error) {

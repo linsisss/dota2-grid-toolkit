@@ -13,7 +13,7 @@ export default function ItemComments({ kind, id, total = 0, onCount }) {
     add: (body) => catalogAPI(base, { method: 'POST', body }),
     remove: (comment) => catalogAPI(`/comments/${comment}`, { method: 'DELETE' })
   };
-  return <div className="item-comments"><Comments id={`${kind}:${id}`} api={api} total={total} onCount={onCount}
+  return <div className="item-comments"><Comments id={`${kind}:${id}`} api={api} total={total} onCount={onCount} authorLabel={kind === 'work' ? t('Автор сетки') : t('Автор фона')}
     Report={({ comment, onClose }) => <ReportDialog kind="comment" onClose={onClose} title={t('Пожаловаться на комментарий')} question={t('Что не так с комментарием?')}
       send={(reason) => catalogAPI(`/comments/${comment}/report`, { method: 'POST', body: { reason } })}/>}/></div>;
 }

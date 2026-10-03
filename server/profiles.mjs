@@ -2,6 +2,7 @@ import { createHmac, randomInt } from 'node:crypto';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { fail } from './catalog-store.mjs';
 import { GRANTED_BADGES, profileBadges } from '../scripts/profile-badges.mjs';
+import { NOTIFICATION_IDS } from '../scripts/profile-notifications.mjs';
 
 // Creator profiles (asked for on 2026-10-02): every account signed in with Telegram has one — a nickname
 // (a neutral two-word one at first, like ScoutingDuck; changed at most once a NICK_DAYS days), a short
@@ -63,6 +64,8 @@ export class Profiles {
     store.db.exec(`CREATE TABLE IF NOT EXISTS profiles(account TEXT PRIMARY KEY, key TEXT NOT NULL UNIQUE, nickname TEXT NOT NULL, folded TEXT NOT NULL UNIQUE,
       changed INTEGER, bio TEXT NOT NULL DEFAULT '', telegram INTEGER NOT NULL DEFAULT 0, avatar TEXT NOT NULL DEFAULT 'pattern', image BLOB, version TEXT,
       created INTEGER NOT NULL)`);
+    // The bot's messages one switched off (scripts/profile-notifications.mjs), comma-separated.
+    if (!store.all('PRAGMA table_info(profiles)').some((column) => column.name === 'muted')) store.db.exec("ALTER TABLE profiles ADD COLUMN muted TEXT NOT NULL DEFAULT ''");
     // Badges an admin gave (scripts/profile-badges.mjs); the like ones are not stored. A given badge's
     // owner gets one message from the bot (server/catalog-telegram.mjs deliverBadgeNotices), once per badge.
     store.db.exec(`CREATE TABLE IF NOT EXISTS profile_badges(account TEXT NOT NULL, badge TEXT NOT NULL, granted INTEGER NOT NULL, PRIMARY KEY(account, badge));
@@ -145,9 +148,15 @@ export class Profiles {
     const row = this.ensure(account), username = this.store.get('SELECT username FROM accounts WHERE id=?', String(account))?.username || '';
     const next = row.changed ? row.changed + NICK_DAYS * 86_400_000 : 0;
     return { key: row.key, nickname: row.nickname, bio: row.bio, telegram: !!row.telegram, username, avatar: this.avatarURL(row), avatarMode: row.avatar,
-      telegramPhoto: !!this.telegramVersion(row.account), nicknameAt: next > this.store.now() ? next : 0 };
+      telegramPhoto: !!this.telegramVersion(row.account), nicknameAt: next > this.store.now() ? next : 0, notifications: this.notifications(account) };
   }
-  update(account, { nickname, bio, telegram } = {}) {
+  // Which of the bot's messages one gets: { review: true, comments: false, … }.
+  notifications(account) {
+    const muted = new Set(String(this.store.get('SELECT muted FROM profiles WHERE account=?', String(account))?.muted || '').split(',').filter(Boolean));
+    return Object.fromEntries(NOTIFICATION_IDS.map((id) => [id, !muted.has(id)]));
+  }
+  wants(account, kind) { return this.notifications(account)[kind] !== false; }
+  update(account, { nickname, bio, telegram, notifications } = {}) {
     return this.store.tx(() => {
       const row = this.ensure(account), now = this.store.now();
       if (nickname !== undefined && nickname !== row.nickname) {
@@ -161,6 +170,11 @@ export class Profiles {
       }
       if (bio !== undefined) this.store.run('UPDATE profiles SET bio=? WHERE account=?', cleanBio(bio), row.account);
       if (telegram !== undefined) this.store.run('UPDATE profiles SET telegram=? WHERE account=?', telegram ? 1 : 0, row.account);
+      if (notifications !== undefined) {
+        if (!notifications || typeof notifications !== 'object' || Object.entries(notifications).some(([id, on]) => !NOTIFICATION_IDS.includes(id) || typeof on !== 'boolean')) fail(400, 'Неверные настройки уведомлений.');
+        const next = { ...this.notifications(row.account), ...notifications };
+        this.store.run('UPDATE profiles SET muted=? WHERE account=?', NOTIFICATION_IDS.filter((id) => !next[id]).join(','), row.account);
+      }
       return this.own(account);
     });
   }

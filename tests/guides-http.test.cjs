@@ -128,6 +128,11 @@ test('a guide goes from draft through the Telegram topic to the page, with likes
   const thread = await guest(`/guides/${id}/comments`);
   assert.deepEqual(thread.body.items.map((item) => item.body), ['Спасибо, получилось!', 'Рад помочь', 'А ещё вопрос', 'Отдельная ветка'], 'threads together, oldest first');
   assert.equal((await guest(`/guides/${id}/comments?offset=3`)).body.items[0].body, 'Отдельная ветка');
+  // The guide's author's words wear a crown; the bot tells the author of new comments and a commenter of a
+  // reply (a reply to the author is a reply, never about one's own words).
+  assert.deepEqual(thread.body.items.map((item) => item.byAuthor), [false, true, false, false]);
+  assert.deepEqual(store.all('SELECT account, reason, comment FROM comment_notices ORDER BY id').map((row) => [row.account, row.reason, row.comment]),
+    [['555', 'comment', first.body.id], ['777', 'reply', reply.body.id], ['555', 'comment', second.body.id], ['555', 'reply', deeper.body.id]]);
   await author(`/guides/comments/${deeper.body.id}`, 'DELETE'); await admin(`/guides/comments/${second.body.id}`, 'DELETE');
   assert.equal((await reader(`/guides/comments/${reply.body.id}`, 'DELETE')).status, 403, 'not someone else’s comment on someone else’s guide');
   assert.equal((await author(`/guides/comments/${first.body.id}`, 'DELETE')).status, 200, 'the guide’s author may remove it');

@@ -1,6 +1,7 @@
 import { fail } from './catalog-store.mjs';
 import { GUIDE_LIMITS, cleanComment } from '../scripts/guide-document.mjs';
 import { GUIDE_QUOTAS } from './guides.mjs';
+import { commentNoticesTable, queueCommentNotices } from './comment-notices.mjs';
 
 // Comments under workshop grids and menu backgrounds (asked for on 2026-10-03), as under guides
 // (server/guides.mjs): published at once, threads oldest first, each thread's replies under its first
@@ -17,6 +18,7 @@ export class ItemComments {
       CREATE TABLE IF NOT EXISTS item_comment_reports(id INTEGER PRIMARY KEY AUTOINCREMENT, comment INTEGER NOT NULL, account TEXT NOT NULL, reason TEXT NOT NULL,
         created INTEGER NOT NULL, resolved INTEGER NOT NULL DEFAULT 0);
       CREATE UNIQUE INDEX IF NOT EXISTS item_comment_reports_open ON item_comment_reports(comment, account) WHERE resolved=0;`);
+    commentNoticesTable(store);
   }
   // The published work or background → its owner's account (null for a guest's), or a 404.
   owner(kind, item) {
@@ -42,7 +44,8 @@ export class ItemComments {
   view(row, { account, admin, owner }) {
     const visible = row.state === 'visible', profiles = this.store.profiles;
     const reply = row.reply ? this.store.get('SELECT id, account, state FROM item_comments WHERE id=?', row.reply) : null;
-    return { id: row.id, thread: row.thread || null, author: visible ? profiles.creator(row.account) : null, body: visible ? row.body : '', deleted: !visible, created: row.created,
+    // `byAuthor`: written by the work's author (a crown by the name).
+    return { id: row.id, thread: row.thread || null, author: visible ? profiles.creator(row.account) : null, byAuthor: visible && !!owner && row.account === owner, body: visible ? row.body : '', deleted: !visible, created: row.created,
       reply: reply ? { id: reply.id, name: reply.state === 'visible' ? profiles.creator(reply.account).name : '' } : null,
       mine: !!account && row.account === account, removable: visible && !!account && (row.account === account || owner === account || admin) };
   }
@@ -53,14 +56,16 @@ export class ItemComments {
       if (store.get('SELECT key FROM blocks WHERE key=? AND until_at>?', `account:${account}`, store.now())) fail(403, 'Комментарии для тебя временно ограничены.');
       let text;
       try { text = cleanComment(body); } catch (error) { fail(400, error.message); }
-      const to = reply ? store.get("SELECT id, thread FROM item_comments WHERE id=? AND kind=? AND item=? AND state='visible'", Number(reply), kind, key) : null;
+      const to = reply ? store.get("SELECT id, thread, account FROM item_comments WHERE id=? AND kind=? AND item=? AND state='visible'", Number(reply), kind, key) : null;
       if (reply && !to) fail(404, 'Комментарий, на который ты отвечаешь, удалён.');
       if (!store.trusted(account)) {
         store.rate(`comment:${account}`, GUIDE_QUOTAS.comments, 60_000, { message: 'Слишком часто. Подожди минуту.', code: 'comment_burst' });
         store.rate(`comment-day:${account}`, GUIDE_QUOTAS.commentsDaily, 86_400_000, { message: 'На сегодня комментариев достаточно.', code: 'comment_limit' });
       }
       const made = store.run('INSERT INTO item_comments(kind,item,account,reply,thread,body,created) VALUES(?,?,?,?,?,?,?)', kind, key, account, to?.id ?? null, to ? to.thread || to.id : null, text, store.now());
-      return this.view(store.get('SELECT * FROM item_comments WHERE id=?', Number(made.lastInsertRowid)), { account, admin: false, owner });
+      const row = store.get('SELECT * FROM item_comments WHERE id=?', Number(made.lastInsertRowid));
+      queueCommentNotices(store, { kind, item: key, comment: row.id, account, owner, replyTo: to?.account });
+      return this.view(row, { account, admin: false, owner });
     });
   }
   remove(id, account, { admin = false, actor = null } = {}) {

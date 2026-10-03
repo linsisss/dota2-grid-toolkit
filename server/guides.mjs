@@ -3,6 +3,7 @@ import { createHmac, randomBytes } from 'node:crypto';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fail } from './catalog-store.mjs';
+import { commentNoticesTable, queueCommentNotices } from './comment-notices.mjs';
 import { GUIDE_CATEGORIES, GUIDE_LIMITS, cleanComment, guideExcerpt, isGuideCategory, normalizeGuideDoc } from '../scripts/guide-document.mjs';
 
 // «Гайды» (asked for on 2026-10-02): guides written by users signed in with Telegram, in the visual
@@ -105,6 +106,7 @@ export class CatalogGuides {
   constructor(store, { dir, salt = 'guides', probe = ffprobe } = {}) {
     this.store = store; this.dir = dir; this.salt = salt; this.probe = probe;
     if (dir) mkdirSync(join(dir, 'tmp'), { recursive: true });
+    commentNoticesTable(store);
     store.db.exec(`CREATE TABLE IF NOT EXISTS guides(id TEXT PRIMARY KEY, account TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'draft',
         public_revision INTEGER, draft_revision INTEGER, reason TEXT NOT NULL DEFAULT '', created INTEGER NOT NULL, updated INTEGER NOT NULL, published INTEGER);
       CREATE INDEX IF NOT EXISTS guides_account ON guides(account, updated);
@@ -510,7 +512,8 @@ export class CatalogGuides {
     const visible = row.state === 'visible';
     const reply = row.reply ? this.store.get('SELECT id, account, state FROM guide_comments WHERE id=?', row.reply) : null;
     const replyName = reply ? (this.people([reply.account])[reply.account]?.name || '') : '';
-    return { id: row.id, thread: row.thread || null, author: visible ? people[row.account] || null : null, body: visible ? row.body : '', deleted: !visible, created: row.created, edited: row.edited || null,
+    // `byAuthor`: written by the guide's author (a crown by the name, asked for on 2026-10-03).
+    return { id: row.id, thread: row.thread || null, author: visible ? people[row.account] || null : null, byAuthor: visible && !!owner && row.account === owner, body: visible ? row.body : '', deleted: !visible, created: row.created, edited: row.edited || null,
       reply: reply ? { id: reply.id, name: reply.state === 'visible' ? replyName : '' } : null,
       mine: !!account && row.account === account, removable: visible && !!account && (row.account === account || owner === account || admin) };
   }
@@ -522,7 +525,7 @@ export class CatalogGuides {
       if (store.get('SELECT key FROM blocks WHERE key=? AND until_at>?', `account:${account}`, now(store))) fail(403, 'Комментарии для тебя временно ограничены.');
       let text;
       try { text = cleanComment(body); } catch (error) { fail(400, error.message); }
-      const to = reply ? store.get("SELECT id, thread FROM guide_comments WHERE id=? AND guide=? AND state='visible'", Number(reply), id) : null;
+      const to = reply ? store.get("SELECT id, thread, account FROM guide_comments WHERE id=? AND guide=? AND state='visible'", Number(reply), id) : null;
       if (reply && !to) fail(404, 'Комментарий, на который ты отвечаешь, удалён.');
       if (!store.trusted(account)) {
         store.rate(`guide-comment:${account}`, GUIDE_QUOTAS.comments, 60_000, { message: 'Слишком часто. Подожди минуту.', code: 'guide_comment_burst' });
@@ -531,6 +534,7 @@ export class CatalogGuides {
       const made = store.run('INSERT INTO guide_comments(guide,account,reply,thread,body,created) VALUES(?,?,?,?,?,?)', id, account, to?.id ?? null, to ? to.thread || to.id : null, text, now(store));
       this.person(account);
       const row = store.get('SELECT * FROM guide_comments WHERE id=?', Number(made.lastInsertRowid));
+      queueCommentNotices(store, { kind: 'guide', item: id, comment: row.id, account, owner: guide.account, replyTo: to?.account });
       return this.commentView(row, this.people([account]), { account, admin: false, owner: guide.account });
     });
   }

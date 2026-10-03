@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Icon, Modal, Notice } from './Common.jsx';
 import { catalogAPI } from './api.js';
 import { profilePath } from './Creator.jsx';
+import { NOTIFICATIONS } from '../../scripts/profile-notifications.mjs';
 import { locale, t } from '../../scripts/i18n.mjs';
 
 // One's own creator profile (server/profiles.mjs): the nickname (once a week), a few lines about
 // oneself, whether the Telegram @username shows, and the avatar — the pattern, the Telegram photo or a
-// picture of one's own (each avatar choice is saved at once). `onSaved`: the account is re-read so the
-// header shows the new nickname and avatar.
+// picture of one's own (each avatar choice is saved at once), and which messages the bot sends in Telegram
+// (scripts/profile-notifications.mjs; each switch is saved at once, the form's unsaved fields stay).
+// `onSaved`: the account is re-read so the header shows the new nickname and avatar.
 const BIO = 300;
 export default function ProfileSettings({ onClose, onSaved }) {
   const [profile, setProfile] = useState(null), [form, setForm] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false);
@@ -19,6 +21,12 @@ export default function ProfileSettings({ onClose, onSaved }) {
     try { const value = await request(); take(value); await onSaved?.(); after?.(); } catch (e) { setError(e.message); } finally { setBusy(false); }
   }
   const avatar = (mode) => run(() => catalogAPI('/profile/avatar', { method: 'POST', body: { mode } }));
+  const [saving, setSaving] = useState('');
+  async function notify(id, on) {
+    setSaving(id); setError('');
+    try { const value = await catalogAPI('/profile', { method: 'PATCH', body: { notifications: { [id]: on } } }); setProfile((current) => ({ ...current, notifications: value.notifications })); }
+    catch (e) { setError(e.message); } finally { setSaving(''); }
+  }
   const upload = (picked) => picked && run(() => catalogAPI('/profile/avatar', { method: 'PUT', raw: picked }));
   if (!form) return <Modal title={t('Профиль')} icon="user" onClose={onClose}><div className="catalog-login-flow">{error ? <Notice error>{error}</Notice> : <p role="status">{t('Загружаем профиль…')}</p>}</div></Modal>;
   const locked = profile.nicknameAt > Date.now(), changed = form.nickname !== profile.nickname || form.bio !== profile.bio || form.telegram !== profile.telegram;
@@ -42,6 +50,10 @@ export default function ProfileSettings({ onClose, onSaved }) {
       <p className="catalog-muted profile-hint">{t('Ссылки на Telegram, TikTok и YouTube будут кликабельными.')} {form.bio.length} / {BIO}</p>
       <label className="catalog-check"><input type="checkbox" checked={form.telegram} disabled={!profile.username} onChange={(event) => setForm({ ...form, telegram: event.target.checked })}/>
         {profile.username ? t('Показывать мой Telegram: @{username}', { username: profile.username }) : t('Показывать мой Telegram — в Telegram не задан @username')}</label>
+      <fieldset className="profile-notifications"><legend>{t('Сообщения от бота в Telegram')}</legend>
+        {NOTIFICATIONS.map((kind) => <label key={kind.id} className="catalog-check"><input type="checkbox" checked={profile.notifications?.[kind.id] !== false} disabled={saving === kind.id}
+          onChange={(event) => notify(kind.id, event.target.checked)}/><span>{t(kind.label)}<small>{t(kind.hint)}</small></span></label>)}
+      </fieldset>
       {error && <Notice error>{error}</Notice>}
       <div className="catalog-actions"><a className="catalog-link" href={profilePath(profile.key)}>{t('Открыть мой профиль')}<Icon name="arrow" size={14}/></a>
         <button type="button" className="catalog-button" onClick={onClose}>{t('Закрыть')}</button>

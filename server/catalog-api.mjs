@@ -208,7 +208,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       if (path === '/profile' && method === 'PATCH') {
         const member = requireUser(), body = await readJSON(request, 20_000);
         store.rate(`profile:${member.id}`, 60, 3_600_000);
-        return send(200, store.profiles.update(member.id, { nickname: body.nickname, bio: body.bio, telegram: typeof body.telegram === 'boolean' ? body.telegram : undefined }));
+        return send(200, store.profiles.update(member.id, { nickname: body.nickname, bio: body.bio, telegram: typeof body.telegram === 'boolean' ? body.telegram : undefined, notifications: body.notifications }));
       }
       // The site's authors on the home page show their profile avatars (asked for on 2026-10-03): by their
       // Telegram usernames; one who has not signed in keeps the picture in the page.

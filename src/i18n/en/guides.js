@@ -196,5 +196,6 @@ export default {
   'Пометку ставит автор или модератор. Она не значит, что гайд плохой, — это предупреждение, а решать тебе.': 'The author or a moderator puts the mark. It doesn’t mean the guide is bad: it’s a warning, and the choice is yours.',
   'Понятно': 'Got it',
   'Убрать пометку может только модератор': 'Only a moderator can remove the mark',
-  'Пометку увидят читатели. После сохранения черновика убрать её сможет только модератор.': 'Readers will see the mark. Once the draft is saved, only a moderator can remove it.'
+  'Пометку увидят читатели. После сохранения черновика убрать её сможет только модератор.': 'Readers will see the mark. Once the draft is saved, only a moderator can remove it.',
+  'Автор гайда': 'The guide’s author'
 };

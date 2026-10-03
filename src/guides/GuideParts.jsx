@@ -18,8 +18,10 @@ export function ago(time) {
   return day(time);
 }
 // `author`: the creator profile (server/profiles.mjs) — { key, name, avatar }; the name opens the profile.
-export function Author({ author, children }) {
-  const name = author?.key ? <span className="guide-author-line"><a className="guide-author-name" href={profilePath(author.key)}>{author.name}</a><BadgeIcons badges={author.badges}/></span>
+// `crown`: the author of what is commented («Автор гайда»), a crown by the name (asked for on 2026-10-03).
+export function Author({ author, children, crown = '' }) {
+  const mark = crown ? <span className="guide-author-crown" title={crown} aria-label={crown} role="img"><Icon name="crown" size={14}/></span> : null;
+  const name = author?.key ? <span className="guide-author-line"><a className="guide-author-name" href={profilePath(author.key)}>{author.name}</a>{mark}<BadgeIcons badges={author.badges}/></span>
     : <b>{author?.name || t('Пользователь')}</b>;
   return <span className="guide-author">{author?.avatar ? <img src={author.avatar} alt="" width="28" height="28" loading="lazy"/> : <span className="guide-author-blank"><Icon name="user" size={15}/></span>}
     <span>{name}{children}</span></span>;

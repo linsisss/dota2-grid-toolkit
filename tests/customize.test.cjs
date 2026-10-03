@@ -227,26 +227,30 @@ test('blur and dim: σ in 1080p pixels scaled to the screen, a black veil, a zoo
   assert.deepEqual(menuLook({ blur: 7, dim: -1 }), menuLook({ blur: 1, dim: 0 }), 'clamped');
 });
 
-test('Windows installers: the menu background and the font by a command that checks the downloaded file', async (t) => {
+test('Windows installers: the menu background and the font by a command that downloads the uploaded pack itself', async (t) => {
   const { backgroundScript, backgroundRemoveScript, fontScript, fontRemoveScript, PACK_NAME, FONT_NAME } = await import('../scripts/installer.mjs');
-  // The background: the site keeps nothing; the address carries the pack's SHA-256 and size and the
-  // script finds that very file, checks it and installs it as the .bat did.
-  const sha256 = 'ab'.repeat(32);
+  // The background: the page uploads the pack (server/install-packs.mjs); the address carries its SHA-256
+  // and size and the script downloads exactly that file from the site, checks it and installs it — it
+  // never looks into Downloads, so nothing can be mixed up.
+  const sha256 = 'ab'.repeat(32), url = `https://gridstudio.me/api/catalog/install/file/bg-${sha256}`;
   assert.equal(PACK_NAME(sha256), 'gridstudio-background-abababab.vpk');
-  const script = backgroundScript({ sha256, size: 1234 }, { remove: 'https://gridstudio.me/api/catalog/install/bg-remove', language: 'ru' });
+  const script = backgroundScript({ sha256, size: 1234, url }, { remove: 'https://gridstudio.me/api/catalog/install/bg-remove', language: 'ru' });
   const remove = backgroundRemoveScript('ru');
   for (const body of [script, remove]) {
     assert.match(body, /^# GridStudio[^\n]*\n& \{\n\$ErrorActionPreference = 'Stop'\n/, 'its own scope');
     assert.match(body, /libraryfolders\.vdf/);
     assert.match(body, /\$boot = Join-Path \$dota 'game\\dota\\cfg\\boot\.vcfg'/);
-    assert.doesNotMatch(body, /UILanguage|Invoke-WebRequest|DownloadString|Start-Process/);
+    assert.doesNotMatch(body, /UILanguage|DownloadString|Start-Process|shell:Downloads|OpenFileDialog/);
     assert.doesNotMatch(body, /[‘’“”]/);
   }
-  assert.match(script, /-Filter 'gridstudio-background-abababab\*\.vpk'/);
-  assert.match(script, /\.Length -ne 1234\)/);
-  assert.match(script, new RegExp(`Get-FileHash -LiteralPath \\$path -Algorithm SHA256\\)\\.Hash -eq '${sha256.toUpperCase()}'`));
-  assert.match(script, /shell:Downloads/);
-  assert.match(script, /OpenFileDialog/, 'else it asks for the file');
+  assert.doesNotMatch(remove, /Invoke-WebRequest/, 'taking it away downloads nothing');
+  assert.match(script, new RegExp(`Invoke-WebRequest -Uri '${url}' -OutFile \\$file -UseBasicParsing`));
+  assert.match(script, /GetTempPath\(\)/);
+  assert.match(script, /\.Length -ne 1234 -or/);
+  assert.match(script, new RegExp(`Get-FileHash -LiteralPath \\$file -Algorithm SHA256\\)\\.Hash -ne '${sha256.toUpperCase()}'`));
+  assert.match(script, /if \(\$status -eq 404\) \{ throw 'Команда устарела/);
+  assert.match(script, /finally \{ if \(\$pack\) \{ Remove-Item -LiteralPath \$pack/, 'the downloaded file goes');
+  assert.throws(() => backgroundScript({ sha256, size: 1234, url: "https://x/a' ; rm -r ~ ; '" }), 'the address is checked before it goes into the script');
   assert.match(script, /\$ProgressPreference = 'SilentlyContinue'/);
   assert.match(script, /'game\\dota_russian'/);
   assert.match(script, /Set-RussianAudio\n/);
@@ -257,7 +261,7 @@ test('Windows installers: the menu background and the font by a command that che
   // The font, the same way: the archive by its fingerprint, only fonts/<name>.otf|ttf out of it, the
   // game's files kept once in panorama/fonts/gridstudio-backup, fontconfig's cache dropped.
   assert.equal(FONT_NAME(sha256), 'gridstudio-font-abababab.zip');
-  const font = fontScript({ sha256, size: 4321 }, { remove: 'https://gridstudio.me/api/catalog/install/font-remove', language: 'ru' });
+  const font = fontScript({ sha256, size: 4321, url: `https://gridstudio.me/api/catalog/install/file/font-${sha256}` }, { remove: 'https://gridstudio.me/api/catalog/install/font-remove', language: 'ru' });
   const fontRemove = fontRemoveScript('ru');
   for (const body of [font, fontRemove]) {
     assert.match(body, /^# GridStudio[^\n]*\n& \{\n\$ErrorActionPreference = 'Stop'\n/, 'its own scope');
@@ -265,11 +269,12 @@ test('Windows installers: the menu background and the font by a command that che
     assert.match(body, /'game\\dota\\panorama\\fonts'/);
     assert.match(body, /gridstudio-backup/);
     assert.match(body, /Join-Path \$env:TEMP 'fontconfig'/);
-    assert.doesNotMatch(body, /Invoke-WebRequest|DownloadString|Start-Process|\.bat/);
+    assert.doesNotMatch(body, /DownloadString|Start-Process|\.bat|shell:Downloads|OpenFileDialog/);
     assert.doesNotMatch(body, /[‘’“”]/);
   }
-  assert.match(font, /-Filter 'gridstudio-font-abababab\*\.zip'/);
-  assert.match(font, /\.Length -ne 4321\)/);
+  assert.match(font, /Invoke-WebRequest -Uri 'https:\/\/gridstudio\.me\/api\/catalog\/install\/file\/font-a/);
+  assert.doesNotMatch(fontRemove, /Invoke-WebRequest/);
+  assert.match(font, /\.Length -ne 4321 -or/);
   assert.match(font, /ZipFile\]::OpenRead\(\$pack\)/);
   assert.match(font, /'\^fonts\/\[A-Za-z0-9\._-\]\+\\\.\(otf\|ttf\)\$'/, 'only font files, no paths');
   assert.match(font, /if \(-not \(Test-Path -LiteralPath \$backup\)\)/, 'the first backup is kept');
@@ -282,18 +287,18 @@ test('Windows installers: the menu background and the font by a command that che
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
   const base = `http://127.0.0.1:${server.address().port}/api/catalog/install`;
-  assert.match(await (await fetch(`${base}/bg-${sha256}-1234-en`)).text(), /Background file: /);
+  assert.match(await (await fetch(`${base}/bg-${sha256}-1234-en`)).text(), new RegExp(`Downloading the background[\\s\\S]*/api/catalog/install/file/bg-${sha256}`));
   assert.match(await (await fetch(`${base}/bg-${sha256}-1234`)).text(), /install\/bg-remove \| iex/);
   assert.match(await (await fetch(`${base}/bg-remove`)).text(), /Restore-Audio/);
-  assert.match(await (await fetch(`${base}/font-${sha256}-4321-en`)).text(), /Font archive: /);
+  assert.match(await (await fetch(`${base}/font-${sha256}-4321-en`)).text(), new RegExp(`Downloading the font[\\s\\S]*/api/catalog/install/file/font-${sha256}`));
   assert.match(await (await fetch(`${base}/font-${sha256}-4321`)).text(), /install\/font-remove \| iex/);
   assert.match(await (await fetch(`${base}/font-remove-en`)).text(), /Dota fonts are back/);
 });
 
-test('grid by a PowerShell command: a script in its own scope that puts the grid into the folder of the account signed in to Steam', async () => {
+test('grid by a PowerShell command: a script in its own scope that downloads the grid and puts it into the folder of the account signed in to Steam', async (t) => {
   const { gridScript, gridRestoreScript, installCommand, gridExpiredScript } = await import('../scripts/installer.mjs');
-  const grid = { version: 3, configs: [{ config_name: 'Мета «x»', categories: [{ category_name: "'@ #> \"$x\"\n", x: 1, y: 2, width: 3, height: 4, hero_ids: [1] }] }] };
-  const script = gridScript(JSON.stringify(grid, null, 2), { restore: 'https://gridstudio.me/api/catalog/install/restore', language: 'ru' });
+  const sha256 = 'cd'.repeat(32), url = 'https://gridstudio.me/api/catalog/install/file/grid-AbCdEf0123456789';
+  const script = gridScript({ url, sha256, size: 777 }, { restore: 'https://gridstudio.me/api/catalog/install/restore', language: 'ru' });
   const restore = gridRestoreScript('ru');
   assert.equal(installCommand('https://gridstudio.me/api/catalog/install/AbCdEf0123456789'),
     "[Net.ServicePointManager]::SecurityProtocol = 'Tls12'; irm https://gridstudio.me/api/catalog/install/AbCdEf0123456789 | iex");
@@ -305,21 +310,41 @@ test('grid by a PowerShell command: a script in its own scope that puts the grid
     assert.match(text, /\$active \+= \[int64\]4294967296/, 'ActiveUser is a DWORD');
     assert.match(text, /'userdata\\' \+ \$account \+ '\\570'/);
     assert.match(text, /Get-Process -Name dota2/);
-    assert.doesNotMatch(text, /Invoke-WebRequest|DownloadString|Start-Process|Read-Host 'Нажми Enter/, 'nothing is downloaded or started; the console stays open by itself');
+    assert.doesNotMatch(text, /DownloadString|Start-Process|Read-Host 'Нажми Enter|shell:Downloads|\$grid = @'/, 'nothing started; no grid text inside; the console stays open by itself');
     assert.doesNotMatch(text, /[‘’“”]/, 'PowerShell takes typographic quotes for its own');
   }
-  // The grid on one line in a here-string (so nothing in it ends the string), its length checked on arrival.
-  const line = script.split('\n')[script.split('\n').indexOf("$grid = @'") + 1];
-  assert.deepEqual(JSON.parse(line), grid);
-  assert.match(script, new RegExp(`\\$grid\\.Length -ne ${line.length}\\)`));
-  assert.match(script, /\[IO\.File\]::WriteAllText\(\$dest, \$grid, \(New-Object System\.Text\.UTF8Encoding\(\$false\)\)\)/);
+  // The grid is downloaded as bytes (the encoding plays no part), checked and copied as it is.
+  assert.match(script, new RegExp(`Invoke-WebRequest -Uri '${url}' -OutFile \\$file -UseBasicParsing`));
+  assert.match(script, /\.Length -ne 777 -or/);
+  assert.match(script, new RegExp(`Hash -ne '${sha256.toUpperCase()}'`));
+  assert.match(script, /Copy-Item -LiteralPath \$file -Destination \$dest -Force/);
+  assert.match(script, /finally \{ Remove-Item -LiteralPath \$file/);
   assert.match(script, /remote\\cfg/);
   assert.match(script, /gridstudio-backup/);
   assert.match(script, /irm https:\/\/gridstudio\.me\/api\/catalog\/install\/restore \| iex/, 'it says how to go back');
+  assert.doesNotMatch(restore, /Invoke-WebRequest/, 'going back downloads nothing');
   assert.match(restore, /Sort-Object Name \| Select-Object -Last 1/);
-  assert.doesNotMatch(restore, /\$grid = @'/);
-  assert.match(gridScript(JSON.stringify(grid), { language: 'en' }), /Done: /);
+  assert.match(gridScript({ url, sha256, size: 1 }, { language: 'en' }), /Done: /);
+  assert.throws(() => gridScript({ url: "https://x/a'; rm ~", sha256, size: 1 }));
   assert.match(gridExpiredScript('ru'), /устарела/);
+  // Over HTTP: the command's script names the file, the file is the grid, byte for byte.
+  const [{ CatalogStore }, { createCatalogAPI }] = await Promise.all([import('../server/catalog-store.mjs'), import('../server/catalog-api.mjs')]);
+  const store = new CatalogStore(':memory:', 'test-grid-install');
+  const { server } = createCatalogAPI({ development: true, origin: 'http://127.0.0.1:4173', salt: 'test-grid-install', admins: new Set(), database: ':memory:' }, { store });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
+  const base = `http://127.0.0.1:${server.address().port}/api/catalog`;
+  const grid = { version: 3, configs: [{ config_name: 'Мета «x»', categories: [{ category_name: "'@ #> \"$x\"\n", x_position: 1, y_position: 2, width: 3, height: 4, hero_ids: [1] }] }] };
+  const saved = await (await fetch(`${base}/install`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'http://127.0.0.1:4173' }, body: JSON.stringify({ grid, lang: 'ru' }) })).json();
+  const local = (address) => `http://127.0.0.1:${server.address().port}${new URL(address).pathname}`;
+  const body = await (await fetch(local(saved.address))).text();
+  const file = /Invoke-WebRequest -Uri '([^']+)'/.exec(body)[1], size = Number(/\.Length -ne (\d+) -or/.exec(body)[1]), hash = /Hash -ne '([0-9A-F]{64})'/.exec(body)[1];
+  assert.match(file, new RegExp(`/api/catalog/install/file/grid-${saved.id}$`));
+  const bytes = Buffer.from(await (await fetch(local(file))).arrayBuffer());
+  assert.equal(bytes.length, size);
+  assert.equal(require('node:crypto').createHash('sha256').update(bytes).digest('hex').toUpperCase(), hash);
+  assert.ok(JSON.parse(bytes.toString('utf8')).configs[0].categories.some((c) => c.category_name === grid.configs[0].categories[0].category_name), 'the grid, letters and quotes as they were');
+  assert.equal((await fetch(`${base}/install/file/grid-AAAAAAAAAAAAAAAA`)).status, 404);
 });
 
 test('the API keeps a grid for the command for a week and serves its script', async (t) => {
@@ -343,12 +368,15 @@ test('the API keeps a grid for the command for a week and serves its script', as
   const script = await fetch(`${base}/install/${id}`);
   assert.equal(script.headers.get('content-type'), 'text/plain; charset=utf-8', 'PowerShell reads the page as UTF-8 only when told so');
   const text = await script.text();
-  assert.match(text, /\{"_comment":"Сетка создана и скачана с gridstudio\.me","version":3,"configs":\[\{"config_name":"Мета"/, 'the site\'s note first');
+  assert.match(text, new RegExp(`Invoke-WebRequest -Uri '${config.origin}/api/catalog/install/file/grid-${id}'`), 'the script downloads the grid');
+  const file = await (await fetch(`${base}/install/file/grid-${id}`)).text();
+  assert.match(file, /^\{"_comment":"Сетка создана и скачана с gridstudio\.me","version":3,"configs":\[\{"config_name":"Мета"/, 'the site\'s note first');
   assert.match(text, /install\/restore \| iex/);
   assert.match(await (await fetch(`${base}/install/restore-en`)).text(), /Brought the previous grids back/);
   assert.equal((await post({ grid: { configs: [] } })).status, 400, 'only a grid file');
   now += GRID_INSTALL_TTL + 1;
   assert.match(await (await fetch(`${base}/install/${id}`)).text(), /устарела/, 'after a week the address says so instead of failing');
+  assert.equal((await fetch(`${base}/install/file/grid-${id}`)).status, 404, 'and its file is gone');
 });
 
 test('every grid the site hands out carries its note first; reading a grid ignores it', async () => {

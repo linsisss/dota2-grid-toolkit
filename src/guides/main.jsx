@@ -7,6 +7,9 @@ import './guides.css';
 import '../site-kit.css';
 import { SITE_SLIDES, autoSlides } from '../../scripts/slide-indicator.mjs';
 import { watchErrors } from '../../scripts/community.mjs';
+import { countVisit } from '../site-stats.js';
+
+countVisit(new URLSearchParams(location.search).get('id') ? `guide:${new URLSearchParams(location.search).get('id')}` : 'guides');
 // «Гайды» (src/guides/GuidesApp.jsx). Drawn once the language is settled (scripts/i18n.mjs).
 languageReady(() => import('../i18n/en/common.js'), () => import('../i18n/en/server.js'), () => import('../i18n/en/catalog.js'),
   () => import('../i18n/en/guides.js')).then(() => { followTitle(); createRoot(document.getElementById('catalog-root')).render(<GuidesApp/>); });

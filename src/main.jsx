@@ -23,6 +23,9 @@ import './site-kit.css';
 import { SITE_SLIDES, autoSlides } from '../scripts/slide-indicator.mjs';
 import { watchErrors } from '../scripts/community.mjs';
 import { listenForCommunity } from './Community.jsx';
+import { countVisit } from './site-stats.js';
+
+countVisit('editor');
 applyGridBackground();
 // Keep one root if the entry module itself is updated by Vite. App is a separate
 // Fast Refresh boundary, so ordinary component edits do not remount this entry.

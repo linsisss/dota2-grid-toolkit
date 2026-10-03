@@ -3,11 +3,13 @@ import { Icon, Modal, Notice } from '../catalog/Common.jsx';
 import catalog from '../../data/dota-fonts.json';
 import { dotaFontPack, fontCoverage, readFont } from '../../scripts/dota-font.mjs';
 import { buildZip } from '../../scripts/zip.mjs';
-import { FONT_NAME, installCommand } from '../../scripts/installer.mjs';
+import { installCommand } from '../../scripts/installer.mjs';
+import { uploadInstallPack } from '../install-pack.js';
 import { lang, t } from '../../scripts/i18n.mjs';
 import { DELIVERY } from './MenuBackground.jsx';
 import { CopyField, Field, InstallWindow, Segmented, rich } from './CustomizeApp.jsx';
 import FontScene from './FontScene.jsx';
+import { countAction } from '../site-stats.js';
 
 // The Dota font: a catalog font (assets/dota-fonts, data/dota-fonts.json) or the user's own
 // .ttf/.otf becomes Valve's font files (scripts/dota-font.mjs), zipped in the browser. Nothing is
@@ -51,13 +53,13 @@ function FontChip({ font, selected, onSelect }) {
     <span style={{ fontFamily: ready ? `'${family}'` : undefined, fontWeight: face.weight, opacity: ready ? 1 : 0.4 }}>{font.family}</span></button>;
 }
 
-// The command of the archive just saved (its name and fingerprint are in it); before a download, a word on it.
+// The command of the archive just sent to the site (its fingerprint is in it); before that, a word on it.
 function Install({ delivery, handed, onClose }) {
   if (delivery === 'command') return <InstallWindow title={t('Как установить шрифт')} onClose={onClose}><ol>
-    <li>{handed ? rich(t('Шрифт скачан как {file} — не переименовывай и не распаковывай его.'), { file: <code>{handed.name}</code> }) : t('Скачай шрифт: архив сохранится сам, а здесь появится команда для него.')}</li>
+    <li>{handed ? t('Шрифт сохранён на GridStudio на 7 дней — команда скачает именно его, ничего искать не нужно.') : t('Нажми «Получить команду»: шрифт отправится на GridStudio, а здесь появится команда для него.')}</li>
     {handed && <li>{t('Скопируй команду:')}<CopyField value={handed.command}/></li>}
     <li>{rich(t('Открой PowerShell ({key}, набери PowerShell, {enter}), вставь команду и нажми {enter}.'), { key: <kbd>Win</kbd>, enter: <kbd>Enter</kbd> })}</li>
-    <li>{t('Она сама найдёт скачанный архив и Dota через Steam, попросит закрыть игру, сохранит шрифты Dota и положит новые.')}</li>
+    <li>{t('Она сама скачает этот шрифт, найдёт Dota через Steam, попросит закрыть игру, сохранит шрифты Dota и положит новые.')}</li>
     <li>{t('Запусти Dota 2.')}</li>
   </ol><p className="catalog-muted">{t('Вернуть шрифты Dota — вставь в PowerShell:')}</p><CopyField value={handed?.remove || removeCommand()}/></InstallWindow>;
   return <InstallWindow title={t('Как установить шрифт')} onClose={onClose}><ol>
@@ -91,7 +93,7 @@ function Restore({ onClose }) {
 export default function FontPicker() {
   const [selected, setSelected] = useState(catalog.fonts[0].id), [own, setOwn] = useState(null);
   const [roles, setRoles] = useState({ Radiance: true, Reaver: true, RadianceM: true });
-  const [delivery, setDelivery] = useState('file'), [previewFamily, setPreviewFamily] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState(''), [install, setInstall] = useState(false);
+  const [delivery, setDelivery] = useState('file'), [previewFamily, setPreviewFamily] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState(''), [install, setInstall] = useState(false), [sending, setSending] = useState(null);
   const [handed, setHanded] = useState(null), [restore, setRestore] = useState(false);
   const input = useRef(null);
   const chosen = own ? null : catalog.fonts.find((font) => font.id === selected);
@@ -146,12 +148,11 @@ export default function FontPicker() {
       files.push({ name: t('ПРОЧТИ.txt'), data: new Uint8Array([0xef, 0xbb, 0xbf, ...new TextEncoder().encode(README(name, license, delivery === 'command'))]) });
       const zip = await buildZip(files);
       if (delivery === 'command') {
-        // Under a name with its fingerprint, and the command for exactly this file, shown at once.
-        const bytes = new Uint8Array(await zip.arrayBuffer());
-        const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map((byte) => byte.toString(16).padStart(2, '0')).join('');
-        saveFile(zip, FONT_NAME(hash));
-        setHanded({ name: FONT_NAME(hash), command: installCommand(`${location.origin}/api/catalog/install/font-${hash}-${bytes.length}${lang === 'en' ? '-en' : ''}`), remove: removeCommand() });
+        // Sent to the site; the command downloads exactly this archive (src/install-pack.js).
+        try { setHanded({ command: await uploadInstallPack('font', new Uint8Array(await zip.arrayBuffer()), setSending), remove: removeCommand() }); }
+        finally { setSending(null); }
       } else saveFile(zip, `gridstudio-font-${slug}.zip`);
+      countAction('font-pack');
       // The install window after every download: the command, or the steps by hand.
       setInstall(true);
     } catch (e) { setError(e.message || t('Не удалось собрать шрифт.')); }
@@ -183,7 +184,8 @@ export default function FontPicker() {
       <footer className="custom-panel-foot">
         {error && <Notice error>{error}</Notice>}
         <Segmented label={t('Что скачать')} value={delivery} onChange={(value) => { setDelivery(value); setHanded(null); }} options={DELIVERY()}/>
-        <button className="catalog-button primary" disabled={busy || noRole || (!own && !chosen)} onClick={download}><Icon name="download"/>{busy ? t('Собираем…') : t('Скачать шрифт для Dota')}</button>
+        <button className="catalog-button primary" disabled={busy || noRole || (!own && !chosen)} onClick={download}><Icon name={delivery === 'command' ? 'terminal' : 'download'}/>
+          {sending !== null ? t('Отправляем на GridStudio… {percent}%', { percent: Math.round(sending * 100) }) : busy ? t('Собираем…') : delivery === 'command' ? t('Получить команду') : t('Скачать шрифт для Dota')}</button>
         <div className="custom-foot-row"><button type="button" className="catalog-link" onClick={() => setRestore(true)}>{t('Вернуть обычный шрифт')}</button>
           <button type="button" className="catalog-link" onClick={() => setInstall(true)}>{t('Как установить')}</button></div>
       </footer>

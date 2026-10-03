@@ -524,6 +524,12 @@ const PROFILE_STYLE_TEXT = `/* GridStudio: buttons to the player's Stratz and Do
 }
 `;
 
+// Every file menuBackgroundPack may write: the server takes a pack for the PowerShell command only with
+// these (server/install-packs.mjs), so nobody can hand out anything else under gridstudio.me.
+export const MENU_PACK_PATHS = Object.freeze(['panorama/layout/dashboard.vxml_c', 'panorama/layout/dashboard_page_home.vxml_c', MENU_LAYOUT, MENU_STYLE, MENU_UI_STYLE,
+  MENU_VIDEO, HERO_PAGE, HERO_STYLE, HERO_VIDEO, GRID_PAGE, GRID_STYLE, GRID_VIDEO, PROFILE_PAGE, PROFILE_STYLE, ...Object.values(PROFILE_ICONS)]);
+export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDEO]);
+
 // video: WebM bytes (VP8/VP9, no Opus audio); dashboard/home/hero.page: Valve's current layouts as
 // text. hero: null keeps Valve's picture behind the hero; { page } shows the menu video there;
 // { page, video } a video of its own. event: assets/dota-menu/event.json for the event button, or

@@ -1,0 +1,47 @@
+{
+  "version": "1.8.7",
+  "date": "2026-10-03",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.7",
+  "sections": [
+    {
+      "title": "Установка командой",
+      "changes": [
+        {
+          "text": "Команда PowerShell сама скачивает с GridStudio именно ту сетку, фон или шрифт, которые ты выбрал",
+          "children": ["Искать файл в «Загрузках» больше не нужно, перепутать его невозможно, а кириллица в сетке не ломается; команда работает 7 дней"]
+        }
+      ]
+    },
+    {
+      "title": "Безопасность",
+      "changes": [
+        {
+          "text": "В гайды больше нельзя прикладывать архивы, программы и скрипты",
+          "children": ["Сайт проверяет сам файл, а не только его имя"]
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Installing by command",
+        "changes": [
+          {
+            "text": "The PowerShell command downloads from GridStudio exactly the grid, background or font you chose",
+            "children": ["No more looking for the file in Downloads, nothing to mix up, and Cyrillic in a grid stays intact; the command works for 7 days"]
+          }
+        ]
+      },
+      {
+        "title": "Security",
+        "changes": [
+          {
+            "text": "Archives, programs and scripts can no longer be attached to guides",
+            "children": ["The site checks the file itself, not only its name"]
+          }
+        ]
+      }
+    ]
+  }
+}

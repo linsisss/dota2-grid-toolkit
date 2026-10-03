@@ -24,6 +24,7 @@ import { ALIGN_ACTIONS, DISTRIBUTE_ACTIONS, alignIconSVG } from './align-icons.m
 import { iconSVG } from './icons.mjs';
 import { PORTRAIT_MD_HEIGHT, portraitSource } from './portraits.mjs';
 import { applyMyBackground, hasMyBackground } from '../src/my-background.js';
+import { countAction } from '../src/site-stats.js';
 import { mountVideoGuide } from '../src/video-guide.js';
 import { slideIndicator } from './slide-indicator.mjs';
 import { wheelScrollsSideways } from './wheel-scroll.mjs';
@@ -2231,6 +2232,7 @@ export function createStudio(projectStorage, initial) {
       try { output = exportCurrent(); } catch (error) { toast(error.message, true); return; }
       if (method !== 'command') {
         download(JSON.stringify(withGridNote(output, t(GRID_NOTE)), null, 2), 'hero_grid_config.json');
+        countAction('grid-export');
         closeModal();
         return toast(t('hero_grid_config.json скачан'));
       }
@@ -3907,6 +3909,7 @@ export function createStudio(projectStorage, initial) {
           : optimizeCategories(planOptimization(doc, measure, { pack, count: pickCount }), target).doc;
         const output = C.exportDota(outputDoc, null, { widths: pickWidths });
         download(JSON.stringify(withGridNote(output, t(GRID_NOTE)), null, 2), 'hero_grid_config.json');
+        countAction('grid-export');
         toast(t('Оптимизированный JSON скачан'));
         return true;
       } catch (error) { toast(error.message, true); return false; }

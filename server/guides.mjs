@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { fail } from './catalog-store.mjs';
 import { commentNoticesTable, queueCommentNotices } from './comment-notices.mjs';
 import { GUIDE_CATEGORIES, GUIDE_LIMITS, cleanComment, guideExcerpt, isGuideCategory, normalizeGuideDoc } from '../scripts/guide-document.mjs';
+import { GUIDE_FILE_EXTENSIONS, GUIDE_FILE_REFUSED, guideFileProblem } from '../scripts/guide-files.mjs';
 
 // «Гайды» (asked for on 2026-10-02): guides written by users signed in with Telegram, in the visual
 // editor (src/guides/GuideEditor.jsx), with pictures, GIFs, video files, files to download and YouTube;
@@ -26,8 +27,6 @@ export const GUIDE_MEDIA = Object.freeze({
 // Uploads come in parts of this size (src/guides/api.js), under nginx's 9 MB for the API.
 export const UPLOAD_PART = 4 * 1024 * 1024;
 export const GUIDE_QUOTAS = Object.freeze({ draftsDaily: 30, submitsDaily: 15, pending: 300, comments: 8, commentsDaily: 150, reportsDaily: 20 });
-const FILE_EXTENSIONS = new Set(['json', 'txt', 'cfg', 'ini', 'md', 'kv', 'kv3', 'vpk', 'zip', '7z', 'rar', 'ttf', 'otf', 'woff', 'woff2',
-  'png', 'jpg', 'jpeg', 'webp', 'gif', 'psd', 'mp4', 'webm', 'mp3', 'ogg', 'wav']);
 const PAGE = 18, COMMENTS_PAGE = 50;
 const now = (store) => store.now();
 const newId = (bytes) => randomBytes(bytes).toString('base64url');
@@ -184,7 +183,7 @@ export class CatalogGuides {
     const bytes = Number(size), clean = cleanFileName(name), ext = extensionOf(clean);
     if (!Number.isSafeInteger(bytes) || bytes <= 0) fail(400, 'Файл пустой.');
     if (bytes > GUIDE_MEDIA[kind]) fail(413, `Файл больше ${GUIDE_MEDIA[kind] / 1024 / 1024} МБ.`);
-    if (kind === 'file' && !FILE_EXTENSIONS.has(ext)) fail(415, 'Такой файл в гайд не добавить: программы и скрипты нельзя.');
+    if (kind === 'file' && !GUIDE_FILE_EXTENSIONS.includes(ext)) fail(415, GUIDE_FILE_REFUSED);
     return store.tx(() => {
       if (store.paused()) fail(503, 'Приём временно приостановлен. Попробуй позже.');
       if (!store.trusted(account)) store.rate(`guide-upload:${account}`, GUIDE_MEDIA.uploadsDaily, 86_400_000, { message: `За сутки можно загрузить ${GUIDE_MEDIA.uploadsDaily} файлов.`, code: 'guide_upload_limit' });
@@ -250,8 +249,10 @@ export class CatalogGuides {
         if (seconds > GUIDE_MEDIA.seconds) drop('Видео длиннее 15 минут.');
       }
     } else {
+      // The file itself, not only its name: no program, archive or script under any name (scripts/guide-files.mjs).
       ext = extensionOf(row.name); mime = 'application/octet-stream';
-      if (!FILE_EXTENSIONS.has(ext)) drop('Такой файл в гайд не добавить: программы и скрипты нельзя.');
+      const problem = guideFileProblem(bytes, ext);
+      if (problem) drop(problem);
     }
     const ready = { ...row, ext, mime, width, height, seconds, size: bytes.length, state: 'ready' };
     mkdirSync(join(this.dir, id.slice(0, 2)), { recursive: true });

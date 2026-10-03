@@ -334,10 +334,13 @@ export default {
   'Командой PowerShell': 'A PowerShell command',
   'Скопируй команду:': 'Copy the command:',
   // The menu background by a PowerShell command (src/customize/MenuBackground.jsx)
-  'Фон скачан как {file} — не переименовывай его.': 'The background is downloaded as {file}; do not rename it.',
-  'Собери фон: файл скачается сам, а здесь появится команда для него.': 'Build the background: the file downloads by itself and its command appears here.',
+  'Фон сохранён на GridStudio на 7 дней — команда скачает именно его, ничего искать не нужно.': 'The background is saved on GridStudio for 7 days — the command downloads exactly it, there is nothing to look for.',
+  'Собери фон: он сразу отправится на GridStudio, а здесь появится команда для него.': 'Build the background: it goes to GridStudio right away and its command appears here.',
+  'Отправляем фон на GridStudio… {percent}%': 'Sending the background to GridStudio… {percent}%',
+  'Не получилось отправить фон на GridStudio. Попробуй ещё раз.': 'Could not send the background to GridStudio. Try again.',
+  'Не получилось отправить файл на сайт. Попробуй ещё раз.': 'Could not send the file to the site. Try again.',
   'Открой PowerShell ({key}, набери PowerShell, {enter}), вставь команду и нажми {enter}.': 'Open PowerShell ({key}, type PowerShell, {enter}), paste the command and press {enter}.',
-  'Она сама найдёт скачанный файл и Dota через Steam, попросит закрыть игру, положит фон в dota_russian и включит русскую озвучку: только с ней Dota читает папку с фоном.': 'It finds the downloaded file and Dota through Steam by itself, asks you to close the game, puts the background into dota_russian and turns on the Russian voice-over: only with it does Dota read the folder with the background.',
+  'Она сама скачает этот фон, найдёт Dota через Steam, попросит закрыть игру, положит фон в dota_russian и включит русскую озвучку: только с ней Dota читает папку с фоном.': 'It downloads this background, finds Dota through Steam by itself, asks you to close the game, puts the background into dota_russian and turns on the Russian voice-over: only with it does Dota read the folder with the background.',
   'Убрать фон — вставь в PowerShell:': 'To remove the background, paste into PowerShell:',
   // The background by hand (src/customize/BackgroundSteps.jsx: the builder and «Студия»).
   'В Steam: Dota 2 → «Свойства» → «Установленные файлы» → «Обзор». Откроется папка {folder}.': 'In Steam: Dota 2 → Properties → Installed Files → Browse. The {folder} folder opens.',

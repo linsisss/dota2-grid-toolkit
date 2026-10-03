@@ -1,5 +1,6 @@
 import { catalogAPI, GUIDES_PATH } from '../catalog/api.js';
 import { t, translateMessage } from '../../scripts/i18n.mjs';
+import { GUIDE_FILE_EXTENSIONS } from '../../scripts/guide-files.mjs';
 
 // «Гайды» on the server (server/guides.mjs, under /api/catalog/guides). Uploads go in parts of
 // UPLOAD_PART bytes, under nginx's limit for the API, so a 50 MB video needs no special route and a
@@ -8,9 +9,9 @@ export { GUIDES_PATH };
 export const guidesAPI = (path, options) => catalogAPI(`/guides${path}`, options);
 export const UPLOAD_PART = 4 * 1024 * 1024;
 export const MEDIA_LIMITS = Object.freeze({ image: 10 * 1024 * 1024, video: 50 * 1024 * 1024, file: 50 * 1024 * 1024 });
-// Files to download: Dota and GridStudio files, archives, text, fonts, pictures. No programs or scripts.
-export const FILE_EXTENSIONS = Object.freeze(['json', 'txt', 'cfg', 'ini', 'md', 'kv', 'kv3', 'vpk', 'zip', '7z', 'rar', 'ttf', 'otf', 'woff', 'woff2',
-  'png', 'jpg', 'jpeg', 'webp', 'gif', 'psd', 'mp4', 'webm', 'mp3', 'ogg', 'wav']);
+// Files to download: Dota and GridStudio files, text, fonts, pictures, sound, video. No archives,
+// programs or scripts (scripts/guide-files.mjs; the server also reads the file itself).
+export const FILE_EXTENSIONS = GUIDE_FILE_EXTENSIONS;
 export const MEDIA_ACCEPT = Object.freeze({
   image: 'image/png,image/jpeg,image/webp,image/gif',
   video: 'video/mp4,video/webm',

@@ -89,7 +89,7 @@ export default function Workspaces({ registry, onOpen }) {
   const auth = useAccount();
   const [items, setItems] = useState([]), [busy, setBusy] = useState(false), [loading, setLoading] = useState(true), [error, setError] = useState('');
   // How to install a background just downloaded: its command («Командой PowerShell») or, for the file, its folder.
-  const [handed, setHanded] = useState(null);
+  const [handed, setHanded] = useState(null), [sending, setSending] = useState(null);
   const [query, setQuery] = useState(''), [archive, setArchive] = useState(false), [rename, setRename] = useState(null), [name, setName] = useState('');
   const [backgrounds, setBackgrounds] = useState([]), [show, setShow] = useState(initialShow), [removing, setRemoving] = useState(null), [statuses, setStatuses] = useState({});
   // Backgrounds: this browser's (the account's or a guest's), merged with the account's recipes. A
@@ -200,7 +200,9 @@ export default function Workspaces({ registry, onOpen }) {
   async function download(item) {
     const { downloadPack, packBackground, folderOf } = await import('./customize/background-pack.js');
     const bytes = async (blob) => (blob instanceof Blob ? new Uint8Array(await blob.arrayBuffer()) : null);
-    const given = await downloadPack(packBackground(await bytes(item.video), item.recipe, await bytes(item.heroVideo), await bytes(item.gridVideo)), item.recipe);
+    let given;
+    try { given = await downloadPack(packBackground(await bytes(item.video), item.recipe, await bytes(item.heroVideo), await bytes(item.gridVideo)), { ...item.recipe, onProgress: setSending }); }
+    finally { setSending(null); }
     // The install window after every download: the command, or the steps by hand for the file.
     setHanded(given || { target: folderOf(item.recipe.folder) });
   }
@@ -231,6 +233,7 @@ export default function Workspaces({ registry, onOpen }) {
       run(async () => { const imported = await readGridFiles(files); for (const file of imported) await registry.create(file.name.replace(/\.json$/i, '').slice(0, 100), file.doc, auth.user?.id || null); });
     }}/></label></div><CreateMenu disabled={working} onGrid={newGrid}/></div></header>
       {incoming && <Notice>{t('Выбери файл, в который добавить сетку из мастерской, или создай новый.')}</Notice>}
+      {sending !== null && <p className="catalog-muted workspace-sending" role="status">{t('Отправляем фон на GridStudio… {percent}%', { percent: Math.round(sending * 100) })}</p>}
       {error && <Notice error report>{error}</Notice>}
       {auth.fileSync.error && <Notice error report>{auth.fileSync.error}<button className="catalog-link" disabled={working} onClick={() => auth.syncFiles()}>{t('Повторить сохранение')}</button></Notice>}
       {loading ? <p role="status">{t('Открываем файлы…')}</p> : entries.length ? <section className="workspace-files" aria-label={t('Студия')}>{entries.map(({ kind, item }) => kind === 'grid' ? gridCard(item)
@@ -238,7 +241,7 @@ export default function Workspaces({ registry, onOpen }) {
         : <section className="workspace-empty"><Icon name={archive ? 'archive' : show === 'backgrounds' ? 'brush' : 'grid'}/><h2>{empty[0]}</h2><p>{empty[1]}</p>
         {!query && !archive && <div className="workspace-empty-actions">{show !== 'backgrounds' && <button className="catalog-button primary" disabled={working} onClick={newGrid}><Icon name="grid"/>{t('Пустая сетка')}</button>}{show !== 'grids' && <a className={`catalog-button${show === 'backgrounds' ? ' primary' : ''}`} href={CUSTOMIZE_PATH}><Icon name="brush"/>{t('Фон меню')}</a>}</div>}</section>}
     </main></div>{handed && <Modal title={t('Как установить фон')} icon="download" onClose={() => setHanded(null)}><div className="catalog-confirm workspace-install">
-      {handed.command ? <><p>{rich(t('Фон скачан как {file} — не переименовывай его.'), { file: <code>{handed.name}</code> })} {rich(t('Открой PowerShell ({key}, набери PowerShell, {enter}), вставь команду и нажми {enter}.'), { key: <kbd>Win</kbd>, enter: <kbd>Enter</kbd> })}</p>
+      {handed.command ? <><p>{t('Фон сохранён на GridStudio на 7 дней — команда скачает именно его, ничего искать не нужно.')} {rich(t('Открой PowerShell ({key}, набери PowerShell, {enter}), вставь команду и нажми {enter}.'), { key: <kbd>Win</kbd>, enter: <kbd>Enter</kbd> })}</p>
         <CommandCopy text={handed.command}/>
         <p className="catalog-muted">{t('Убрать фон — вставь в PowerShell:')}</p><CommandCopy text={handed.remove} small/></>
         : <BackgroundSteps target={handed.target}/>}

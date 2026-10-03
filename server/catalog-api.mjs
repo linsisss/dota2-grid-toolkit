@@ -16,6 +16,9 @@ import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
 import { StudioBackgrounds } from './studio-backgrounds.mjs';
 import { pickSafeGrid, renderSpaceThumbnail } from './catalog-preview.mjs';
 import { pageMeta, tabOf } from '../scripts/og-pages.mjs';
+import { SiteStats } from './site-stats.mjs';
+import { adminUsers } from './admin-users.mjs';
+import { InstallPacks, PACK_LIMITS } from './install-packs.mjs';
 import { PREVIEW_TEXT, authorOf, backgroundPreviewImage, gridPreviewImage, guidePreviewImage, previewTitle, profilePreviewImage, sitePage, withPreview } from './link-preview.mjs';
 import { badgeOf } from '../scripts/profile-badges.mjs';
 import { BACKGROUND_TAGS, BACKGROUND_LIMITS, backgroundMeta, unpackBackgroundUpload } from '../scripts/background-document.mjs';
@@ -71,6 +74,7 @@ export function catalogConfig(env = process.env) {
     media: env.CATALOG_MEDIA || join(dirname(env.CATALOG_DB || '.catalog-data/catalog.sqlite'), 'backgrounds'),
     // «Гайды»' uploads (server/guides.mjs), next to the database unless set.
     guides: env.CATALOG_GUIDES || join(dirname(env.CATALOG_DB || '.catalog-data/catalog.sqlite'), 'guides'),
+    packs: env.CATALOG_PACKS || join(dirname(env.CATALOG_DB || '.catalog-data/catalog.sqlite'), 'install-packs'),
     // The built site (its pages get link previews for shared works): the release's dist unless set.
     site: env.CATALOG_SITE || fileURLToPath(new URL('../dist/', import.meta.url)) };
 }
@@ -106,7 +110,7 @@ function sendFile(request, response, { path, size }, type, cache) {
 // module does not load the canvas renderer until a picture is asked for.
 const LANDING_WIDTHS = [1440, 2160, 2880];
 export function createCatalogAPI(config, { store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null, heroMeta = new HeroMeta({ token: config.stratzToken }) } = {}) {
-  const accounts = new Accounts(store), arts = new CatalogArts(store);
+  const accounts = new Accounts(store), arts = new CatalogArts(store), stats = new SiteStats(store), packs = new InstallPacks(store, { dir: config.packs || join(tmpdir(), 'gridstudio-install-packs') });
   // Shared menu backgrounds keep files next to the database (config.media).
   let galleries = backgrounds;
   const gallery = () => (galleries ||= new CatalogBackgrounds(store, { dir: config.media || mkdtempSync(join(tmpdir(), 'gridstudio-backgrounds-')) }));
@@ -192,6 +196,36 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         store.rate('steam:global', 300, 60_000);
         return send(200, await steamProfiles.resolve(url.searchParams.get('profile')));
       }
+      // The site's statistics (server/site-stats.mjs): a page shown or an action done, from the pages.
+      if (path === '/hit' && method === 'POST') {
+        const body = await readJSON(request, 2_000);
+        if (body.page) stats.visit(String(body.page), identity.browser, { account: user?.id || null, referrer: body.referrer, mobile: body.mobile === true, lang: body.lang });
+        if (['grid-export', 'background-pack', 'font-pack'].includes(body.event)) stats.event(body.event, identity.browser);
+        response.writeHead(204); return response.end();
+      }
+      // A background's or font's pack for its PowerShell command (server/install-packs.mjs): sent in parts,
+      // checked, kept a week; the command's script downloads it from /install/file/<id>.
+      if (path === '/install/packs' && method === 'POST') {
+        const body = await readJSON(request);
+        return send(200, packs.start(body.kind, body.sha256, Number(body.size), ipHash));
+      }
+      const packPart = /^\/install\/packs\/((?:bg|font)-[0-9a-f]{64})$/.exec(path);
+      if (packPart && method === 'PUT') return send(200, packs.write(packPart[1], Number(url.searchParams.get('offset')), await readBytes(request, PACK_LIMITS.part)));
+      // The grid's hero_grid_config.json for its command's script (server/grid-installs.mjs), as bytes.
+      const gridFile = /^\/install\/file\/grid-([A-Za-z0-9_-]{16})$/.exec(path);
+      if (gridFile && ['GET', 'HEAD'].includes(method)) {
+        const bytes = gridInstalls.file(gridFile[1]);
+        if (!bytes) fail(404, 'Файл устарел или не найден.');
+        response.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': bytes.length, 'Cache-Control': 'private, no-store' });
+        return response.end(method === 'HEAD' ? undefined : bytes);
+      }
+      const packFile = /^\/install\/file\/((?:bg|font)-[0-9a-f]{64})$/.exec(path);
+      if (packFile && ['GET', 'HEAD'].includes(method)) {
+        const file = packs.ready(packFile[1]);
+        if (!file) fail(404, 'Файл устарел или не найден.');
+        if (method === 'HEAD') { response.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Length': file.size }); return response.end(); }
+        return sendFile(request, response, file, 'application/octet-stream', 'private, no-store');
+      }
       // A grid for the PowerShell command (server/grid-installs.mjs): stored for a week, its script by address.
       if (path === '/install' && method === 'POST') {
         store.rate(`install:${ipHash}`, 60, 600_000);
@@ -270,6 +304,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         const login = loginCookie(), body = await readJSON(request);
         if (body.id !== login.id) fail(409, 'Попытка входа изменилась.');
         const result = accounts.finish(login.id, login.verifier, body.userId, session);
+        stats.event('login', result.user?.id);
         setCookie(cookie('gs_account', result.session, SESSION_AGE)); setCookie(cookie('gs_login', '', 0));
         return send(200, { user: result.user });
       }
@@ -289,7 +324,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       if (spaceMatch) {
         const member = requireUser(), id = spaceMatch[1];
         if (method === 'GET') return send(200, accounts.space(id, member));
-        if (method === 'PUT') { const body = await readJSON(request, 8_500_000); return send(200, accounts.saveSpace(id, member, body)); }
+        if (method === 'PUT') { const body = await readJSON(request, 8_500_000), saved = accounts.saveSpace(id, member, body); stats.event('studio-save', member.id); return send(200, saved); }
         if (method === 'PATCH') { const body = await readJSON(request); if (typeof body.archived !== 'boolean') fail(400, 'Неверная настройка архива.'); return send(200, accounts.archiveSpace(id, member, body.revision, body.archived)); }
       }
       // «Студия» backgrounds of the signed-in account: recipes and posters only (server/studio-backgrounds.mjs).
@@ -578,6 +613,10 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         }
         // Who decided what lately, on the site and in Telegram (server/admin-journal.mjs).
         if (path === '/admin/journal' && method === 'GET') return send(200, adminJournal(store, { before: Number(url.searchParams.get('before')) || 0 }));
+        // «Статистика» (server/site-stats.mjs): visits, sign-ups, downloads and activity for 7, 30, 90 or 365 days.
+        if (path === '/admin/stats' && method === 'GET') return send(200, stats.report(Number(url.searchParams.get('days')) || 30));
+        // «Пользователи» (server/admin-users.mjs): everyone who signed in with Telegram, their profile and Telegram.
+        if (path === '/admin/users' && method === 'GET') return send(200, adminUsers(store, { q: url.searchParams.get('q') || '', sort: url.searchParams.get('sort') || 'new', offset: Number(url.searchParams.get('offset')) || 0 }));
         const search = (url.searchParams.get('q') || '').trim().slice(0, 80);
         if (path.startsWith('/admin/guides') && await guideAdminRoutes({ request, url, path, method, send, guides, readJSON, actor, search })) return;
         if (path === '/admin/works' && method === 'GET') return send(200, { ...store.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search),

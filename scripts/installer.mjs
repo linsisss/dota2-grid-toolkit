@@ -24,9 +24,8 @@ const TEXTS = {
       audio: 'Язык озвучки Dota теперь русский: Dota читает фон только из папки dota_russian. Интерфейс не меняется; если русской озвучки нет, герои говорят по-английски.',
       audioBack: 'Вернул прежний язык озвучки Dota.',
       launch: 'Если в Steam в параметрах запуска Dota 2 есть -language (кроме -language russian), убери его: с ним Dota не читает dota_russian.',
-      found: 'Файл фона: ', pickPack: 'Не нашёл скачанный фон в «Загрузках» и на рабочем столе. Выбери его в окне.',
-      pickTitle: 'Файл фона GridStudio (gridstudio-background-….vpk)', wrongPack: 'Это не тот файл: выбери фон, скачанный вместе с этой командой.',
-      noPack: 'Файл фона не выбран. Скачай фон на сайте ещё раз и вставь новую команду.',
+      downloading: 'Скачиваю фон с GridStudio…', expired: 'Команда устарела: она работает 7 дней. Собери фон на сайте ещё раз и скопируй новую команду.',
+      offline: 'Не получилось скачать фон. Проверь интернет и вставь команду ещё раз.', broken: 'Фон скачался с ошибкой. Вставь команду ещё раз.',
       restart: 'Перезапусти Dota 2.', back: 'Убрать фон — вставь в PowerShell: '
     },
     grid: {
@@ -41,16 +40,16 @@ const TEXTS = {
       back: 'Вернуть прежние сетки — вставь в PowerShell: ',
       noBackup: 'Копий нет: до установки из GridStudio в Dota не было файла с сетками.',
       restored: 'Вернул прежние сетки из копии ', restoredAfter: 'Запусти Dota 2. Вставишь команду ещё раз — вернётся копия ещё раньше, если она есть.',
-      broken: 'Сетка пришла повреждённой. Скачай её на сайте файлом вручную.',
-      expired: 'Эта команда устарела: она работает 7 дней. Открой GridStudio и скопируй новую.'
+      broken: 'Сетка скачалась с ошибкой. Вставь команду ещё раз.',
+      expired: 'Эта команда устарела: она работает 7 дней. Открой GridStudio и скопируй новую.',
+      downloading: 'Скачиваю сетку с GridStudio…', offline: 'Не получилось скачать сетку. Проверь интернет и вставь команду ещё раз.'
     },
     font: {
       title: 'шрифт Dota 2',
       noBackup: 'Нет резервной копии. Верни шрифты проверкой целостности файлов в Steam.', restored: 'Вернул шрифты Dota. Перезапусти Dota 2.',
       saved: 'Шрифты Dota сохранены в panorama\\fonts\\gridstudio-backup.', done: ['Готово, файлов: ', '. Папка: '],
-      found: 'Архив шрифта: ', pickPack: 'Не нашёл скачанный архив шрифта в «Загрузках» и на рабочем столе. Выбери его в окне.',
-      pickTitle: 'Архив шрифта GridStudio (gridstudio-font-….zip)', wrongPack: 'Это не тот файл: выбери архив, скачанный вместе с этой командой.',
-      noPack: 'Архив не выбран. Скачай шрифт на сайте ещё раз и вставь новую команду.', empty: 'В архиве нет шрифтов.',
+      downloading: 'Скачиваю шрифт с GridStudio…', expired: 'Команда устарела: она работает 7 дней. Скачай шрифт на сайте ещё раз и скопируй новую команду.',
+      offline: 'Не получилось скачать шрифт. Проверь интернет и вставь команду ещё раз.', broken: 'Шрифт скачался с ошибкой. Вставь команду ещё раз.', empty: 'В архиве нет шрифтов.',
       after: 'Запусти Dota 2.', back: 'Вернуть шрифты Dota — вставь в PowerShell: '
     }
   },
@@ -67,9 +66,8 @@ const TEXTS = {
       audio: 'Dota audio language is now Russian: Dota reads the background only from the dota_russian folder. The interface stays as it was; without the Russian voice pack, heroes keep speaking English.',
       audioBack: 'Put back the Dota audio language from before.',
       launch: 'If Dota 2 has -language in its Steam launch options (other than -language russian), remove it: with it, Dota does not read dota_russian.',
-      found: 'Background file: ', pickPack: 'Could not find the downloaded background in Downloads or on the desktop. Pick it in the window.',
-      pickTitle: 'GridStudio background file (gridstudio-background-....vpk)', wrongPack: 'This is not the file: pick the background downloaded with this command.',
-      noPack: 'No background file was picked. Download the background on the site again and paste the new command.',
+      downloading: 'Downloading the background from GridStudio...', expired: 'This command is out of date: it works for 7 days. Build the background on the site again and copy the new command.',
+      offline: 'Could not download the background. Check the internet connection and paste the command again.', broken: 'The background arrived damaged. Paste the command again.',
       restart: 'Restart Dota 2.', back: 'To remove the background, paste into PowerShell: '
     },
     grid: {
@@ -84,16 +82,16 @@ const TEXTS = {
       back: 'To bring the previous grids back, paste into PowerShell: ',
       noBackup: 'There are no copies: Dota had no grid file before the GridStudio install.',
       restored: 'Brought the previous grids back from the copy ', restoredAfter: 'Start Dota 2. Paste the command again to go one more copy back, if there is one.',
-      broken: 'The grid arrived damaged. Download it on the site as a file instead.',
-      expired: 'This command is out of date: it works for 7 days. Open GridStudio and copy a new one.'
+      broken: 'The grid arrived damaged. Paste the command again.',
+      expired: 'This command is out of date: it works for 7 days. Open GridStudio and copy a new one.',
+      downloading: 'Downloading the grid from GridStudio...', offline: 'Could not download the grid. Check the internet connection and paste the command again.'
     },
     font: {
       title: 'Dota 2 font',
       noBackup: 'There is no backup. Get the fonts back with Verify integrity of game files in Steam.', restored: 'Dota fonts are back. Restart Dota 2.',
       saved: 'Dota fonts are saved in panorama\\fonts\\gridstudio-backup.', done: ['Done, files: ', '. Folder: '],
-      found: 'Font archive: ', pickPack: 'Could not find the downloaded font archive in Downloads or on the desktop. Pick it in the window.',
-      pickTitle: 'GridStudio font archive (gridstudio-font-....zip)', wrongPack: 'This is not the file: pick the archive downloaded with this command.',
-      noPack: 'No archive was picked. Download the font on the site again and paste the new command.', empty: 'There are no fonts in the archive.',
+      downloading: 'Downloading the font from GridStudio...', expired: 'This command is out of date: it works for 7 days. Download the font on the site again and copy the new command.',
+      offline: 'Could not download the font. Check the internet connection and paste the command again.', broken: 'The font arrived damaged. Paste the command again.', empty: 'There are no fonts in the archive.',
       after: 'Start Dota 2.', back: 'To get the Dota fonts back, paste into PowerShell: '
     }
   }
@@ -246,33 +244,35 @@ ${body}
 }
 `;
 
-// The install script for one grid. `json`: the hero_grid_config.json text; it is put in compact,
-// on one line inside a here-string, so nothing in it can end the string. Its length is checked on
-// arrival: a PowerShell that read the page in a wrong encoding would write a broken file.
-// `restore`: the restore command's address, printed at the end.
-export function gridScript(json, { restore = '', language = lang } = {}) {
+// The install script for one grid (until 03.10.2026 the grid was inside the script, on one line in a
+// here-string — a PowerShell that read the page in a wrong encoding broke its letters). Now, as with the
+// background, the script downloads the hero_grid_config.json the page sent (server/grid-installs.mjs,
+// …/install/file/grid-<id>) as bytes and checks its size and SHA-256 (DOWNLOAD), so the encoding plays no
+// part. `restore`: the restore command's address, printed at the end.
+export function gridScript({ url, sha256, size }, { restore = '', language = lang } = {}) {
+  if (!validDownload(sha256, size, url)) throw new Error('Unknown grid file.');
   const m = texts(language), g = m.grid;
-  const body = JSON.stringify(JSON.parse(json));
   return gridFrame(g, `${GRID_STEAM(m, g)}
-$grid = @'
-${body}
-'@
-if ($grid.Length -ne ${body.length}) { Write-Host ${quote(g.broken)} -ForegroundColor Red; return }
+\$ProgressPreference = 'SilentlyContinue'
+${DOWNLOAD({ sha256, size, url, ext: 'json' }, g)}
 Start-Grid {
   param($cfg, $backups)
-  $dest = Join-Path $cfg 'hero_grid_config.json'
-  New-Item -ItemType Directory -Force -Path $cfg | Out-Null
-  if (Test-Path -LiteralPath $dest) {
-    New-Item -ItemType Directory -Force -Path $backups | Out-Null
-    $copy = Join-Path $backups ('hero_grid_config-' + (Get-Date -Format 'yyyy-MM-dd_HH-mm-ss') + '.json')
-    Copy-Item -LiteralPath $dest -Destination $copy -Force
-    Write-Host (${quote(g.kept)} + $copy)
-  }
-  [IO.File]::WriteAllText($dest, $grid, (New-Object System.Text.UTF8Encoding($false)))
-  Write-Host (${quote(g.done)} + $dest) -ForegroundColor Green
-  Write-Host ''
-  Write-Host ${quote(g.after)}
-${restore ? `  Write-Host (${quote(g.back)} + ${quote(installCommand(restore))})\n` : ''}}`);
+  $file = Get-Pack
+  try {
+    $dest = Join-Path $cfg 'hero_grid_config.json'
+    New-Item -ItemType Directory -Force -Path $cfg | Out-Null
+    if (Test-Path -LiteralPath $dest) {
+      New-Item -ItemType Directory -Force -Path $backups | Out-Null
+      $copy = Join-Path $backups ('hero_grid_config-' + (Get-Date -Format 'yyyy-MM-dd_HH-mm-ss') + '.json')
+      Copy-Item -LiteralPath $dest -Destination $copy -Force
+      Write-Host (${quote(g.kept)} + $copy)
+    }
+    Copy-Item -LiteralPath $file -Destination $dest -Force
+    Write-Host (${quote(g.done)} + $dest) -ForegroundColor Green
+    Write-Host ''
+    Write-Host ${quote(g.after)}
+${restore ? `    Write-Host (${quote(g.back)} + ${quote(installCommand(restore))})\n` : ''}  } finally { Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue }
+}`);
 }
 // Puts the newest copy back (and drops it: the next run goes one copy further back).
 export function gridRestoreScript(language = lang) {
@@ -295,49 +295,44 @@ export function gridExpiredScript(language = lang) {
   return `# GridStudio\nWrite-Host ${quote(texts(language).grid.expired)} -ForegroundColor Red\n`;
 }
 
-// The menu background by a PowerShell command (/background, «Командой PowerShell»): the page saves the
-// pack as gridstudio-background-<first 8 of its SHA-256>.vpk and copies the command; the address
-// carries the pack's SHA-256 and size (server/grid-installs.mjs), so the site keeps nothing. The
-// script finds that file in Downloads or on the desktop (else asks for it), checks it, finds Dota
+// The menu background by a PowerShell command (/background, «Командой PowerShell»; until 03.10.2026 the
+// page saved the pack and the script looked for it in Downloads): the page uploads the pack to the site
+// (server/install-packs.mjs, kept a week) and copies the command; its address carries the pack's SHA-256
+// and size. The script downloads exactly that file from GridStudio (DOWNLOAD), checks it, finds Dota
 // through Steam, puts it into game/dota_russian as pak02_dir.vpk (a file it replaces is kept as
-// .gridstudio-backup) and makes Russian the audio language (AUDIO).
+// .gridstudio-backup), makes Russian the audio language (AUDIO) and deletes the downloaded file.
 export const PACK_NAME = (sha256) => `gridstudio-background-${sha256.slice(0, 8)}.vpk`;
-// The file the page saved with the command: by its name in Downloads or on the desktop (a browser may
-// add « (1)»), else picked in a window; it counts only with the size and SHA-256 the address carries.
-// Defines Find-Pack, which returns the file's path.
-const FIND_DOWNLOAD = ({ sha256, size, name, filter }, x) => String.raw`function Test-Pack($path) {
-  if ((Get-Item -LiteralPath $path).Length -ne ${size}) { return $false }
-  return (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -eq '${sha256.toUpperCase()}'
-}
-function Find-Pack {
-  $folders = @()
-  try { $folders += (New-Object -ComObject Shell.Application).NameSpace('shell:Downloads').Self.Path } catch { }
-  if ($env:USERPROFILE) { $folders += (Join-Path $env:USERPROFILE 'Downloads') }
-  $folders += [Environment]::GetFolderPath('Desktop')
-  foreach ($folder in @($folders | Where-Object { $_ } | Select-Object -Unique)) {
-    if (-not (Test-Path -LiteralPath $folder)) { continue }
-    foreach ($file in @(Get-ChildItem -LiteralPath $folder -Filter '${name.replace(/(\.[a-z]+)$/, '*$1')}' -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending)) {
-      if (Test-Pack $file.FullName) { return $file.FullName }
-    }
+// The pack the page uploaded with the command, downloaded into %TEMP%; it counts only with the size and
+// SHA-256 the address carries. A gone one (404) means an out-of-date command. Defines Get-Pack, which
+// returns the file's path.
+const DOWNLOAD = ({ sha256, size, url, ext }, x) => String.raw`function Get-Pack {
+  $file = Join-Path ([IO.Path]::GetTempPath()) ('gridstudio-' + [guid]::NewGuid().ToString('N') + '.${ext}')
+  Write-Host ${quote(x.downloading)}
+  try { Invoke-WebRequest -Uri '${url}' -OutFile $file -UseBasicParsing }
+  catch {
+    Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue
+    $status = 0
+    if ($_.Exception.Response) { $status = [int]$_.Exception.Response.StatusCode }
+    if ($status -eq 404) { throw ${quote(x.expired)} }
+    throw ${quote(x.offline)}
   }
-  Write-Host ${quote(x.pickPack)}
-  Add-Type -AssemblyName System.Windows.Forms
-  $dialog = New-Object System.Windows.Forms.OpenFileDialog
-  $dialog.Filter = '${filter}'
-  $dialog.Title = ${quote(x.pickTitle)}
-  if ($dialog.ShowDialog() -eq 'OK') { if (Test-Pack $dialog.FileName) { return $dialog.FileName }; throw ${quote(x.wrongPack)} }
-  throw ${quote(x.noPack)}
+  if ((Get-Item -LiteralPath $file).Length -ne ${size} -or (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ne '${sha256.toUpperCase()}') {
+    Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue
+    throw ${quote(x.broken)}
+  }
+  return $file
 }`;
-const validDownload = (sha256, size) => /^[0-9a-f]{64}$/.test(sha256) && Number.isSafeInteger(size) && size > 0;
-export function backgroundScript({ sha256, size }, { remove = '', language = lang } = {}) {
-  if (!validDownload(sha256, size)) throw new Error('Unknown background file.');
+const validDownload = (sha256, size, url) => /^[0-9a-f]{64}$/.test(sha256) && Number.isSafeInteger(size) && size > 0 && /^https?:\/\/[A-Za-z0-9.:-]+\/[A-Za-z0-9/._-]+$/.test(String(url));
+// `url`: where the uploaded pack is (…/api/catalog/install/file/bg-<sha256>).
+export function backgroundScript({ sha256, size, url }, { remove = '', language = lang } = {}) {
+  if (!validDownload(sha256, size, url)) throw new Error('Unknown background file.');
   const m = texts(language), b = m.background;
   return gridFrame(b, String.raw`$ProgressPreference = 'SilentlyContinue'
 ${FIND_DOTA(m)}
-${FIND_DOWNLOAD({ sha256, size, name: PACK_NAME(sha256), filter: 'VPK (*.vpk)|*.vpk' }, b)}
+${DOWNLOAD({ sha256, size, url, ext: 'vpk' }, b)}
+$pack = $null
 try {
-  $pack = Find-Pack
-  Write-Host (${quote(b.found)} + $pack)
+  $pack = Get-Pack
   $dota = Find-Dota
   Write-Host ('Dota 2: ' + $dota)
   Wait-DotaClosed
@@ -356,7 +351,7 @@ ${AUDIO(b)}
 ${remove ? `  Write-Host (${quote(b.back)} + ${quote(installCommand(remove))})\n` : ''}} catch {
   Write-Host ''
   Write-Host (${quote(m.error)} + $_.Exception.Message) -ForegroundColor Red
-}`);
+} finally { if ($pack) { Remove-Item -LiteralPath $pack -Force -ErrorAction SilentlyContinue } }`);
 }
 // Takes the background away: the file goes, the one it replaced and the audio language come back.
 export function backgroundRemoveScript(language = lang) {
@@ -380,23 +375,24 @@ ${AUDIO(b)}
 }
 
 // The font by a PowerShell command (/background?tab=font, «Командой PowerShell»; it was a zip with .bat
-// files until 02.10.2026): the page saves the archive as gridstudio-font-<first 8 of its SHA-256>.zip and
-// copies the command; as with the background, the address carries the SHA-256 and size and the site keeps
-// nothing. The script finds the archive (FIND_DOWNLOAD), finds Dota, and puts every fonts/<name>.otf|ttf
+// files until 02.10.2026, found in Downloads until 03.10.2026): as with the background, the page uploads
+// the archive (server/install-packs.mjs) and the address carries its SHA-256 and size. The script
+// downloads it (DOWNLOAD), finds Dota, and puts every fonts/<name>.otf|ttf
 // of the archive over the game's file of that name in game/dota/panorama/fonts; the originals go to
 // panorama/fonts/gridstudio-backup once (a second install keeps the first backup). Then fontconfig's
 // cache in %TEMP% goes, or it would keep the old fonts (the game rebuilds it).
 export const FONT_NAME = (sha256) => `gridstudio-font-${sha256.slice(0, 8)}.zip`;
 const FONT_CACHE = String.raw`  if ($env:TEMP) { $cache = Join-Path $env:TEMP 'fontconfig'; if (Test-Path -LiteralPath $cache) { Remove-Item -LiteralPath $cache -Recurse -Force -ErrorAction SilentlyContinue } }`;
-export function fontScript({ sha256, size }, { remove = '', language = lang } = {}) {
-  if (!validDownload(sha256, size)) throw new Error('Unknown font archive.');
+// `url`: where the uploaded archive is (…/api/catalog/install/file/font-<sha256>).
+export function fontScript({ sha256, size, url }, { remove = '', language = lang } = {}) {
+  if (!validDownload(sha256, size, url)) throw new Error('Unknown font archive.');
   const m = texts(language), f = m.font;
   return gridFrame(f, String.raw`$ProgressPreference = 'SilentlyContinue'
 ${FIND_DOTA(m)}
-${FIND_DOWNLOAD({ sha256, size, name: FONT_NAME(sha256), filter: 'ZIP (*.zip)|*.zip' }, f)}
+${DOWNLOAD({ sha256, size, url, ext: 'zip' }, f)}
+$pack = $null
 try {
-  $pack = Find-Pack
-  Write-Host (${quote(f.found)} + $pack)
+  $pack = Get-Pack
   $dota = Find-Dota
   Write-Host ('Dota 2: ' + $dota)
   Wait-DotaClosed
@@ -421,7 +417,7 @@ ${FONT_CACHE}
 ${remove ? `  Write-Host (${quote(f.back)} + ${quote(installCommand(remove))})\n` : ''}} catch {
   Write-Host ''
   Write-Host (${quote(m.error)} + $_.Exception.Message) -ForegroundColor Red
-}`);
+} finally { if ($pack) { Remove-Item -LiteralPath $pack -Force -ErrorAction SilentlyContinue } }`);
 }
 // Puts the game's fonts back from the backup and drops it.
 export function fontRemoveScript(language = lang) {

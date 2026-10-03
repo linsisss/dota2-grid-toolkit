@@ -3,13 +3,15 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createCanvas, GlobalFonts, loadImage } from '@napi-rs/canvas';
 import { renderCatalogPreview } from './catalog-preview.mjs';
+import { OG_SIZE, ogTags } from '../scripts/og-pages.mjs';
 
 // Link previews (Open Graph) for a work shared from the workshop: a grid (/workshop?id=…) or a menu
 // background (/background?background=…). Messengers do not run the page's script, so nginx hands
 // these two addresses to the API, which returns the built page with the work's title, author,
 // a line of text and a 1200 × 630 picture: the grid on Dota's backdrop, or a frame of the
-// background's video. 18+ works get a blurred picture. Everything else is the page as built.
-export const PREVIEW_SIZE = [1200, 630];
+// background's video. 18+ works get a blurred picture. The pages and their tabs have their own
+// pictures (scripts/og-pages.mjs); everything else is the page as built.
+export const PREVIEW_SIZE = OG_SIZE;
 export const PREVIEW_TEXT = {
   grid: 'Переходи и поставь эту сетку в Dota 2 за пару кликов! А ещё можно создать свои, либо отредактировать чужие.',
   background: 'Переходи и поставь этот фон в Dota 2 за пару кликов! А ещё можно создать свои, либо отредактировать чужие.',
@@ -20,25 +22,14 @@ let fonts = false;
 // Libre Franklin Bold (SIL OFL, one of the font page's catalogue, scripts/fetch-dota-fonts.mjs); until
 // 1.8.2 Montserrat, which left the catalogue in 1.8.0, and the previews fell back to a plain font.
 const font = () => { if (!fonts) { GlobalFonts.registerFromPath(new URL('../assets/dota-fonts/libre-franklin/libre-franklin-700.ttf', import.meta.url).pathname, 'PreviewMontserrat'); fonts = true; } };
-const escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
-// The work's name and author, as the preview's title.
-export const previewTitle = (item) => (item.author ? `${item.title} — ${item.author}` : item.title);
+// The work's name and author, as the preview's title. A signed-in author's work has no signature of its
+// own: the author is the profile's nickname (`creator.name`; a background row — the API passes it).
+export const authorOf = (item) => item.author || item.creator?.name || '';
+export const previewTitle = (item, author = authorOf(item)) => (author ? `${item.title} — ${author}` : item.title);
 
-// The page with its title, description and the Open Graph / Twitter tags replaced.
-export function withPreview(html, { title, description, url, image, alt }) {
-  const [width, height] = PREVIEW_SIZE;
-  const properties = [['og:type', 'website'], ['og:site_name', 'GridStudio'], ['og:locale', 'ru_RU'], ['og:title', title], ['og:description', description],
-    ['og:url', url], ['og:image', image], ['og:image:type', 'image/jpeg'], ['og:image:width', width], ['og:image:height', height], ['og:image:alt', alt]];
-  const names = [['twitter:card', 'summary_large_image'], ['twitter:title', title], ['twitter:description', description], ['twitter:image', image]];
-  const tags = [...properties.map(([p, v]) => `<meta property="${p}" content="${escape(v)}"/>`), ...names.map(([n, v]) => `<meta name="${n}" content="${escape(v)}"/>`), `<link rel="canonical" href="${escape(url)}"/>`];
-  return html
-    .replace(/\n[ \t]*<meta\s+(?:property="og:|name="twitter:)[^>]*>/g, '')
-    .replace(/\n[ \t]*<link\s+rel="canonical"[^>]*>/g, '')
-    .replace(/<title>[\s\S]*?<\/title>/, `<title>${escape(title)} — GridStudio</title>`)
-    .replace(/<meta\s+name="description"[^>]*>/, `<meta name="description" content="${escape(description)}"/>`)
-    .replace('</head>', `    ${tags.join('\n    ')}\n  </head>`);
-}
+// The page with its title, description and the Open Graph / Twitter tags replaced (scripts/og-pages.mjs).
+export const withPreview = (html, meta) => ogTags(html, meta, { head: true });
 
 // Built pages, reread when a release replaces them.
 const pages = new Map();
@@ -69,14 +60,46 @@ function adult(context, width, height) {
   font(); context.fillStyle = '#ece9f5'; context.font = '96px PreviewMontserrat'; context.textAlign = 'center'; context.textBaseline = 'middle'; context.fillText('18+', width / 2, height / 2);
 }
 
-// A grid on Dota's backdrop (the workshop card's picture): whole, over a blurred copy of itself.
-export async function gridPreviewImage(item) {
+// The text cut to `room` with «…».
+function fit(context, text, room) {
+  let line = String(text || '');
+  if (context.measureText(line).width <= room) return line;
+  while (line.length > 1 && context.measureText(`${line}…`).width > room) line = line.slice(0, -1);
+  return `${line.trimEnd()}…`;
+}
+// A work's caption under its picture (asked for on 2026-10-03: the pictures had no text of their own):
+// the bottom darkened, the title on one line, then «СЕТКА ГЕРОЕВ» or «ФОН ГЛАВНОГО МЕНЮ» with the author,
+// and the site on the right. CAPTION_TOP: where the caption starts; a grid is drawn whole above it and
+// darkened only below itself (`shade`: where the darkening starts).
+const CAPTION_TOP = 478;
+function caption(context, width, height, { label, title, author, shade: from = height * 0.45 }) {
+  const shade = context.createLinearGradient(0, from, 0, height);
+  shade.addColorStop(0, '#0f0e1300'); shade.addColorStop(0.5, '#0f0e13c4'); shade.addColorStop(1, '#0f0e13f5');
+  context.fillStyle = shade; context.fillRect(0, 0, width, height);
+  font(); context.textBaseline = 'alphabetic';
+  const bottom = height - 46, room = width - 128;
+  context.font = '26px PreviewMontserrat'; context.fillStyle = '#c4b5ed'; context.textAlign = 'right';
+  context.fillText('gridstudio.me', width - 64, bottom);
+  const site = context.measureText('gridstudio.me').width;
+  context.textAlign = 'left'; context.font = '22px PreviewMontserrat'; context.fillText(label, 64, bottom);
+  const after = 64 + context.measureText(label).width;
+  if (author) { context.fillStyle = '#afa7bf'; context.font = '26px PreviewMontserrat'; context.fillText(fit(context, `·  ${author}`, width - 64 - site - 40 - after - 14), after + 14, bottom); }
+  context.fillStyle = '#f4f1fa'; context.font = '54px PreviewMontserrat'; context.fillText(fit(context, title, room), 64, bottom - 52);
+}
+
+// A grid on Dota's backdrop (the workshop card's picture): whole above the caption, over a blurred copy of itself.
+export async function gridPreviewImage(item, author = authorOf(item)) {
   const picture = await loadImage(await renderCatalogPreview(item.grid));
   return jpeg((context, width, height) => {
     context.filter = 'blur(24px) brightness(0.55)'; cover(context, picture, width, height); context.filter = 'none';
-    const scale = Math.min(width / picture.width, height / picture.height), w = picture.width * scale, h = picture.height * scale;
-    context.drawImage(picture, (width - w) / 2, (height - h) / 2, w, h);
+    const top = 20, scale = Math.min((width - 80) / picture.width, (CAPTION_TOP - top) / picture.height), w = picture.width * scale, h = picture.height * scale;
+    const x = (width - w) / 2;
+    context.save(); context.shadowColor = '#00000099'; context.shadowBlur = 40; context.shadowOffsetY = 12; context.fillStyle = '#000';
+    context.beginPath(); context.roundRect(x, top, w, h, 14); context.fill(); context.restore();
+    context.save(); context.beginPath(); context.roundRect(x, top, w, h, 14); context.clip(); context.drawImage(picture, x, top, w, h); context.restore();
+    context.strokeStyle = '#ffffff1f'; context.lineWidth = 1.5; context.beginPath(); context.roundRect(x + 0.75, top + 0.75, w - 1.5, h - 1.5, 14); context.stroke();
     if (item.tags?.includes('18+')) adult(context, width, height);
+    caption(context, width, height, { label: 'СЕТКА ГЕРОЕВ', title: item.title, author, shade: top + h - 24 });
   });
 }
 
@@ -90,12 +113,13 @@ function frame(video) {
     child.on('close', (code) => { clearTimeout(timer); resolve(code === 0 && chunks.length ? Buffer.concat(chunks) : null); });
   });
 }
-export async function backgroundPreviewImage(row, files) {
+export async function backgroundPreviewImage(row, files, author = authorOf(row)) {
   const still = await frame(files.video) || readFileSync(files.poster);
   const picture = await loadImage(still);
   return jpeg((context, width, height) => {
     cover(context, picture, width, height);
     if (JSON.parse(row.tags || '[]').includes('18+')) adult(context, width, height);
+    caption(context, width, height, { label: 'ФОН ГЛАВНОГО МЕНЮ', title: row.title, author });
   });
 }
 

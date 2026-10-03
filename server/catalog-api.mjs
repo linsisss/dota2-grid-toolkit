@@ -15,7 +15,8 @@ import { ART_CATEGORIES, ART_LIMITS, artSubmission } from '../scripts/art-docume
 import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
 import { StudioBackgrounds } from './studio-backgrounds.mjs';
 import { pickSafeGrid, renderSpaceThumbnail } from './catalog-preview.mjs';
-import { PREVIEW_TEXT, backgroundPreviewImage, gridPreviewImage, guidePreviewImage, previewTitle, profilePreviewImage, sitePage, withPreview } from './link-preview.mjs';
+import { pageMeta, tabOf } from '../scripts/og-pages.mjs';
+import { PREVIEW_TEXT, authorOf, backgroundPreviewImage, gridPreviewImage, guidePreviewImage, previewTitle, profilePreviewImage, sitePage, withPreview } from './link-preview.mjs';
 import { badgeOf } from '../scripts/profile-badges.mjs';
 import { BACKGROUND_TAGS, BACKGROUND_LIMITS, backgroundMeta, unpackBackgroundUpload } from '../scripts/background-document.mjs';
 import { MENU_SIZES } from '../scripts/menu-background.mjs';
@@ -394,7 +395,8 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       }
       // The landing page's random well-liked grid. Never cached, so every visit draws again. The
       // picture is rendered only for grids that may be on the landing, once per revision.
-      // A shared work's page with its link preview (nginx sends /workshop?id= and /background?background= here).
+      // A shared work's page with its link preview (nginx sends /workshop?id=, ?creator=, /background?background=,
+      // /guides?id= and the tabs of scripts/og-pages.mjs here).
       const page = /^\/page\/(workshop|customize|guides)$/.exec(path);
       if (page && ['GET', 'HEAD'].includes(method)) {
         const html = sitePage(config.site, { workshop: 'catalog', customize: 'customize', guides: 'guides' }[page[1]]);
@@ -420,10 +422,12 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
           const backgroundId = url.searchParams.get('background') || '';
           if (page[1] === 'customize' && /^[1-9]\d{0,12}$/.test(backgroundId)) {
             const row = gallery().get(Number(backgroundId));
-            if (row?.status === 'approved') meta = { title: previewTitle(row), description: PREVIEW_TEXT.background, url: `${config.origin}/background?background=${row.id}`,
+            if (row?.status === 'approved') meta = { title: previewTitle(row, backgroundAuthor(row)), description: PREVIEW_TEXT.background, url: `${config.origin}/background?background=${row.id}`,
               image: `${config.origin}/api/catalog/preview/background/${row.id}.jpg?updated=${row.updated}`, alt: `Фон «${row.title}»` };
           }
         } catch (error) { if (!(error instanceof CatalogError)) throw error; }
+        // A tab with an address of its own: /workshop?backgrounds, /workshop?rules, /background?tab=font.
+        if (!meta) { const tab = tabOf(page[1], url.searchParams); if (tab) meta = pageMeta(tab, config.origin); }
         response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' });
         return response.end(method === 'HEAD' ? undefined : meta ? withPreview(html, meta) : html);
       }
@@ -431,11 +435,12 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       if (preview && method === 'GET') {
         let key, render;
         if (preview[4]) { const card = profilePreview(preview[4]); key = `profile:${card.key}:${card.version}`; render = () => profilePreviewImage(card); }
-        else if (preview[1]) { const item = store.publicItem(preview[1]); key = `work:${item.id}:${item.revision}:${item.tags.join()}`; render = () => gridPreviewImage(item); }
+        else if (preview[1]) { const item = store.publicItem(preview[1]); key = `work:${item.id}:${item.revision}:${item.tags.join()}:${authorOf(item)}`; render = () => gridPreviewImage(item); }
         else if (preview[3]) { const source = guides().preview(preview[3]); key = `guide:${preview[3]}:${source.revision}`; render = () => guidePreviewImage(source); }
         else {
           const row = gallery().get(Number(preview[2])); if (row?.status !== 'approved') fail(404, 'Фон не найден.');
-          key = `background:${row.id}:${row.updated}:${row.tags}`; render = () => backgroundPreviewImage(row, { video: gallery().file(row.id, 'video'), poster: gallery().file(row.id, 'poster') });
+          const author = backgroundAuthor(row);
+          key = `background:${row.id}:${row.updated}:${row.tags}:${author}`; render = () => backgroundPreviewImage(row, { video: gallery().file(row.id, 'video'), poster: gallery().file(row.id, 'poster') }, author);
         }
         if (!previews.has(key)) store.rate(`preview:${ipHash}`, 30, 60_000);
         const image = await previewImage(key, render);
@@ -615,6 +620,8 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
   }
   // What a profile's link preview shows (server/link-preview.mjs profilePreviewImage); `version` changes
   // with any of it, so the picture's address changes too.
+  // A background's author for its link preview: the profile's nickname of a signed-in author, a guest's signature.
+  const backgroundAuthor = (row) => (row.account ? store.profiles.creator(row.account)?.name : row.author) || '';
   function profilePreview(key) {
     const row = store.profiles.byKey(key), stats = creatorStats(row.account), card = store.profiles.card(row);
     const counts = [[stats.likes, ['лайк', 'лайка', 'лайков']], [stats.grids, ['сетка', 'сетки', 'сеток']], [stats.backgrounds, ['фон', 'фона', 'фонов']], [stats.guides, ['гайд', 'гайда', 'гайдов']]]

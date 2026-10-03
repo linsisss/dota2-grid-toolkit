@@ -1,0 +1,33 @@
+{
+  "version": "1.8.3",
+  "date": "2026-10-03",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.3",
+  "sections": [
+    {
+      "title": "Сайт",
+      "changes": [
+        {
+          "text": "У каждой страницы сайта своя карточка при отправке ссылки в мессенджеры",
+          "children": ["«Студия», мастерская сеток и фонов, фон меню, шрифт, гайды и правила — со своим заголовком, описанием и картинкой"]
+        },
+        "Карточка ссылки на сетку или фон подписана прямо на картинке: название, сетка это или фон, автор",
+        "В заголовке карточки ссылки на сетку или фон снова виден автор"
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Site",
+        "changes": [
+          {
+            "text": "Every page of the site has its own card when you share its link in a messenger",
+            "children": ["The Studio, the workshop’s grids and backgrounds, the menu background, the font, guides and rules — each with its own title, description and picture"]
+          },
+          "A shared grid’s or background’s card is captioned right on the picture: the title, whether it is a grid or a background, the author",
+          "The author is back in the title of a shared grid’s or background’s card"
+        ]
+      }
+    ]
+  }
+}

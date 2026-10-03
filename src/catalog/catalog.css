@@ -471,6 +471,8 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 .badge-editor p { margin:0; font-size:13px; }
 @media(max-width:560px) { .badge-editor-item { grid-template-columns:1fr auto; } .badge-editor-item small { grid-column:1 / -1; grid-row:2; } }
 .creator-bio { margin:16px 0 0!important; white-space:pre-line; overflow-wrap:anywhere; line-height:1.6; }
+.creator-bio a { color:var(--cat-accent); text-decoration:underline; text-decoration-color:#c4b5ed66; text-underline-offset:3px; }
+.creator-bio a:hover { text-decoration-color:currentColor; }
 .creator-side { display:grid; gap:16px; justify-items:end; }
 .creator-stats { display:grid; grid-template-columns:repeat(4,auto); gap:4px 26px; margin:0; font-variant-numeric:tabular-nums; }
 .creator-stats div { display:grid; gap:2px; }

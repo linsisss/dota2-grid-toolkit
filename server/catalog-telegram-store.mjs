@@ -84,6 +84,8 @@ export class TelegramQueue {
       }
       if (this.backgrounds) for (const row of this.store.all("SELECT * FROM backgrounds WHERE status='pending'")) {
         if (queued('background', row.id)) continue;
+        // The card names the backgrounds it looks like: wait for the comparison (server/similarity.mjs).
+        if (!this.store.similarity.backgroundReady(row)) continue;
         this.store.run("INSERT OR IGNORE INTO telegram_reviews(id,kind,work,revision,report_id,summary) VALUES(?,'background',?,?,0,?)", randomBytes(12).toString('hex'), backgroundKey(row.id), row.id,
           JSON.stringify({ title: row.title, author: row.author, credit: row.credit || '', creator: row.account ? this.store.profiles.creator(row.account).name : '',
             tags: JSON.parse(row.tags), aspect: row.aspect, seconds: row.seconds, similar: near(this.store.similarity.similarBackgrounds(row)) }));

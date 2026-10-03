@@ -405,6 +405,7 @@ export default {
   '3–20 символов: буквы, цифры, _ . -. Менять ник можно раз в неделю.': '3–20 characters: letters, digits, _ . -. You can change it once a week.',
   'О себе': 'About me',
   'Что делаешь, где тебя найти': 'What you make, where to find you',
+  'Ссылки на Telegram, TikTok и YouTube будут кликабельными.': 'Links to Telegram, TikTok and YouTube become clickable.',
   'Показывать мой Telegram: @{username}': 'Show my Telegram: @{username}',
   'Показывать мой Telegram — в Telegram не задан @username': 'Show my Telegram: no @username set in Telegram',
   'Открыть мой профиль': 'Open my profile',

@@ -27,9 +27,9 @@ const images = (doc, media) => {
 
 export default function GuideWrite({ id: startId }) {
   const auth = useAccount();
-  const [loaded, setLoaded] = useState(!startId ? { title: '', category: 'profiles', cover: '', doc: null, media: {} } : null);
+  const [loaded, setLoaded] = useState(!startId ? { title: '', category: 'general', cover: '', doc: null, media: {} } : null);
   const [error, setError] = useState(''), [notes, setNotes] = useState([]);
-  const [title, setTitle] = useState(''), [category, setCategory] = useState('profiles'), [cover, setCover] = useState(''), [doc, setDoc] = useState(null), [media, setMedia] = useState({});
+  const [title, setTitle] = useState(''), [category, setCategory] = useState('general'), [cover, setCover] = useState(''), [doc, setDoc] = useState(null), [media, setMedia] = useState({});
   // The mark «модификация файлов игры»: `kept` — on in the account already, so only a moderator takes it off.
   const [modding, setModding] = useState(false), [kept, setKept] = useState(false);
   const [uploads, setUploads] = useState(0), [save, setSave] = useState({ state: 'idle' }), [preview, setPreview] = useState(false), [sent, setSent] = useState(false), [sending, setSending] = useState(false);

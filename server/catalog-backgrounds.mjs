@@ -1,11 +1,11 @@
 import { spawn } from 'node:child_process';
-import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync, existsSync, statSync } from 'node:fs';
+import { mkdirSync, renameSync, rmSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { digest, equal, fail } from './catalog-store.mjs';
 import { BACKGROUND_LIMITS, backgroundMeta } from '../scripts/background-document.mjs';
 import { MENU_SIZES } from '../scripts/menu-background.mjs';
-import { pictureHash, videoHashes } from './similarity.mjs';
+import { videoFingerprint } from './similarity.mjs';
 
 // Shared menu backgrounds (the workshop's «Фоны»). Like player arts: anyone may send one (ALTCHA, daily
 // limits), a moderator approves it on the site or in the Telegram topic, only approved ones are
@@ -37,11 +37,6 @@ async function probe(path) {
   return info;
 }
 
-// The frames of the video and the poster, as server/similarity.mjs compares them.
-async function fingerprint(video, seconds, poster) {
-  const frames = await videoHashes(video, seconds);
-  return [...frames, await pictureHash(poster).catch(() => null)];
-}
 
 export class CatalogBackgrounds {
   constructor(store, { dir }) {
@@ -71,14 +66,15 @@ export class CatalogBackgrounds {
     store.removeSelfLikes('background_likes', 'background', 'backgrounds', backgroundKey('*'));
   }
   get(id) { return this.store.get('SELECT * FROM backgrounds WHERE id=?', id); }
-  // Backgrounds sent before fingerprints (2026-10-02) get theirs, one by one, a few seconds of ffmpeg each.
-  async fingerprintMissing(limit = 200) {
+  // Backgrounds without a fingerprint — sent before them (2026-10-02) or before the second kind
+  // (2026-10-03) — get theirs, one by one: a few seconds of ffmpeg each, then the comparison with the rest.
+  async fingerprintMissing(limit = 500) {
     const rows = this.store.all(`SELECT id, seconds FROM backgrounds WHERE status IN ('pending','approved')
       AND NOT EXISTS(SELECT 1 FROM fingerprints f WHERE f.kind='background' AND f.id=backgrounds.id) ORDER BY id LIMIT ?`, limit);
     for (const row of rows) {
-      const video = this.file(row.id, 'video'), poster = this.file(row.id, 'poster');
+      const video = this.file(row.id, 'video');
       if (!existsSync(video)) continue;
-      try { this.store.similarity.saveBackground(row.id, await fingerprint(video, row.seconds, readFileSync(poster))); } catch { /* Tried again on the next start. */ }
+      try { await this.store.similarity.saveBackground(row.id, await videoFingerprint(video)); } catch { /* Tried again on the next start. */ }
     }
     return rows.length;
   }
@@ -120,7 +116,7 @@ export class CatalogBackgrounds {
       jpeg = await canvas.encode('jpeg', 82);
     } catch { rmSync(temp, { force: true }); fail(415, 'Обложка не читается.'); }
     // Its fingerprint for near copies (server/similarity.mjs); a background without one is only not compared.
-    const hashes = await fingerprint(temp, seconds, jpeg).catch(() => null);
+    const prints = await videoFingerprint(temp).catch(() => null);
     const now = store.now();
     return store.tx(() => {
       guard();
@@ -134,7 +130,8 @@ export class CatalogBackgrounds {
       const id = Number(lastInsertRowid);
       writeFileSync(this.file(id, 'poster'), jpeg);
       renameSync(temp, this.file(id, 'video'));  // the very bytes ffprobe checked
-      if (hashes) store.similarity.saveBackground(id, hashes);
+      // Compared with the other backgrounds after this answer (server/similarity.mjs queueMatches).
+      if (prints) store.similarity.saveBackground(id, prints).catch(() => {});
       store.audit(backgroundKey(id), 'background-submit');
       return { id, status: 'pending', token: this.token(id) };
     });

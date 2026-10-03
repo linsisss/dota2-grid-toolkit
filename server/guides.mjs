@@ -304,7 +304,7 @@ export class CatalogGuides {
   prepare(account, input, guide = null) {
     const title = String(input.title ?? '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
     if (title.length > GUIDE_LIMITS.title) fail(400, `Название до ${GUIDE_LIMITS.title} символов.`);
-    const category = isGuideCategory(input.category) ? input.category : 'profiles';
+    const category = isGuideCategory(input.category) ? input.category : 'general';
     let normal;
     try { normal = normalizeGuideDoc(input.doc); } catch (error) { fail(400, error.message); }
     const ids = [...new Set(normal.media)];

@@ -1,17 +1,24 @@
 import { spawn } from 'node:child_process';
-import { createCanvas, loadImage } from '@napi-rs/canvas';
-import { BACKGROUND_SIMILAR, FRAMES, GRID_SIMILAR, frameHash, framesSimilarity, gridSignature, gridSimilarity } from '../scripts/similarity.mjs';
+import { setImmediate as breathe } from 'node:timers/promises';
+import { BACKGROUND_FRAMES, BACKGROUND_SIMILAR, FRAME_H, FRAME_W, GRID_SIMILAR, backgroundFingerprint, backgroundFrame, backgroundSimilarity,
+  gridSignature, gridSimilarity, prepareBackground } from '../scripts/similarity.mjs';
 
 // Near copies for the moderators (scripts/similarity.mjs has the measures): the fingerprints of grid
 // versions and of menu backgrounds, kept in the catalog database (made when a version or a background
 // arrives; older ones are made when first needed — grids — or by fingerprintMissing — backgrounds),
-// and the published works and backgrounds that look like the one being checked.
+// and the published works and backgrounds that look like the one being checked. Comparing backgrounds
+// takes a few milliseconds a pair, so a new fingerprint is compared with all the others once, in the
+// background, and the pairs that look alike are kept in background_matches.
 export class Similarity {
   constructor(store) {
     this.store = store; this.grids = new Map();
-    store.db.exec('CREATE TABLE IF NOT EXISTS fingerprints(kind TEXT NOT NULL, id INTEGER NOT NULL, sig TEXT NOT NULL, PRIMARY KEY(kind, id))');
-    // Versions replaced or deleted since: their fingerprints go.
+    this.matching = Promise.resolve();
+    store.db.exec(`CREATE TABLE IF NOT EXISTS fingerprints(kind TEXT NOT NULL, id INTEGER NOT NULL, sig TEXT NOT NULL, PRIMARY KEY(kind, id));
+      CREATE TABLE IF NOT EXISTS background_matches(background INTEGER NOT NULL, other INTEGER NOT NULL, score REAL NOT NULL, PRIMARY KEY(background, other));`);
+    // Versions replaced or deleted since: their fingerprints go. Background fingerprints of the first
+    // kind (a JSON list of hashes, before 2026-10-03) too: fingerprintMissing makes them anew.
     store.run("DELETE FROM fingerprints WHERE kind='grid' AND id NOT IN (SELECT id FROM revisions)");
+    store.run("DELETE FROM fingerprints WHERE kind='background' AND sig NOT LIKE '{%'");
   }
   save(kind, id, sig) { this.store.run('INSERT OR REPLACE INTO fingerprints(kind,id,sig) VALUES(?,?,?)', kind, id, sig); }
   // ——— Grids: a version's signature (cached; made from its stored grid the first time).
@@ -41,48 +48,81 @@ export class Similarity {
         score: Math.round(score * 100) / 100, published: row.created,
         same: row.browser === work.browser || (!!row.account && row.account === work.account) }));
   }
-  // ——— Backgrounds: difference hashes of FRAMES frames and of the poster.
-  saveBackground(id, hashes) { this.save('background', id, JSON.stringify(hashes)); }
+  // ——— Backgrounds: the frames (scripts/similarity.mjs backgroundFingerprint), stored as JSON with the
+  // grey pixels in base64; saving one queues its comparison with every other background.
+  saveBackground(id, fingerprint) {
+    this.store.run("DELETE FROM fingerprints WHERE kind='background-matched' AND id=?", id);
+    this.save('background', id, JSON.stringify({ v: 2, order: fingerprint.order, frames: fingerprint.frames.map((f) => ({ ...f, gray: Buffer.from(f.gray).toString('base64') })) }));
+    return this.queueMatches(id);
+  }
   background(id) {
     const row = this.store.get("SELECT sig FROM fingerprints WHERE kind='background' AND id=?", id);
-    return row ? JSON.parse(row.sig) : null;
+    return row ? decode(row.sig) : null;
   }
+  // The comparisons run one after another, never two at once; the promise resolves when this one is done.
+  queueMatches(id) {
+    this.matching = this.matching.catch(() => {}).then(() => this.matchBackground(id));
+    return this.matching;
+  }
+  async matchBackground(id) {
+    const mine = prepareBackground(this.background(id));
+    if (!mine) return 0;
+    const others = this.store.all("SELECT id FROM fingerprints WHERE kind='background' AND id<>?", id), found = [];
+    for (const [n, { id: other }] of others.entries()) {
+      if (n % 4 === 3) await breathe();  // other requests get their turn
+      const score = backgroundSimilarity(mine, prepareBackground(this.background(other)));
+      if (score >= MATCH_KEPT) found.push([other, Math.round(score * 100) / 100]);
+    }
+    this.store.tx(() => {
+      this.store.run('DELETE FROM background_matches WHERE background=? OR other=?', id, id);
+      for (const [other, score] of found) {
+        this.store.run('INSERT OR REPLACE INTO background_matches(background,other,score) VALUES(?,?,?)', id, other, score);
+        this.store.run('INSERT OR REPLACE INTO background_matches(background,other,score) VALUES(?,?,?)', other, id, score);
+      }
+      this.save('background-matched', id, '');
+    });
+    return found.length;
+  }
+  // Whether a pending background's card may go to the moderators: its comparison is done (the card
+  // names the near copies), it has no fingerprint at all, or two minutes have passed.
+  backgroundReady(background) {
+    const has = (kind) => !!this.store.get('SELECT 1 x FROM fingerprints WHERE kind=? AND id=?', kind, background.id);
+    return !has('background') || has('background-matched') || this.store.now() - background.created > 120_000;
+  }
+  // The published backgrounds that look like this one, closest first: { id, title, author, score,
+  // published, same } — `same`: the same browser or Telegram account sent both.
   similarBackgrounds(background, limit = 3) {
-    const mine = this.background(background.id);
-    if (!mine) return [];
-    const rows = this.store.all(`SELECT b.id, b.title, b.author, b.browser, b.account, b.created, f.sig FROM backgrounds b JOIN fingerprints f ON f.kind='background' AND f.id=b.id
-      WHERE b.status='approved' AND b.id<>?`, background.id);
-    return rows.map((row) => ({ row, score: framesSimilarity(mine, JSON.parse(row.sig)) })).filter(({ score }) => score >= BACKGROUND_SIMILAR)
-      .sort((a, b) => b.score - a.score || a.row.id - b.row.id).slice(0, limit)
-      .map(({ row, score }) => ({ id: row.id, title: row.title, author: row.account ? this.store.profiles.creator(row.account).name : row.author,
-        score: Math.round(score * 100) / 100, published: row.created,
-        same: row.browser === background.browser || (!!row.account && row.account === background.account) }));
+    return this.store.all(`SELECT b.id, b.title, b.author, b.browser, b.account, b.created, m.score FROM background_matches m JOIN backgrounds b ON b.id=m.other
+      WHERE m.background=? AND m.score>=? AND b.status='approved' AND b.id<>? ORDER BY m.score DESC, b.id LIMIT ?`, background.id, BACKGROUND_SIMILAR, background.id, limit)
+      .map((row) => ({ id: row.id, title: row.title, author: row.account ? this.store.profiles.creator(row.account).name : row.author,
+        score: row.score, published: row.created, same: row.browser === background.browser || (!!row.account && row.account === background.account) }));
   }
+}
+// Pairs kept a little under the moderators' threshold, so a later change of it needs no new comparison.
+const MATCH_KEPT = 0.3;
+function decode(sig) {
+  try {
+    const value = JSON.parse(sig);
+    if (value?.v !== 2) return null;
+    return { order: value.order, frames: value.frames.map((f) => ({ ...f, gray: new Uint8Array(Buffer.from(f.gray, 'base64')) })) };
+  } catch { return null; }
 }
 
-// 9 × 8 grey values → a frame hash (scripts/similarity.mjs frameHash).
-const grey = (rgba) => Array.from({ length: rgba.length / 4 }, (_, i) => 0.299 * rgba[i * 4] + 0.587 * rgba[i * 4 + 1] + 0.114 * rgba[i * 4 + 2]);
-export async function pictureHash(bytes) {
-  const image = await loadImage(Buffer.from(bytes)), canvas = createCanvas(9, 8), ctx = canvas.getContext('2d');
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(image, 0, 0, 9, 8);
-  return frameHash(grey(ctx.getImageData(0, 0, 9, 8).data));
-}
-// FRAMES frames spread over the video, each scaled to 9 × 8 grey by ffmpeg.
-export function videoHashes(path, seconds, count = FRAMES) {
+// A frame a second (at most BACKGROUND_FRAMES), FRAME_W × FRAME_H, read by ffmpeg → the fingerprint.
+export function videoFingerprint(path) {
   return new Promise((resolve, reject) => {
-    const rate = Math.max(0.05, count / Math.max(0.1, Number(seconds) || 1));
-    const child = spawn('ffmpeg', ['-v', 'error', '-protocol_whitelist', 'file', '-i', path, '-vf', `fps=${rate.toFixed(4)},scale=9:8:flags=area,format=gray`,
-      '-frames:v', String(count), '-f', 'rawvideo', 'pipe:1'], { stdio: ['ignore', 'pipe', 'ignore'] });
-    const chunks = []; const timer = setTimeout(() => child.kill('SIGKILL'), 60_000);
+    const child = spawn('ffmpeg', ['-v', 'error', '-protocol_whitelist', 'file', '-i', path, '-vf', `fps=1,scale=${FRAME_W}:${FRAME_H}:flags=area,format=rgb24`,
+      '-frames:v', String(BACKGROUND_FRAMES), '-f', 'rawvideo', 'pipe:1'], { stdio: ['ignore', 'pipe', 'ignore'] });
+    const chunks = []; const timer = setTimeout(() => child.kill('SIGKILL'), 120_000);
     child.stdout.on('data', (chunk) => chunks.push(chunk));
     child.on('error', (error) => { clearTimeout(timer); reject(error); });
     child.on('close', (code) => {
       clearTimeout(timer);
       if (code !== 0) return reject(new Error('ffmpeg'));
-      const raw = Buffer.concat(chunks), hashes = [];
-      for (let at = 0; at + 72 <= raw.length; at += 72) hashes.push(frameHash(Array.from(raw.subarray(at, at + 72))));
-      resolve(hashes);
+      const raw = Buffer.concat(chunks), size = FRAME_W * FRAME_H * 3, frames = [];
+      for (let at = 0; at + size <= raw.length; at += size) frames.push(backgroundFrame(raw.subarray(at, at + size)));
+      if (!frames.length) return reject(new Error('ffmpeg: no frames'));
+      resolve(backgroundFingerprint(frames));
     });
   });
 }

@@ -31,18 +31,44 @@ test('grid fingerprints: a copy moved or renamed matches, an edit stays close, a
   assert.equal(gridSimilarity('', sig), 0);
 });
 
-test('frame hashes: a flat frame has none, a brighter copy keeps the bits, the share of close frames is the score', async () => {
-  const { frameHash, hammingHex, framesSimilarity } = await load();
-  const ramp = Array.from({ length: 72 }, (_, i) => ((i * 37) % 97) + 40);
-  assert.equal(frameHash(Array(72).fill(30)), null, 'flat');
-  const hash = frameHash(ramp);
-  assert.match(hash, /^[0-9a-f]{16}$/);
-  assert.equal(hammingHex(hash, frameHash(ramp.map((v) => v * 0.6))), 0, 'darker: the same gradients');
-  const other = frameHash(ramp.map((v, i) => ramp[71 - i]));
-  assert.ok(hammingHex(hash, other) > 10);
-  assert.equal(framesSimilarity([hash, null], [other, hash]), 1);
-  assert.equal(framesSimilarity([hash], [other]), 0);
-  assert.equal(framesSimilarity([], [hash]), 0);
+// A synthetic frame: rgb bytes of FRAME_W × FRAME_H drawn by `paint(x, y) → [r, g, b]`.
+async function frame(paint) {
+  const { FRAME_W, FRAME_H, backgroundFrame } = await load();
+  const rgb = new Uint8Array(FRAME_W * FRAME_H * 3);
+  for (let y = 0; y < FRAME_H; y++) for (let x = 0; x < FRAME_W; x++) rgb.set(paint(x, y).map((v) => Math.max(0, Math.min(255, Math.round(v)))), (y * FRAME_W + x) * 3);
+  return backgroundFrame(rgb);
+}
+const still = async (paint, n = 3) => { const { backgroundFingerprint, prepareBackground } = await load(); const f = await frame(paint); return prepareBackground(backgroundFingerprint(Array(n).fill(f))); };
+// A picture with detail: rings and a diagonal stripe pattern in orange.
+const picture = (x, y) => { const v = 128 + 90 * Math.sin(Math.hypot(x - 40, y - 15) / 2.2) * Math.cos((x + y) / 7); return [v, v * 0.6, v * 0.2]; };
+
+test('background frames: a black or flat frame has nothing to compare, a still picture is one distinct frame', async () => {
+  const { backgroundFingerprint, backgroundSimilarity, prepareBackground } = await load();
+  assert.equal((await frame(() => [8, 8, 8])).informative, false, 'black');
+  assert.equal((await frame(() => [120, 60, 30])).informative, false, 'one colour');
+  assert.equal((await frame(picture)).informative, true);
+  const fp = backgroundFingerprint([await frame(picture), await frame(picture), await frame(() => [8, 8, 8])]);
+  assert.equal(fp.frames.length, 2); assert.deepEqual(fp.order, [0, 0, 1]);
+  const black = prepareBackground(backgroundFingerprint([await frame(() => [8, 8, 8])]));
+  assert.equal(backgroundSimilarity(black, black), 0, 'two black videos are not copies');
+});
+
+test('background similarity: darker, mirrored, zoomed and grey copies match; another picture with the same light does not', async () => {
+  const { backgroundSimilarity, BACKGROUND_SIMILAR } = await load();
+  const original = await still(picture);
+  const close = async (paint, why) => assert.ok(backgroundSimilarity(original, await still(paint)) >= BACKGROUND_SIMILAR, why);
+  await close((x, y) => picture(x, y).map((v) => v * 0.55), 'darker');
+  await close((x, y) => picture(63 - x, y), 'mirrored');
+  await close((x, y) => picture(6.4 + x * 0.8, 3.6 + y * 0.8), 'zoomed into the centre');
+  await close((x, y) => picture(x * 0.85, y * 0.85), 'a crop from the corner');
+  await close((x, y) => { const [r, g, b] = picture(x, y), v = 0.3 * r + 0.59 * g + 0.11 * b; return [v, v, v]; }, 'no colour');
+  // The same overall light (bright top, dark bottom), another picture.
+  const sky = (detail) => (x, y) => { const v = 220 - y * 5 + detail(x, y); return [v * 0.9, v * 0.7, v * 0.4]; };
+  const one = await still(sky((x, y) => 25 * Math.sin(x * 1.3) * Math.sin(y * 0.9))), two = await still(sky((x, y) => 25 * Math.cos(x * 0.45 + y * 1.7)));
+  assert.ok(backgroundSimilarity(one, two) < BACKGROUND_SIMILAR, `the same light, other detail: ${backgroundSimilarity(one, two)}`);
+  // Colourful frames must share their hues.
+  const blue = await still((x, y) => picture(x, y).reverse());
+  assert.ok(backgroundSimilarity(original, blue) < BACKGROUND_SIMILAR, 'orange vs blue');
 });
 
 const identity = (n) => ({ browser: `browser-${n}`, ip: `ip-${n}` });
@@ -116,21 +142,55 @@ test('the comparison picture stacks two pictures under their labels', async () =
 });
 
 const hasFFmpeg = spawnSync('ffmpeg', ['-version']).status === 0;
-test('background fingerprints: the same video darker and re-encoded is close, another one is not', { skip: !hasFFmpeg && 'ffmpeg is not installed' }, async (t) => {
-  const { videoHashes } = await import('../server/similarity.mjs');
-  const { framesSimilarity, BACKGROUND_SIMILAR } = await load();
+test('background videos: a darker, trimmed, zoomed or mirrored copy is close, another video is not', { skip: !hasFFmpeg && 'ffmpeg is not installed' }, async (t) => {
+  const { videoFingerprint } = await import('../server/similarity.mjs');
+  const { backgroundSimilarity, prepareBackground, BACKGROUND_SIMILAR } = await load();
   const dir = mkdtempSync(join(tmpdir(), 'similarity-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
-  const make = (name, source, filter = 'null') => {
+  const make = (name, source, filter = 'null', seek = 0) => {
     const path = join(dir, name);
-    const made = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `${source}=s=640x360:r=15`, '-t', '3', '-vf', filter,
+    const made = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `${source}=s=640x360:r=15`, '-ss', String(seek), '-t', '6', '-vf', filter,
       '-c:v', 'libvpx-vp9', '-b:v', '300k', '-deadline', 'realtime', '-cpu-used', '8', '-an', '-f', 'webm', path]);
     assert.equal(made.status, 0, String(made.stderr));
     return path;
   };
-  const original = await videoHashes(make('a.webm', 'testsrc'), 3);
-  const darker = await videoHashes(make('b.webm', 'testsrc', 'eq=brightness=-0.15,boxblur=1'), 3);
-  const other = await videoHashes(make('c.webm', 'mandelbrot'), 3);
-  assert.equal(original.length, 8);
-  assert.ok(framesSimilarity(original, darker) >= BACKGROUND_SIMILAR, `darker: ${framesSimilarity(original, darker)}`);
-  assert.ok(framesSimilarity(original, other) < BACKGROUND_SIMILAR, `other: ${framesSimilarity(original, other)}`);
+  const print = async (...args) => prepareBackground(await videoFingerprint(make(...args)));
+  const original = await print('a.webm', 'testsrc2');
+  for (const [name, filter, seek] of [['darker', 'eq=brightness=-0.15,boxblur=1'], ['trimmed', 'null', 2], ['zoomed', 'crop=iw*0.8:ih*0.8,scale=640:360'], ['mirrored', 'hflip']]) {
+    const score = backgroundSimilarity(original, await print(`${name}.webm`, 'testsrc2', filter, seek));
+    assert.ok(score >= BACKGROUND_SIMILAR, `${name}: ${score}`);
+  }
+  const other = backgroundSimilarity(original, await print('c.webm', 'mandelbrot'));
+  assert.ok(other < BACKGROUND_SIMILAR, `other: ${other}`);
+});
+
+test('a background is compared with the others once, after it arrives; the moderation queue names the published one', { skip: !hasFFmpeg && 'ffmpeg is not installed' }, async (t) => {
+  const { CatalogStore } = await import('../server/catalog-store.mjs');
+  const { videoFingerprint } = await import('../server/similarity.mjs');
+  const s = new CatalogStore(':memory:', 'test-similarity-bg'); t.after(() => s.close());
+  const { CatalogBackgrounds } = await import('../server/catalog-backgrounds.mjs');
+  const dir = mkdtempSync(join(tmpdir(), 'similarity-bg-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
+  new CatalogBackgrounds(s, { dir });
+  const video = (name, source, filter = 'null') => {
+    const path = join(dir, name);
+    spawnSync('ffmpeg', ['-v', 'error', '-f', 'lavfi', '-i', `${source}=s=640x360:r=15`, '-t', '4', '-vf', filter, '-c:v', 'libvpx-vp9', '-b:v', '300k', '-deadline', 'realtime', '-cpu-used', '8', '-an', path]);
+    return path;
+  };
+  const now = s.now(), add = (title, status, browser) => Number(s.run(`INSERT INTO backgrounds(title,author,aspect,seconds,bytes,hash,browser,ip,created,updated,status) VALUES(?,'',?,4,1,?,?,'ip',?,?,?)`,
+    title, '16:9', title, browser, now, now, status).lastInsertRowid);
+  const first = add('Оригинал', 'approved', 'b1'), copy = add('Копия', 'pending', 'b2'), other = add('Другой', 'pending', 'b3');
+  await s.similarity.saveBackground(first, await videoFingerprint(video('1.webm', 'testsrc2')));
+  const row = (id) => s.get('SELECT * FROM backgrounds WHERE id=?', id);
+  const pending = s.similarity.saveBackground(copy, await videoFingerprint(video('2.webm', 'testsrc2', 'eq=brightness=-0.1,hflip')));
+  assert.equal(s.similarity.backgroundReady(row(copy)), false, 'the card waits for the comparison');
+  await pending;
+  assert.equal(s.similarity.backgroundReady(row(copy)), true);
+  await s.similarity.saveBackground(other, await videoFingerprint(video('3.webm', 'mandelbrot')));
+  const near = s.similarity.similarBackgrounds(row(copy));
+  assert.equal(near.length, 1); assert.equal(near[0].id, first); assert.equal(near[0].title, 'Оригинал'); assert.equal(near[0].same, false);
+  assert.deepEqual(s.similarity.similarBackgrounds(row(other)), []);
+  assert.deepEqual(s.similarity.similarBackgrounds(row(first)), [], 'pending copies are not «published» matches');
+  // Fingerprints of the first kind are dropped so that fingerprintMissing makes them anew.
+  s.run("INSERT OR REPLACE INTO fingerprints(kind,id,sig) VALUES('background',99,'[\"00ff\"]')");
+  new (s.similarity.constructor)(s);
+  assert.equal(s.get("SELECT count(*) n FROM fingerprints WHERE kind='background' AND id=99").n, 0);
 });

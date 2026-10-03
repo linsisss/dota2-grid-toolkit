@@ -39,7 +39,7 @@ export default function ProfileSettings({ onClose, onSaved }) {
       <p className="catalog-muted profile-hint">{locked ? t('Ник можно менять раз в неделю. Следующая смена — {date}.', { date: new Date(profile.nicknameAt).toLocaleDateString(locale, { day: 'numeric', month: 'long' }) })
         : t('3–20 символов: буквы, цифры, _ . -. Менять ник можно раз в неделю.')}</p>
       <label>{t('О себе')}<textarea rows={4} maxLength={BIO} value={form.bio} placeholder={t('Что делаешь, где тебя найти')} onChange={(event) => setForm({ ...form, bio: event.target.value })}/></label>
-      <p className="catalog-muted profile-hint">{form.bio.length} / {BIO}</p>
+      <p className="catalog-muted profile-hint">{t('Ссылки на Telegram, TikTok и YouTube будут кликабельными.')} {form.bio.length} / {BIO}</p>
       <label className="catalog-check"><input type="checkbox" checked={form.telegram} disabled={!profile.username} onChange={(event) => setForm({ ...form, telegram: event.target.checked })}/>
         {profile.username ? t('Показывать мой Telegram: @{username}', { username: profile.username }) : t('Показывать мой Telegram — в Telegram не задан @username')}</label>
       {error && <Notice error>{error}</Notice>}

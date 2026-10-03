@@ -13,7 +13,9 @@ export const GUIDE_LIMITS = Object.freeze({
   title: 120, summary: 280, text: 60_000, nodes: 6000, depth: 8, media: 60, alt: 200, href: 2000,
   comment: 2000
 });
+// «Общие» (asked for on 2026-10-03) — for guides about anything else; the first and the default.
 export const GUIDE_CATEGORIES = Object.freeze([
+  Object.freeze({ id: 'general', title: 'Общие' }),
   Object.freeze({ id: 'profiles', title: 'Профили' }),
   Object.freeze({ id: 'miniprofiles', title: 'Минипрофили' })
 ]);

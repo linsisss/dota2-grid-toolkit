@@ -1,0 +1,41 @@
+{
+  "version": "1.8.1",
+  "date": "2026-10-03",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.1",
+  "sections": [
+    {
+      "title": "Профили",
+      "changes": [
+        {
+          "text": "Ссылки на Telegram, TikTok и YouTube в описании профиля теперь кликабельны",
+          "children": ["Ссылки на другие сайты остаются текстом"]
+        }
+      ]
+    },
+    {
+      "title": "Гайды",
+      "changes": [
+        "Новый раздел «Общие» — для гайдов обо всём остальном"
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Profiles",
+        "changes": [
+          {
+            "text": "Links to Telegram, TikTok and YouTube in a profile description are now clickable",
+            "children": ["Links to other sites stay plain text"]
+          }
+        ]
+      },
+      {
+        "title": "Guides",
+        "changes": [
+          "A new «General» section — for guides about anything else"
+        ]
+      }
+    ]
+  }
+}

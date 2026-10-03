@@ -3,6 +3,7 @@
 export default {
   // The list (GuidesApp.jsx)
   'Гайды — GridStudio': 'Guides — GridStudio',
+  'Общие': 'General',
   'Профили': 'Profiles',
   'Минипрофили': 'Mini profiles',
   'Все': 'All',

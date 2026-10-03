@@ -238,3 +238,17 @@ test('the bot writes once when an admin gives a badge, not when it was taken bac
   await worker.deliverBadgeNotices();
   assert.equal(sent.length, 1);
 });
+
+test('profile description: only Telegram, TikTok and YouTube links become links', async () => {
+  const { bioParts } = await import('../scripts/profile-links.mjs');
+  const links = (text) => bioParts(text).filter((part) => part.href).map((part) => [part.text, part.href]);
+  assert.deepEqual(links('Мой тг: t.me/linsissya, ютуб — https://www.youtube.com/@linsis!'),
+    [['t.me/linsissya', 'https://t.me/linsissya'], ['https://www.youtube.com/@linsis', 'https://www.youtube.com/@linsis']]);
+  assert.deepEqual(links('tiktok: https://vm.tiktok.com/ZMabc123/ и youtu.be/dQw4w9WgXcQ?t=10)'),
+    [['https://vm.tiktok.com/ZMabc123/', 'https://vm.tiktok.com/ZMabc123/'], ['youtu.be/dQw4w9WgXcQ?t=10', 'https://youtu.be/dQw4w9WgXcQ?t=10']]);
+  assert.deepEqual(links('сайт https://evil.com/t.me и gridstudio.me'), [], 'other sites stay text');
+  assert.deepEqual(links('me@t.me.ru, nott.me/x, http://t.me:8080/x, https://user:pass@t.me/x, javascript:alert(1)'), []);
+  assert.deepEqual(links('T.ME/Upper'), [['T.ME/Upper', 'https://t.me/Upper']]);
+  // The text around the links is kept whole.
+  assert.equal(bioParts('a t.me/x b').map((part) => part.text).join(''), 'a t.me/x b');
+});

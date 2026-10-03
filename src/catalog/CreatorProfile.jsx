@@ -9,6 +9,7 @@ import ProfileSettings from './ProfileSettings.jsx';
 import { BadgeEditor, BadgeList } from './Badges.jsx';
 import { GuideCard } from '../guides/GuideParts.jsx';
 import '../guides/guides.css';
+import { bioParts } from '../../scripts/profile-links.mjs';
 import { locale, t } from '../../scripts/i18n.mjs';
 
 // A creator's public profile (asked for on 2026-10-02; /workshop?creator=<key>, server/profiles.mjs):
@@ -55,7 +56,7 @@ export default function CreatorProfile({ id }) {
         <BadgeList badges={profile.badges || []}/>
         <p className="creator-facts">{profile.telegram && <a href={telegramLink(profile.telegram)} target="_blank" rel="noreferrer"><Icon name="telegram" size={15}/>{profile.telegram}</a>}
           <span><Icon name="clock" size={15}/>{t('На сайте с {date}', { date: new Date(profile.joined).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) })}</span></p>
-        {profile.bio ? <p className="creator-bio">{profile.bio}</p> : profile.mine && <p className="creator-bio catalog-muted">{t('Расскажи о себе в настройках профиля.')}</p>}
+        {profile.bio ? <p className="creator-bio">{bioParts(profile.bio).map((part, i) => part.href ? <a key={i} href={part.href} target="_blank" rel="noopener noreferrer nofollow ugc">{part.text}</a> : part.text)}</p> : profile.mine && <p className="creator-bio catalog-muted">{t('Расскажи о себе в настройках профиля.')}</p>}
       </div>
       <div className="creator-side">
         <dl className="creator-stats"><div className="is-likes"><dt>{t('Лайки')}</dt><dd><Icon name="heart" size={18}/>{stats.likes.toLocaleString(locale)}</dd></div>

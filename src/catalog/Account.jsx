@@ -157,12 +157,12 @@ export function SubscribeButton({ item, onChange, path = `/works/${item.id}/subs
   if (!item.followable) return null;
   return <div className="catalog-subscribe">
     <button className={`catalog-button${item.subscribed ? ' is-subscribed' : ''}`} aria-pressed={!!item.subscribed} disabled={busy} onClick={async () => {
-      if (!auth.user) return auth.requestLogin(t('Войди через Telegram, чтобы подписаться на автора. О новых сетках напишет бот.'));
+      if (!auth.user) return auth.requestLogin(t('Войди через Telegram, чтобы подписаться на автора. О новых работах напишет бот.'));
       setBusy(true); setError('');
       try { onChange(await catalogAPI(path, { method: 'PUT', body: { subscribed: !item.subscribed } })); }
       catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }
     }}><Icon name={item.subscribed ? 'check' : 'bell'}/>{item.subscribed ? t('Вы подписаны на автора') : t('Подписаться на автора')}</button>
-    <p className="catalog-muted">{item.subscribed ? t('Бот пришлёт ссылку, когда автор выложит новую сетку.') : t('Новые сетки автора — сообщением от бота в Telegram.')}</p>
+    <p className="catalog-muted">{item.subscribed ? t('Бот пришлёт ссылку, когда автор выложит новую сетку, фон или гайд.') : t('Новые сетки, фоны и гайды автора — сообщением от бота в Telegram.')}</p>
     {error && <Notice error>{error}</Notice>}
   </div>;
 }

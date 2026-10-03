@@ -50,7 +50,7 @@ export function ReviewLayout({ badge, title, fields = null, meta, status, action
         {action.icon && <Icon name={action.icon}/>}{action.label}{action.key && <kbd>{action.key.toUpperCase()}</kbd>}</button>)}
         {tools && <span className="admin-tools">{tools}</span>}</div>}
       {asking && <form className="admin-reason" onSubmit={confirm} onKeyDown={(event) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) confirm(event); }}>
-        {asking.reason.kind && <div className="catalog-tags" role="group" aria-label="Быстрые причины">{quickReasons(asking.reason.kind).map(([name, text]) =>
+        {asking.reason.kind && <div className="catalog-tags" role="group" aria-label="Быстрые причины">{quickReasons(asking.reason.kind, asking.reason).map(([name, text]) =>
           <button type="button" key={name} aria-pressed={reason === text} onClick={() => setReason(reason === text ? '' : text)}>{name}</button>)}</div>}
         <textarea ref={field} rows={2} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)}
           placeholder={asking.reason.placeholder || (asking.reason.required ? 'Причина — автор увидит её дословно' : 'Причина, необязательно')} aria-label="Причина"/>

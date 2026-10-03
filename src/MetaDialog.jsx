@@ -3,6 +3,7 @@ import D from '../scripts/data.mjs';
 import { catalogAPI } from './catalog/api.js';
 import { META_BRACKETS, META_BRACKET_MEDALS, META_BRACKET_NAMES, META_DEFAULTS, META_POSITIONS, META_POSITION_TITLES, META_SIZES, metaGroups, metaNumber, orderByMeta, positionOfGroup, rankHeroes } from '../scripts/hero-meta.mjs';
 import C from '../scripts/core.mjs';
+import { portraitSource } from '../scripts/portraits.mjs';
 import { Icon } from './Icon.jsx';
 import { locale, t, translateMessage } from '../scripts/i18n.mjs';
 
@@ -40,7 +41,7 @@ const ratesTitle = (hero) => t('пикрейт {pick}%, винрейт {win}%', 
 function Portrait({ id, index, lines = [], title = '', dim = false }) {
   const hero = heroes.get(id), name = hero ? translateMessage(hero.name) : String(id);
   return <span className={`meta-hero${dim ? ' is-dim' : ''}`} style={{ '--i': index }} title={title ? `${name} · ${title}` : name}>
-    <span className="meta-hero-card">{hero && <img src={`./${hero.portrait}`} alt="" decoding="async"/>}</span>
+    <span className="meta-hero-card">{hero && <img src={`./${portraitSource(hero)}`} alt="" decoding="async"/>}</span>
     {lines.map((line, i) => <small key={i}>{line}</small>)}
   </span>;
 }

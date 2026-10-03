@@ -4,6 +4,8 @@ import { CatalogArts, artKey } from './catalog-arts.mjs';
 import { backgroundKey } from './catalog-backgrounds.mjs';
 import { guideKey } from './guides.mjs';
 import { GUIDE_CATEGORIES } from '../scripts/guide-document.mjs';
+import { TELEGRAM_REASON } from '../scripts/reject-reasons.mjs';
+import { ItemComments } from './item-comments.mjs';
 
 // Durable notification outbox. Revisions are already committed before discovery;
 // restarting either process cannot lose a submission or publish it by accident.
@@ -14,6 +16,8 @@ export class TelegramQueue {
     this.backgrounds = backgrounds;
     // «Гайды» (server/guides.mjs): versions to check, reports on guides and on comments.
     this.guides = guides;
+    // Comments under grids and backgrounds (server/item-comments.mjs): reports on them.
+    this.comments = new ItemComments(store);
     store.db.exec(`CREATE TABLE IF NOT EXISTS telegram_reviews(
       id TEXT PRIMARY KEY, kind TEXT NOT NULL, work TEXT NOT NULL, revision INTEGER NOT NULL,
       report_id INTEGER NOT NULL DEFAULT 0, summary TEXT NOT NULL,
@@ -47,6 +51,10 @@ export class TelegramQueue {
     if (job.kind === 'guide-report' || job.kind === 'guide-comment-report') {
       const report = this.store.get(`SELECT p.resolved, g.status, c.state FROM guide_reports p JOIN guides g ON g.id=p.guide LEFT JOIN guide_comments c ON c.id=p.comment WHERE p.id=?`, job.report_id);
       return !!report && !report.resolved && report.status === 'approved' && (job.kind === 'guide-report' || report.state === 'visible');
+    }
+    if (job.kind === 'item-comment-report') {
+      const report = this.store.get('SELECT p.resolved, c.state FROM item_comment_reports p JOIN item_comments c ON c.id=p.comment WHERE p.id=?', job.report_id);
+      return !!report && !report.resolved && report.state === 'visible';
     }
     if (job.kind === 'art') return this.arts.get(job.revision)?.status === 'pending';
     if (job.kind === 'background') return this.store.get('SELECT status FROM backgrounds WHERE id=?', job.revision)?.status === 'pending';
@@ -91,6 +99,15 @@ export class TelegramQueue {
             tags: JSON.parse(row.tags), aspect: row.aspect, seconds: row.seconds, similar: near(this.store.similarity.similarBackgrounds(row)) }));
       }
       for (const report of this.store.all("SELECT p.*,w.public_revision FROM reports p JOIN works w ON w.id=p.work WHERE p.resolved=0 AND w.state='active' AND w.public_revision IS NOT NULL")) add('report', this.store.revision(report.public_revision), report);
+      // Reports on comments under grids and backgrounds: the comment is the revision, the report its id.
+      for (const report of this.store.all(`SELECT p.*, c.kind item_kind, c.item, c.body FROM item_comment_reports p JOIN item_comments c ON c.id=p.comment
+        WHERE p.resolved=0 AND c.state='visible'`)) {
+        const title = report.item_kind === 'work' ? this.store.get('SELECT r.title FROM works w JOIN revisions r ON r.id=w.public_revision WHERE w.id=?', report.item)?.title
+          : this.store.get('SELECT title FROM backgrounds WHERE id=?', Number(report.item))?.title;
+        this.store.run("INSERT OR IGNORE INTO telegram_reviews(id,kind,work,revision,report_id,summary) VALUES(?,'item-comment-report',?,?,?,?)", randomBytes(12).toString('hex'),
+          report.item_kind === 'work' ? report.item : backgroundKey(Number(report.item)), report.comment, report.id,
+          JSON.stringify({ title: title || '', what: report.item_kind, item: report.item, reason: report.reason, comment: report.body.slice(0, 600) }));
+      }
       // Reports on approved menu backgrounds: the background is the revision, the report its own id.
       if (this.backgrounds) for (const row of this.store.all("SELECT b.*,p.id report,p.reason complaint FROM background_reports p JOIN backgrounds b ON b.id=p.background WHERE p.resolved=0 AND b.status='approved'"))
         this.store.run("INSERT OR IGNORE INTO telegram_reviews(id,kind,work,revision,report_id,summary) VALUES(?,'background-report',?,?,?,?)", randomBytes(12).toString('hex'), backgroundKey(row.id), row.id, row.report,
@@ -166,7 +183,8 @@ export class TelegramQueue {
   sent(job, message) {
     this.store.run("UPDATE telegram_reviews SET message=?,state=CASE WHEN state='finished' THEN state ELSE 'sent' END WHERE id=?", message, job.id);
   }
-  decide(id, action, actor) {
+  // `reason`: a rejection's text (scripts/reject-reasons.mjs), TELEGRAM_REASON without one.
+  decide(id, action, actor, reason = TELEGRAM_REASON) {
     // The revision check and decision are one synchronous SQLite transaction.
     // An awaited Telegram membership check must finish before entering here.
     return this.store.tx(() => {
@@ -174,16 +192,20 @@ export class TelegramQueue {
       if (!job || !this.active(job)) fail(409, 'Эта заявка уже проверена, изменена или удалена.');
       if (job.kind === 'guide') {
         if (!['approve', 'reject'].includes(action)) fail(400, 'Неизвестное действие.');
-        this.guides.moderate(job.revision, { action, reason: action === 'reject' ? 'Отклонено участником команды в Telegram.' : '' }, { transaction: false });
+        this.guides.moderate(job.revision, { action, reason: action === 'reject' ? reason : '' }, { transaction: false });
+      } else if (job.kind === 'item-comment-report') {
+        if (!['keep', 'hide'].includes(action)) fail(400, 'Неизвестное действие.');
+        this.comments.decideReport(job.report_id, action);
+        this.store.audit(job.work, `report-${action}`);
       } else if (job.kind === 'guide-report' || job.kind === 'guide-comment-report') {
         if (!['keep', 'hide'].includes(action)) fail(400, 'Неизвестное действие.');
         this.guides.decideReport(job.report_id, action);
       } else if (job.kind === 'art') {
         if (!['approve', 'reject'].includes(action)) fail(400, 'Неизвестное действие.');
-        this.arts.moderate(job.revision, { action, reason: action === 'reject' ? 'Отклонено участником команды в Telegram.' : '' }, { transaction: false });
+        this.arts.moderate(job.revision, { action, reason: action === 'reject' ? reason : '' }, { transaction: false });
       } else if (job.kind === 'background') {
         if (!['approve', 'reject'].includes(action)) fail(400, 'Неизвестное действие.');
-        this.backgrounds.moderate(job.revision, { action, reason: action === 'reject' ? 'Отклонено участником команды в Telegram.' : '' }, { transaction: false });
+        this.backgrounds.moderate(job.revision, { action, reason: action === 'reject' ? reason : '' }, { transaction: false });
       } else if (job.kind === 'background-report') {
         if (!['keep', 'hide'].includes(action)) fail(400, 'Неизвестное действие.');
         if (action === 'hide') this.backgrounds.moderate(job.revision, { action: 'hide', reason: 'Скрыто после жалобы в Telegram.' }, { transaction: false });
@@ -193,7 +215,7 @@ export class TelegramQueue {
         if (!['approve', 'reject'].includes(action)) fail(400, 'Неизвестное действие.');
         // moderate has its own transaction; use a savepoint-compatible wrapper.
         this.store.moderate(job.work, { revision: job.revision, action,
-          reason: action === 'reject' ? 'Отклонено участником команды в Telegram.' : '' }, { transaction: false });
+          reason: action === 'reject' ? reason : '' }, { transaction: false });
       } else {
         if (!['keep', 'hide'].includes(action)) fail(400, 'Неизвестное действие.');
         if (action === 'hide') {

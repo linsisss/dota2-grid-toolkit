@@ -35,11 +35,11 @@ export default {
   'Убрать лайк': 'Unlike',
   'Поставить лайк': 'Like',
   'Войди через Telegram, чтобы поставить лайк.': 'Sign in with Telegram to like this.',
-  'Войди через Telegram, чтобы подписаться на автора. О новых сетках напишет бот.': 'Sign in with Telegram to follow the author. The bot will message you about new grids.',
+  'Войди через Telegram, чтобы подписаться на автора. О новых работах напишет бот.': 'Sign in with Telegram to follow the author. The bot will tell you about new works.',
   'Вы подписаны на автора': 'Following the author',
   'Подписаться на автора': 'Follow the author',
-  'Бот пришлёт ссылку, когда автор выложит новую сетку.': 'The bot will send you a link when the author posts a new grid.',
-  'Новые сетки автора — сообщением от бота в Telegram.': 'Get the author’s new grids as a message from the bot in Telegram.',
+  'Бот пришлёт ссылку, когда автор выложит новую сетку, фон или гайд.': 'The bot will send you a link when the author posts a new grid, background or guide.',
+  'Новые сетки, фоны и гайды автора — сообщением от бота в Telegram.': 'Get the author’s new grids, backgrounds and guides as a message from the bot in Telegram.',
 
   // ChangelogButton.jsx: «Что нового» (the release notes themselves are the `en` of releases/*.json)
   'Что нового': 'What’s new',

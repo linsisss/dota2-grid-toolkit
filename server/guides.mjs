@@ -615,6 +615,7 @@ export class CatalogGuides {
         store.run("UPDATE guides SET public_revision=?, draft_revision=NULL, status=CASE WHEN status='hidden' THEN 'hidden' ELSE 'approved' END, reason='', updated=?, published=coalesce(published, ?) WHERE id=?",
           revision.id, at, at, guide.id);
         store.run('INSERT OR IGNORE INTO guide_notices(revision,account,guide,first,created) VALUES(?,?,?,?,?)', revision.id, guide.account, guide.id, first ? 1 : 0, at);
+        if (first) store.notifyFollowers(guide.account, `guide:${guide.id}`);
       } else if (action === 'reject') {
         need(revision.status === 'pending' && guide.draft_revision === revision.id);
         if (!reason) fail(400, 'Укажи причину отказа.');

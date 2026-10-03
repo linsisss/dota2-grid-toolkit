@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { catalogAPI } from './api.js';
 import { Icon, Notice } from './Common.jsx';
+import { rejectReasons } from '../../scripts/reject-reasons.mjs';
 
 // What the admin queues (grids, arts, backgrounds, guides) share, so they look and work alike: tabs
 // with counts and a search, the list on the left with a scroll of its own and its pages under it
@@ -11,22 +12,14 @@ const PAGE = 20;
 // A key typed into a field is not a command (the list's ↑ ↓, a review's A / R / H).
 export const typing = (event) => !!event.target.closest?.('input, textarea, select, [contenteditable="true"]') || event.ctrlKey || event.metaKey || event.altKey;
 const NOUNS = {
-  works: { many: 'сеток', loading: 'Загружаем сетки…', inside: 'В вашей сетке', bad: 'она плохая', yours: 'Ваша сетка', other: 'другую', place: 'мастерскую' },
-  arts: { many: 'артов', loading: 'Загружаем арты…', inside: 'В вашем арте', bad: 'он плохой', yours: 'Ваш арт', other: 'другой', place: 'библиотеку' },
-  backgrounds: { many: 'фонов', loading: 'Загружаем фоны…', inside: 'В вашем фоне', bad: 'он плохой', yours: 'Ваш фон', other: 'другой', place: 'мастерскую' },
-  guides: { many: 'гайдов', loading: 'Загружаем гайды…', inside: 'В вашем гайде', bad: 'он плохой', yours: 'Ваш гайд', other: 'другой', place: 'гайды' }
+  works: { many: 'сеток', loading: 'Загружаем сетки…' },
+  arts: { many: 'артов', loading: 'Загружаем арты…' },
+  backgrounds: { many: 'фонов', loading: 'Загружаем фоны…' },
+  guides: { many: 'гайдов', loading: 'Загружаем гайды…' }
 };
 
-// The author sees the reason word for word in «Мои публикации» and, signed in with Telegram, in a message
-// from the bot (catalog-telegram.mjs deliverRejectNotices).
-export function quickReasons(kind) {
-  const n = NOUNS[kind];
-  return [
-    ['Не хватает деталей', `${n.inside} недостаточно деталей для публикации. Это не значит, что ${n.bad}, просто мы не можем пропускать каждую заявку в ${n.place}.`],
-    ['Плохое качество', `${n.yours} слишком низкого качества. Попробуйте найти качество лучше, либо загрузите ${n.other}.`],
-    ['Нарушение правил', 'Нарушение правил']
-  ];
-}
+// The rejection's quick reasons (scripts/reject-reasons.mjs, the same as on the Telegram card): [name, text].
+export const quickReasons = (kind, context) => rejectReasons(kind, context).map(({ name, text }) => [name, text]);
 
 // «…. Причина: …» after a status, without a doubled full stop.
 export const reasonNote = reason => reason ? `. Причина: ${reason.replace(/\.+$/, '')}` : '';

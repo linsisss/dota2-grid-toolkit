@@ -1,0 +1,91 @@
+{
+  "version": "1.8.2",
+  "date": "2026-10-03",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.2",
+  "sections": [
+    {
+      "title": "Мастерская",
+      "changes": [
+        {
+          "text": "Комментарии под сетками — как под гайдами, с ответами",
+          "children": ["Автор сетки может удалить лишние, на чужие можно пожаловаться"]
+        },
+        {
+          "text": "Счётчик скачиваний на странице сетки и в профиле автора",
+          "children": ["Каждый человек считается раз в сутки, свои скачивания автору не засчитываются"]
+        },
+        "Вкладка «За неделю» — сетки, которые больше всего лайкали за последние 7 дней",
+        "Перед отправкой сетки сайт предупреждает, если в мастерской уже есть похожая, и предлагает указать её в «По мотивам»"
+      ]
+    },
+    {
+      "title": "Фон главного меню",
+      "changes": [
+        "Комментарии под фонами, счётчик скачиваний и вкладка «За неделю» — как у сеток",
+        "Перед отправкой фона сайт предупреждает, если похожий фон уже есть в мастерской"
+      ]
+    },
+    {
+      "title": "Профили",
+      "changes": [
+        "Подписчики узнают в боте не только о новых сетках автора, но и о его фонах и гайдах",
+        "Ссылка на профиль в Telegram, Discord и других мессенджерах показывает карточку: аватар, ник, значки и статистику"
+      ]
+    },
+    {
+      "title": "Сайт",
+      "changes": [
+        {
+          "text": "Портреты героев стали легче: страницы с сетками грузятся быстрее",
+          "children": ["Для всех героев это 0,7 МБ вместо 1,8 МБ; полные портреты — только в редакторе при сильном приближении"]
+        },
+        "Аватарки команды на главной берутся из профилей на сайте",
+        "Картинки-превью ссылок снова рисуются нужным шрифтом"
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Workshop",
+        "changes": [
+          {
+            "text": "Comments under grids — like under guides, with replies",
+            "children": ["A grid’s author can delete unwanted ones, others can be reported"]
+          },
+          {
+            "text": "A download counter on a grid’s page and in the author’s profile",
+            "children": ["Each person counts once a day; authors’ own downloads don’t count"]
+          },
+          "A «This week» tab — the grids liked most over the last 7 days",
+          "Before you send a grid, the site warns if a similar one is already in the workshop and offers to credit it as the original"
+        ]
+      },
+      {
+        "title": "Main menu background",
+        "changes": [
+          "Comments under backgrounds, a download counter and the «This week» tab — as for grids",
+          "Before you send a background, the site warns if a similar one is already in the workshop"
+        ]
+      },
+      {
+        "title": "Profiles",
+        "changes": [
+          "Followers hear from the bot not only about an author’s new grids but also about their backgrounds and guides",
+          "A profile link in Telegram, Discord and other messengers shows a card: avatar, nickname, badges and stats"
+        ]
+      },
+      {
+        "title": "Site",
+        "changes": [
+          {
+            "text": "Lighter hero portraits: pages with grids load faster",
+            "children": ["0.7 MB instead of 1.8 MB for all heroes; full portraits only in the editor when zoomed in a lot"]
+          },
+          "Team avatars on the home page come from the site profiles",
+          "Link preview images use the right font again"
+        ]
+      }
+    ]
+  }
+}

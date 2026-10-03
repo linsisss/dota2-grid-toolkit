@@ -44,6 +44,12 @@ export async function downloadGrid(grid) {
 }
 // The same grid by a PowerShell command (server/grid-installs.mjs, scripts/installer.mjs): stored on
 // the site for a week; → the command that puts it into the folder of the account signed in to Steam.
+// A workshop grid ('work') or background downloaded: the counter on its card (server: one a visitor a day).
+export function countDownload(kind, id) {
+  if (!id) return;
+  fetch(`/api/catalog/${kind === 'background' ? 'backgrounds' : 'works'}/${id}/downloaded`, { method: 'POST', credentials: 'same-origin', keepalive: true,
+    headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+}
 export async function gridInstallCommand(grid) {
   const safe = await import('./pick-safe.js').then(({ pickSafeGrid }) => pickSafeGrid(grid)).catch(() => grid);
   const result = await catalogAPI('/install', { method: 'POST', body: { grid: withGridNote(safe, t(GRID_NOTE)), lang } });

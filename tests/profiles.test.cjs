@@ -158,7 +158,7 @@ test('over HTTP: one’s own profile and its settings, the public page with work
   assert.equal(page.status, 200);
   assert.equal(page.body.nickname, 'Квортеро'); assert.equal(page.body.bio, 'Сетки и фоны'); assert.equal(page.body.telegram, '@user_601');
   assert.equal(page.body.mine, false);
-  assert.deepEqual(page.body.stats, { grids: 1, backgrounds: 0, guides: 0, likes: 1 });
+  assert.deepEqual(page.body.stats, { grids: 1, backgrounds: 0, guides: 0, likes: 1, downloads: 0 });
   assert.equal(page.body.grids[0].id, work.id); assert.equal(page.body.grids[0].liked, true); assert.equal(page.body.grids[0].grid, undefined, 'no grids in the list');
   assert.deepEqual(page.body.backgrounds, []); assert.deepEqual(page.body.guides, []);
   assert.equal((await author(`/profiles/${mine.key}`)).body.mine, true);
@@ -204,6 +204,14 @@ test('over HTTP: one’s own profile and its settings, the public page with work
   const journal = (await admin('/admin/journal')).body.items.filter((item) => item.kind === 'profile');
   assert.deepEqual(journal.map((item) => item.label), ['Значок снят: Поддержавший', 'Значок выдан: Разработчик', 'Значок выдан: Поддержавший'], 'the repeated one is not recorded');
   assert.equal(journal[0].title, 'Квортеро'); assert.equal(journal[0].link, `workshop?creator=${mine.key}`);
+  // Downloads: one a visitor a day, the author's own not counted; the profile adds them up.
+  assert.equal((await fan(`/works/${work.id}/downloaded`, 'POST', {})).body.downloads, 1);
+  assert.equal((await fan(`/works/${work.id}/downloaded`, 'POST', {})).body.downloads, 1, 'the same day');
+  assert.equal((await author(`/works/${work.id}/downloaded`, 'POST', {})).body.downloads, 1, 'not the author');
+  assert.equal((await guest(`/works/${work.id}/download`)).status, 200);
+  assert.equal((await guest(`/works/${work.id}`)).body.downloads, 2, 'a guest browser counts too');
+  assert.equal((await guest(`/profiles/${mine.key}`)).body.stats.downloads, 2);
+  assert.equal((await guest('/works/00000000-0000-0000-0000-000000000000/downloaded', 'POST', {})).status, 404);
   const svg = await guest(`/profiles/${mine.key}/avatar?v=p`);
   assert.equal(svg.headers.get('content-type'), 'image/svg+xml'); assert.match(svg.headers.get('content-security-policy') || '', /default-src 'none'/);
 });
@@ -251,4 +259,81 @@ test('profile description: only Telegram, TikTok and YouTube links become links'
   assert.deepEqual(links('T.ME/Upper'), [['T.ME/Upper', 'https://t.me/Upper']]);
   // The text around the links is kept whole.
   assert.equal(bioParts('a t.me/x b').map((part) => part.text).join(''), 'a t.me/x b');
+});
+
+test('followers hear about a new menu background too; the unsubscribe button names the profile', async (t) => {
+  const { store, login } = await fixture(t);
+  const { CatalogTelegram } = await import('../server/catalog-telegram.mjs');
+  const { CatalogBackgrounds } = await import('../server/catalog-backgrounds.mjs');
+  const sent = [];
+  const worker = new CatalogTelegram(store, { chatId: '-1004309207941', topicId: 6, origin: 'https://gridstudio.me', local: false },
+    { sendMessage: async (message) => { sent.push(message); return { message_id: sent.length }; }, answerCallbackQuery: async () => ({}), editMessageReplyMarkup: async () => ({}) }, { log: () => {} });
+  worker.botId = 42;
+  const author = login('801').user, fan = login('802').user;
+  store.follow(fan.id, author.id, true);
+  const gallery = new CatalogBackgrounds(store, { dir: '/nonexistent' });
+  const now = store.now();
+  const id = Number(store.run("INSERT INTO backgrounds(title,author,aspect,seconds,bytes,hash,account,browser,ip,created,updated) VALUES('Лес','','16:9',5,1,'h',?,'b','i',?,?)", author.id, now, now).lastInsertRowid);
+  gallery.moderate(id, { action: 'approve' });
+  await worker.deliverNotifications();
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].chat_id, fan.id);
+  assert.equal(sent[0].text, `Новый фон главного меню от <b>${author.nickname}</b>: <a href="https://gridstudio.me/background?background=${id}">«Лес»</a>`);
+  assert.deepEqual(sent[0].reply_markup.inline_keyboard[1], [{ text: 'Отписаться от автора', callback_data: `sub:off:p:${author.profile}` }]);
+  await worker.callback({ id: 'q', data: `sub:off:p:${author.profile}`, from: { id: Number(fan.id), is_bot: false },
+    message: { message_id: 1, chat: { id: Number(fan.id), type: 'private' }, from: { id: 42 }, reply_markup: sent[0].reply_markup } });
+  assert.equal(store.get('SELECT count(*) n FROM subscriptions WHERE account=?', fan.id).n, 0);
+});
+
+test('«За неделю»: the week’s likes first, then all-time likes', async (t) => {
+  const { store, login, advance } = await fixture(t);
+  const fans = ['901', '902', '903'].map((id) => login(id).user.id);
+  const old = store.save({ title: 'Старая', author: 'a', tags: ['Аниме'], grid: grid(60) }, identity(1));
+  store.moderate(old.id, { action: 'approve', revision: old.revision });
+  for (const fan of fans) store.like(old.id, fan, true);
+  advance(10 * DAY);
+  const fresh = store.save({ title: 'Новая', author: 'b', tags: ['Аниме'], grid: grid(70) }, identity(2));
+  store.moderate(fresh.id, { action: 'approve', revision: fresh.revision });
+  store.like(fresh.id, fans[0], true);
+  assert.deepEqual(store.list({ popular: true }).items.map((w) => w.title), ['Старая', 'Новая']);
+  assert.deepEqual(store.list({ popular: 'week' }).items.map((w) => w.title), ['Новая', 'Старая']);
+  assert.deepEqual(store.list({}).items.map((w) => w.title), ['Новая', 'Старая']);
+});
+
+test('before sending: the published grids and backgrounds a new one looks like, not the sender’s own', async (t) => {
+  const [{ CatalogStore }, , , { createCatalogAPI }] = await modules;
+  const { BACKGROUND_FRAMES, FRAME_W, FRAME_H, backgroundFrame, backgroundFingerprint } = await import('../scripts/similarity.mjs');
+  const store = new CatalogStore(':memory:', 'test-similar-before');
+  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-similar-before', admins: new Set(), database: ':memory:', media: '/nonexistent' };
+  const { server, accounts, gallery } = createCatalogAPI(config, { store }); await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
+  const signIn = (id) => { const r = accounts.begin(`ip-${id}`, `browser-${id}`); accounts.candidate(r.id, from(id)); accounts.approve(r.id, Number(id), true); return accounts.finish(r.id, r.verifier, id).session; };
+  const base = `http://127.0.0.1:${server.address().port}/api/catalog`;
+  const call = (session) => async (path, body, raw = false) => {
+    const response = await fetch(base + path, { method: 'POST', headers: { 'Content-Type': raw ? 'application/octet-stream' : 'application/json', Origin: config.origin, Cookie: session ? `gs_account=${session}` : '' }, body: raw ? body : JSON.stringify(body) });
+    return { status: response.status, body: await response.json() };
+  };
+  const author = call(signIn('1001')), other = call(signIn('1002')), guest = call(null);
+  // A grid with plenty of categories, published by 1001.
+  const art = { version: 3, configs: [{ config_name: 'Арт', categories: Array.from({ length: 40 }, (_, i) => ({ category_name: '#*+'[i % 3], x_position: 20 + (i * 37) % 900, y_position: 10 + i * 12, width: 70, height: 12, hero_ids: [] })) }] };
+  const work = store.save({ title: 'Оригинал', author: '', tags: ['Аниме'], grid: art }, identity(1), null, null, null, '1001');
+  store.moderate(work.id, { action: 'approve', revision: work.revision });
+  const moved = structuredClone(art); for (const c of moved.configs[0].categories) c.x_position += 30;
+  const seen = (await other('/works/similar', { grid: moved })).body.similar;
+  assert.equal(seen.length, 1); assert.equal(seen[0].work, work.id); assert.equal(seen[0].title, 'Оригинал'); assert.ok(seen[0].score >= 0.9);
+  assert.equal(seen[0].author, store.profiles.creator('1001').name);
+  assert.deepEqual((await author('/works/similar', { grid: moved })).body.similar, [], 'not the sender’s own');
+  assert.deepEqual((await other('/works/similar', { grid: moved, work: work.id })).body.similar, [], 'not its own earlier version');
+  assert.equal((await guest('/works/similar', { grid: { version: 3, configs: [] } })).status, 400);
+  // A background: frames sent by the page, compared with the published ones.
+  const frame = (shift) => { const rgb = new Uint8Array(FRAME_W * FRAME_H * 3); for (let y = 0; y < FRAME_H; y++) for (let x = 0; x < FRAME_W; x++) { const v = 128 + 100 * Math.sin((x + shift) / 3) * Math.cos(y / 4); rgb.set([v, v * 0.7, v * 0.3], (y * FRAME_W + x) * 3); } return rgb; };
+  gallery();
+  const now = store.now();
+  const id = Number(store.run("INSERT INTO backgrounds(title,author,aspect,seconds,bytes,hash,account,browser,ip,created,updated,status) VALUES('Волны','',?,3,1,'h',?,'b','i',?,?,'approved')", '16:9', '1001', now, now).lastInsertRowid);
+  await store.similarity.saveBackground(id, backgroundFingerprint([frame(0), frame(0), frame(0)].map(backgroundFrame)));
+  const frames = new Uint8Array([...frame(0), ...frame(0)]);
+  const bg = (await other('/backgrounds/similar', frames, true)).body.similar;
+  assert.equal(bg.length, 1); assert.equal(bg[0].id, id); assert.equal(bg[0].title, 'Волны');
+  assert.equal((await other('/backgrounds/similar', new Uint8Array(10), true)).status, 400);
+  assert.ok(BACKGROUND_FRAMES >= 2);
 });

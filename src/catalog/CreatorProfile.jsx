@@ -7,6 +7,7 @@ import { HideAdultButton } from './Sensitive.jsx';
 import { LikeButton, SubscribeButton, useAccount } from './Account.jsx';
 import ProfileSettings from './ProfileSettings.jsx';
 import { BadgeEditor, BadgeList } from './Badges.jsx';
+import { BackgroundCommentsButton } from './BackgroundComments.jsx';
 import { GuideCard } from '../guides/GuideParts.jsx';
 import '../guides/guides.css';
 import { bioParts } from '../../scripts/profile-links.mjs';
@@ -60,7 +61,7 @@ export default function CreatorProfile({ id }) {
       </div>
       <div className="creator-side">
         <dl className="creator-stats"><div className="is-likes"><dt>{t('Лайки')}</dt><dd><Icon name="heart" size={18}/>{stats.likes.toLocaleString(locale)}</dd></div>
-          <div><dt>{t('Сетки')}</dt><dd>{stats.grids}</dd></div><div><dt>{t('Фоны')}</dt><dd>{stats.backgrounds}</dd></div><div><dt>{t('Гайды')}</dt><dd>{stats.guides}</dd></div></dl>
+          <div><dt>{t('Сетки')}</dt><dd>{stats.grids}</dd></div><div><dt>{t('Фоны')}</dt><dd>{stats.backgrounds}</dd></div><div><dt>{t('Гайды')}</dt><dd>{stats.guides}</dd></div><div><dt>{t('Скачивания')}</dt><dd>{(stats.downloads || 0).toLocaleString(locale)}</dd></div></dl>
         {!profile.mine && <SubscribeButton item={profile} path={`/profiles/${profile.key}/subscribe`} onChange={(value) => setProfile((current) => ({ ...current, ...value }))}/>}
         {(profile.mine || auth.admin) && <div className="creator-side-actions">{profile.mine && <button className="catalog-button" onClick={() => setSettings(true)}><Icon name="sliders"/>{t('Настройки профиля')}</button>}
           {auth.admin && <button className="catalog-button" onClick={() => setBadges(true)}><Icon name="award"/>Значки</button>}</div>}
@@ -85,6 +86,7 @@ function Works({ kind, items, onUpdate }) {
   if (kind === 'grids') return <section className="catalog-grid" aria-label={t('Сетки')}>{items.map((item) => <WorkCard key={item.id} item={item} onChange={(value) => onUpdate('grids', item.id, value)}/>)}</section>;
   if (kind === 'backgrounds') return <section className="background-grid" aria-label={t('Фоны')}>{items.map((item) => <BackgroundCard key={item.id} item={item}><div className="background-card-actions">
     <LikeButton item={item} path={`/backgrounds/${item.id}/like`} onChange={(value) => onUpdate('backgrounds', item.id, value)}/>
+    <BackgroundCommentsButton item={item} onCount={(comments) => onUpdate('backgrounds', item.id, { comments })}/>
     <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`}>{t('Использовать')}</a></div></BackgroundCard>)}</section>;
   return <section className="guide-grid creator-guides" aria-label={t('Гайды')}>{items.map((item) => <GuideCard key={item.id} item={item}/>)}</section>;
 }

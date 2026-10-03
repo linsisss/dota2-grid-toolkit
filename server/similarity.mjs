@@ -48,6 +48,32 @@ export class Similarity {
         score: Math.round(score * 100) / 100, published: row.created,
         same: row.browser === work.browser || (!!row.account && row.account === work.account) }));
   }
+  // Before sending (src/catalog/SubmissionForm.jsx, asked for on 2026-10-03): the published works a grid
+  // looks like, other than `work` (its own earlier version) and the sender's own — so an honest author
+  // can say «по мотивам» before a moderator asks.
+  similarToGrid(grid, { work = '', account = null } = {}, limit = 3) {
+    const mine = gridSignature(grid);
+    if (!mine) return [];
+    const rows = this.store.all(`SELECT w.id work, w.account, r.id revision, r.title, r.author FROM works w JOIN revisions r ON r.id=w.public_revision
+      WHERE w.state='active' AND w.id<>?`, work).filter((row) => !account || row.account !== account);
+    return rows.map((row) => ({ row, score: gridSimilarity(mine, this.grid(row.revision)) })).filter(({ score }) => score >= GRID_SIMILAR)
+      .sort((a, b) => b.score - a.score).slice(0, limit)
+      .map(({ row, score }) => ({ work: row.work, title: row.title, author: row.account ? this.store.profiles.creator(row.account).name : row.author, score: Math.round(score * 100) / 100 }));
+  }
+  // The same for a background before it is sent: `fingerprint` made by the page from its video
+  // (scripts/similarity.mjs backgroundFingerprint), compared with the published backgrounds.
+  async similarToBackground(fingerprint, { account = null } = {}, limit = 3) {
+    const mine = prepareBackground(fingerprint);
+    if (!mine) return [];
+    const rows = this.store.all(`SELECT b.id, b.title, b.author, b.account FROM backgrounds b JOIN fingerprints f ON f.kind='background' AND f.id=b.id WHERE b.status='approved'`)
+      .filter((row) => !account || row.account !== account), found = [];
+    for (const [n, row] of rows.entries()) {
+      if (n % 4 === 3) await breathe();
+      const score = backgroundSimilarity(mine, prepareBackground(this.background(row.id)));
+      if (score >= BACKGROUND_SIMILAR) found.push({ id: row.id, title: row.title, author: row.account ? this.store.profiles.creator(row.account).name : row.author, score: Math.round(score * 100) / 100 });
+    }
+    return found.sort((a, b) => b.score - a.score).slice(0, limit);
+  }
   // ——— Backgrounds: the frames (scripts/similarity.mjs backgroundFingerprint), stored as JSON with the
   // grey pixels in base64; saving one queues its comparison with every other background.
   saveBackground(id, fingerprint) {

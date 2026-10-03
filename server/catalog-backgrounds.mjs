@@ -141,7 +141,7 @@ export class CatalogBackgrounds {
     // A signed-in author's background shows their profile; an old signature of theirs stays private.
     return { id: row.id, title: row.title, author: row.account ? '' : row.author, credit: row.credit || '', ...(row.account ? { creator: this.store.profiles.creator(row.account) } : {}),
       tags: JSON.parse(row.tags), aspect: row.aspect, seconds: row.seconds, bytes: row.bytes, updated: row.updated,
-      likes: this.store.get('SELECT count(*) n FROM background_likes WHERE background=?', row.id).n,
+      likes: this.store.get('SELECT count(*) n FROM background_likes WHERE background=?', row.id).n, downloads: this.store.downloads('background', row.id), comments: this.store.commentCount('background', row.id),
       liked: !!(account && this.store.get('SELECT 1 FROM background_likes WHERE background=? AND account=?', row.id, account)), mine: !!(account && row.account === account) };
   }
   // The author's key to the moderation result of one submission (no account needed): derived from
@@ -191,7 +191,9 @@ export class CatalogBackgrounds {
     if (aspect) { clauses.push('aspect=?'); args.push(aspect); }
     const where = clauses.join(' AND ');
     const total = this.store.get(`SELECT count(*) n FROM backgrounds WHERE ${where}`, ...args).n;
-    const items = this.store.all(`SELECT * FROM backgrounds WHERE ${where} ORDER BY ${popular ? `${LIKES} DESC, ` : ''}updated DESC, id DESC LIMIT 24 OFFSET ?`, ...args, page * 24).map((row) => this.view(row, account));
+    // 'week': by the likes of the last seven days first, as the grids (server/catalog-store.mjs list).
+    const week = popular === 'week' ? `(SELECT count(*) FROM background_likes WHERE background=backgrounds.id AND created>=${Math.floor(this.store.now() - 7 * 86_400_000)}) DESC, ` : '';
+    const items = this.store.all(`SELECT * FROM backgrounds WHERE ${where} ORDER BY ${week}${popular ? `${LIKES} DESC, ` : ''}updated DESC, id DESC LIMIT 24 OFFSET ?`, ...args, page * 24).map((row) => this.view(row, account));
     return { items, total, aspects };
   }
   // A creator's approved backgrounds, newest first (the profile page, server/profiles.mjs).
@@ -240,7 +242,7 @@ export class CatalogBackgrounds {
       if (!row) fail(404, 'Фон не найден.');
       const need = (...states) => { if (!states.includes(row.status)) fail(409, 'Фон уже проверен или изменён. Обнови список.'); };
       const set = (status, why = '') => store.run('UPDATE backgrounds SET status=?,reason=?,updated=? WHERE id=?', status, why, store.now(), id);
-      if (action === 'approve') { need('pending'); set('approved'); }
+      if (action === 'approve') { need('pending'); set('approved'); store.notifyFollowers(row.account, `bg:${id}`); }
       else if (action === 'reject') { need('pending'); if (!reason) fail(400, 'Укажи причину отказа.'); set('rejected', reason); store.rejectNotice('background', id, row.account); }
       else if (action === 'hide') { need('approved'); set('hidden', reason); store.run('UPDATE background_reports SET resolved=1 WHERE background=?', id); }
       else if (action === 'resolve') { need('approved'); store.run('UPDATE background_reports SET resolved=1 WHERE background=?', id); }

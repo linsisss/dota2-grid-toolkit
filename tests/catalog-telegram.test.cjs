@@ -29,7 +29,8 @@ async function fixture(t, overrides = {}) {
   const saved = store.save(input(), identity);
   return { store, worker, saved, sent, edits, answers, api };
 }
-const callback = (job, action, user = 7) => ({ id: 'callback-id', data: `gs:${action}:${job.id}`, from: { id: user, first_name: `Игрок ${user}`, is_bot: false },
+// 'reject' is a decision without a reason (gs:rj:n); 'menu' is the «Отклонить» button that opens the reasons.
+const callback = (job, action, user = 7) => ({ id: 'callback-id', data: `gs:${{ reject: 'rj:n', menu: 'reject' }[action] || action}:${job.id}`, from: { id: user, first_name: `Игрок ${user}`, is_bot: false },
   message: { message_id: job.message, message_thread_id: 6, chat: { id: -1004309207941 }, from: { id: 42 } } });
 const jobOf = f => f.store.get('SELECT * FROM telegram_reviews ORDER BY rowid DESC LIMIT 1');
 
@@ -227,14 +228,14 @@ test('followers get one message for an author\'s new work, none for updates or g
   assert.equal(direct.length, 1);
   assert.equal(direct[0].chat_id, '502');
   // The author's profile nickname, not their signature or Telegram name.
-  assert.match(direct[0].text, new RegExp(`${f.store.profiles.creator('501').name}</b> выложил новую сетку героев`));
-  assert.match(direct[0].text, /<\/b> выложил новую сетку героев <a href="https:\/\/gridstudio\.me\/workshop\?id=[0-9a-f-]{36}">«&lt;Сетка&gt;»<\/a>/);
-  assert.equal(direct[0].reply_markup.inline_keyboard[1][0].callback_data, `sub:off:${second.id}`);
+  assert.match(direct[0].text, new RegExp(`^Новая сетка героев от <b>${f.store.profiles.creator('501').name}</b>: `));
+  assert.match(direct[0].text, /<\/b>: <a href="https:\/\/gridstudio\.me\/workshop\?id=[0-9a-f-]{36}">«&lt;Сетка&gt;»<\/a>$/);
+  assert.equal(direct[0].reply_markup.inline_keyboard[1][0].callback_data, `sub:off:p:${f.store.profiles.creator('501').key}`);
   // Whole values and standalone numbers only: the work UUID in the link may contain «501».
   const values = []; JSON.stringify(direct[0], (key, value) => { values.push(value); return value; });
   assert.ok(!values.includes('501') && !values.includes(501) && !/(^|[^0-9a-f])501([^0-9a-f]|$)/i.test(direct[0].text), 'the author account id stays private');
   // The button in the private chat unsubscribes; foreign chats cannot.
-  const button = (user, chat = user) => ({ id: 'q', data: `sub:off:${second.id}`, from: { id: user, is_bot: false },
+  const button = (user, chat = user) => ({ id: 'q', data: `sub:off:p:${f.store.profiles.creator('501').key}`, from: { id: user, is_bot: false },
     message: { message_id: 901, chat: { id: chat, type: 'private' }, from: { id: 42 }, reply_markup: direct[0].reply_markup } });
   await f.worker.callback(button(502, 503));
   assert.equal(f.store.publicItem(first.id, '502').subscribed, true);
@@ -344,4 +345,25 @@ test('admins correct the title, author and tags of the public version or a pendi
   assert.throws(() => f.store.moderate(f.saved.id, { action: 'edit', revision: f.saved.revision, title: 'X', author: '', tags: ['Арт'] }), /тегов/);
   assert.throws(() => f.store.moderate(f.saved.id, { action: 'edit', revision: 999999, title: 'X', author: '', tags: [] }), /изменилась/);
   assert.equal(JSON.parse(f.store.get("SELECT actor FROM audit WHERE action='edit' ORDER BY id DESC").actor).id, '1253427');
+});
+test('«Отклонить» on the card opens the reasons; a reason reaches the author word for word, a near copy is linked', async t => {
+  const markups = [];
+  const f = await fixture(t, { editMessageReplyMarkup: async params => { markups.push(params); return true; } });
+  await f.worker.deliverOne();
+  const job = jobOf(f);
+  await f.worker.callback(callback(job, 'menu'));
+  const menu = markups.at(-1).reply_markup.inline_keyboard.map((row) => row.map((button) => button.text));
+  assert.deepEqual(menu, [['Не хватает деталей'], ['Плохое качество'], ['Уже есть в мастерской'], ['Это арт, а не сетка'], ['Нарушение правил'], ['Без причины', 'Назад']]);
+  assert.equal(f.store.get('SELECT status FROM revisions WHERE id=?', job.revision).status, 'pending', 'the menu decides nothing');
+  await f.worker.callback(callback(job, 'back'));
+  assert.deepEqual(markups.at(-1).reply_markup.inline_keyboard.at(-1).map((button) => button.text), ['Одобрить', 'Отклонить']);
+  await f.worker.callback(callback(job, 'rj:a'));
+  assert.equal(f.store.get('SELECT reason FROM revisions WHERE id=?', job.revision).reason,
+    'Это арт, а не полноценная сетка. Отправьте его в «ASCII-арты» в редакторе: «Готовые арты» → «Предложить свой арт».');
+  // «Уже есть в мастерской» names the near copy's original when the card has one.
+  const { cardReasons } = await import('../server/catalog-telegram.mjs');
+  const reasons = cardReasons({ kind: 'submission', summary: JSON.stringify({ similar: [{ work: f.saved.id, title: 'x', score: 1 }] }) }, { origin: 'https://gridstudio.me' });
+  assert.equal(reasons.find((r) => r.code === 'c').text, `Такая работа уже есть в мастерской — https://gridstudio.me/workshop?id=${f.saved.id}`);
+  assert.equal(cardReasons({ kind: 'background', summary: JSON.stringify({ similar: [{ id: 7 }] }) }, { origin: 'https://gridstudio.me' }).find((r) => r.code === 'c').text,
+    'Такой фон уже есть в мастерской — https://gridstudio.me/background?background=7');
 });

@@ -5,7 +5,8 @@ import { createCanvas, GlobalFonts, loadImage } from '@napi-rs/canvas';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const root = new URL('../', import.meta.url).pathname;
-for (const weight of [400, 700]) GlobalFonts.registerFromPath(`${root}assets/dota-fonts/montserrat/montserrat-${weight}.ttf`, `Montserrat${weight}`);
+// Libre Franklin from the font catalogue (Montserrat left it in 1.8.0), under the old family names.
+for (const weight of [400, 700]) GlobalFonts.registerFromPath(`${root}assets/dota-fonts/libre-franklin/libre-franklin-${weight}.ttf`, `Montserrat${weight}`);
 const [W, H] = [1200, 630], canvas = createCanvas(W, H), c = canvas.getContext('2d');
 const INK = '#efeaf5', MUTED = '#afa7bf', ACCENT = '#c4b5ed', GROUND = '#15141a';
 

@@ -91,7 +91,7 @@ export default {
   'Войди через Telegram, чтобы отвечать.': 'Sign in with Telegram to reply.',
   'Загружаем комментарии…': 'Loading comments…',
   'Войди через Telegram, чтобы пожаловаться.': 'Sign in with Telegram to report.',
-  'Пока никто не написал. Будь первым — спроси или поблагодари автора.': 'No one has written yet. Be the first: ask a question or thank the author.',
+  'Пока никто не написал — спроси или поблагодари автора.': 'No one has written yet. Be the first: ask a question or thank the author.',
   'Ответ {name}': 'Replying to {name}',
   'Не отвечать': 'Cancel reply',
   'Напиши комментарий…': 'Write a comment…',

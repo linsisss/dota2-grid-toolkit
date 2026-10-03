@@ -9,6 +9,7 @@ import { CatalogStore } from './catalog-store.mjs';
 import { catalogConfig } from './catalog-api.mjs';
 import { TelegramQueue } from './catalog-telegram-store.mjs';
 import { badgeOf } from '../scripts/profile-badges.mjs';
+import { rejectReasons } from '../scripts/reject-reasons.mjs';
 import { renderCatalogPreview, renderArtPreview, renderComparison } from './catalog-preview.mjs';
 import { Accounts } from './accounts.mjs';
 import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
@@ -50,7 +51,7 @@ function similarLines(s, what, link) {
 export function reviewCaption(job, config) {
   const s = JSON.parse(job.summary), actor = job.actor ? JSON.parse(job.actor) : null;
   const decisionIcon = { approve: 'approve', reject: 'reject', keep: 'approve', hide: 'reject' }[job.outcome] || 'notice';
-  const labels = job.kind.startsWith('guide') ? guideLabel : resultLabel;
+  const labels = job.kind.startsWith('guide') ? guideLabel : job.kind === 'item-comment-report' ? { ...resultLabel, hide: 'Комментарий удалён' } : resultLabel;
   const decision = job.outcome
     ? `${reviewEmoji(decisionIcon)} ${labels[job.outcome] || 'Проверено'}${actor ? ` · ${escape(actor.name)} (ID ${escape(actor.id)})` : ''}`
     : `${reviewEmoji('waiting')} Ожидает принятия решения`;
@@ -69,6 +70,13 @@ export function reviewCaption(job, config) {
       '', decision
     ].join('\n');
   }
+  if (job.kind === 'item-comment-report') return [
+    ...(config.local ? ['<i>Локальная проверка</i>'] : []),
+    `${reviewEmoji('notice')} <b>Жалоба на комментарий ${s.what === 'work' ? 'к сетке' : 'к фону'}:</b> "${escape(s.title)}"`,
+    `${reviewEmoji('tags')} Комментарий: ${escape(String(s.comment).slice(0, 500))}`,
+    `${reviewEmoji('tags')} Жалоба: ${escape(String(s.reason).slice(0, 350))}`,
+    '', decision
+  ].join('\n');
   if (job.kind === 'guide-report' || job.kind === 'guide-comment-report') return [
     ...(config.local ? ['<i>Локальная проверка</i>'] : []),
     `${reviewEmoji('notice')} <b>${job.kind === 'guide-report' ? 'Жалоба на гайд' : 'Жалоба на комментарий к гайду'}:</b> "${escape(s.title)}"`,
@@ -107,6 +115,19 @@ export function reviewCaption(job, config) {
     '', decision
   ].join('\n');
 }
+// The kinds of card that can be turned down, and their reasons' kind (scripts/reject-reasons.mjs).
+const REASON_KINDS = { submission: 'works', background: 'backgrounds', art: 'arts', guide: 'guides' };
+// The reasons of a card's rejection: the published work it repeats is linked in «Уже есть в мастерской».
+export function cardReasons(job, config) {
+  const s = JSON.parse(job.summary || '{}'), near = s.similar?.[0];
+  const original = near ? (near.work ? `${config.origin}/workshop?id=${near.work}` : near.id ? `${config.origin}/background?background=${near.id}` : '') : '';
+  return rejectReasons(REASON_KINDS[job.kind], { original });
+}
+// «Отклонить» on a card shows the reasons instead of the decision buttons; «Назад» brings them back.
+export function reasonKeyboard(job, config) {
+  return { inline_keyboard: [...cardReasons(job, config).map((reason) => [{ text: reason.name, callback_data: `gs:rj:${reason.code}:${job.id}` }]),
+    [{ text: 'Без причины', callback_data: `gs:rj:n:${job.id}` }, { text: 'Назад', callback_data: `gs:back:${job.id}` }]] };
+}
 export function reviewKeyboard(job, config) {
   if (job.kind.startsWith('guide')) {
     const s = JSON.parse(job.summary), page = `${config.origin}/guides?id=${s.guide}`;
@@ -118,6 +139,12 @@ export function reviewKeyboard(job, config) {
     // The text, pictures, video and files are read on the site: a review link opens this version.
     if (!config.local) buttons.unshift([{ text: job.kind === 'guide' ? 'Читать гайд' : 'Открыть гайд', url: job.kind === 'guide' ? `${page}&review=${s.review}` : page }]);
     return { inline_keyboard: buttons };
+  }
+  if (job.kind === 'item-comment-report') {
+    const s = JSON.parse(job.summary), page = s.what === 'work' ? `${config.origin}/workshop?id=${s.item}` : `${config.origin}/workshop?backgrounds`;
+    const open = config.local ? [] : [[{ text: s.what === 'work' ? 'Открыть сетку' : 'Открыть фоны', url: page }]];
+    if (job.outcome) return { inline_keyboard: job.outcome === 'keep' ? open : [] };
+    return { inline_keyboard: [...open, [['keep', 'Оставить', 'approve'], ['hide', 'Удалить комментарий', 'reject']].map(([action, text, icon]) => ({ text, icon_custom_emoji_id: reviewEmojis[icon][0], callback_data: `gs:${action}:${job.id}` }))] };
   }
   if (job.outcome) {
     // Backgrounds have no page of their own: the link opens the workshop's «Фоны».
@@ -161,6 +188,11 @@ export class CatalogTelegram {
   }
   // An update shows «Было» over «Стало»; a near copy shows itself over the published work it looks like
   // (server/similarity.mjs). Anything that fails to draw leaves the single picture.
+  // A reported comment's card shows what it is under: the grid, or the background's poster.
+  async commentPicture(s) {
+    if (s.what === 'work') return this.render(JSON.parse(this.store.get('SELECT r.grid FROM works w JOIN revisions r ON r.id=w.public_revision WHERE w.id=?', s.item).grid));
+    return readFileSync(this.queue.backgrounds.file(Number(s.item), 'poster'));
+  }
   async compared(job, preview) {
     const s = JSON.parse(job.summary);
     try {
@@ -187,6 +219,7 @@ export class CatalogTelegram {
     try {
       preview = job.kind.startsWith('guide') ? await this.renderGuide(this.queue.guides.preview(JSON.parse(job.summary).guide, job.revision))
         : job.kind === 'background' || job.kind === 'background-report' ? readFileSync(this.queue.backgrounds.file(job.revision, 'poster'))
+        : job.kind === 'item-comment-report' ? await this.commentPicture(JSON.parse(job.summary))
         : await (job.kind === 'art' ? this.renderArt(this.queue.arts.get(job.revision).text) : this.render(JSON.parse(this.store.revision(job.revision).grid)));
       preview = await this.compared(job, preview);
     }
@@ -238,21 +271,32 @@ export class CatalogTelegram {
     await delay(40); // Telegram allows about 30 messages per second per bot.
     return true;
   }
-  // New works of followed authors.
+  // New works of followed authors: grids, menu backgrounds ('bg:<id>') and guides ('guide:<id>').
+  followedWork(key) {
+    const origin = this.config.origin, has = (name) => !!this.store.get('SELECT 1 x FROM sqlite_master WHERE name=?', name);
+    if (key.startsWith('bg:')) {
+      const row = has('backgrounds') && this.store.get("SELECT id, account, title FROM backgrounds WHERE id=? AND status='approved'", Number(key.slice(3)));
+      return row && { account: row.account, title: row.title, what: 'Новый фон главного меню', open: 'Открыть фон', url: `${origin}/background?background=${row.id}` };
+    }
+    if (key.startsWith('guide:')) {
+      const row = has('guides') && this.store.get("SELECT g.id, g.account, r.title FROM guides g JOIN guide_revisions r ON r.id=g.public_revision WHERE g.id=? AND g.status='approved'", key.slice(6));
+      return row && { account: row.account, title: row.title, what: 'Новый гайд', open: 'Открыть гайд', url: `${origin}/guides?id=${row.id}` };
+    }
+    const row = this.store.get("SELECT w.id, w.account, r.title FROM works w JOIN revisions r ON r.id=w.public_revision WHERE w.id=? AND w.state='active'", key);
+    return row && { account: row.account, title: row.title, what: 'Новая сетка героев', open: 'Открыть сетку', url: `${origin}/workshop?id=${row.id}` };
+  }
   async deliverNotifications(limit = 20) {
     const due = this.store.all("SELECT * FROM notifications WHERE state='queued' AND next_at<=? ORDER BY id LIMIT ?", this.store.now(), limit);
     for (const note of due) {
-      const work = this.store.get(`SELECT w.id, w.account, r.title FROM works w JOIN revisions r ON r.id=w.public_revision
-        WHERE w.id=? AND w.state='active'`, note.work);
-      if (!work || !this.store.get('SELECT 1 x FROM subscriptions WHERE account=? AND author=?', note.account, work.account)) {
+      const work = this.followedWork(note.work);
+      if (!work?.account || !this.store.get('SELECT 1 x FROM subscriptions WHERE account=? AND author=?', note.account, work.account)) {
         this.store.run("UPDATE notifications SET state='dropped' WHERE id=?", note.id); continue;
       }
-      const url = `${this.config.origin}/workshop?id=${work.id}`;
       // The author's profile nickname (server/profiles.mjs), never their Telegram name.
-      const name = this.store.profiles.creator(work.account)?.name || 'Автор';
+      const author = this.store.profiles.creator(work.account);
       if (!await this.direct('notifications', 'id', note, {
-        text: `<b>${escape(name)}</b> выложил новую сетку героев <a href="${escape(url)}">«${escape(work.title)}»</a>`,
-        reply_markup: { inline_keyboard: [[{ text: 'Открыть сетку', url }], [{ text: 'Отписаться от автора', callback_data: `sub:off:${work.id}` }]] } })) return;
+        text: `${work.what} от <b>${escape(author?.name || 'автора')}</b>: <a href="${escape(work.url)}">«${escape(work.title)}»</a>`,
+        reply_markup: { inline_keyboard: [[{ text: work.open, url: work.url }], [{ text: 'Отписаться от автора', callback_data: `sub:off:p:${author.key}` }]] } })) return;
     }
   }
   // The author's own grid or its update was approved, on the site or in the moderation topic.
@@ -339,11 +383,14 @@ export class CatalogTelegram {
   }
   async subscriptionCallback(query) {
     const answer = text => this.api.answerCallbackQuery({ callback_query_id: query.id, text, show_alert: false }).catch(() => {});
-    const match = /^sub:off:([0-9a-f-]{36})$/.exec(query.data || ''), m = query.message;
+    // sub:off:p:<profile key>; messages before 1.8.2 name a grid: sub:off:<work id>.
+    const match = /^sub:off:(?:p:([A-Za-z0-9_-]{12})|([0-9a-f-]{36}))$/.exec(query.data || ''), m = query.message;
     if (!match || m?.chat.type !== 'private' || m.chat.id !== query.from?.id || m.from?.id !== this.botId || query.from.is_bot) return answer('Эта кнопка работает только в личном чате с ботом.');
-    try { this.store.subscribe(String(query.from.id), match[1], false); }
-    catch (error) { if (error.status !== 404) return answer(error.status ? error.message : 'Не удалось отписаться. Попробуй на сайте.'); }
-    await answer('Ты отписался от автора.');
+    try {
+      if (match[1]) this.store.follow(String(query.from.id), this.store.profiles.byKey(match[1]).account, false);
+      else this.store.subscribe(String(query.from.id), match[2], false);
+    } catch (error) { if (error.status !== 404) return answer(error.status ? error.message : 'Не удалось отписаться. Попробуй на сайте.'); }
+    await answer('Подписка на автора отменена.');
     const open = m.reply_markup?.inline_keyboard?.[0];
     await this.api.editMessageReplyMarkup({ chat_id: m.chat.id, message_id: m.message_id, reply_markup: { inline_keyboard: open ? [open] : [] } }).catch(() => {});
   }
@@ -351,8 +398,10 @@ export class CatalogTelegram {
     if (query.data?.startsWith('login:')) return this.loginCallback(query);
     if (query.data?.startsWith('sub:')) return this.subscriptionCallback(query);
     const answer = text => this.api.answerCallbackQuery({ callback_query_id: query.id, text, show_alert: true }).catch(() => {});
-    const match = /^gs:(approve|reject|keep|hide):([a-f0-9]{24})$/.exec(query.data || '');
-    if (!match) return;
+    // gs:<action>:<job>, gs:rj:<reason code>:<job> (a rejection with that reason), gs:back:<job>.
+    const parsed = /^gs:(?:(approve|reject|keep|hide|back)|rj:([a-z])):([a-f0-9]{24})$/.exec(query.data || '');
+    if (!parsed) return;
+    const match = [parsed[0], parsed[1] || 'reject', parsed[3]], code = parsed[2];
     const message = query.message;
     if (!message || String(message.chat?.id) !== this.config.chatId || message.message_thread_id !== this.config.topicId ||
       message.from?.id !== this.botId || !query.from?.id || query.from.is_bot) return answer('Эти кнопки работают только в топике модерации.');
@@ -366,8 +415,15 @@ export class CatalogTelegram {
     // Recover the receipt if Telegram delivered a card but its HTTP response was lost.
     if (!job.message) this.queue.sent(job, message.message_id);
     if (!this.queue.get(job.id).message) return answer('Карточка ещё не зарегистрирована. Попробуй через несколько секунд.');
+    // «Отклонить» on a card with reasons opens them; «Назад» closes them.
+    if ((parsed[1] === 'reject' && REASON_KINDS[job.kind]) || parsed[1] === 'back') {
+      const markup = parsed[1] === 'back' ? reviewKeyboard(this.queue.get(job.id), this.config) : reasonKeyboard(job, this.config);
+      await this.api.editMessageReplyMarkup({ chat_id: message.chat.id, message_id: message.message_id, reply_markup: markup }).catch(() => {});
+      return this.api.answerCallbackQuery({ callback_query_id: query.id }).catch(() => {});
+    }
+    const reason = code && code !== 'n' ? cardReasons(job, this.config).find((item) => item.code === code)?.text : undefined;
     try {
-      this.queue.decide(job.id, match[1], { id: query.from.id, name: [query.from.first_name, query.from.last_name].filter(Boolean).join(' ').slice(0, 100) || 'Участник' });
+      this.queue.decide(job.id, match[1], { id: query.from.id, name: [query.from.first_name, query.from.last_name].filter(Boolean).join(' ').slice(0, 100) || 'Участник' }, reason);
       await answer(resultLabel[match[1]]);
     } catch (error) {
       const current = this.queue.get(job.id);

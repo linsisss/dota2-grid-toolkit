@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CATALOG_TAGS, normalizeCatalogGrid } from '../../scripts/catalog-document.mjs';
 import { Brand, Icon, Modal, Notice, SegmentSwitch, Stats } from './Common.jsx';
-import { catalogAPI, CATALOG_PATH, CUSTOMIZE_PATH, EDITOR_PATH, GUIDES_PATH, RULES_PATH, STUDIO_PATH, downloadGrid, forgetWork, managementLink, ownedWorks, rememberWork } from './api.js';
+import { catalogAPI, CATALOG_PATH, CUSTOMIZE_PATH, EDITOR_PATH, GUIDES_PATH, RULES_PATH, STUDIO_PATH, countDownload, downloadGrid, forgetWork, managementLink, ownedWorks, rememberWork } from './api.js';
 import GridPreview from './GridPreview.jsx';
 import { foreignNoticeable, foreignSample, gridForeignGlyphs } from '../../scripts/dota-rendering.mjs';
 import { HideAdultButton, SensitiveArt } from './Sensitive.jsx';
@@ -11,6 +11,8 @@ import SubmissionForm from './SubmissionForm.jsx';
 import WorkCard from './WorkCard.jsx';
 import { CreatorName } from './Creator.jsx';
 import CreatorProfile from './CreatorProfile.jsx';
+import ItemComments from './ItemComments.jsx';
+import { BackgroundCommentsButton } from './BackgroundComments.jsx';
 import ReportDialog from './ReportDialog.jsx';
 import Moderation from './Moderation.jsx';
 import Rules from './Rules.jsx';
@@ -51,7 +53,7 @@ function WorkDetail({ id, ownerToken, managing }) {
     <section className="catalog-detail"><div>{managing ? <GridPreview grid={item.grid} title={item.title} large/> : <SensitiveArt item={item}><GridPreview grid={item.grid} title={item.title} large/></SensitiveArt>}
       <div className="catalog-preview-caption"><p className="catalog-muted">{t('Превью 1193 × 593. Шрифты и портреты в игре могут отличаться.')}</p>{!managing && <HideAdultButton/>}<GridBackgroundSwitch/></div></div>
       <div className="catalog-detail-info"><div className="catalog-tags">{item.tags.map(tag => <span key={tag}>{t(tag)}</span>)}</div><h1>{item.title}</h1>
-        <p className="catalog-author"><CreatorName item={item}/><span>{new Date(item.updated).toLocaleDateString(locale)}</span></p><Stats stats={item.stats}/>
+        <p className="catalog-author"><CreatorName item={item}/><span>{new Date(item.updated).toLocaleDateString(locale)}{item.downloads ? ` · ${t('Скачали: {count}', { count: item.downloads.toLocaleString(locale) })}` : ''}</span></p><Stats stats={item.stats}/>
         {item.stats.categories > 2000 && <Notice>{t('Более 2 000 категорий. На некоторых компьютерах сетка может заметно снизить FPS или вызвать вылет Dota.')}</Notice>}
         {foreignNoticeable(foreign) && <Notice>{t('{count} символов из {total} нет в шрифте Dota ({sample}). Игра рисует их шрифтом Windows, поэтому в Dota они выглядят иначе, чем на превью, и на разных компьютерах по-разному.', { count: foreign.count.toLocaleString(locale), total: foreign.total.toLocaleString(locale), sample: foreignSample(foreign) })}</Notice>}
         {managing ? <>
@@ -63,11 +65,12 @@ function WorkDetail({ id, ownerToken, managing }) {
           {item.published && !item.blocked && <a className="catalog-button" href={`${CATALOG_PATH}?id=${id}`}>{t('Открыть публичную страницу')}</a>}
           <p className="catalog-muted">{item.linked ? t('Управление доступно только из твоего Telegram-аккаунта.') : t('Секретная ссылка подтверждает владение сеткой. Сохрани её для привязки к Telegram.')}</p>
           <button className="catalog-link danger" onClick={() => setDeleting(true)}>{t('Удалить публикацию')}</button>
-        </> : <><LikeButton item={item} onChange={value => setItem(current => ({...current,...value}))}/><SubscribeButton item={item} onChange={value => setItem(current => ({...current,...value}))}/><AdminEditButton item={item} onSaved={value => setItem(current => ({...current,...value}))}/>{item.mine && <a className="catalog-button" href={`${CATALOG_PATH}?id=${id}&manage=1`}>{t('Управлять публикацией')}</a>}<button className="catalog-button primary" onClick={() => downloadGrid(item.grid)}><Icon name="download"/>{t('Скачать грид')}</button><InstallButton item={item}/>
+        </> : <><LikeButton item={item} onChange={value => setItem(current => ({...current,...value}))}/><SubscribeButton item={item} onChange={value => setItem(current => ({...current,...value}))}/><AdminEditButton item={item} onSaved={value => setItem(current => ({...current,...value}))}/>{item.mine && <a className="catalog-button" href={`${CATALOG_PATH}?id=${id}&manage=1`}>{t('Управлять публикацией')}</a>}<button className="catalog-button primary" onClick={() => { downloadGrid(item.grid); countDownload('work', item.id); }}><Icon name="download"/>{t('Скачать грид')}</button><InstallButton item={item}/>
           <a className="catalog-button" href={`${EDITOR_PATH}?catalog=${id}`}>{t('Открыть в редакторе')}<Icon name="arrow"/></a><p className="catalog-muted">{t('В редакторе сетка добавится к твоему файлу после подтверждения.')}</p>
           <button className="catalog-link" onClick={() => setReport(true)}>{t('Пожаловаться')}</button></>}
         {error && <Notice error>{error}</Notice>}
       </div></section>
+    {!managing && <div id="comments" className="catalog-comments"><ItemComments kind="work" id={item.id} total={item.comments || 0}/></div>}
     {editing && <Modal title={t('Изменить публикацию')} icon="edit" size="lg" onClose={() => { setEditing(false); reload(); }}>
       <div className="catalog-replace"><label className="catalog-button"><Icon name="plus"/>{t('Заменить сетку из JSON')}<input type="file" accept=".json,application/json" className="catalog-file" onChange={async event => {
         const file = event.target.files[0]; if (!file) return;
@@ -93,15 +96,16 @@ function Backgrounds({ mine, onMine, auth }) {
   const { items, total, aspects, error, more, update } = useBackgrounds({ tag, query, sort, aspect });
   const pick = (value) => { setSort(value); onMine(false); };
   return <>
-    <div className="catalog-toolbar"><div className="catalog-tabs" aria-label={t('Подборка')}><button aria-pressed={!mine && sort === 'popular'} onClick={() => pick('popular')}>{t('Популярные')}</button><button aria-pressed={!mine && sort === 'new'} onClick={() => pick('new')}>{t('Новые')}</button><button aria-pressed={mine} onClick={() => onMine(true)}>{t('Мои публикации')}</button></div>
+    <div className="catalog-toolbar"><div className="catalog-tabs" aria-label={t('Подборка')}><button aria-pressed={!mine && sort === 'popular'} onClick={() => pick('popular')}>{t('Популярные')}</button><button aria-pressed={!mine && sort === 'week'} onClick={() => pick('week')}>{t('За неделю')}</button><button aria-pressed={!mine && sort === 'new'} onClick={() => pick('new')}>{t('Новые')}</button><button aria-pressed={mine} onClick={() => onMine(true)}>{t('Мои публикации')}</button></div>
       {!mine && <label className="catalog-search"><Icon name="search"/><input aria-label={t('Поиск фонов')} placeholder={t('Название или автор')} value={query} maxLength={80} onChange={e => setQuery(e.target.value)}/></label>}</div>
     {mine ? <OwnedBackgrounds auth={auth}/> : <>
     <div className="background-filters"><BackgroundTagFilter value={tag} onChange={setTag}/><BackgroundScreenFilter value={aspect} onChange={setAspect} counts={aspects}/></div>
     {error && <Notice error>{error}</Notice>}
     {!items ? !error && <p role="status">{t('Загружаем фоны…')}</p> : items.length ? <>
-      <div className="catalog-results"><span>{t('Фонов: {count}', { count: total })}{sort === 'popular' && ` · ${t('По числу лайков')}`}</span><HideAdultButton/></div>
+      <div className="catalog-results"><span>{t('Фонов: {count}', { count: total })}{sort === 'popular' && ` · ${t('По числу лайков')}`}{sort === 'week' && ` · ${t('По лайкам за неделю')}`}</span><HideAdultButton/></div>
       <section className="background-grid" aria-label={t('Фоны пользователей')}>{items.map(item => <BackgroundCard key={item.id} item={item}><div className="background-card-actions">
         <LikeButton item={item} path={`/backgrounds/${item.id}/like`} onChange={value => update(item.id, value)}/>
+        <BackgroundCommentsButton item={item} onCount={(comments) => update(item.id, { comments })}/>
         <button className="catalog-icon" aria-label={t('Пожаловаться на фон {title}', { title: item.title })} title={t('Пожаловаться')} onClick={() => setReport(item)}><Icon name="flag"/></button>
         <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`}>{t('Использовать')}</a></div></BackgroundCard>)}</section>
       {items.length < total && <button className="catalog-button background-more" onClick={more}>{t('Показать ещё')}</button>}
@@ -150,12 +154,12 @@ function Gallery() {
       <p>{mine ? (backgrounds ? t('Опубликованные фоны и заявки на проверке.') : t('Опубликованные сетки и заявки на проверке.')) : backgrounds ? t('Фоны главного меню от пользователей. Возьми готовый или собери свой.') : t('Найди свой вариант. Открой в редакторе и сделай по-своему.')}</p></div>
       <div className="catalog-actions">{backgrounds ? <a className="catalog-button primary" href={CUSTOMIZE_PATH}><Icon name="plus"/>{t('Собрать фон')}</a> : <>{!mine && <InstallButton/>}<a className="catalog-button primary" href={`${EDITOR_PATH}?new=1`}><Icon name="plus"/>{t('Создать сетку')}</a></>}</div></header>
     <div key={kind} className="workshop-switch-view">{backgrounds ? <Backgrounds key={auth.user?.id || 'guest'} mine={mine} onMine={showMine} auth={auth}/> : <>
-    <div className="catalog-toolbar"><div className="catalog-tabs" aria-label={t('Подборка')}><button aria-pressed={!mine && sort==='popular'} onClick={()=>filter(setSort,'popular')}>{t('Популярные')}</button><button aria-pressed={!mine && sort==='new'} onClick={()=>filter(setSort,'new')}>{t('Новые')}</button><button aria-pressed={mine} onClick={()=>showMine(true)}>{t('Мои публикации')}</button></div>
+    <div className="catalog-toolbar"><div className="catalog-tabs" aria-label={t('Подборка')}><button aria-pressed={!mine && sort==='popular'} onClick={()=>filter(setSort,'popular')}>{t('Популярные')}</button><button aria-pressed={!mine && sort==='week'} onClick={()=>filter(setSort,'week')}>{t('За неделю')}</button><button aria-pressed={!mine && sort==='new'} onClick={()=>filter(setSort,'new')}>{t('Новые')}</button><button aria-pressed={mine} onClick={()=>showMine(true)}>{t('Мои публикации')}</button></div>
       {!mine && <label className="catalog-search"><Icon name="search"/><input aria-label={t('Поиск сеток')} placeholder={t('Название или автор')} value={query} maxLength={80} onChange={e=>filter(setQuery,e.target.value)}/></label>}</div>
     {!mine && <div className="catalog-tags catalog-filters"><button aria-pressed={!tag} onClick={()=>filter(setTag,'')}>{t('Все теги')}</button>{CATALOG_TAGS.map(value=><button key={value} aria-pressed={tag===value} onClick={()=>filter(setTag,tag===value?'':value)}>{t(value)}</button>)}</div>}
     {error && <Notice error report>{error}<button className="catalog-link" onClick={()=>setRetry(x=>x+1)}>{t('Попробовать снова')}</button></Notice>}
     {loading ? <p role="status">{t('Загружаем сетки…')}</p> : mine ? <OwnedPublications items={privateItems} guestItems={owned} auth={auth}/> : data?.items.length ? <>
-      <div className="catalog-results"><span>{t('Сеток: {count}', { count: data.total })}{sort==='popular' && ` · ${t('По числу лайков')}`}</span><HideAdultButton/><GridBackgroundSwitch/></div>
+      <div className="catalog-results"><span>{t('Сеток: {count}', { count: data.total })}{sort==='popular' && ` · ${t('По числу лайков')}`}{sort==='week' && ` · ${t('По лайкам за неделю')}`}</span><HideAdultButton/><GridBackgroundSwitch/></div>
       <section className="catalog-grid" aria-label={t('Работы пользователей')}>{data.items.map(item=><WorkCard key={item.id} item={item} onChange={value=>updateLike(item.id,value)}/>)}</section>
       {data.total>12 && <nav className="catalog-pagination" aria-label={t('Страницы мастерской')}><button className="catalog-button" disabled={!page} onClick={()=>setPage(x=>x-1)}>{t('Назад')}</button><span>{page+1} / {Math.ceil(data.total/12)}</span><button className="catalog-button" disabled={(page+1)*12>=data.total} onClick={()=>setPage(x=>x+1)}>{t('Дальше')}</button></nav>}
     </> : !error && <section className="catalog-empty"><h2>{query||tag?t('Таких сеток пока нет'):t('Мастерская начинается с твоей сетки')}</h2><p>{query||tag?t('Попробуй другой запрос.'):t('Создай сетку в редакторе и отправь её на проверку.')}</p><a className="catalog-button" href={STUDIO_PATH}>{t('Открыть студию')}</a></section>}

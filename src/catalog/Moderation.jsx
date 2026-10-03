@@ -112,7 +112,7 @@ export function WorkReview({ item, queue: { busy, run } }) {
   const actions = item.blocked ? [{ id: 'unblock', label: 'Разблокировать', icon: 'unlock', tone: 'primary', key: 'a', run: () => decide('unblock') }] : [
     ...(pending ? [
       { id: 'approve', label: changed ? 'Сохранить и одобрить' : 'Одобрить', icon: 'check', tone: 'primary', key: 'a', run: () => decide('approve') },
-      { id: 'reject', label: 'Отклонить', icon: 'close', key: 'r', reason: { kind: 'works', required: true }, run: reason => decide('reject', { reason }) }] : []),
+      { id: 'reject', label: 'Отклонить', icon: 'close', key: 'r', reason: { kind: 'works', required: true, original: item.similar?.[0] ? new URL(`${CATALOG_PATH}?id=${item.similar[0].work}`, location.href).href : '' }, run: reason => decide('reject', { reason }) }] : []),
     ...(reports ? [{ id: 'resolve', label: 'Оставить, жалобы проверены', icon: 'check', tone: pending ? '' : 'primary', key: pending ? '' : 'a', run: () => decide('resolve') }] : []),
     ...(item.published && !pending ? [{ id: 'feature', label: item.featured ? 'Убрать из подборки' : 'В подборку', icon: 'sparkle', run: () => decide('feature', { featured: !item.featured }) }] : []),
     ...(item.published || reports ? [{ id: 'block', label: 'Скрыть', icon: 'eyeOff', tone: 'danger', key: 'h', hint: 'Скрыть из мастерской и на 7 дней ограничить отправку из этого браузера',

@@ -6,7 +6,7 @@ Checked on 2026-09-26 in Chromium, against Vite development (port 4173) and the 
 
 - npm run check: authored editor modules parse.
 - npm test: **35 passing tests**.
-- npm run build: React/Vite production compilation succeeds; landscape and vertical portrait assets are copied to dist/assets/heroes and dist/assets/portraits.
+- npm run build: React/Vite production compilation succeeds; landscape and vertical portrait assets are copied to dist/assets/heroes and dist/assets/portraits (with the half-size portraits in md/).
 - Coverage includes Dota v3 round-trips, unknown IDs and metadata, multiple configurations, native project validation, history, fresh IDs, export warnings, conversion edge cases and all 127 portraits.
 - New interaction tests verify uniform aspect ratios and fixed opposite anchors for all four corners, free axis scaling, clamping past the opposite corner, repeated Shift toggling from the original geometry, multi-object transforms, zoom-independent handle hit testing and Unicode symbol counts through history.
 

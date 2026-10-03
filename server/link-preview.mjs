@@ -14,9 +14,12 @@ export const PREVIEW_TEXT = {
   grid: 'Переходи и поставь эту сетку в Dota 2 за пару кликов! А ещё можно создать свои, либо отредактировать чужие.',
   background: 'Переходи и поставь этот фон в Dota 2 за пару кликов! А ещё можно создать свои, либо отредактировать чужие.',
   guide: 'Гайд на GridStudio: как оформить Dota 2 под себя.',
+  profile: 'Сетки, фоны и гайды автора на GridStudio.',
 };
 let fonts = false;
-const font = () => { if (!fonts) { GlobalFonts.registerFromPath(new URL('../assets/dota-fonts/montserrat/montserrat-700.ttf', import.meta.url).pathname, 'PreviewMontserrat'); fonts = true; } };
+// Libre Franklin Bold (SIL OFL, one of the font page's catalogue, scripts/fetch-dota-fonts.mjs); until
+// 1.8.2 Montserrat, which left the catalogue in 1.8.0, and the previews fell back to a plain font.
+const font = () => { if (!fonts) { GlobalFonts.registerFromPath(new URL('../assets/dota-fonts/libre-franklin/libre-franklin-700.ttf', import.meta.url).pathname, 'PreviewMontserrat'); fonts = true; } };
 const escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 // The work's name and author, as the preview's title.
@@ -132,3 +135,41 @@ export async function guidePreviewImage({ title, section, author, cover: coverFi
   });
 }
 
+
+// A creator's profile (server/profiles.mjs, asked for on 2026-10-03): the avatar in a ring, the nickname,
+// the badges as pills, and the counts; the site's lilac glow behind. `avatar`: the picture's bytes.
+export async function profilePreviewImage({ nickname, avatar, badges, stats }) {
+  const picture = avatar ? await loadImage(Buffer.from(avatar)).catch(() => null) : null;
+  return jpeg((context, width, height) => {
+    const glow = context.createRadialGradient(width * 0.2, height * 0.1, 0, width * 0.2, height * 0.1, width);
+    glow.addColorStop(0, '#c4b5ed40'); glow.addColorStop(1, '#0f0e1300');
+    context.fillStyle = glow; context.fillRect(0, 0, width, height);
+    const size = 240, x = 96, y = (height - size) / 2 - 20;
+    context.save(); context.beginPath(); context.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2); context.clip();
+    if (picture) context.drawImage(picture, x, y, size, size); else { context.fillStyle = '#2a2633'; context.fillRect(x, y, size, size); }
+    context.restore();
+    context.strokeStyle = '#ffffff30'; context.lineWidth = 3; context.beginPath(); context.arc(x + size / 2, y + size / 2, size / 2 + 1.5, 0, Math.PI * 2); context.stroke();
+    font();
+    const left = x + size + 64, room = width - left - 72;
+    context.textAlign = 'left'; context.textBaseline = 'alphabetic';
+    let nameSize = 76;
+    context.font = `${nameSize}px PreviewMontserrat`;
+    while (context.measureText(nickname).width > room && nameSize > 40) context.font = `${(nameSize -= 4)}px PreviewMontserrat`;
+    context.fillStyle = '#f4f1fa'; context.fillText(nickname, left, y + 92);
+    // Badges as pills, as many as fit on one line.
+    let pillX = left;
+    context.font = '24px PreviewMontserrat';
+    for (const badge of badges) {
+      const w = context.measureText(badge.label).width + 36;
+      if (pillX + w > width - 72) break;
+      context.fillStyle = `${badge.color}26`; context.strokeStyle = `${badge.color}99`; context.lineWidth = 2;
+      context.beginPath(); context.roundRect(pillX, y + 122, w, 44, 22); context.fill(); context.stroke();
+      context.fillStyle = badge.color; context.fillText(badge.label, pillX + 18, y + 152);
+      pillX += w + 12;
+    }
+    context.fillStyle = '#afa7bf'; context.font = '30px PreviewMontserrat';
+    context.fillText(stats, left, y + (badges.length ? 222 : 160));
+    context.fillStyle = '#c4b5ed'; context.font = '26px PreviewMontserrat';
+    context.fillText('gridstudio.me', 96, height - 56);
+  });
+}

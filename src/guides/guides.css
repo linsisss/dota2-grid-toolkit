@@ -1,7 +1,7 @@
 /* «Гайды» (src/guides/): the list's cards, a guide to read, its comments, and writing one. The site's
    dark glass and lilac (src/site-kit.css, src/window-kit.css); the text of a guide reads like an
    article: 17px, a column of about 72 characters. */
-:is(.guides-page, .guide-review, .creator-guides) { --gd-ink: #efeaf5; --gd-text: #d9d3e4; --gd-muted: #afa7bf; --gd-line: #ffffff14; --gd-glass: #1b1922; --gd-accent: #c4b5ed; --gd-ease: cubic-bezier(.2, .8, .2, 1); }
+:is(.guides-page, .guide-review, .creator-guides, .item-comments) { --gd-ink: #efeaf5; --gd-text: #d9d3e4; --gd-muted: #afa7bf; --gd-line: #ffffff14; --gd-glass: #1b1922; --gd-accent: #c4b5ed; --gd-ease: cubic-bezier(.2, .8, .2, 1); }
 
 /* ——— The list. */
 .guide-toolbar-end { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }

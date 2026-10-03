@@ -38,7 +38,7 @@ export function BackgroundReview({ item, queue: { busy, run } }) {
   const [text, tone] = STATUS[item.status] || [item.status, 'neutral'];
   const actions = item.status === 'pending' ? [
     { id: 'approve', label: changed ? 'Сохранить и одобрить' : 'Одобрить', icon: 'check', tone: 'primary', key: 'a', run: () => decide('approve') },
-    { id: 'reject', label: 'Отклонить', icon: 'close', key: 'r', reason: { kind: 'backgrounds', required: true }, run: (reason) => decide('reject', reason) }
+    { id: 'reject', label: 'Отклонить', icon: 'close', key: 'r', reason: { kind: 'backgrounds', required: true, original: item.similar?.[0] ? new URL(`/background?background=${item.similar[0].id}`, location.href).href : '' }, run: (reason) => decide('reject', reason) }
   ] : item.status === 'approved' ? [
     ...(reports ? [{ id: 'resolve', label: 'Оставить, жалобы проверены', icon: 'check', tone: 'primary', key: 'a', run: () => decide('resolve') }] : []),
     { id: 'hide', label: 'Скрыть из мастерской', icon: 'eyeOff', tone: 'danger', key: 'h', reason: { confirm: 'Скрыть' }, run: (reason) => decide('hide', reason) }

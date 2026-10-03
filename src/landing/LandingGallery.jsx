@@ -48,6 +48,13 @@ function Brand() {
 const SUPPORT_URL = 'https://www.donationalerts.com/r/linsiss';
 function Authors() {
   const [Support, setSupport] = useState(null);
+  // Their profile avatars (GET /api/catalog/team); the pictures in the page until then, or for good.
+  const [team, setTeam] = useState({});
+  useEffect(() => {
+    const c = new AbortController();
+    fetch('/api/catalog/team', { signal: c.signal, credentials: 'omit' }).then((r) => (r.ok ? r.json() : {})).then(setTeam, () => {});
+    return () => c.abort();
+  }, []);
   const open = (event) => {
     event.preventDefault();
     import('../SupportDialog.jsx').then((module) => setSupport(() => module.default)).catch(() => window.open(SUPPORT_URL, '_blank', 'noreferrer'));
@@ -56,9 +63,9 @@ function Authors() {
     <div className="landing-authors">
       <span className="author-credit">{t('Авторы')}</span>
       <div className="landing-author-links">
-        <a href="tg://resolve?domain=linsissya"><img src={linsissya} alt="" width="32" height="32" />@linsissya</a>
+        <a href="tg://resolve?domain=linsissya"><img src={team.linsissya || linsissya} alt="" width="32" height="32" />@linsissya</a>
         <span>&amp;</span>
-        <a href="https://rin.ms/" target="_blank" rel="noreferrer"><img src={dissonance} alt="" width="32" height="32" />@dissonance</a>
+        <a href="https://rin.ms/" target="_blank" rel="noreferrer"><img src={team.dissonance || dissonance} alt="" width="32" height="32" />@dissonance</a>
       </div>
     </div>
     <div className="landing-credit-links">

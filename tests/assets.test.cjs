@@ -33,3 +33,18 @@ test('every catalog hero has a local WebP icon (PNG kept for old tabs) and all t
     for (const e of C.demoDocument(kind).entities)
       for (const id of e.heroIds) assert.ok(ids.has(id), `Missing hero ${id}`);
 });
+
+test('every hero but the cropped target has a half-size portrait for previews (scripts/make-portraits-md.mjs)', async () => {
+  const { heroes } = require('../scripts/data.mjs').default;
+  const { portraitSource, PORTRAIT_MD_HEIGHT } = await import('../scripts/portraits.mjs');
+  const { loadImage } = require('@napi-rs/canvas');
+  for (const hero of heroes) {
+    const small = portraitSource(hero);
+    assert.equal(portraitSource(hero, true), hero.portrait);
+    if (hero.portraitCrop) { assert.equal(small, hero.portrait); continue; }
+    assert.equal(small, `assets/portraits/md/${hero.id}.webp`);
+    const bytes = fs.readFileSync(path.join(root, small)), full = fs.readFileSync(path.join(root, hero.portrait)), image = await loadImage(bytes);
+    assert.equal(image.height, PORTRAIT_MD_HEIGHT, small);
+    assert.ok(bytes.length < full.length / 2, `${small}: ${bytes.length} bytes`);
+  }
+});

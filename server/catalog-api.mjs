@@ -5,7 +5,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CatalogStore, CatalogError, digest, equal, secret, fail } from './catalog-store.mjs';
-import { CATALOG_TAGS, CATALOG_LIMITS, catalogText } from '../scripts/catalog-document.mjs';
+import { CATALOG_TAGS, CATALOG_LIMITS, catalogText, normalizeCatalogGrid } from '../scripts/catalog-document.mjs';
+import { BACKGROUND_FRAMES, FRAME_H, FRAME_W, backgroundFingerprint, backgroundFrame } from '../scripts/similarity.mjs';
 import { Accounts, SESSION_AGE } from './accounts.mjs';
 import { CatalogCaptcha } from './catalog-captcha.mjs';
 import { SteamProfiles } from './steam-profile.mjs';
@@ -14,7 +15,8 @@ import { ART_CATEGORIES, ART_LIMITS, artSubmission } from '../scripts/art-docume
 import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
 import { StudioBackgrounds } from './studio-backgrounds.mjs';
 import { pickSafeGrid, renderSpaceThumbnail } from './catalog-preview.mjs';
-import { PREVIEW_TEXT, backgroundPreviewImage, gridPreviewImage, guidePreviewImage, previewTitle, sitePage, withPreview } from './link-preview.mjs';
+import { PREVIEW_TEXT, backgroundPreviewImage, gridPreviewImage, guidePreviewImage, previewTitle, profilePreviewImage, sitePage, withPreview } from './link-preview.mjs';
+import { badgeOf } from '../scripts/profile-badges.mjs';
 import { BACKGROUND_TAGS, BACKGROUND_LIMITS, backgroundMeta, unpackBackgroundUpload } from '../scripts/background-document.mjs';
 import { MENU_SIZES } from '../scripts/menu-background.mjs';
 import { HeroMeta } from './hero-meta.mjs';
@@ -23,12 +25,17 @@ import { withGridNote } from '../scripts/grid-note.mjs';
 import { CatalogGuides } from './guides.mjs';
 import { guideAdminRoutes, guideRoutes } from './guides-api.mjs';
 import { adminJournal } from './admin-journal.mjs';
+import { ItemComments } from './item-comments.mjs';
 import { NICK_LIMITS } from './profiles.mjs';
 
 const cookies = (request) => Object.fromEntries((request.headers.cookie || '').split(';').map(pair => {
   const at = pair.indexOf('='); return at < 0 ? ['', ''] : [pair.slice(0, at).trim(), pair.slice(at + 1)];
 }));
 const local = (host) => ['localhost', '127.0.0.1', '[::1]'].includes(host);
+// ?sort=popular → all-time likes, ?sort=week → the week's likes first, anything else → newest.
+const sortOf = (url) => ({ popular: true, week: 'week' }[url.searchParams.get('sort')] || false);
+// The authors credited on the home page (src/landing/LandingGallery.jsx Authors), by Telegram username.
+const TEAM = ['linsissya', 'dissonance'];
 export function catalogConfig(env = process.env) {
   const development = env.CATALOG_DEV === '1';
   const origin = env.CATALOG_ORIGIN || (development ? 'http://127.0.0.1:4173' : 'https://gridstudio.me');
@@ -105,6 +112,8 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
   store.unlimited = config.unlimited || new Set();
   // «Гайды» (server/guides.mjs): uploads next to the database (config.guides); unused ones are swept hourly.
   let guideStore = null;
+  // Comments under grids and backgrounds (server/item-comments.mjs).
+  const comments = new ItemComments(store);
   const guides = () => (guideStore ||= new CatalogGuides(store, { dir: config.guides || mkdtempSync(join(tmpdir(), 'gridstudio-guides-')), salt: config.salt }));
   setInterval(() => { try { guideStore?.cleanup(); } catch { /* Next hour. */ } }, 3_600_000).unref();
   let studios = null;
@@ -199,6 +208,17 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         const member = requireUser(), body = await readJSON(request, 20_000);
         store.rate(`profile:${member.id}`, 60, 3_600_000);
         return send(200, store.profiles.update(member.id, { nickname: body.nickname, bio: body.bio, telegram: typeof body.telegram === 'boolean' ? body.telegram : undefined }));
+      }
+      // The site's authors on the home page show their profile avatars (asked for on 2026-10-03): by their
+      // Telegram usernames; one who has not signed in keeps the picture in the page.
+      if (path === '/team' && method === 'GET') {
+        const team = {};
+        for (const name of TEAM) {
+          const account = store.get('SELECT id FROM accounts WHERE lower(username)=?', name)?.id;
+          if (account) team[name] = store.profiles.creator(account).avatar;
+        }
+        response.setHeader('Cache-Control', 'public, max-age=300');
+        return send(200, team);
       }
       // What one liked (asked for on 2026-10-02): only for oneself, on one's own profile page.
       if (path === '/profile/likes' && method === 'GET') {
@@ -313,7 +333,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         const tag = url.searchParams.get('tag') || '', aspect = url.searchParams.get('aspect') || '', query = (url.searchParams.get('q') || '').trim().slice(0, 80);
         if (tag && !BACKGROUND_TAGS.includes(tag)) fail(400, 'Неизвестный тег.');
         if (aspect && !Object.hasOwn(MENU_SIZES, aspect)) fail(400, 'Неизвестный формат экрана.');
-        return send(200, gallery().list({ query, tag, aspect, popular: url.searchParams.get('sort') === 'popular', account: user?.id || null, page: Math.min(1000, Math.max(0, Number(url.searchParams.get('page')) || 0)) | 0 }));
+        return send(200, gallery().list({ query, tag, aspect, popular: sortOf(url), account: user?.id || null, page: Math.min(1000, Math.max(0, Number(url.searchParams.get('page')) || 0)) | 0 }));
       }
       if (path === '/backgrounds' && method === 'POST') {
         const upload = unpackBackgroundUpload(await readBytes(request, BACKGROUND_LIMITS.video + BACKGROUND_LIMITS.poster + 8_000));
@@ -327,11 +347,36 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       const backgroundItem = /^\/backgrounds\/([1-9]\d{0,12})$/.exec(path);
       if (backgroundItem && method === 'GET') return send(200, gallery().item(Number(backgroundItem[1]), user?.id || null));
       // Likes (Telegram accounts) and reports (anyone, with the captcha) as for grids.
-      const backgroundAction = /^\/backgrounds\/([1-9]\d{0,12})\/(like|report)$/.exec(path);
+      const backgroundAction = /^\/backgrounds\/([1-9]\d{0,12})\/(like|report|downloaded|comments)$/.exec(path);
       if (backgroundAction && backgroundAction[2] === 'like' && method === 'PUT') {
         const member = requireUser(), body = await readJSON(request);
         if (typeof body.liked !== 'boolean') fail(400, 'Неверное значение лайка.');
         store.rate(`like:${member.id}`, 90, 60_000); return send(200, gallery().like(Number(backgroundAction[1]), member.id, body.liked));
+      }
+      // Comments under a background, as under a grid (server/item-comments.mjs).
+      if (backgroundAction && backgroundAction[2] === 'comments') {
+        gallery();
+        if (method === 'GET') return send(200, comments.list('background', Number(backgroundAction[1]), { account: user?.id || null, admin: isAdmin(user), offset: url.searchParams.get('offset') }));
+        if (method === 'POST') { const member = requireUser(), body = await readJSON(request, 20_000); return send(201, comments.add('background', Number(backgroundAction[1]), member.id, body)); }
+      }
+      // A comment under a grid or a background: deleted by its author, the work's author or an admin; reported by others.
+      const commentAction = /^\/comments\/([1-9]\d{0,12})(\/report)?$/.exec(path);
+      if (commentAction && method === 'DELETE' && !commentAction[2]) {
+        const member = requireUser();
+        return send(200, comments.remove(Number(commentAction[1]), member.id, { admin: isAdmin(member),
+          actor: isAdmin(member) ? JSON.stringify({ id: String(member.id), name: `${member.username ? `@${member.username}` : member.name} · сайт`.slice(0, 100) }) : null }));
+      }
+      if (commentAction && method === 'POST' && commentAction[2]) {
+        const member = requireUser(), body = await readJSON(request, 20_000);
+        return send(200, comments.report(member.id, Number(commentAction[1]), body.reason));
+      }
+      // A file built in the builder from this background (src/customize/MenuBackground.jsx download).
+      if (backgroundAction && backgroundAction[2] === 'downloaded' && method === 'POST') {
+        const row = gallery().get(Number(backgroundAction[1]));
+        if (row?.status !== 'approved') fail(404, 'Фон не найден.');
+        store.rate(`download:${ipHash}`, 240, 3_600_000);
+        store.countDownload('background', row.id, user ? `a:${user.id}` : `b:${identity.browser}`, row.account);
+        return send(200, { downloads: store.downloads('background', row.id) });
       }
       if (backgroundAction && backgroundAction[2] === 'report' && method === 'POST') {
         const body = await readJSON(request), reason = catalogText(body.reason, 500, 'Причина жалобы', true);
@@ -366,6 +411,12 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
             if (guide.public) meta = { title: guide.author ? `${guide.title} — ${guide.author.name}` : guide.title, description: guide.excerpt || PREVIEW_TEXT.guide,
               url: `${config.origin}/guides?id=${guide.id}`, image: `${config.origin}/api/catalog/preview/guide/${guide.id}.jpg?revision=${guide.revision}`, alt: `Гайд «${guide.title}»` };
           }
+          // A creator's profile (/workshop?creator=<key>): the nickname, the description, the counts.
+          if (page[1] === 'workshop' && /^[A-Za-z0-9_-]{12}$/.test(url.searchParams.get('creator') || '')) {
+            const card = profilePreview(url.searchParams.get('creator'));
+            meta = { title: card.nickname, description: card.bio || `${PREVIEW_TEXT.profile} ${card.stats}.`, url: `${config.origin}/workshop?creator=${card.key}`,
+              image: `${config.origin}/api/catalog/preview/profile/${card.key}.jpg?v=${card.version}`, alt: `Профиль ${card.nickname}` };
+          }
           const backgroundId = url.searchParams.get('background') || '';
           if (page[1] === 'customize' && /^[1-9]\d{0,12}$/.test(backgroundId)) {
             const row = gallery().get(Number(backgroundId));
@@ -376,10 +427,11 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' });
         return response.end(method === 'HEAD' ? undefined : meta ? withPreview(html, meta) : html);
       }
-      const preview = /^\/preview\/(?:work\/([0-9a-f-]{36})|background\/([1-9]\d{0,12})|guide\/([A-Za-z0-9_-]{12}))\.jpg$/.exec(path);
+      const preview = /^\/preview\/(?:work\/([0-9a-f-]{36})|background\/([1-9]\d{0,12})|guide\/([A-Za-z0-9_-]{12})|profile\/([A-Za-z0-9_-]{12}))\.jpg$/.exec(path);
       if (preview && method === 'GET') {
         let key, render;
-        if (preview[1]) { const item = store.publicItem(preview[1]); key = `work:${item.id}:${item.revision}:${item.tags.join()}`; render = () => gridPreviewImage(item); }
+        if (preview[4]) { const card = profilePreview(preview[4]); key = `profile:${card.key}:${card.version}`; render = () => profilePreviewImage(card); }
+        else if (preview[1]) { const item = store.publicItem(preview[1]); key = `work:${item.id}:${item.revision}:${item.tags.join()}`; render = () => gridPreviewImage(item); }
         else if (preview[3]) { const source = guides().preview(preview[3]); key = `guide:${preview[3]}:${source.revision}`; render = () => guidePreviewImage(source); }
         else {
           const row = gallery().get(Number(preview[2])); if (row?.status !== 'approved') fail(404, 'Фон не найден.');
@@ -407,7 +459,23 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
           'Cache-Control': url.searchParams.get('revision') === String(item.revision) ? 'public, max-age=86400' : 'no-cache' });
         return response.end(image);
       }
-      if (path === '/works' && method === 'GET') return send(200, store.list({ query: (url.searchParams.get('q') || '').slice(0, 80), tag: url.searchParams.get('tag') || '', popular: url.searchParams.get('sort') === 'popular', account: user?.id, page: Math.min(1000, Math.max(0, Number(url.searchParams.get('page')) || 0)) | 0 }));
+      if (path === '/works' && method === 'GET') return send(200, store.list({ query: (url.searchParams.get('q') || '').slice(0, 80), tag: url.searchParams.get('tag') || '', popular: sortOf(url), account: user?.id, page: Math.min(1000, Math.max(0, Number(url.searchParams.get('page')) || 0)) | 0 }));
+      // Before sending: the published works a grid or a background looks like (server/similarity.mjs).
+      if (path === '/works/similar' && method === 'POST') {
+        const body = await readJSON(request);
+        store.rate(`similar:${ipHash}`, 30, 60_000);
+        const grid = normalizeCatalogGrid(body.grid).grid;
+        return send(200, { similar: store.similarity.similarToGrid(grid, { work: typeof body.work === 'string' ? body.work : '', account: user?.id || null }) });
+      }
+      if (path === '/backgrounds/similar' && method === 'POST') {
+        store.rate(`similar-bg:${ipHash}`, 10, 60_000);
+        const raw = await readBytes(request, BACKGROUND_FRAMES * FRAME_W * FRAME_H * 3), size = FRAME_W * FRAME_H * 3;
+        if (!raw.length || raw.length % size) fail(400, 'Неверные кадры.');
+        const frames = [];
+        for (let at = 0; at < raw.length; at += size) frames.push(backgroundFrame(raw.subarray(at, at + size)));
+        gallery();  // its tables
+        return send(200, { similar: await store.similarity.similarToBackground(backgroundFingerprint(frames), { account: user?.id || null }) });
+      }
       if (path === '/works' && method === 'POST') {
         const body = await readJSON(request);
         const receipt = store.receipt(body.requestId, body.managementToken, user?.id);
@@ -417,7 +485,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         if (concurrentReceipt) return send(200, concurrentReceipt);
         return send(201, store.save(body, identity, null, null, null, user?.id));
       }
-      const match = /^\/(works|manage)\/([0-9a-f-]{36})(?:\/(download|report|like|claim|grid|subscribe))?$/.exec(path);
+      const match = /^\/(works|manage)\/([0-9a-f-]{36})(?:\/(download|downloaded|report|like|claim|grid|subscribe|comments))?$/.exec(path);
       if (match) {
         const [, scope, id, operation] = match;
         if (scope === 'works' && operation === 'grid' && method === 'GET') {
@@ -440,10 +508,24 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         }
         if (scope === 'works' && method === 'GET') {
           const item = store.publicItem(id, user?.id);
-          if (operation === 'download') { response.setHeader('Content-Disposition', 'attachment; filename="hero_grid_config.json"'); return send(200, withGridNote(pickSafeGrid(item.grid))); }
+          if (operation === 'download') {
+            store.countDownload('work', id, user ? `a:${user.id}` : `b:${identity.browser}`, store.get('SELECT account FROM works WHERE id=?', id)?.account);
+            response.setHeader('Content-Disposition', 'attachment; filename="hero_grid_config.json"'); return send(200, withGridNote(pickSafeGrid(item.grid)));
+          }
           if (!operation) return send(200, item);
         }
         if (scope === 'manage' && operation === 'claim' && method === 'POST') return send(200, accounts.claim(id, token(request), requireUser()));
+        if (scope === 'works' && operation === 'comments') {
+          if (method === 'GET') return send(200, comments.list('work', id, { account: user?.id || null, admin: isAdmin(user), offset: url.searchParams.get('offset') }));
+          if (method === 'POST') { const member = requireUser(), body = await readJSON(request, 20_000); return send(201, comments.add('work', id, member.id, body)); }
+        }
+        // A grid downloaded or installed by a command from the workshop (src/catalog/api.js countDownload).
+        if (scope === 'works' && operation === 'downloaded' && method === 'POST') {
+          store.publicItem(id);
+          store.rate(`download:${ipHash}`, 240, 3_600_000);
+          store.countDownload('work', id, user ? `a:${user.id}` : `b:${identity.browser}`, store.get('SELECT account FROM works WHERE id=?', id)?.account);
+          return send(200, { downloads: store.downloads('work', id) });
+        }
         if (scope === 'works' && operation === 'like' && method === 'PUT') {
           const member = requireUser(), body = await readJSON(request);
           if (typeof body.liked !== 'boolean') fail(400, 'Неверное значение лайка.');
@@ -526,8 +608,20 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       grids: count("SELECT count(*) n FROM works WHERE account=? AND state='active' AND public_revision IS NOT NULL"),
       backgrounds: count("SELECT count(*) n FROM backgrounds WHERE account=? AND status='approved'"),
       guides: count("SELECT count(*) n FROM guides WHERE account=? AND status='approved'"),
-      likes: store.profiles.likes(account, true)
+      likes: store.profiles.likes(account, true),
+      downloads: count("SELECT count(*) n FROM downloads d JOIN works w ON d.kind='work' AND w.id=d.item WHERE w.account=? AND w.state='active' AND w.public_revision IS NOT NULL")
+        + count("SELECT count(*) n FROM downloads d JOIN backgrounds b ON d.kind='background' AND b.id=CAST(d.item AS INTEGER) WHERE b.account=? AND b.status='approved'")
     };
+  }
+  // What a profile's link preview shows (server/link-preview.mjs profilePreviewImage); `version` changes
+  // with any of it, so the picture's address changes too.
+  function profilePreview(key) {
+    const row = store.profiles.byKey(key), stats = creatorStats(row.account), card = store.profiles.card(row);
+    const counts = [[stats.likes, ['лайк', 'лайка', 'лайков']], [stats.grids, ['сетка', 'сетки', 'сеток']], [stats.backgrounds, ['фон', 'фона', 'фонов']], [stats.guides, ['гайд', 'гайда', 'гайдов']]]
+      .filter(([n], i) => i === 0 || n > 0).map(([n, forms]) => `${n} ${forms[n % 10 === 1 && n % 100 !== 11 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2]}`).join(' · ');
+    const badges = store.profiles.badges(row.account, stats.likes).map(badgeOf).filter(Boolean);
+    const version = createHmac('sha256', 'profile-preview').update(JSON.stringify([card.nickname, card.avatar, badges.map((b) => b.id), counts])).digest('hex').slice(0, 12);
+    return { key, nickname: card.nickname, bio: card.bio.replace(/\s+/g, ' ').slice(0, 200), stats: counts, version, badges, avatar: store.profiles.avatar(key).body };
   }
   function creatorPage(key, viewer) {
     const row = store.profiles.byKey(key), account = row.account;

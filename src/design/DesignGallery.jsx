@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import D from '../../scripts/data.mjs';
+import { portraitSource } from '../../scripts/portraits.mjs';
 import currentEditor from '../../assets/design/editor-current.webp';
 import linsissya from '../../assets/design/linsissya.webp';
 import dissonance from '../../assets/design/dissonance.webp';
@@ -383,7 +384,7 @@ function HeroGrid({ groups, selected, onSelect, showGrid, preview, zoom, addHero
             {group.ids.map((id, j) => (
               <image
                 key={`${id}-${j}`}
-                href={HEROES.get(id)?.portrait}
+                href={HEROES.has(id) ? portraitSource(HEROES.get(id)) : undefined}
                 x={group.x + j * 61}
                 y={group.y}
                 width="53"
@@ -787,7 +788,7 @@ function Editor({ direction, goLanding, notify }) {
           </div>
           <div className="selected-portraits">
             {current.ids.map((id, i) => (
-              <img key={`${id}-${i}`} src={HEROES.get(id)?.portrait} alt={HEROES.get(id)?.name} />
+              <img key={`${id}-${i}`} src={HEROES.has(id) ? portraitSource(HEROES.get(id)) : undefined} alt={HEROES.get(id)?.name} />
             ))}
             <button aria-label="Добавить героя" onClick={addHero}>
               <Icon name="plus" size={17} />

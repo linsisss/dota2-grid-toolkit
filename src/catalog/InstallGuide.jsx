@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { DEFAULT_STEAM_DIRECTORY, steamConfigFolder } from '../../scripts/steam-profile.mjs';
 import { findSteamAccount } from '../../scripts/steam-folder.mjs';
 import { Icon, Modal, rich } from './Common.jsx';
-import { EDITOR_PATH, downloadGrid, gridInstallCommand, gridRestoreCommand } from './api.js';
+import { EDITOR_PATH, countDownload, downloadGrid, gridInstallCommand, gridRestoreCommand } from './api.js';
 import { t, translateMessage } from '../../scripts/i18n.mjs';
 import VideoGuide from '../VideoGuide.jsx';
 
@@ -109,7 +109,7 @@ function FileSteps({ item }) {
   const file = <code>hero_grid_config.json</code>;
   return <><div className="catalog-install-video"><VideoGuide/></div><ol className="catalog-install">
     <li><strong>{t('Скачай сетку.')}</strong> {rich(t('Браузер сохранит файл {file} в «Загрузки».'), { file })}
-      {item && <button className="catalog-button primary" onClick={() => downloadGrid(item.grid)}><Icon name="download"/>{t('Скачать грид')}</button>}
+      {item && <button className="catalog-button primary" onClick={() => { downloadGrid(item.grid); countDownload('work', item.id); }}><Icon name="download"/>{t('Скачать грид')}</button>}
       <FileNameNote/></li>
     <li><strong>{t('Закрой Dota 2.')}</strong> {rich(t('Если в папке ниже уже есть {file}, сохрани его копию: новый файл заменит все твои сетки.'), { file })}
       <p className="catalog-muted">{rich(t('Хочешь оставить свои сетки? {open} — она добавится к твоему файлу, и ты скачаешь всё одним JSON.'), { open: item ? <a href={`${EDITOR_PATH}?catalog=${item.id}`}>{t('Открой эту сетку в редакторе')}</a> : t('Открой сетку в редакторе') })}</p></li>
@@ -128,7 +128,7 @@ export function InstallGuide({ item }) {
     if (method !== 'command' || asked.current || !item) return;
     asked.current = true;
     setCommand(null);
-    gridInstallCommand(item.grid).then(text => setCommand({ text }), error => { asked.current = false; setCommand({ error: error.message }); });
+    gridInstallCommand(item.grid).then(text => { setCommand({ text }); countDownload('work', item.id); }, error => { asked.current = false; setCommand({ error: error.message }); });
   }, [method]);
   if (!item) return <FileSteps/>;
   return <div className="catalog-install-guide"><Methods method={method} onChange={setMethod}/>

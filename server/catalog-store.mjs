@@ -73,6 +73,9 @@ export class CatalogStore {
     if (!this.all('PRAGMA table_info(audit)').some(c => c.name === 'actor')) this.run('ALTER TABLE audit ADD COLUMN actor TEXT');
     // Before 1.6.1 authors could like their own grids; like() refuses that now and the old ones go.
     this.removeSelfLikes('likes', 'work', 'works');
+    // Downloads of workshop grids and backgrounds (asked for on 2026-10-03): one a visitor (a Telegram
+    // account or a browser) a day, the author's own not counted.
+    this.db.exec('CREATE TABLE IF NOT EXISTS downloads(kind TEXT NOT NULL, item TEXT NOT NULL, who TEXT NOT NULL, day INTEGER NOT NULL, PRIMARY KEY(kind, item, who, day))');
     // Near copies of grids and backgrounds for the moderators (server/similarity.mjs).
     this.similarity = new Similarity(this);
     // Creator profiles (server/profiles.mjs): the nickname and avatar shown for an account.
@@ -240,7 +243,7 @@ export class CatalogStore {
     const work = this.get("SELECT * FROM works WHERE id=? AND state='active' AND public_revision IS NOT NULL", id);
     if (!work) fail(404, 'Сетка не найдена или ещё не опубликована.');
     // A signed-in author's old signature stays private: their profile is the author now.
-    return { ...this.view(work, this.revision(work.public_revision)), ...(work.account ? { author: '' } : {}), likes: this.get('SELECT count(*) n FROM likes WHERE work=?', id).n,
+    return { ...this.view(work, this.revision(work.public_revision)), ...(work.account ? { author: '' } : {}), likes: this.get('SELECT count(*) n FROM likes WHERE work=?', id).n, downloads: this.downloads('work', id), comments: this.commentCount('work', id),
       liked: !!(account && this.get('SELECT work FROM likes WHERE work=? AND account=?', id, account)), mine: !!(account && work.account === account),
       ...this.following(work, account) };
   }
@@ -255,6 +258,23 @@ export class CatalogStore {
     if (!work.account) fail(409, 'Автор этой сетки не входил через Telegram, поэтому подписаться на него пока нельзя.');
     if (work.account === account) fail(400, 'Это твоя сетка.');
     return this.follow(account, work.account, subscribed);
+  }
+  // A download of a grid ('work') or a menu background ('background') by `who` ('a:<account>' or
+  // 'b:<browser>'); `owner`: the item's account, whose own downloads do not count.
+  countDownload(kind, item, who, owner = null) {
+    if (owner && who === `a:${owner}`) return;
+    this.run('INSERT OR IGNORE INTO downloads(kind,item,who,day) VALUES(?,?,?,?)', kind, String(item), who, Math.floor(this.now() / 86_400_000));
+  }
+  // Visible comments under a grid ('work') or a background (server/item-comments.mjs; none before it exists).
+  commentCount(kind, item) {
+    if (!this.get("SELECT 1 x FROM sqlite_master WHERE name='item_comments'")) return 0;
+    return this.get("SELECT count(*) n FROM item_comments WHERE kind=? AND item=? AND state='visible'", kind, String(item)).n;
+  }
+  downloads(kind, item) { return this.get('SELECT count(*) n FROM downloads WHERE kind=? AND item=?', kind, String(item)).n; }
+  // The followers of `author` hear about a new work from the bot (catalog-telegram.mjs deliverNotifications),
+  // once: `key` is a grid's id, 'bg:<id>' for a menu background, 'guide:<id>' for a guide.
+  notifyFollowers(author, key) {
+    if (author) this.run('INSERT OR IGNORE INTO notifications(account,work,created) SELECT account,?,? FROM subscriptions WHERE author=? AND account<>?', String(key), this.now(), author, author);
   }
   // Following an author's Telegram account (a grid's page or their profile) → { followable, subscribed }.
   follow(account, author, subscribed) {
@@ -283,7 +303,10 @@ export class CatalogStore {
     if (tag) { clauses.push('EXISTS (SELECT 1 FROM json_each(r.tags) WHERE value=?)'); args.push(tag); }
     const from = `FROM works w JOIN revisions r ON r.id=w.public_revision WHERE ${clauses.join(' AND ')}`;
     const total = this.get(`SELECT count(*) n ${from}`, ...args).n;
-    const rows = this.all(`SELECT w.id ${from} ORDER BY ${popular ? '(SELECT count(*) FROM likes WHERE work=w.id) DESC,' : ''}r.created DESC,w.id LIMIT 12 OFFSET ?`, ...args, page * 12);
+    // `popular`: by likes; 'week' — by the likes of the last seven days first (asked for on 2026-10-03:
+    // new works could not get to the top of all-time likes), then all-time likes.
+    const week = popular === 'week' ? `(SELECT count(*) FROM likes WHERE work=w.id AND created>=${Math.floor(this.now() - 7 * 86_400_000)}) DESC,` : '';
+    const rows = this.all(`SELECT w.id ${from} ORDER BY ${week}${popular ? '(SELECT count(*) FROM likes WHERE work=w.id) DESC,' : ''}r.created DESC,w.id LIMIT 12 OFFSET ?`, ...args, page * 12);
     return { total, page, items: rows.map(({ id }) => { const item = this.publicItem(id, account); delete item.grid; return item; }) };
   }
   like(id, account, liked) {
@@ -352,8 +375,7 @@ export class CatalogStore {
           revision, work.account, id, work.public_revision ? 0 : 1, this.now());
         if (work.public_revision) this.run('DELETE FROM revisions WHERE id=?', work.public_revision);
         // A Telegram-linked author's first publication notifies each subscriber once; updates do not.
-        else if (work.account) this.run('INSERT OR IGNORE INTO notifications(account,work,created) SELECT account,?,? FROM subscriptions WHERE author=? AND account<>?',
-          id, this.now(), work.account, work.account);
+        else if (work.account) this.notifyFollowers(work.account, id);
         this.run("UPDATE revisions SET status='approved',reason='' WHERE id=?", revision);
         this.run("UPDATE works SET public_revision=?,draft_revision=NULL,state='active',featured=? WHERE id=?", revision, featured ? 1 : 0, id);
       } else if (action === 'reject') {

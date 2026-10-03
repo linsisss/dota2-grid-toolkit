@@ -16,7 +16,7 @@ import { LoopPreview, TrimBar } from './Trim.jsx';
 import { ShareBackground } from './ShareBackground.jsx';
 import profilePreview from '../../assets/dota-menu/ui/profile-preview.webp';
 import { backgroundMedia } from '../catalog/BackgroundGallery.jsx';
-import { CATALOG_PATH, STUDIO_PATH, catalogAPI } from '../catalog/api.js';
+import { CATALOG_PATH, STUDIO_PATH, catalogAPI, countDownload } from '../catalog/api.js';
 import { lang, locale, t } from '../../scripts/i18n.mjs';
 
 // The main-menu background, made entirely in the browser: the file becomes a WebM
@@ -285,6 +285,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
   // copy remembers the folder and the way.
   async function download(pack) {
     const given = await downloadPack(pack, { folder, delivery });
+    if (origin?.kind === 'workshop') countDownload('background', origin.id);
     if (studioId.current) rememberDownload(studioId.current, { folder, delivery }).catch(() => {});
     setHanded(given); setInstall(true);
   }

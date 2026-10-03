@@ -9,6 +9,28 @@ import { t } from '../scripts/i18n.mjs';
 export const remotePoster = (id) => `/api/catalog/studio/backgrounds/${id}/poster.jpg`;
 
 // A frame of the WebM a second in (or halfway through a shorter one), as a JPEG.
+// A frame a second (at most 30), 64 × 36 RGB bytes each, one after another: what the server compares
+// with the published backgrounds before this one is sent (scripts/similarity.mjs backgroundFrame).
+export async function similarityFrames(video, { width = 64, height = 36, max = 30 } = {}) {
+  const element = document.createElement('video'), url = URL.createObjectURL(new Blob([video], { type: 'video/webm' }));
+  const seek = (time) => new Promise((done) => { element.onseeked = done; element.currentTime = time; });
+  try {
+    element.muted = true; element.preload = 'auto'; element.src = url;
+    await new Promise((done, failed) => { element.onloadeddata = done; element.onerror = () => failed(new Error('video')); });
+    let duration = element.duration;
+    if (!Number.isFinite(duration)) { await seek(1e9); duration = element.currentTime || 1; }
+    const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+    const context = canvas.getContext('2d', { willReadFrequently: true }); context.imageSmoothingQuality = 'high';
+    const count = Math.max(1, Math.min(max, Math.ceil(duration))), out = new Uint8Array(count * width * height * 3);
+    for (let i = 0; i < count; i++) {
+      await seek(Math.min(i, Math.max(0, duration - 0.05)));
+      context.drawImage(element, 0, 0, width, height);
+      const rgba = context.getImageData(0, 0, width, height).data;
+      for (let p = 0, o = i * width * height * 3; p < width * height; p++) { out[o + p * 3] = rgba[p * 4]; out[o + p * 3 + 1] = rgba[p * 4 + 1]; out[o + p * 3 + 2] = rgba[p * 4 + 2]; }
+    }
+    return out;
+  } finally { URL.revokeObjectURL(url); }
+}
 export async function posterFrame(video, width = 640, quality = 0.85) {
   const element = document.createElement('video'), url = URL.createObjectURL(new Blob([video], { type: 'video/webm' }));
   try {

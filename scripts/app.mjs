@@ -22,6 +22,7 @@ import { clampEraser, readEraserSize, stepEraserSize, storeEraserSize, wheelEras
 import { guideLines, snapMove } from './smart-guides.mjs';
 import { ALIGN_ACTIONS, DISTRIBUTE_ACTIONS, alignIconSVG } from './align-icons.mjs';
 import { iconSVG } from './icons.mjs';
+import { PORTRAIT_MD_HEIGHT, portraitSource } from './portraits.mjs';
 import { applyMyBackground, hasMyBackground } from '../src/my-background.js';
 import { mountVideoGuide } from '../src/video-guide.js';
 import { slideIndicator } from './slide-indicator.mjs';
@@ -523,19 +524,21 @@ export function createStudio(projectStorage, initial) {
   function zoomBy(factor) {
     setZoom(zoom * factor);
   }
-  function loadPortrait(id) {
+  // The half-size portrait (scripts/portraits.mjs); `full` — the full one, for a card zoomed in past it.
+  function loadPortrait(id, full = false) {
     if (!heroById.has(id)) return null;
-    if (!portraits.has(id)) {
+    const key = full ? `${id}:full` : id;
+    if (!portraits.has(key)) {
       const img = new Image();
       img.onload = draw;
       img.onerror = () => {
-        portraits.set(id, null);
+        portraits.set(key, null);
         draw();
       };
-      img.src = heroById.get(id).portrait;
-      portraits.set(id, img);
+      img.src = portraitSource(heroById.get(id), full);
+      portraits.set(key, img);
     }
-    return portraits.get(id);
+    return portraits.get(key);
   }
   function roundRect(x, y, w, h, radius, fill, stroke) {
     ctx.beginPath();
@@ -762,9 +765,12 @@ export function createStudio(projectStorage, initial) {
     requestPaint();
   }
   function drawHeroPortrait(id, x, y, width, height) {
-    const img = loadPortrait(id);
+    const ready = (image) => image?.complete && image.naturalWidth;
+    let img = loadPortrait(id);
+    // Taller on the screen than the half-size portrait: the full one, the half one drawn until it loads.
+    if (height * density > PORTRAIT_MD_HEIGHT) { const full = loadPortrait(id, true); if (ready(full) || !ready(img)) img = full; }
     ctx.fillStyle = '#202831'; ctx.fillRect(x, y, width, height);
-    if (img?.complete && img.naturalWidth) {
+    if (ready(img)) {
       ctx.filter = 'saturate(0.7)';
       ctx.drawImage(img, ...portraitSourceRect(img, width, height, heroById.get(id)?.portraitCrop), x, y, width, height);
       ctx.filter = 'none';

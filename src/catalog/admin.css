@@ -97,6 +97,8 @@
 :root .catalog-page .admin-fields .admin-inline :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select) {
   flex: 1; min-width: 0; border: 0; background-color: transparent; box-shadow: none; }
 .admin-fields-row .catalog-button { min-height: 34px; padding: 0 14px; }
+/* Room for the select's arrow (src/catalog/catalog.css). */
+:root .catalog-page .admin-fields select { padding-right: 30px; background-position: right 9px center; }
 .admin-tags fieldset { margin: 0; padding: 0; border: 0; }
 .admin-tags legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 :root .admin .admin-tags .catalog-tags, :root .admin .catalog-tags.admin-tags { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; }

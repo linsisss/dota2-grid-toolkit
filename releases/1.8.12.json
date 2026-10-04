@@ -1,0 +1,23 @@
+{
+  "version": "1.8.12",
+  "date": "2026-10-04",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.12",
+  "sections": [
+    {
+      "title": "Мастерская",
+      "changes": [
+        { "text": "Выпадающие списки на сайте теперь в его стиле, а не белые системные" }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Workshop",
+        "changes": [
+          { "text": "Drop-down lists on the site now match its style instead of the system’s white ones" }
+        ]
+      }
+    ]
+  }
+}

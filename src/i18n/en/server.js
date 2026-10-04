@@ -125,6 +125,7 @@ const messages = {
   "В вашем фоне недостаточно деталей для публикации. Это не значит, что он плохой, просто мы не можем пропускать каждую заявку в мастерскую.": "Your background doesn’t have enough detail to be published. It doesn’t mean your background is bad, we just can’t let every submission into the Workshop.",
   "Ваш фон слишком низкого качества. Попробуйте найти качество лучше, либо загрузите другой.": "Your background is too low in quality. Try to find a better quality one, or upload another one.",
   'Нарушение правил': 'Breaks the rules',
+  'Картинки не пропускаем': 'We don’t accept still pictures',
   // server/grid-installs.mjs
   'Это не файл сеток Dota.': 'This is not a Dota grid file.',
   'Сетка слишком большая для команды. Скачай её файлом.': 'The grid is too big for the command. Download it as a file.',

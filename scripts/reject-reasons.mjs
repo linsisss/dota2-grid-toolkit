@@ -19,6 +19,8 @@ export function rejectReasons(kind, { original = '' } = {}) {
     { code: 'q', name: 'Плохое качество', text: `${n.yours} слишком низкого качества. Попробуйте найти качество лучше, либо загрузите ${n.other}.` },
     ...(n.same ? [{ code: 'c', name: 'Уже есть в мастерской', text: `${n.same} уже есть в мастерской${original ? ` — ${original}` : ''}` }] : []),
     ...(kind === 'works' ? [{ code: 'a', name: 'Это арт, а не сетка', text: 'Это арт, а не полноценная сетка. Отправьте его в «ASCII-арты» в редакторе: «Готовые арты» → «Предложить свой арт».' }] : []),
+    // A still picture instead of a background (asked for on 2026-10-04).
+    ...(kind === 'backgrounds' ? [{ code: 'p', name: 'Картинка', text: 'Картинки не пропускаем' }] : []),
     { code: 'r', name: 'Нарушение правил', text: 'Нарушение правил' }
   ];
 }

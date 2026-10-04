@@ -1,3 +1,4 @@
+const { tempMedia } = require('./temp-media.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
@@ -9,7 +10,7 @@ const grid = (x) => ({ version: 3, configs: [{ config_name: 'Test', categories: 
 test('comments under a grid: a thread, deleting, a report that becomes a moderation card', async (t) => {
   const [{ CatalogStore }, { createCatalogAPI }, { TelegramQueue }] = await modules;
   const store = new CatalogStore(':memory:', 'test-item-comments');
-  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-item-comments', admins: new Set(['900000099']), database: ':memory:', media: '/nonexistent' };
+  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-item-comments', admins: new Set(['900000099']), database: ':memory:', media: tempMedia() };
   const { server, accounts } = createCatalogAPI(config, { store }); await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
   const signIn = (id) => { const r = accounts.begin(`ip-${id}`, `b-${id}`); accounts.candidate(r.id, { id: Number(id), first_name: 'U', is_bot: false }); accounts.approve(r.id, Number(id), true); return accounts.finish(r.id, r.verifier, id).session; };

@@ -1,3 +1,4 @@
+const { tempMedia } = require('./temp-media.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
@@ -51,7 +52,7 @@ test('statistics: distinct visitors, views, new visitors, online, sources, devic
 test('statistics over HTTP: pages count visits, only admins read the report', async (t) => {
   const [{ CatalogStore }, , { createCatalogAPI }] = await modules;
   const store = new CatalogStore(':memory:', 'test-site-stats-http');
-  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-site-stats-http', admins: new Set(['900000099']), database: ':memory:', media: '/nonexistent' };
+  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-site-stats-http', admins: new Set(['900000099']), database: ':memory:', media: tempMedia() };
   const { server, accounts } = createCatalogAPI(config, { store }); await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
   const signIn = (id) => { const r = accounts.begin(`ip-${id}`, `b-${id}`); accounts.candidate(r.id, { id: Number(id), first_name: 'U', is_bot: false }); accounts.approve(r.id, Number(id), true); return accounts.finish(r.id, r.verifier, id).session; };
@@ -128,7 +129,7 @@ test('statistics: where people and new accounts come from, live numbers', async 
 test('statistics: a new account keeps where it came from at its first sign-in; the live numbers are for admins', async (t) => {
   const [{ CatalogStore }, , { createCatalogAPI }] = await modules;
   const store = new CatalogStore(':memory:', 'test-site-stats-signup');
-  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-site-stats-signup', admins: new Set(['900000099']), database: ':memory:', media: '/nonexistent' };
+  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-site-stats-signup', admins: new Set(['900000099']), database: ':memory:', media: tempMedia() };
   const { server, accounts } = createCatalogAPI(config, { store }); await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
   const base = `http://127.0.0.1:${server.address().port}/api/catalog`;

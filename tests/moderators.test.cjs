@@ -1,3 +1,4 @@
+const { tempMedia } = require('./temp-media.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
@@ -6,7 +7,7 @@ const assert = require('node:assert/strict');
 test('a moderator approves or turns down what waits, and nothing else; only admins give the role', async (t) => {
   const [{ CatalogStore }, { createCatalogAPI }, { moderatorAllows }, { CatalogArts }] = await Promise.all([import('../server/catalog-store.mjs'), import('../server/catalog-api.mjs'), import('../server/moderators.mjs'), import('../server/catalog-arts.mjs')]);
   const store = new CatalogStore(':memory:', 'test-moderators');
-  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-moderators', admins: new Set(['900000099']), database: ':memory:', media: '/nonexistent' };
+  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-moderators', admins: new Set(['900000099']), database: ':memory:', media: tempMedia() };
   const { server, accounts } = createCatalogAPI(config, { store }); await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
   const signIn = (id) => { const r = accounts.begin(`ip-${id}`, `b-${id}`); accounts.candidate(r.id, { id: Number(id), first_name: `U${id}`, is_bot: false }); accounts.approve(r.id, Number(id), true); return accounts.finish(r.id, r.verifier, id).session; };

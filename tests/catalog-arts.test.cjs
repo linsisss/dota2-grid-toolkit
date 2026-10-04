@@ -1,3 +1,4 @@
+const { tempMedia } = require('./temp-media.cjs');
 const { proof } = require('./captcha-helper.cjs');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -198,7 +199,7 @@ test('an art from the editor: rows where Dota draws them, checked, stored, drawn
 test('an art from the editor over HTTP: a big one fits the request', async t => {
   const [{ CatalogStore }, , , { createCatalogAPI }] = await modules;
   const store = new CatalogStore(':memory:', 'test-arts-rows-http');
-  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-arts-rows-http', admins: new Set(), database: ':memory:', media: '/nonexistent' };
+  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-arts-rows-http', admins: new Set(), database: ':memory:', media: tempMedia() };
   const { server } = createCatalogAPI(config, { store }); await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
   const base = `http://127.0.0.1:${server.address().port}/api/catalog`;

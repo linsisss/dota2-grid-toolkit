@@ -1,3 +1,4 @@
+const { tempMedia } = require('./temp-media.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
@@ -271,7 +272,7 @@ test('followers hear about a new menu background too; the unsubscribe button nam
   worker.botId = 42;
   const author = login('801').user, fan = login('802').user;
   store.follow(fan.id, author.id, true);
-  const gallery = new CatalogBackgrounds(store, { dir: '/nonexistent' });
+  const gallery = new CatalogBackgrounds(store, { dir: tempMedia() });
   const now = store.now();
   const id = Number(store.run("INSERT INTO backgrounds(title,author,aspect,seconds,bytes,hash,account,browser,ip,created,updated) VALUES('Лес','','16:9',5,1,'h',?,'b','i',?,?)", author.id, now, now).lastInsertRowid);
   gallery.moderate(id, { action: 'approve' });
@@ -304,7 +305,7 @@ test('before sending: the published grids and backgrounds a new one looks like, 
   const [{ CatalogStore }, , , { createCatalogAPI }] = await modules;
   const { BACKGROUND_FRAMES, FRAME_W, FRAME_H, backgroundFrame, backgroundFingerprint } = await import('../scripts/similarity.mjs');
   const store = new CatalogStore(':memory:', 'test-similar-before');
-  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-similar-before', admins: new Set(), database: ':memory:', media: '/nonexistent' };
+  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-similar-before', admins: new Set(), database: ':memory:', media: tempMedia() };
   const { server, accounts, gallery } = createCatalogAPI(config, { store }); await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
   const signIn = (id) => { const r = accounts.begin(`ip-${id}`, `browser-${id}`); accounts.candidate(r.id, from(id)); accounts.approve(r.id, Number(id), true); return accounts.finish(r.id, r.verifier, id).session; };

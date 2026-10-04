@@ -1,3 +1,4 @@
+const { tempMedia } = require('./temp-media.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
@@ -5,7 +6,7 @@ const assert = require('node:assert/strict');
 test('admin users: everyone who signed in with Telegram, their profile and Telegram, a search; admins only', async (t) => {
   const [{ CatalogStore }, { createCatalogAPI }] = await Promise.all([import('../server/catalog-store.mjs'), import('../server/catalog-api.mjs')]);
   const store = new CatalogStore(':memory:', 'test-admin-users');
-  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-admin-users', admins: new Set(['900000099']), database: ':memory:', media: '/nonexistent' };
+  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-admin-users', admins: new Set(['900000099']), database: ':memory:', media: tempMedia() };
   const { server, accounts } = createCatalogAPI(config, { store }); await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
   const signIn = (id, user) => { const r = accounts.begin(`ip-${id}`, `b-${id}`); accounts.candidate(r.id, { id: Number(id), is_bot: false, ...user }); accounts.approve(r.id, Number(id), true); return accounts.finish(r.id, r.verifier, id).session; };

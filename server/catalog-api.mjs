@@ -154,7 +154,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
   const cookie = (name, value, age) => `${name}=${value}; Path=/api/catalog; HttpOnly; SameSite=Strict; Max-Age=${age}${config.development ? '' : '; Secure'}`;
   const token = request => /^Bearer ([A-Za-z0-9_-]{43})$/.exec(request.headers.authorization || '')?.[1] || '';
   const isAdmin = user => !!user && !!config.admins?.has(String(user.id));
-  // 'admin', 'moderator' (server/moderators.mjs: approve or turn down grids, backgrounds and guides) or null.
+  // 'admin', 'moderator' (server/moderators.mjs: approve or turn down grids, arts, backgrounds and guides) or null.
   const roleOf = user => (isAdmin(user) ? 'admin' : user && moderators.has(user.id) ? 'moderator' : null);
   // Who may see what waits for a decision (a pending background's files, a guide's version under review).
   const canReview = user => !!roleOf(user);
@@ -188,7 +188,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         const member = accounts.user(session), role = roleOf(member);
         if (!member) fail(401, 'Войди через Telegram, чтобы открыть админку.');
         if (!role) fail(403, 'Админка доступна только администраторам и модераторам GridStudio.');
-        if (role === 'moderator' && !moderatorAllows(method, path)) fail(403, 'Модератору доступны только сетки, фоны и гайды на проверке.');
+        if (role === 'moderator' && !moderatorAllows(method, path)) fail(403, 'Модератору доступны только сетки, арты, фоны и гайды на проверке.');
         return { member, role };
       };
       const setCookie = value => response.appendHeader('Set-Cookie', value);
@@ -662,7 +662,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         const backgroundReview = /^\/admin\/backgrounds\/([1-9]\d{0,12})$/.exec(path);
         if (backgroundReview && method === 'POST') { const body = await readJSON(request); limit(body.action); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = gallery().moderate(Number(backgroundReview[1]), body, { actor }); return send(200, { reviewed: true, ...result }); }
         const artReview = /^\/admin\/arts\/([1-9]\d{0,12})$/.exec(path);
-        if (artReview && method === 'POST') { const body = await readJSON(request); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = arts.moderate(Number(artReview[1]), body, { actor }); return send(200, { reviewed: true, ...result }); }
+        if (artReview && method === 'POST') { const body = await readJSON(request); limit(body.action); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = arts.moderate(Number(artReview[1]), body, { actor }); return send(200, { reviewed: true, ...result }); }
         const review = /^\/admin\/works\/([0-9a-f-]{36})$/.exec(path);
         if (review && method === 'POST') { const body = await readJSON(request); limit(body.action); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = store.moderate(review[1], body, { actor }); return send(200, { reviewed: true, ...(body.action === 'edit' ? result : {}) }); }
       }

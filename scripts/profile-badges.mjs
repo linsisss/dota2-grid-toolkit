@@ -6,7 +6,7 @@
 // `color` the pill's (the same as src/catalog/catalog.css, for the profile's link preview).
 export const BADGES = Object.freeze([
   { id: 'developer', label: 'Разработчик', hint: 'Делает GridStudio', icon: 'badgeDev', color: '#a78bfa' },
-  { id: 'moderator', label: 'Модератор', hint: 'Проверяет сетки, фоны и гайды', icon: 'shield', role: true, color: '#8fb8ff' },
+  { id: 'moderator', label: 'Модератор', hint: 'Проверяет сетки, арты, фоны и гайды', icon: 'shield', role: true, color: '#8fb8ff' },
   { id: 'bughunter', label: 'Bug Hunter', hint: 'Находит баги и сообщает о них', icon: 'bug', color: '#5fd39a' },
   { id: 'idea', label: 'Идейный вдохновитель', hint: 'Идеи этого пользователя появились на сайте', icon: 'badgeIdea', color: '#f3c46d' },
   { id: 'sponsor', label: 'Поддержавший', hint: 'Поддерживает разработку сайта', icon: 'badgeSponsor', color: '#f78fb3' },

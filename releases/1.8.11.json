@@ -1,0 +1,41 @@
+{
+  "version": "1.8.11",
+  "date": "2026-10-04",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.11",
+  "sections": [
+    {
+      "title": "Редактор",
+      "changes": [
+        {
+          "text": "У готовых артов появилась категория «18+»",
+          "children": ["Такие арты в библиотеке размыты, пока ты не подтвердишь, что тебе есть 18, — как сетки и фоны 18+ в мастерской"]
+        }
+      ]
+    },
+    {
+      "title": "Профили",
+      "changes": [
+        { "text": "Модераторы теперь проверяют и готовые арты" }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Editor",
+        "changes": [
+          {
+            "text": "Ready-made art now has an 18+ category",
+            "children": ["Such art stays blurred in the library until you confirm you are 18, like 18+ grids and backgrounds in the Workshop"]
+          }
+        ]
+      },
+      {
+        "title": "Profiles",
+        "changes": [
+          { "text": "Moderators now review ready-made art too" }
+        ]
+      }
+    ]
+  }
+}

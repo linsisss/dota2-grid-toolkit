@@ -181,6 +181,7 @@ export default {
   'Надписи': 'Lettering',
   'Предметы': 'Objects',
   'Другое': 'Other',
+  'Автор отметил этот арт как 18+: в нём может быть откровенный контент.': 'The author marked this art as 18+: it may contain explicit content.',
 
   // ArtworkOptimizer.jsx
   'Оптимизация категорий': 'Category optimization',

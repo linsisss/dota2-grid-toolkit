@@ -4,6 +4,8 @@ import { ArtPreview } from './ArtPreview.jsx';
 import { Icon } from './Icon.jsx';
 import { ArtSubmission } from './ArtSubmission.jsx';
 import { catalogAPI } from './catalog/api.js';
+import { setAdult, useAdultConfirmed } from './adult-consent.js';
+import { isAdultArt } from '../scripts/art-document.mjs';
 import { t } from '../scripts/i18n.mjs';
 
 // 'Все' and PLAYERS are the filter's values; t() turns them, the categories and the built-in arts'
@@ -11,9 +13,26 @@ import { t } from '../scripts/i18n.mjs';
 const PLAYERS = 'От пользователей';
 const artName = (art) => (art.player ? art.name : t(art.name));
 
+// An 18+ art (scripts/art-document.mjs) stays blurred, here and in its dialog, until the viewer says
+// they are 18: then every 18+ art on the page is uncovered until a reload or «Скрыть 18+».
+function AdultCover({ asking = false, onClose }) {
+  if (!asking) return <span className="art-adult-cover"><Icon name="eye" size={22}/><b>18+</b><small>{t('Нажми, чтобы показать')}</small></span>;
+  return (
+    <div className="art-adult-cover is-asking" role="group" aria-labelledby="artAdultQuestion">
+      <b id="artAdultQuestion">{t('Тебе есть 18?')}</b>
+      <p>{t('Автор отметил этот арт как 18+: в нём может быть откровенный контент.')}</p>
+      <div>
+        <button className="button secondary" onClick={onClose}>{t('Нет')}</button>
+        <button className="button primary" onClick={() => setAdult(true)} autoFocus>{t('Мне есть 18')}</button>
+      </div>
+    </div>
+  );
+}
+
 function ArtDialog({ art, editor, canvas, close }) {
   const ref = useRef(null);
   const [layout, setLayout] = useState(null);
+  const confirmed = useAdultConfirmed(), hidden = isAdultArt(art) && !confirmed;
   useEffect(() => {
     const trigger = document.activeElement;
     ref.current.showModal();
@@ -33,8 +52,9 @@ function ArtDialog({ art, editor, canvas, close }) {
           ×
         </button>
       </header>
-      <div className="art-large-preview">
+      <div className={`art-large-preview${hidden ? ' is-adult' : ''}`}>
         <ArtPreview art={art} onLayout={setLayout} />
+        {hidden && <AdultCover asking onClose={close}/>}
       </div>
       <footer className="art-dialog-footer">
         <div>
@@ -54,6 +74,7 @@ function ArtDialog({ art, editor, canvas, close }) {
         </button>
         <button
           className="button primary"
+          disabled={hidden}
           onClick={() => {
             if (editor.addAsciiArt(art)) close();
           }}
@@ -71,7 +92,8 @@ export function AsciiLibrary({ editor, canvas }) {
     [limit, setLimit] = useState(12),
     [selected, setSelected] = useState(null),
     [players, setPlayers] = useState([]),
-    [submitting, setSubmitting] = useState(false);
+    [submitting, setSubmitting] = useState(false),
+    adult = useAdultConfirmed();
   // Approved player arts follow the built-in ones. The server answers 304 while nothing
   // changed; without the API the editor keeps the built-in library.
   useEffect(() => {
@@ -97,7 +119,9 @@ export function AsciiLibrary({ editor, canvas }) {
     <section className="ascii-library" aria-label={t('Библиотека ASCII-артов')}>
       <div className="ascii-library-heading">
         <h2>{t('Готовые арты')}</h2>
-        <span>{all.length}</span>
+        {adult && all.some(isAdultArt) ? (
+          <button type="button" className="art-hide-adult" onClick={() => setAdult(false)}><Icon name="eyeOff" size={14}/>{t('Скрыть 18+')}</button>
+        ) : <span>{all.length}</span>}
       </div>
       <button className="button secondary full art-offer" onClick={() => setSubmitting(true)}>
         {t('Предложить свой арт')}
@@ -132,8 +156,9 @@ export function AsciiLibrary({ editor, canvas }) {
             onClick={() => setSelected(art)}
             aria-label={t('Посмотреть арт: {name}', { name: artName(art) })}
           >
-            <div className="art-thumbnail">
+            <div className={`art-thumbnail${isAdultArt(art) && !adult ? ' is-adult' : ''}`}>
               <ArtPreview art={art} />
+              {isAdultArt(art) && !adult && <AdultCover/>}
             </div>
             <span>
               {artName(art)}

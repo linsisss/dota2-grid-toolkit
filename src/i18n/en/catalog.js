@@ -433,7 +433,7 @@ export default {
   '500 лайков': '500 likes',
   'Делает GridStudio': 'Makes GridStudio',
   'Модератор': 'Moderator',
-  'Проверяет сетки, фоны и гайды': 'Reviews grids, backgrounds and guides',
+  'Проверяет сетки, арты, фоны и гайды': 'Reviews grids, art, backgrounds and guides',
   'Находит баги и сообщает о них': 'Finds bugs and reports them',
   'Идеи этого пользователя появились на сайте': 'This user’s ideas made it into the site',
   'Поддерживает разработку сайта': 'Supports the site’s development',

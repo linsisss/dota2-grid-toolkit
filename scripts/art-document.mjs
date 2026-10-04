@@ -4,7 +4,10 @@ import { invisibleWarning } from './dota-rendering.mjs';
 
 // Player-submitted ready-made arts: the same text format as data/ascii-arts.json,
 // validated by the same rules in the submission form and on the server.
-export const ART_CATEGORIES = ['Орнаменты', 'Существа', 'Космос', 'Персонажи', 'Надписи', 'Предметы', 'Другое'];
+// «18+» (asked for on 2026-10-04) blurs the art in the editor's library until the viewer confirms their
+// age, as for grids and backgrounds (src/AsciiLibrary.jsx).
+export const ART_CATEGORIES = ['Орнаменты', 'Существа', 'Космос', 'Персонажи', 'Надписи', 'Предметы', '18+', 'Другое'];
+export const isAdultArt = (art) => art?.category === '18+';
 // The largest built-in art has 65 rows, 187 columns and 8 521 characters.
 export const ART_LIMITS = Object.freeze({ chars: 12_000, rows: 120, width: 250, daily: 5, accountDaily: 15 });
 // An art from the editor (asked for on 2026-10-04: arts drawn in the editor could only be pasted as

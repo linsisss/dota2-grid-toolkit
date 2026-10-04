@@ -7,8 +7,11 @@ const identity = (n = 1) => ({ browser: `browser-${n}`, ip: 'shared-network' });
 const art = (extra = {}) => ({ name: 'Сердечко', category: 'Другое', author: 'Игрок', text: '\n\n    @@ @@\n    @@@@@\n      @\n\n', ...extra });
 
 test('an art is stored exactly as it will be inserted, within the library limits', async () => {
-  const [, , { artSubmission, ART_LIMITS }] = await modules;
+  const [, , { artSubmission, ART_LIMITS, isAdultArt }] = await modules;
   assert.deepEqual(artSubmission(art()), { name: 'Сердечко', author: 'Игрок', credit: '', category: 'Другое', text: '@@ @@\n@@@@@\n  @', rows: null });
+  // «18+» is a category; the editor's library blurs such arts until the viewer says they are 18.
+  assert.equal(artSubmission(art({ category: '18+' })).category, '18+');
+  assert.deepEqual([isAdultArt({ category: '18+' }), isAdultArt({ category: 'Другое' }), isAdultArt(null)], [true, false, false]);
   assert.throws(() => artSubmission(art({ category: 'Мемы' })), /категорию/);
   assert.throws(() => artSubmission(art({ name: ' ' })), /Название/);
   assert.throws(() => artSubmission(art({ text: '\n   \n' })), /нет символов/);

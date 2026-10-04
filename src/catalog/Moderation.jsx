@@ -22,7 +22,7 @@ const AdminInbox = lazy(() => import('./AdminInbox.jsx'));
 // decided what. A review keeps its decision on top (src/catalog/AdminReview.jsx), keys do the usual:
 // ↑ ↓ the list, A approve, R turn down, H hide. The server checks the Telegram account on every
 // /admin request; these screens only spare everyone else from an empty page. A moderator
-// (server/moderators.mjs, 2026-10-04) gets only «Сетки», «Фоны» and «Гайды» waiting for a decision.
+// (server/moderators.mjs, 2026-10-04) gets only «Сетки», «Готовые арты», «Фоны» and «Гайды» waiting for a decision.
 export default function Moderation() {
   const auth = useAccount();
   if (auth.loading) return <p role="status">Проверяем доступ…</p>;
@@ -34,7 +34,7 @@ export default function Moderation() {
 }
 
 const VIEWS = [['inbox', 'Входящие', 'bell'], ['works', 'Сетки', 'grid'], ['arts', 'Готовые арты', 'art'], ['backgrounds', 'Фоны', 'brush'], ['guides', 'Гайды', 'guides'], ['stats', 'Статистика', 'gauge'], ['users', 'Пользователи', 'user'], ['journal', 'Журнал', 'history']];
-const MODERATOR_VIEWS = ['works', 'backgrounds', 'guides'];
+const MODERATOR_VIEWS = ['works', 'arts', 'backgrounds', 'guides'];
 
 function AdminPanel({ auth }) {
   const { config } = useCatalogConfig();
@@ -54,7 +54,7 @@ function AdminPanel({ auth }) {
   const changed = () => setTick(x => x + 1);
   const show = value => { const url = new URL(location.href); url.searchParams.set('moderate', value === 'inbox' ? '' : value); url.searchParams.delete('filter'); history.replaceState(history.state, '', url); setView(value); };
   // A moderator's counts are what waits for their decision; reports are the admins'.
-  const c = summary?.counts, waiting = c ? (moderator ? { works: c.works.pending, backgrounds: c.backgrounds.pending, guides: c.guides.pending }
+  const c = summary?.counts, waiting = c ? (moderator ? { works: c.works.pending, arts: c.arts.pending, backgrounds: c.backgrounds.pending, guides: c.guides.pending }
     : { works: c.works.pending + c.works.reports, arts: c.arts.pending, backgrounds: c.backgrounds.pending + c.backgrounds.reports, guides: c.guides.pending + c.guides.reports }) : {};
   waiting.inbox = c ? waiting.works + waiting.arts + waiting.backgrounds + waiting.guides : 0;
   async function pause() {
@@ -62,7 +62,7 @@ function AdminPanel({ auth }) {
     try { setSummary({ ...summary, ...(await catalogAPI('/admin/settings', { method: 'PATCH', body: { paused: !summary.paused } })) }); } catch (error) { denied(error); } finally { setBusy(false); }
   }
   return <div className="admin" ref={box} style={{ '--admin-offset': `${offset}px` }}>
-    <header className="admin-top"><div><h1>Модерация</h1><p>{moderator ? 'Одобряй или отклоняй сетки, фоны и гайды на проверке. ' : ''}Проверяй именно ту версию, которая будет опубликована. Решения отражаются и на карточках в Telegram.</p></div>
+    <header className="admin-top"><div><h1>Модерация</h1><p>{moderator ? 'Одобряй или отклоняй сетки, арты, фоны и гайды на проверке. ' : ''}Проверяй именно ту версию, которая будет опубликована. Решения отражаются и на карточках в Telegram.</p></div>
       {!moderator && <div className="admin-top-actions">
         <button type="button" className={`admin-pause${summary?.paused ? ' is-paused' : ''}`} role="switch" aria-checked={summary ? !summary.paused : undefined} disabled={busy || !summary} onClick={pause}
           title={summary?.paused ? 'Новые заявки не принимаются. Нажми, чтобы открыть приём.' : 'Нажми, чтобы временно не принимать новые заявки.'}><i/>{summary?.paused ? 'Приём приостановлен' : 'Приём открыт'}</button>

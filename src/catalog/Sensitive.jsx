@@ -1,21 +1,15 @@
-import { useState, useSyncExternalStore } from 'react';
+import { useState } from 'react';
 import { Icon, Modal } from './Common.jsx';
 import { t } from '../../scripts/i18n.mjs';
+import { setAdult, useAdultConfirmed } from '../adult-consent.js';
 
 // The viewer confirms their age for this page only: it applies to every 18+ grid and background at
 // once, and after a reload they are blurred again; «Скрыть 18+» blurs them at once. Until 1.6.1 the answer
 // was kept in the browser for good (KEY), so that old answer is dropped.
 const KEY = 'gridstudio.catalog.adult.v1';
 try { localStorage.removeItem(KEY); } catch { /* Nothing was stored. */ }
-const listeners = new Set();
-let confirmed = false;
-const subscribe = listener => { listeners.add(listener); return () => listeners.delete(listener); };
-function setAdult(value) {
-  confirmed = value;
-  listeners.forEach(listener => listener());
-}
+export { useAdultConfirmed };
 export const isAdultWork = item => !!item?.tags?.includes('18+');
-export const useAdultConfirmed = () => useSyncExternalStore(subscribe, () => confirmed, () => false);
 // Shown once 18+ works are uncovered, to blur them again without a reload.
 export function HideAdultButton() {
   if (!useAdultConfirmed()) return null;

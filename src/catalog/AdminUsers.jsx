@@ -41,7 +41,7 @@ function Role({ user, onRole }) {
   const toggle = () => { setBusy(true); setError(''); catalogAPI(`/admin/users/${user.id}/moderator`, { method: 'POST', body: { on } })
     .then((value) => onRole(value.moderator ? 'moderator' : null), (problem) => setError(problem.message)).finally(() => setBusy(false)); };
   return <div className="admin-user-role">
-    <p>{on ? 'Модератор может одобрять и отклонять сетки, фоны и гайды на проверке — больше ничего в админке.' : 'Модератор: одобряет и отклоняет сетки, фоны и гайды на проверке.'}</p>
+    <p>{on ? 'Модератор может одобрять и отклонять сетки, арты, фоны и гайды на проверке — больше ничего в админке.' : 'Модератор: одобряет и отклоняет сетки, фоны и гайды на проверке.'}</p>
     <button type="button" className={`catalog-button${on ? '' : ' danger'}`} disabled={busy} onClick={toggle}><Icon name="shield" size={15}/>{busy ? 'Сохраняем…' : on ? 'Сделать модератором' : 'Снять роль модератора'}</button>
     {error && <Notice error>{error}</Notice>}
   </div>;

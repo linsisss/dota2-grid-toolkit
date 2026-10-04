@@ -2,9 +2,9 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 // Moderators (server/moderators.mjs): an admin gives the role in «Пользователи»; a moderator only approves or
-// turns down grids, backgrounds and guides waiting for a decision.
+// turns down grids, arts, backgrounds and guides waiting for a decision.
 test('a moderator approves or turns down what waits, and nothing else; only admins give the role', async (t) => {
-  const [{ CatalogStore }, { createCatalogAPI }, { moderatorAllows }] = await Promise.all([import('../server/catalog-store.mjs'), import('../server/catalog-api.mjs'), import('../server/moderators.mjs')]);
+  const [{ CatalogStore }, { createCatalogAPI }, { moderatorAllows }, { CatalogArts }] = await Promise.all([import('../server/catalog-store.mjs'), import('../server/catalog-api.mjs'), import('../server/moderators.mjs'), import('../server/catalog-arts.mjs')]);
   const store = new CatalogStore(':memory:', 'test-moderators');
   const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-moderators', admins: new Set(['900000099']), database: ':memory:', media: '/nonexistent' };
   const { server, accounts } = createCatalogAPI(config, { store }); await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -21,6 +21,9 @@ test('a moderator approves or turns down what waits, and nothing else; only admi
   const work = (title) => store.save({ title, author: '', tags: ['Аниме'], grid: { ...grid, configs: [{ config_name: title, categories: [{ ...grid.configs[0].categories[0], x_position: 100 * ++n }] }] } }, { browser: `b-${title}`, ip: 'i' }, null, null, null, '1302');
   const published = work('Опубликованная'); store.moderate(published.id, { action: 'approve', revision: published.revision });
   const first = work('Первая'), second = work('Вторая');
+  const arts = new CatalogArts(store), art = (name, text) => arts.submit({ name, category: '18+', author: 'Гость', text }, { browser: `b-${name}`, ip: 'i' }).id;
+  const shown = art('Показанный', '@ @\n @'); arts.moderate(shown, { action: 'approve' });
+  const heart = art('Сердце', '@@ @@\n @@@'), star = art('Звезда', ' *\n***');
 
   assert.deepEqual((await call('/auth/me', mod)).body.moderator, false);
   assert.equal((await call('/admin/works', mod)).status, 403);
@@ -51,12 +54,19 @@ test('a moderator approves or turns down what waits, and nothing else; only admi
   assert.equal((await call(`/admin/works/${second.id}`, mod, { method: 'POST', body: { action: 'reject', revision: second.revision, reason: 'Дубликат' } })).status, 200);
   assert.equal(store.publicItem(first.id).title, 'Первая');
   assert.equal(JSON.parse(store.get("SELECT actor FROM audit WHERE work=? AND action='approve'", first.id).actor).id, '1301');
+  // Arts waiting for a decision too (asked for on 2026-10-04): approve or turn down, no corrections or hiding.
+  assert.deepEqual((await call('/admin/arts?filter=approved', mod)).body.items.map((item) => item.name).sort(), ['Звезда', 'Сердце']);
+  for (const [id, action] of [[heart, 'edit'], [shown, 'hide']])
+    assert.equal((await call(`/admin/arts/${id}`, mod, { method: 'POST', body: { action, name: 'Чужое', category: 'Другое', reason: 'x' } })).status, 403, action);
+  assert.equal((await call(`/admin/arts/${heart}`, mod, { method: 'POST', body: { action: 'approve' } })).status, 200);
+  assert.equal((await call(`/admin/arts/${star}`, mod, { method: 'POST', body: { action: 'reject', reason: 'Дубликат' } })).status, 200);
+  assert.deepEqual([arts.get(heart).status, arts.get(star).status, arts.get(shown).status, arts.get(heart).name], ['approved', 'rejected', 'approved', 'Сердце']);
   // Nothing else of the admin panel.
-  for (const [path, method, body] of [['/admin/stats', 'GET'], ['/admin/stats/live', 'GET'], ['/admin/users', 'GET'], ['/admin/journal', 'GET'], ['/admin/arts', 'GET'],
-    ['/admin/settings', 'PATCH', { paused: true }], ['/admin/users/1302/moderator', 'POST', { on: true }], ['/admin/guides/abcdefghijkl/modding', 'POST', { modding: true }], ['/admin/arts/1', 'POST', { action: 'approve' }]])
+  for (const [path, method, body] of [['/admin/stats', 'GET'], ['/admin/stats/live', 'GET'], ['/admin/users', 'GET'], ['/admin/journal', 'GET'],
+    ['/admin/settings', 'PATCH', { paused: true }], ['/admin/users/1302/moderator', 'POST', { on: true }], ['/admin/guides/abcdefghijkl/modding', 'POST', { modding: true }], ['/admin/arts/abc', 'POST', { action: 'approve' }]])
     assert.equal((await call(path, mod, { method, body })).status, 403, path);
   assert.equal(store.paused(), false);
-  assert.deepEqual([moderatorAllows('GET', '/admin/backgrounds'), moderatorAllows('POST', '/admin/backgrounds/12'), moderatorAllows('POST', '/admin/guides/7'), moderatorAllows('DELETE', '/admin/works')], [true, true, true, false]);
+  assert.deepEqual([moderatorAllows('GET', '/admin/backgrounds'), moderatorAllows('POST', '/admin/backgrounds/12'), moderatorAllows('POST', '/admin/guides/7'), moderatorAllows('POST', '/admin/arts/3'), moderatorAllows('DELETE', '/admin/works')], [true, true, true, true, false]);
 
   // Taken back: the panel closes at once.
   assert.deepEqual((await call('/admin/users/1301/moderator', admin, { method: 'POST', body: { on: false } })).body, { moderator: false });

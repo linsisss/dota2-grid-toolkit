@@ -468,3 +468,38 @@
 .art-offer {
   margin-bottom: 12px;
 }
+/* 18+ arts (src/AsciiLibrary.jsx AdultCover): blurred until the viewer says they are 18. */
+.art-large-preview { position: relative; overflow: hidden; }
+.art-thumbnail { overflow: hidden; }
+.is-adult > canvas { filter: blur(14px) saturate(.6); transform: scale(1.1); }
+.art-adult-cover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 3px;
+  background: #15141a80;
+  color: var(--text);
+  text-align: center;
+}
+.art-adult-cover b { font-size: 15px; letter-spacing: .06em; }
+.art-adult-cover small { color: var(--muted); font-size: 11px; }
+.art-adult-cover.is-asking { gap: 10px; padding: 20px; background: #15141ab3; }
+.art-adult-cover.is-asking b { font-size: 20px; letter-spacing: 0; }
+.art-adult-cover.is-asking p { margin: 0; max-width: 42ch; color: var(--muted); font-size: 13px; }
+.art-adult-cover.is-asking div { display: flex; gap: 10px; margin-top: 4px; }
+.art-hide-adult {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.art-hide-adult:hover { color: var(--text); }

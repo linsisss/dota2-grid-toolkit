@@ -224,6 +224,10 @@ const messages = {
   'Неизвестная аватарка.': 'Unknown avatar.',
   'Такой значок не выдаётся вручную.': 'This badge isn’t given by hand.',
   'Фото профиля недоступно.': 'The profile photo isn’t available.',
+  // scripts/art-document.mjs artRows: an art from the editor (2026-10-04)
+  'Арт из редактора повреждён. Возьми его из редактора ещё раз.': 'The art from the editor is damaged. Take it from the editor again.',
+  'В арте пока нет символов: выдели символы или текст в редакторе.': 'The art has no symbols yet: select symbols or text in the editor.',
+  'Арт больше экрана сетки. Выдели один рисунок, а не всю сетку.': 'The art is bigger than the grid screen. Select one drawing, not the whole grid.',
 };
 export default messages;
 
@@ -262,6 +266,7 @@ const own = [
   [/^За сутки можно загрузить (\d+) файлов\.$/, 'You can upload $1 files a day.'],
   [/^За сутки можно начать (\d+) гайдов\.$/, 'You can start $1 guides a day.'],
   [/^За сутки можно отправить на проверку (\d+) версий\.$/, 'You can send $1 versions for review a day.'],
+  [/^В арте ([\d\s]+) строк, максимум ([\d\s]+)\. Сократи его «Оптимизацией» в редакторе\.$/, (whole, n, max) => `The art has ${number(n)} rows; the maximum is ${number(max)}. Reduce it with “Optimization” in the editor.`],
   [/^В арте (\d+) строк, максимум (\d+)\.$/, 'The art has $1 lines; the maximum is $2.'],
   [/^Самая длинная строка — (\d+) символов, максимум (\d+)\.$/, 'The longest line has $1 symbols; the maximum is $2.'],
   [/^(.+): допустимо до ([\d\s]+) символов\.$/, (whole, field, max) => `${FIELDS[field] || field}: up to ${number(max)} characters.`],

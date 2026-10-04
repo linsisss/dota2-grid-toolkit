@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from './Common.jsx';
-import { quickReasons, typing } from './ModerationQueue.jsx';
-export { typing };
+import { quickReasons, StaffRole, typing, useStaffRole } from './ModerationQueue.jsx';
+export { StaffRole, typing, useStaffRole };
 
 // What every review in the admin panel shares (redone on 2026-10-02 to be quicker to use): the
 // decision on top — what it is, its state, and the buttons, each with its key — staying in view while
@@ -9,12 +9,17 @@ export { typing };
 // the buttons with the quick answers; editing the title and the like folds away below. Like the
 // rest of the admin panel, Russian only.
 
+// A moderator's review (StaffRole, src/catalog/ModerationQueue.jsx) has only these buttons and no corrections.
+const MODERATOR_ACTIONS = new Set(['approve', 'reject']);
+
 // `actions`: [{ id, label, icon, tone ('primary' | 'danger'), key, disabled, run(reason), reason: { kind, required, placeholder, confirm } , extra }]
 // An action with `reason` asks for it first (quick answers when `kind` is given), `extra` adds controls to that form.
 // `fields` (the editable title, author, tags) take the title's place; `children` is the stage — the picture,
 // video or text, fitted into what is left of the screen (`stage: 'text'` scrolls instead).
 // Everything about an item fits one screen (asked for on 2026-10-02): nothing waits below the picture.
-export function ReviewLayout({ badge, title, fields = null, meta, status, actions = [], busy = false, alert = null, stage = 'picture', tools = null, children }) {
+export function ReviewLayout({ badge, title, fields: editable = null, meta, status, actions: all = [], busy = false, alert = null, stage = 'picture', tools = null, children }) {
+  const moderator = useStaffRole() === 'moderator';
+  const actions = moderator ? all.filter((action) => MODERATOR_ACTIONS.has(action.id)) : all, fields = moderator ? null : editable;
   const [asking, setAsking] = useState(null), [reason, setReason] = useState(''), field = useRef(null);
   useEffect(() => { setAsking(null); setReason(''); }, [title, badge]);
   const trigger = (action) => {

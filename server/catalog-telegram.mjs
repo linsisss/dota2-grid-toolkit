@@ -89,8 +89,9 @@ export function reviewCaption(job, config) {
   if (job.kind === 'art') return [
     ...(config.local ? ['<i>Локальная проверка</i>'] : []),
     `${reviewEmoji('notice')} <b>Новый арт на проверку:</b> "${escape(s.title)}"`,
-    `${reviewEmoji('author')} Автор: ${escape(s.author || 'не указан')}`,
-    `${reviewEmoji('categories')} Строк: ${s.rows}, ширина: ${s.width} символов`,
+    `${reviewEmoji('author')} Автор: ${escape(s.author || 'не указан')}${s.credit ? ` · по мотивам: ${escape(s.credit)}` : ''}`,
+    // An art from the editor is rows where Dota draws them (scripts/art-document.mjs artRows), not lines of text.
+    `${reviewEmoji('categories')} ${s.editor ? `Из редактора: ${plural(s.rows, 'строка', 'строки', 'строк')} символов` : `Строк: ${s.rows}, ширина: ${s.width} символов`}`,
     `${reviewEmoji('tags')} Категория: ${escape(s.category)}`,
     '', decision
   ].join('\n');
@@ -222,7 +223,7 @@ export class CatalogTelegram {
       preview = job.kind.startsWith('guide') ? await this.renderGuide(this.queue.guides.preview(JSON.parse(job.summary).guide, job.revision))
         : job.kind === 'background' || job.kind === 'background-report' ? readFileSync(this.queue.backgrounds.file(job.revision, 'poster'))
         : job.kind === 'item-comment-report' ? await this.commentPicture(JSON.parse(job.summary))
-        : await (job.kind === 'art' ? this.renderArt(this.queue.arts.get(job.revision).text) : this.render(JSON.parse(this.store.revision(job.revision).grid)));
+        : await (job.kind === 'art' ? this.renderArt(this.queue.arts.drawable(this.queue.arts.get(job.revision))) : this.render(JSON.parse(this.store.revision(job.revision).grid)));
       preview = await this.compared(job, preview);
     }
     catch { this.queue.retry(job, 'queued', 60_000); this.log(`Не удалось нарисовать превью заявки ${job.id}; повтор через минуту.`); return false; }

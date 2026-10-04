@@ -208,6 +208,20 @@ function categoryEntries(state) {
       category_name: label.text, x_position: +label.x.toFixed(6), y_position: +label.y.toFixed(6), width: 30, height: 30, hero_ids: [] } })));
     return [...labels, ...entries];
 }
+// An art for «Готовые арты» from the editor (asked for on 2026-10-04; scripts/art-document.mjs artRows):
+// the chosen objects' categories as the grid's download for the «Герои» page keeps them — glyphs of one
+// line joined into rows exactly (compactCategoryRows), a multi-line text one row a line — from their top
+// left corner. Heroes and hidden layers are left out. measure(text) → { width }.
+function artRows(doc, ids, measure) {
+  const chosen = new Set(ids);
+  const state = { ...doc, entities: doc.entities.filter((e) => chosen.has(e.id) && e.type !== 'heroes' && !e.meta) };
+  const rows = compactCategoryRows(categoryEntries(state), measure).filter((c) => !c.hero_ids.length && typeof c.category_name === 'string')
+    .flatMap((c) => c.category_name.split('\n').map((line, i) => ({ text: line.replace(/\s+$/u, ''), x: c.x_position, y: c.y_position + i * DOTA.header })))
+    .filter((row) => /\S/u.test(row.text));
+  if (!rows.length) throw new Error(t('Выбери символы или текст: героев в арт не добавить.'));
+  const left = Math.min(...rows.map((row) => row.x)), top = Math.min(...rows.map((row) => row.y));
+  return rows.map((row) => ({ text: row.text, x: +(row.x - left).toFixed(3), y: +(row.y - top).toFixed(3) }));
+}
 // A download for every screen (docs/zoom-and-optimization.md «Экран выбора героя»). Dota's hero-
 // pick screen shows only the first line of a name, and it and every resolution but 1080p set
 // the glyphs of one name apart from where the «Герои» page puts them. So every multi-line name
@@ -1169,6 +1183,7 @@ export default {
   layerName,
   entity,
   addArtwork,
+  artRows,
   deleteArtwork,
   importDota,
   exportDota,

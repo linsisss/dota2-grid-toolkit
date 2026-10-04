@@ -10,13 +10,22 @@ const builtin = new Set(JSON.parse(readFileSync(new URL('../data/ascii-arts.json
 export const artKey = id => `art:${id}`;
 const FILTERS = { pending: "status='pending'", approved: "status='approved'", hidden: "status IN ('hidden','rejected')" };
 
+// An art's hash: a text art's text (as the built-in ones), an art from the editor's rows.
+const artHash = (art) => digest(art.rows ? `rows:${JSON.stringify(art.rows)}` : art.text);
+// A signed-in author's art is signed by their profile's nickname (as grids), a guest's by `author`.
+const signature = (store, row) => (row.account ? store.profiles.creator(row.account)?.name : '') || row.author;
+
 // Ready-made arts from players. Every art waits for a moderator, on the site or in the
-// Telegram topic; only approved ones reach the editor's library.
+// Telegram topic; only approved ones reach the editor's library. An art is a text, or rows from the
+// editor (`rows`, scripts/art-document.mjs artRows).
 export class CatalogArts {
   constructor(store) { this.store = store; }
   get(id) { return this.store.get('SELECT * FROM arts WHERE id=?', id); }
+  // What the card, the preview and the library draw: { text, rows } with `rows` parsed.
+  drawable(row) { return { ...row, rows: row.rows ? JSON.parse(row.rows) : null }; }
+  author(row) { return signature(this.store, row); }
   submit(input, identity, account = null) {
-    const art = artSubmission(input), hash = digest(art.text), store = this.store;
+    const art = artSubmission(input), hash = artHash(art), store = this.store;
     return store.tx(() => {
       if (store.paused()) fail(503, 'Приём временно приостановлен. Мастерская и редактор доступны.');
       for (const key of [identity.browser, identity.ip]) if (store.get('SELECT key FROM blocks WHERE key=? AND until_at>?', key, store.now())) fail(403, 'Отправка с этого источника временно ограничена.');
@@ -29,8 +38,8 @@ export class CatalogArts {
       store.rate(`art-ip:${identity.ip}`, 40, 86_400_000, { message: 'Достигнут общий лимит отправки артов из этой сети за 24 часа.', code: 'art_network_limit' });
       if (store.get("SELECT count(*) n FROM arts WHERE status='pending'").n >= 1000) fail(503, 'Очередь проверки артов заполнена. Попробуй позже.');
       const now = store.now();
-      const { lastInsertRowid } = store.run('INSERT INTO arts(name,category,author,text,hash,account,browser,ip,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?)',
-        art.name, art.category, art.author, art.text, hash, account, identity.browser, identity.ip, now, now);
+      const { lastInsertRowid } = store.run('INSERT INTO arts(name,category,author,credit,text,rows,hash,account,browser,ip,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
+        art.name, art.category, account ? '' : art.author, art.credit, art.text, art.rows ? JSON.stringify(art.rows) : null, hash, account, identity.browser, identity.ip, now, now);
       const id = Number(lastInsertRowid);
       store.audit(artKey(id), 'art-submit');
       return { id, status: 'pending' };
@@ -38,9 +47,12 @@ export class CatalogArts {
   }
   // The public library. The version changes with every decision or correction, so the editor
   // revalidates with one cheap request instead of downloading every art again.
+  // A renamed author's arts show the new nickname, so profile changes count too.
   library() {
-    const { n, updated } = this.store.get("SELECT count(*) n, coalesce(max(updated),0) updated FROM arts WHERE status='approved'");
-    return { version: `${n}-${updated}`, load: () => this.store.all("SELECT id,name,category,author,text FROM arts WHERE status='approved' ORDER BY updated DESC, id DESC") };
+    const { n, updated, renamed } = this.store.get(`SELECT count(*) n, coalesce(max(a.updated),0) updated, coalesce(max(p.changed),0) renamed
+      FROM arts a LEFT JOIN profiles p ON p.account=a.account WHERE a.status='approved'`);
+    return { version: `${n}-${updated}-${renamed}`, load: () => this.store.all("SELECT id,name,category,author,credit,text,rows,account FROM arts WHERE status='approved' ORDER BY updated DESC, id DESC")
+      .map((row) => ({ id: row.id, name: row.name, category: row.category, author: signature(this.store, row), credit: row.credit, text: row.text, ...(row.rows ? { rows: JSON.parse(row.rows) } : {}) })) };
   }
   // The admin queue; `search` finds a name or an author in it, as for grids and backgrounds (tab counts stay whole).
   moderation(filter = 'pending', page = 0, search = '') {
@@ -50,11 +62,12 @@ export class CatalogArts {
     const counts = Object.fromEntries(Object.entries(FILTERS).map(([key, sql]) => [key, store.get(`SELECT count(*) n FROM arts WHERE ${sql}`).n]));
     const total = search ? store.get(`SELECT count(*) n FROM arts WHERE ${where}`, ...args).n : counts[filter in FILTERS ? filter : 'pending'];
     const items = store.all(`SELECT * FROM arts WHERE ${where} ORDER BY ${filter === 'pending' ? 'id' : 'updated DESC, id DESC'} LIMIT 20 OFFSET ?`, ...args, page * 20)
-      .map(art => ({ id: art.id, name: art.name, category: art.category, author: art.author, text: art.text, status: art.status, reason: art.reason,
+      .map(art => ({ id: art.id, name: art.name, category: art.category, author: art.author, credit: art.credit, text: art.text, ...(art.rows ? { rows: JSON.parse(art.rows) } : {}),
+        creator: art.account ? store.profiles.creator(art.account) : null, status: art.status, reason: art.reason,
         created: art.created, linked: !!art.account, related: store.get('SELECT count(*) n FROM arts WHERE browser=?', art.browser).n }));
     return { items, total, counts, paused: store.paused() };
   }
-  moderate(id, { action, reason = '', name, category, author }, { transaction = true, actor = null } = {}) {
+  moderate(id, { action, reason = '', name, category, author, credit }, { transaction = true, actor = null } = {}) {
     const store = this.store;
     const apply = () => {
       const art = this.get(id);
@@ -73,8 +86,9 @@ export class CatalogArts {
         set('approved');
       } else if (action === 'edit') {
         need('pending', 'approved');
-        const meta = artMeta({ name, category, author });
-        store.run('UPDATE arts SET name=?,category=?,author=?,updated=? WHERE id=?', meta.name, meta.category, meta.author, store.now(), id);
+        // A signed-in author's art keeps their nickname: only the credit («по мотивам») is edited.
+        const meta = artMeta({ name, category, author: art.account ? '' : author, credit: credit ?? art.credit });
+        store.run('UPDATE arts SET name=?,category=?,author=?,credit=?,updated=? WHERE id=?', meta.name, meta.category, meta.author, meta.credit, store.now(), id);
         store.audit(artKey(id), action, actor);
         return meta;
       } else fail(400, 'Неизвестное действие.');

@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { drawCatalogGrid, drawGridGround } from '../scripts/catalog-rendering.mjs';
 import { normalizeCatalogGrid } from '../scripts/catalog-document.mjs';
 import D from '../scripts/data.mjs';
-import { layoutAsciiArt } from '../scripts/ascii-library.mjs';
+import { artLayout } from '../scripts/ascii-library.mjs';
 import { drawCategoryLabel, glyphWidths, measureCategoryText } from '../scripts/dota-rendering.mjs';
 import C from '../scripts/core.mjs';
 import { workspaceGridPreview } from '../scripts/workspace-preview.mjs';
@@ -63,11 +63,12 @@ export async function heroImages(grid) {
   })));
 }
 // A submitted art on the card: rows laid out as on insertion, scaled to fit the Dota grid frame.
-export async function renderArtPreview(text) {
+// `art`: its text, or the art ({ text, rows }: a text art or one from the editor, scripts/ascii-library.mjs artLayout).
+export async function renderArtPreview(art) {
   loadFonts();
   const canvas = createCanvas(1193, 593), ctx = canvas.getContext('2d');
   drawGridGround(ctx, await gridBackground());
-  const layout = layoutAsciiArt(text, line => measureCategoryText(ctx, line).advances.reduce((a, b) => a + b, 0));
+  const layout = artLayout(typeof art === 'string' ? { text: art } : art, line => measureCategoryText(ctx, line).advances.reduce((a, b) => a + b, 0));
   const scale = Math.min(1.5, (1193 - 60) / layout.width, (593 - 60) / layout.height);
   ctx.translate((1193 - layout.width * scale) / 2, (593 - layout.height * scale) / 2); ctx.scale(scale, scale);
   for (const row of layout.rows) drawCategoryLabel(ctx, row.text, row.x, row.y, '#d6c8f7');

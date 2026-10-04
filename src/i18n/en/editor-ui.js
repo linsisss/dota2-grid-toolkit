@@ -589,4 +589,17 @@ export default {
   'пикрейт {pick}%, винрейт {win}%': 'pick rate {pick}%, win rate {win}%',
   'STRATZ · НЕДЕЛЯ С {date}': 'STRATZ · WEEK OF {date}',
   'Герои уже стоят по мете этой позиции.': 'The heroes already stand in this position’s meta order.',
+
+  // ArtSubmission.jsx: an art from the editor (2026-10-04)
+  'Откуда взять арт': 'Where to take the art from',
+  'На холсте пока нет символов или текста.': 'There are no symbols or text on the canvas yet.',
+  'Из редактора': 'From the editor',
+  'Вставить текст': 'Paste text',
+  'Что отправить': 'What to send',
+  'Слой «{name}»': 'Layer “{name}”',
+  'объектов: {count}': 'objects: {count}',
+  'Только символы и текст: герои в арт не попадают. Скрытые слои не отправляются.': 'Symbols and text only: heroes don’t go into an art. Hidden layers aren’t sent.',
+  'Выбери, что отправить, — здесь появится превью.': 'Choose what to send, and the preview appears here.',
+  'Арт вставится у других так же, как он стоит у тебя: строки символов на своих местах.': 'Others will insert the art just as it stands in your editor: rows of symbols in their places.',
+  'Строк символов: {rows} · {w} × {h} px на холсте.': 'Rows of symbols: {rows} · {w} × {h} px on the canvas.',
 };

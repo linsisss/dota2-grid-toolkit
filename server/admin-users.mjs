@@ -5,7 +5,8 @@
 // commented, a restriction if there is one, and where the account came from (server/site-stats.mjs
 // signup: the source, the site, utm_* marks, the first page and the page it signed in on; 'unknown' for
 // accounts from before 03.10.2026). Admins only. A search finds a nickname, an @username, a Telegram name
-// or an id; a source narrows the list; 50 at a time.
+// or an id; a source narrows the list; 50 at a time. `role`: 'admin' (CATALOG_ADMIN_TELEGRAM_IDS, `admins`), 'moderator'
+// (server/moderators.mjs, given here) or null.
 import { SOURCES } from './site-stats.mjs';
 export const USERS_PAGE = 50;
 const SORTS = {
@@ -14,7 +15,7 @@ const SORTS = {
   works: '(grids + backgrounds + guides) DESC, coalesce(seen, a.updated) DESC',
 };
 
-export function adminUsers(store, stats, { q = '', sort = 'new', offset = 0, source = '' } = {}) {
+export function adminUsers(store, stats, { q = '', sort = 'new', offset = 0, source = '', admins = new Set() } = {}) {
   const has = (name) => !!store.get('SELECT 1 x FROM sqlite_master WHERE name=?', name);
   const count = (table, where) => (has(table) ? `(SELECT count(*) FROM ${table} WHERE ${where})` : '0');
   const query = String(q).trim().replace(/^@/, '').toLowerCase().slice(0, 80);
@@ -26,6 +27,7 @@ export function adminUsers(store, stats, { q = '', sort = 'new', offset = 0, sou
   const from = "FROM accounts a LEFT JOIN profiles p ON p.account=a.id LEFT JOIN signup_sources s ON s.account=a.id";
   const rows = store.all(`SELECT a.id, a.name, a.username, a.updated, p.key, p.nickname, p.created, p.telegram, s.source, s.referrer, s.landing, s.signup, s.utm, s.first_seen,
       ${has('visits') ? '(SELECT max(last) FROM visits v WHERE v.account=a.id)' : 'NULL'} seen,
+      ${has('moderators') ? '(SELECT 1 FROM moderators m WHERE m.account=a.id)' : 'NULL'} moderator,
       ${count('works', "account=a.id AND state='active' AND public_revision IS NOT NULL")} grids,
       ${count('backgrounds', "account=a.id AND status='approved'")} backgrounds,
       ${count('guides', "account=a.id AND status='approved'")} guides,
@@ -44,7 +46,7 @@ export function adminUsers(store, stats, { q = '', sort = 'new', offset = 0, sou
       profile: creator && { key: creator.key, nickname: creator.name, avatar: creator.avatar, badges: creator.badges },
       joined: row.created || row.updated, seen: row.seen || row.updated, blocked: row.blocked || 0,
       works: { grids: row.grids, backgrounds: row.backgrounds, guides: row.guides, arts: row.arts }, comments: row.comments,
-      online: !!row.seen && now - row.seen < 5 * 60_000,
+      online: !!row.seen && now - row.seen < 5 * 60_000, role: admins.has(String(row.id)) ? 'admin' : row.moderator ? 'moderator' : null,
       came: { source: row.source || 'unknown', label: SOURCES[row.source || 'unknown'], site: row.referrer || '', utm: row.utm ? JSON.parse(row.utm) : null,
         landing: row.landing ? stats.pageLabel(row.landing) : '', signup: row.signup ? stats.pageLabel(row.signup) : '', firstSeen: row.first_seen || null } };
   });

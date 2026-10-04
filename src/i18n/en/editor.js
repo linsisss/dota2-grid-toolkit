@@ -586,4 +586,8 @@ export default {
   'Герои упорядочены по мете': 'Heroes sorted by meta',
   'Не удалось собрать сетку меты.': 'Could not build the meta grid.',
   'Группа по мете добавлена': 'Meta group added',
+  // app.mjs, core.mjs: an art for «Готовые арты» from the editor (2026-10-04)
+  'Выделенное': 'Selection',
+  'Всё, кроме героев': 'Everything but heroes',
+  'Выбери символы или текст: героев в арт не добавить.': 'Choose symbols or text: heroes can’t go into an art.',
 };

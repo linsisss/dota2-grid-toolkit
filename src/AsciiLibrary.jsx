@@ -27,7 +27,7 @@ function ArtDialog({ art, editor, canvas, close }) {
         <span className="win-icon" aria-hidden="true"><Icon name="art"/></span>
         <div>
           <h2 id="artDialogTitle">{artName(art)}</h2>
-          <span>{[art.category && t(art.category), art.author, art.player && t('от пользователей')].filter(Boolean).join(' · ')}</span>
+          <span>{[art.category && t(art.category), art.author, art.credit && t('по мотивам: {credit}', { credit: art.credit }), art.player && t('от пользователей')].filter(Boolean).join(' · ')}</span>
         </div>
         <button className="icon-button" aria-label={t('Закрыть просмотр арта')} onClick={close}>
           ×
@@ -148,7 +148,7 @@ export function AsciiLibrary({ editor, canvas }) {
           {t('Показать ещё')} · {arts.length - limit}
         </button>
       )}
-      {submitting && <ArtSubmission onClose={() => setSubmitting(false)} />}
+      {submitting && <ArtSubmission editor={editor} onClose={() => setSubmitting(false)} />}
       {selected && (
         <ArtDialog art={selected} editor={editor} canvas={canvas} close={() => setSelected(null)} />
       )}

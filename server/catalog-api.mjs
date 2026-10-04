@@ -29,6 +29,7 @@ import { withGridNote } from '../scripts/grid-note.mjs';
 import { CatalogGuides } from './guides.mjs';
 import { guideAdminRoutes, guideRoutes } from './guides-api.mjs';
 import { adminJournal } from './admin-journal.mjs';
+import { MODERATOR_ACTIONS, Moderators, moderatorAllows } from './moderators.mjs';
 import { ItemComments } from './item-comments.mjs';
 import { NICK_LIMITS } from './profiles.mjs';
 
@@ -110,7 +111,7 @@ function sendFile(request, response, { path, size }, type, cache) {
 // module does not load the canvas renderer until a picture is asked for.
 const LANDING_WIDTHS = [1440, 2160, 2880];
 export function createCatalogAPI(config, { store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null, heroMeta = new HeroMeta({ token: config.stratzToken }) } = {}) {
-  const accounts = new Accounts(store), arts = new CatalogArts(store), stats = new SiteStats(store), packs = new InstallPacks(store, { dir: config.packs || join(tmpdir(), 'gridstudio-install-packs') });
+  const accounts = new Accounts(store), arts = new CatalogArts(store), stats = new SiteStats(store), moderators = new Moderators(store), packs = new InstallPacks(store, { dir: config.packs || join(tmpdir(), 'gridstudio-install-packs') });
   // Shared menu backgrounds keep files next to the database (config.media).
   let galleries = backgrounds;
   const gallery = () => (galleries ||= new CatalogBackgrounds(store, { dir: config.media || mkdtempSync(join(tmpdir(), 'gridstudio-backgrounds-')) }));
@@ -153,6 +154,10 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
   const cookie = (name, value, age) => `${name}=${value}; Path=/api/catalog; HttpOnly; SameSite=Strict; Max-Age=${age}${config.development ? '' : '; Secure'}`;
   const token = request => /^Bearer ([A-Za-z0-9_-]{43})$/.exec(request.headers.authorization || '')?.[1] || '';
   const isAdmin = user => !!user && !!config.admins?.has(String(user.id));
+  // 'admin', 'moderator' (server/moderators.mjs: approve or turn down grids, backgrounds and guides) or null.
+  const roleOf = user => (isAdmin(user) ? 'admin' : user && moderators.has(user.id) ? 'moderator' : null);
+  // Who may see what waits for a decision (a pending background's files, a guide's version under review).
+  const canReview = user => !!roleOf(user);
   const handler = async (request, response) => {
     response.setHeader('Cache-Control', 'no-store'); response.setHeader('X-Content-Type-Options', 'nosniff');
     response.setHeader('Referrer-Policy', 'no-referrer'); response.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
@@ -177,12 +182,14 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       const identity = { browser: store.identity('browser', browser), ip: ipHash };
       const session = cookies(request).gs_account, user = accounts.user(session);
       const requireUser = () => accounts.require(session);
-      // Checked on every admin request against the live Telegram session, never cached.
-      const requireAdmin = () => {
-        const member = accounts.user(session);
+      // Checked on every admin request against the live Telegram session, never cached. A moderator only
+      // gets the queues waiting for a decision and the decision itself (server/moderators.mjs).
+      const requireStaff = () => {
+        const member = accounts.user(session), role = roleOf(member);
         if (!member) fail(401, 'Войди через Telegram, чтобы открыть админку.');
-        if (!isAdmin(member)) fail(403, 'Админка доступна только администраторам GridStudio.');
-        return member;
+        if (!role) fail(403, 'Админка доступна только администраторам и модераторам GridStudio.');
+        if (role === 'moderator' && !moderatorAllows(method, path)) fail(403, 'Модератору доступны только сетки, фоны и гайды на проверке.');
+        return { member, role };
       };
       const setCookie = value => response.appendHeader('Set-Cookie', value);
       const loginCookie = () => {
@@ -190,7 +197,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         if (!id || !verifier) fail(401, 'Начни вход в этом браузере.');
         return { id, verifier };
       };
-      if (path === '/auth/me' && method === 'GET') return send(200, { user, admin: isAdmin(user) });
+      if (path === '/auth/me' && method === 'GET') return send(200, { user, admin: isAdmin(user), moderator: roleOf(user) === 'moderator' });
       if (path === '/steam/resolve' && method === 'GET') {
         store.rate(`steam:${ipHash}`, 20, 60_000);
         store.rate('steam:global', 300, 60_000);
@@ -368,7 +375,8 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         return send(200, { items: library.load() });
       }
       if (path === '/arts' && method === 'POST') {
-        const body = await readJSON(request, 200_000);
+        // An art from the editor is up to 3 000 rows with their places (scripts/art-document.mjs ART_ROWS).
+        const body = await readJSON(request, 800_000);
         artSubmission(body); // Spare the captcha when the art itself is not accepted.
         await captcha.verify(body.captcha, identity, 'art');
         return send(201, arts.submit(body, identity, user?.id));
@@ -433,8 +441,8 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       const backgroundFile = /^\/backgrounds\/([1-9]\d{0,12})\/(poster\.jpg|video\.webm)$/.exec(path);
       if (backgroundFile && ['GET', 'HEAD'].includes(method)) {
         const kind = backgroundFile[2] === 'poster.jpg' ? 'poster' : 'video';
-        const file = gallery().media(Number(backgroundFile[1]), kind, isAdmin(user), user?.id || null);
-        // A background's files never change; pending ones stay private to admins.
+        const file = gallery().media(Number(backgroundFile[1]), kind, canReview(user), user?.id || null);
+        // A background's files never change; pending ones stay private to admins and moderators.
         return sendFile(request, response, file, kind === 'poster' ? 'image/jpeg' : 'video/webm', file.public ? 'public, max-age=31536000, immutable' : 'private, no-store');
       }
       // The landing page's random well-liked grid. Never cached, so every visit draws again. The
@@ -593,12 +601,24 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       }
       // Who decided, for the audit log and the Telegram card.
       const actorOf = (member) => JSON.stringify({ id: String(member.id), name: `${member.username ? `@${member.username}` : member.name} · сайт`.slice(0, 100) });
-      if (path.startsWith('/guides') && await guideRoutes({ request, response, url, path, method, send, user, requireUser, isAdmin, identity, guides, readJSON, readBytes, sendFile, actor: actorOf })) return;
+      if (path.startsWith('/guides') && await guideRoutes({ request, response, url, path, method, send, user, requireUser, isAdmin, canReview, identity, guides, readJSON, readBytes, sendFile, actor: actorOf })) return;
       if (path.startsWith('/admin/')) {
-        const member = requireAdmin();
+        const { member, role } = requireStaff();
         // Recorded in the audit log and shown on the Telegram moderation card.
         const actor = JSON.stringify({ id: String(member.id), name: `${member.username ? `@${member.username}` : member.name} · сайт`.slice(0, 100) });
-        if (path === '/admin/session' && method === 'GET') return send(200, { admin: true });
+        // A moderator's lists are what waits for a decision; their decision is an approval or a refusal.
+        if (role === 'moderator') url.searchParams.set('filter', 'pending');
+        const limit = (action) => { if (role === 'moderator' && !MODERATOR_ACTIONS.includes(action)) fail(403, 'Модератор может только одобрить или отклонить.'); };
+        if (path === '/admin/session' && method === 'GET') return send(200, { admin: role === 'admin', moderator: role === 'moderator' });
+        // An admin makes an account a moderator or takes it back («Пользователи»); recorded in «Журнал».
+        const moderatorMatch = /^\/admin\/users\/([1-9]\d{0,15})\/moderator$/.exec(path);
+        if (moderatorMatch && method === 'POST') {
+          const body = await readJSON(request);
+          if (typeof body.on !== 'boolean') fail(400, 'Неверный запрос.');
+          if (body.on && isAdmin({ id: moderatorMatch[1] })) fail(409, 'У администраторов и так есть все права.');
+          if (moderators.set(moderatorMatch[1], body.on)) store.audit(`profile:${store.profiles.creator(moderatorMatch[1]).key}`, `moderator-${body.on ? 'on' : 'off'}`, actor);
+          return send(200, { moderator: moderators.has(moderatorMatch[1]) });
+        }
         // What waits for a decision in every section, for the panel's menu and «Входящие».
         if (path === '/admin/summary' && method === 'GET') {
           const table = (name) => !!store.get('SELECT 1 x FROM sqlite_master WHERE name=?', name);
@@ -627,9 +647,9 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         if (path === '/admin/stats/live' && method === 'GET') return send(200, stats.live());
         // «Пользователи» (server/admin-users.mjs): everyone who signed in with Telegram, their profile and Telegram.
         if (path === '/admin/users' && method === 'GET') return send(200, adminUsers(store, stats, { q: url.searchParams.get('q') || '', sort: url.searchParams.get('sort') || 'new',
-          offset: Number(url.searchParams.get('offset')) || 0, source: url.searchParams.get('source') || '' }));
+          offset: Number(url.searchParams.get('offset')) || 0, source: url.searchParams.get('source') || '', admins: config.admins || new Set() }));
         const search = (url.searchParams.get('q') || '').trim().slice(0, 80);
-        if (path.startsWith('/admin/guides') && await guideAdminRoutes({ request, url, path, method, send, guides, readJSON, actor, search })) return;
+        if (path.startsWith('/admin/guides') && await guideAdminRoutes({ request, url, path, method, send, guides, readJSON, actor, search, limit })) return;
         if (path === '/admin/works' && method === 'GET') return send(200, { ...store.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search),
           artsPending: store.get("SELECT count(*) n FROM arts WHERE status='pending'").n,
           guidesPending: (({ pending, reports }) => pending + reports)(guides().counts()),
@@ -640,11 +660,11 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         if (path === '/admin/arts' && method === 'GET') return send(200, arts.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search));
         if (path === '/admin/backgrounds' && method === 'GET') return send(200, gallery().moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search));
         const backgroundReview = /^\/admin\/backgrounds\/([1-9]\d{0,12})$/.exec(path);
-        if (backgroundReview && method === 'POST') { const body = await readJSON(request); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = gallery().moderate(Number(backgroundReview[1]), body, { actor }); return send(200, { reviewed: true, ...result }); }
+        if (backgroundReview && method === 'POST') { const body = await readJSON(request); limit(body.action); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = gallery().moderate(Number(backgroundReview[1]), body, { actor }); return send(200, { reviewed: true, ...result }); }
         const artReview = /^\/admin\/arts\/([1-9]\d{0,12})$/.exec(path);
         if (artReview && method === 'POST') { const body = await readJSON(request); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = arts.moderate(Number(artReview[1]), body, { actor }); return send(200, { reviewed: true, ...result }); }
         const review = /^\/admin\/works\/([0-9a-f-]{36})$/.exec(path);
-        if (review && method === 'POST') { const body = await readJSON(request); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = store.moderate(review[1], body, { actor }); return send(200, { reviewed: true, ...(body.action === 'edit' ? result : {}) }); }
+        if (review && method === 'POST') { const body = await readJSON(request); limit(body.action); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); const result = store.moderate(review[1], body, { actor }); return send(200, { reviewed: true, ...(body.action === 'edit' ? result : {}) }); }
       }
       fail(404, 'Не найдено.');
     } catch (error) {

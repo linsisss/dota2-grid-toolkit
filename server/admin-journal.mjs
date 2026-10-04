@@ -1,11 +1,13 @@
 import { badgeOf } from '../scripts/profile-badges.mjs';
 // The admin panel's «Журнал» (src/catalog/AdminJournal.jsx): the latest decisions with who took them,
-// on the site or by a button in the Telegram topic, across grids, arts, backgrounds, guides and profile badges. Read
+// on the site or by a button in the Telegram topic, across grids, arts, backgrounds, guides, profile badges and the moderator role. Read
 // from the audit log; only entries with an actor (people's decisions, not the system's).
 const ACTIONS = {
   approve: 'Одобрено', reject: 'Отклонено', edit: 'Исправлено', block: 'Скрыто и ограничено', unblock: 'Разблокировано',
   feature: 'Подборка', resolve: 'Жалобы проверены', hide: 'Скрыто', restore: 'Возвращено', keep: 'Жалоба отклонена',
-  'report-keep': 'Жалоба отклонена', 'report-hide': 'Скрыто по жалобе'
+  'report-keep': 'Жалоба отклонена', 'report-hide': 'Скрыто по жалобе',
+  // server/moderators.mjs, given and taken back in «Пользователи».
+  'moderator-on': 'Выдана роль модератора', 'moderator-off': 'Снята роль модератора'
 };
 const KINDS = { work: 'Сетка', art: 'Арт', bg: 'Фон', guide: 'Гайд', profile: 'Профиль' };
 

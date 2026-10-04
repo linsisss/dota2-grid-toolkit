@@ -15,11 +15,11 @@ function openTelegramWindow() {
   return popup;
 }
 export function AccountProvider({ children }) {
-  const [user, setUser] = useState(null), [admin, setAdmin] = useState(false), [loading, setLoading] = useState(true), [login, setLogin] = useState(false), [reason, setReason] = useState('');
+  const [user, setUser] = useState(null), [admin, setAdmin] = useState(false), [moderator, setModerator] = useState(false), [loading, setLoading] = useState(true), [login, setLogin] = useState(false), [reason, setReason] = useState('');
   const telegramWindow = useRef(null);
   const userRef = useRef(null), transferQueue = useRef(Promise.resolve()), checked = useRef(0), channel = useRef(null);
   const [fileSync, setFileSync] = useState({ busy: false, error: '', revision: 0 });
-  async function refresh() { try { const result = await catalogAPI('/auth/me'); checked.current = Date.now(); userRef.current = result.user; setUser(result.user); setAdmin(!!result.admin); return result.user; } finally { setLoading(false); } }
+  async function refresh() { try { const result = await catalogAPI('/auth/me'); checked.current = Date.now(); userRef.current = result.user; setUser(result.user); setAdmin(!!result.admin); setModerator(!!result.moderator); return result.user; } finally { setLoading(false); } }
   const announce = () => { try { channel.current?.postMessage('auth'); } catch { /* The other tabs catch up on their next recheck. */ } };
   function syncFiles() {
     const account = userRef.current;
@@ -47,7 +47,7 @@ export function AccountProvider({ children }) {
     return () => { channel.current?.close(); channel.current = null; window.removeEventListener('focus', focus); window.removeEventListener('online', recheck); };
   }, []);
   useEffect(() => { if (user) syncFiles(); else setFileSync(state => ({ ...state, busy: false, error: '' })); }, [user?.id]);
-  return <Context.Provider value={{ user, admin, loading, refresh, fileSync, syncFiles, requestLogin: text => { telegramWindow.current = openTelegramWindow(); setReason(text || ''); setLogin(true); }, logout: async () => { await catalogAPI('/auth/logout', { method: 'POST', body: {} }); userRef.current = null; setUser(null); setAdmin(false); announce(); } }}>
+  return <Context.Provider value={{ user, admin, moderator, loading, refresh, fileSync, syncFiles, requestLogin: text => { telegramWindow.current = openTelegramWindow(); setReason(text || ''); setLogin(true); }, logout: async () => { await catalogAPI('/auth/logout', { method: 'POST', body: {} }); userRef.current = null; setUser(null); setAdmin(false); setModerator(false); announce(); } }}>
     {children}{login && <LoginDialog telegramWindow={telegramWindow} reason={reason} onClose={() => setLogin(false)} onSuccess={async () => { await refresh(); announce(); setLogin(false); }}/>}</Context.Provider>;
 }
 export const useAccount = () => useContext(Context);
@@ -128,7 +128,7 @@ export function AccountButton() {
       <a role="menuitem" href={profilePath(auth.user.profile)}><Icon name="user"/>{t('Мой профиль')}</a>
       <a role="menuitem" href={`${profilePath(auth.user.profile)}&tab=liked`}><Icon name="heart"/>{t('Понравилось')}</a>
       <button role="menuitem" onClick={() => { close(); setSettings(true); }}><Icon name="sliders"/>{t('Настройки профиля')}</button>
-      {auth.admin && <a role="menuitem" href={`${CATALOG_PATH}?moderate`}><Icon name="shield"/>Админка</a>}
+      {(auth.admin || auth.moderator) && <a role="menuitem" href={`${CATALOG_PATH}?moderate`}><Icon name="shield"/>{auth.admin ? 'Админка' : 'Модерация'}</a>}
       <hr/>
       <p className="account-menu-note">{auth.fileSync.busy ? <><Icon name="loader" size={14}/>{t('Сохраняем файлы…')}</> : t('Файлы автоматически сохраняются в аккаунте и доступны на других устройствах.')}</p>
       {auth.fileSync.error && <div className="account-menu-error" role="alert">{auth.fileSync.error}<button role="menuitem" className="catalog-link" onClick={() => auth.syncFiles()}>{t('Повторить сохранение')}</button></div>}

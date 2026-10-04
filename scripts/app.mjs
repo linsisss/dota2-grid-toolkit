@@ -16,7 +16,7 @@ import { moveHero, heroAt, heroDropIndex, createHeroMotion, targetHeroMotion, ad
 import { editLayout } from './hero-chrome.mjs';
 import { numberButtons, stepNumber } from './form-controls.mjs';
 import { gamePreviewLayout } from './game-preview.mjs';
-import { layoutAsciiArt, placeAsciiArt } from './ascii-library.mjs';
+import { artLayout, placeAsciiArt } from './ascii-library.mjs';
 import { BRUSH_TOOLS, DRAWING_TOOLS, GRADIENT_CHARS, bentLine, constrainAxis, drawingPoints, lassoContains, setDrawingShift, advanceDrawingStroke } from './drawing.mjs';
 import { clampEraser, readEraserSize, stepEraserSize, storeEraserSize, wheelEraserSize, drawBrushRing } from './eraser-size.mjs';
 import { guideLines, snapMove } from './smart-guides.mjs';
@@ -3944,8 +3944,26 @@ export function createStudio(projectStorage, initial) {
       if (done) setTool('select');
       return done;
     },
+    // «Предложить свой арт» from the editor (src/ArtSubmission.jsx): what can be offered — the selection,
+    // each layer but «Герои», everything — and its rows (core artRows). Visible layers only.
+    artSources: () => {
+      const shown = new Set(doc.layers.filter((layer) => layer.visible).map((layer) => layer.id));
+      const art = doc.entities.filter((e) => e.type !== 'heroes' && !e.meta && shown.has(e.layer));
+      const chosen = art.filter((e) => selected.has(e.id));
+      // The base layers' names say nothing of the drawing: the grid's name is offered instead.
+      const layers = doc.layers.filter((layer) => layer.id !== 'heroes').map((layer) => ({ id: `layer:${layer.id}`, label: C.layerName(layer), name: ['decor', 'background'].includes(layer.id) ? doc.name : C.layerName(layer),
+        count: art.filter((e) => e.layer === layer.id).length })).filter((source) => source.count);
+      return [...(chosen.length ? [{ id: 'selection', label: t('Выделенное'), name: '', count: chosen.length }] : []), ...layers,
+        ...(layers.length > 1 ? [{ id: 'all', label: t('Всё, кроме героев'), name: doc.name, count: art.length }] : [])];
+    },
+    artRows: (source) => {
+      const shown = new Set(doc.layers.filter((layer) => layer.visible).map((layer) => layer.id));
+      const ids = doc.entities.filter((e) => e.type !== 'heroes' && !e.meta && shown.has(e.layer) && (source === 'selection' ? selected.has(e.id)
+        : source === 'all' || source === `layer:${e.layer}`)).map((e) => e.id);
+      return C.artRows(doc, ids, (text) => measureCategoryWidth(ctx, text));
+    },
     addAsciiArt: (art) => {
-      const layout = layoutAsciiArt(art.text, (text) =>
+      const layout = artLayout(art, (text) =>
         measureCategoryText(ctx, text).advances.reduce((a, b) => a + b, 0)
       );
       const done = commit(() => {

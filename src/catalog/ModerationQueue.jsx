@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { catalogAPI } from './api.js';
 import { Icon, Notice } from './Common.jsx';
 import { rejectReasons } from '../../scripts/reject-reasons.mjs';
@@ -7,6 +7,12 @@ import { rejectReasons } from '../../scripts/reject-reasons.mjs';
 // with counts and a search, the list on the left with a scroll of its own and its pages under it
 // (↑ ↓ walk it), and the rejection reason's quick answers. The server checks the Telegram admin on
 // every request.
+
+// Who works in the panel (src/catalog/Moderation.jsx): 'admin', or 'moderator' — who only approves or turns
+// down what waits for a decision (server/moderators.mjs, asked for on 2026-10-04): their queues have only
+// «На проверке», their reviews only «Одобрить» and «Отклонить» (AdminReview.jsx). The server checks it too.
+export const StaffRole = createContext('admin');
+export const useStaffRole = () => useContext(StaffRole);
 
 const PAGE = 20;
 // A key typed into a field is not a command (the list's ↑ ↓, a review's A / R / H).
@@ -78,8 +84,9 @@ export function QueueList({ items, selected, onSelect, entry, label, keyOf = (it
 }
 
 // Tabs, search, then the list beside `children`, the review of the selected one.
-export function Queue({ queue, tabs, label, entry, children }) {
-  const { kind, data, query, page, setPage } = queue, noun = NOUNS[kind];
+// A moderator (server/moderators.mjs) has only the first tab, «На проверке».
+export function Queue({ queue, tabs: all, label, entry, children }) {
+  const { kind, data, query, page, setPage } = queue, noun = NOUNS[kind], tabs = useStaffRole() === 'moderator' ? all.slice(0, 1) : all;
   return <>
     <div className="catalog-toolbar admin-toolbar"><div className="catalog-tabs is-small">{tabs.map(([value, name]) => <button key={value} aria-pressed={queue.filter === value} onClick={() => queue.showFilter(value)}>
       {name}{data?.counts?.[value] ? <span className="catalog-count">{data.counts[value]}</span> : null}</button>)}</div>

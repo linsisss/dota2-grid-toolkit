@@ -8,7 +8,7 @@ const art = (extra = {}) => ({ name: 'Сердечко', category: 'Другое
 
 test('an art is stored exactly as it will be inserted, within the library limits', async () => {
   const [, , { artSubmission, ART_LIMITS }] = await modules;
-  assert.deepEqual(artSubmission(art()), { name: 'Сердечко', author: 'Игрок', category: 'Другое', text: '@@ @@\n@@@@@\n  @' });
+  assert.deepEqual(artSubmission(art()), { name: 'Сердечко', author: 'Игрок', credit: '', category: 'Другое', text: '@@ @@\n@@@@@\n  @', rows: null });
   assert.throws(() => artSubmission(art({ category: 'Мемы' })), /категорию/);
   assert.throws(() => artSubmission(art({ name: ' ' })), /Название/);
   assert.throws(() => artSubmission(art({ text: '\n   \n' })), /нет символов/);
@@ -33,11 +33,13 @@ test('arts wait for moderation, reject duplicates and built-in arts, and reach t
   assert.throws(() => arts.moderate(first.id, { action: 'reject' }), /причину/);
   arts.moderate(first.id, { action: 'approve' }, { actor });
   assert.notEqual(arts.library().version, before);
-  assert.deepEqual(arts.library().load().map(row => ({ ...row })), [{ id: 1, name: 'Сердечко', category: 'Другое', author: 'Игрок', text: '@@ @@\n@@@@@\n  @' }]);
+  // A signed-in author's art is signed by their profile's nickname, whatever was typed as the author.
+  assert.deepEqual(arts.library().load().map(row => ({ ...row })), [{ id: 1, name: 'Сердечко', category: 'Другое', author: store.profiles.creator('501').name, credit: '', text: '@@ @@\n@@@@@\n  @' }]);
+  assert.equal(arts.get(1).author, '');
   assert.equal(store.get('SELECT account FROM art_notices WHERE art=1').account, '501');
   assert.throws(() => arts.moderate(first.id, { action: 'approve' }), /уже проверен/);
   assert.throws(() => arts.submit(art({ name: 'Копия' }), identity(2)), /уже есть/);
-  assert.deepEqual(arts.moderate(first.id, { action: 'edit', name: ' Сердце ', category: 'Существа', author: '' }, { actor }), { name: 'Сердце', category: 'Существа', author: '' });
+  assert.deepEqual(arts.moderate(first.id, { action: 'edit', name: ' Сердце ', category: 'Существа', author: 'Чужой', credit: 'Оригинал Х' }, { actor }), { name: 'Сердце', category: 'Существа', author: '', credit: 'Оригинал Х' });
   arts.moderate(first.id, { action: 'hide', reason: 'Повтор' }, { actor });
   assert.equal(arts.library().load().length, 0);
   assert.deepEqual([arts.moderation('hidden').total, arts.moderation('pending').counts], [1, { pending: 0, approved: 0, hidden: 1 }]);
@@ -116,7 +118,7 @@ test('Telegram: an art card goes to the moderation topic, a button decides it, t
     sendMessage: async params => { direct.push(params); return { message_id: 900 }; }
   };
   const config = { chatId: '-1004309207941', topicId: 6, origin: 'https://gridstudio.me', local: false };
-  const worker = new CatalogTelegram(store, config, api, { render: async () => Buffer.from('grid'), renderArt: async text => { arts.push(text); return Buffer.from('art'); }, log: () => {} });
+  const worker = new CatalogTelegram(store, config, api, { render: async () => Buffer.from('grid'), renderArt: async drawn => { arts.push(drawn.rows ? drawn.rows : drawn.text); return Buffer.from('art'); }, log: () => {} });
   await worker.check();
   const library = new CatalogArts(store);
   store.run("INSERT INTO accounts VALUES('501','Автор','author_nick',0)");
@@ -143,4 +145,68 @@ test('Telegram: an art card goes to the moderation topic, a button decides it, t
   assert.equal(direct[0].chat_id, '501');
   assert.equal(direct[0].text, '<tg-emoji emoji-id="5985596818912712352">✅</tg-emoji> Твой арт <b>«&lt;Сердце&gt;»</b> одобрен и появился в «Готовых артах» редактора.');
   assert.deepEqual(direct[0].reply_markup.inline_keyboard, [[{ text: 'Открыть редактор', url: 'https://gridstudio.me/editor' }]]);
+});
+
+test('an art from the editor: rows where Dota draws them, checked, stored, drawn and signed like a grid', async t => {
+  const [{ CatalogStore }, { CatalogArts }, { artRows, artSubmission, ART_ROWS }, , { CatalogTelegram }] = await modules;
+  const { artLayout } = await import('../scripts/ascii-library.mjs');
+  // Moved to start at 0, 0, ordered by rows, trailing spaces dropped; one glyph is a symbol when inserted.
+  const rows = [{ text: '.:.  ', x: 120.5, y: 212 }, { text: '#', x: 100, y: 200.25 }, { text: '::', x: 110, y: 212 }];
+  assert.deepEqual(artRows(rows), { rows: [{ text: '#', x: 0, y: 0 }, { text: '::', x: 10, y: 11.75 }, { text: '.:.', x: 20.5, y: 11.75 }], text: '#\n::\n.:.' });
+  const layout = artLayout({ rows: artRows(rows).rows }, (line) => line.length * 10);
+  assert.deepEqual(layout.rows.map((row) => [row.type, row.text, row.x, row.y]), [['symbol', '#', 0, 0], ['text', '::', 10, 11.75], ['text', '.:.', 20.5, 11.75]]);
+  assert.deepEqual([layout.width, layout.height], [20.5 + 38, 41.75]);
+  assert.throws(() => artRows([]), /нет символов/);
+  assert.throws(() => artRows([{ text: '  ', x: 0, y: 0 }]), /повреждён/);
+  assert.throws(() => artRows([{ text: 'a', x: 'x', y: 0 }]), /повреждён/);
+  assert.throws(() => artRows([{ text: '⣿', x: 0, y: 0 }]), /брайль/);
+  assert.throws(() => artRows([{ text: '#', x: 0, y: 0 }, { text: '#', x: ART_ROWS.w + 5, y: 0 }]), /больше экрана/);
+  assert.throws(() => artRows(Array.from({ length: ART_ROWS.rows + 1 }, (_, i) => ({ text: '#', x: 0, y: i / 10 }))), /Оптимизацией/);
+  assert.deepEqual(artSubmission({ name: 'Точки', category: 'Другое', credit: 'Excalibur', rows }).rows.length, 3);
+
+  const store = new CatalogStore(':memory:', 'test-arts-rows'); t.after(() => store.close());
+  const arts = new CatalogArts(store);
+  const sent = arts.submit({ name: 'Точки', category: 'Другое', author: 'Не я', credit: 'Excalibur', rows }, identity(), '777');
+  assert.throws(() => arts.submit({ name: 'Ещё', category: 'Другое', rows: rows.map((row) => ({ ...row, x: row.x + 50 })) }, identity(2)), /ждёт проверки/, 'the same rows elsewhere are the same art');
+  const queued = arts.moderation('pending').items[0];
+  assert.deepEqual([queued.rows.length, queued.creator.name, queued.author, queued.credit], [3, store.profiles.creator('777').name, '', 'Excalibur']);
+  arts.moderate(sent.id, { action: 'approve' });
+  const [shown] = arts.library().load();
+  assert.deepEqual(shown, { id: sent.id, name: 'Точки', category: 'Другое', author: store.profiles.creator('777').name, credit: 'Excalibur', text: '#\n::\n.:.', rows: artRows(rows).rows });
+  // A text art keeps no rows in the library.
+  arts.submit(art({ text: '@@@' }), identity(3)); arts.moderate(sent.id + 1, { action: 'approve' });
+  assert.equal('rows' in arts.library().load().find((row) => row.text === '@@@'), false);
+  assert.equal(arts.library().load().find((row) => row.text === '@@@').author, 'Игрок', 'a guest signs it themselves');
+  // The Telegram card draws the rows and says where the art came from.
+  const drawn = [], photos = [];
+  const api = { getMe: async () => ({ id: 42, username: 'test_bot' }), getChat: async () => ({ is_forum: true, title: 'Test' }), getChatMember: async () => ({ status: 'administrator' }),
+    getWebhookInfo: async () => ({ url: '' }), sendPhoto: async (params) => { photos.push(params); return { message_id: 100 + photos.length, message_thread_id: 6, chat: { id: -1 } }; },
+    editMessageCaption: async () => true, answerCallbackQuery: async () => true, sendMessage: async () => ({ message_id: 900 }) };
+  const worker = new CatalogTelegram(store, { chatId: '-1', topicId: 6, origin: 'https://gridstudio.me', local: false }, api,
+    { render: async () => Buffer.from('grid'), renderArt: async (value) => { drawn.push(value); return Buffer.from('art'); }, log: () => {} });
+  await worker.check();
+  arts.submit({ name: 'Вторые точки', category: 'Космос', credit: 'Оригинал', rows: [{ text: '*', x: 0, y: 0 }, { text: '* *', x: 4, y: 30 }] }, identity(4), '777');
+  await worker.deliverOne();
+  assert.deepEqual(drawn.at(-1).rows, [{ text: '*', x: 0, y: 0 }, { text: '* *', x: 4, y: 30 }]);
+  assert.match(photos.at(-1).caption, /Автор: .+ · по мотивам: Оригинал/);
+  assert.match(photos.at(-1).caption, /Из редактора: 2 строки символов/);
+});
+
+test('an art from the editor over HTTP: a big one fits the request', async t => {
+  const [{ CatalogStore }, , , { createCatalogAPI }] = await modules;
+  const store = new CatalogStore(':memory:', 'test-arts-rows-http');
+  const config = { development: true, origin: 'http://127.0.0.1:4173', salt: 'test-arts-rows-http', admins: new Set(), database: ':memory:', media: '/nonexistent' };
+  const { server } = createCatalogAPI(config, { store }); await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { await new Promise((resolve) => server.close(resolve)); store.close(); });
+  const base = `http://127.0.0.1:${server.address().port}/api/catalog`;
+  let cookie = '';
+  async function call(path, method = 'GET', body) {
+    const response = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json', Origin: config.origin, Cookie: cookie }, ...(body ? { body: JSON.stringify(body) } : {}) });
+    for (const set of response.headers.getSetCookie()) { const name = set.split('=')[0]; cookie = cookie.split('; ').filter(value => value && !value.startsWith(name + '=')).concat(set.split(';')[0]).join('; '); }
+    return { status: response.status, body: await response.json() };
+  }
+  const rows = Array.from({ length: 2500 }, (_, i) => ({ text: '.:'.repeat(5), x: (i % 50) * 20.123, y: Math.floor(i / 50) * 11.5 }));
+  const sent = await call('/arts', 'POST', { name: 'Большой', category: 'Другое', rows, captcha: await proof(call, 'art') });
+  assert.equal(sent.status, 201, JSON.stringify(sent.body));
+  assert.equal(JSON.parse(store.get('SELECT rows FROM arts').rows).length, 2500);
 });

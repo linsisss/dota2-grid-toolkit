@@ -82,6 +82,11 @@ export class CatalogStore {
     this.profiles = new Profiles(this);
     // «Оригинал / по мотивам»: whose work a signed-in author's grid is based on (their own nickname is the author).
     if (!this.all('PRAGMA table_info(revisions)').some(c => c.name === 'credit')) this.run("ALTER TABLE revisions ADD COLUMN credit TEXT NOT NULL DEFAULT ''");
+    // Arts (server/catalog-arts.mjs): `rows` of an art from the editor (JSON, scripts/art-document.mjs artRows) and,
+    // as for grids, `credit` — whose work a signed-in author's art is based on (2026-10-04).
+    const artColumns = new Set(this.all('PRAGMA table_info(arts)').map(c => c.name));
+    if (!artColumns.has('rows')) this.run('ALTER TABLE arts ADD COLUMN rows TEXT');
+    if (!artColumns.has('credit')) this.run("ALTER TABLE arts ADD COLUMN credit TEXT NOT NULL DEFAULT ''");
   }
   close() { this.db.close(); }
   // An author signed in with Telegram hears from the bot why a submission was rejected, once.

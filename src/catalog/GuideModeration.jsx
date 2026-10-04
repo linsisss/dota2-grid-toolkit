@@ -2,7 +2,7 @@ import { GUIDE_CATEGORIES } from '../../scripts/guide-document.mjs';
 import { catalogAPI } from './api.js';
 import { Icon } from './Common.jsx';
 import { Queue, reasonNote, useQueue } from './ModerationQueue.jsx';
-import { ReportsAlert, ReviewLayout } from './AdminReview.jsx';
+import { ReportsAlert, ReviewLayout, useStaffRole } from './AdminReview.jsx';
 import GuideContent, { fileSize } from '../guides/GuideContent.jsx';
 import '../guides/guides.css';
 
@@ -28,6 +28,7 @@ export function GuideReview({ item, queue: { busy, run } }) {
   const removeComment = (id) => run(() => catalogAPI(`/guides/comments/${id}`, { method: 'DELETE' }));
   // «! Используется модификация файлов игры»: the author can put it; here a moderator puts it or takes it off.
   const mark = () => run(() => catalogAPI(`/admin/guides/${item.guide}/modding`, { method: 'POST', body: { modding: !item.modding } }));
+  const moderator = useStaffRole() === 'moderator';
   const files = Object.values(item.media).filter((media) => media.kind === 'file');
   const hidden = item.guideStatus === 'hidden' && item.status === 'approved';
   const status = hidden ? ['Скрыт', 'bad'] : { pending: ['На проверке', 'wait'], approved: ['Опубликован', 'ok'], rejected: ['Отклонён', 'bad'], draft: ['Черновик', 'neutral'] }[item.status] || [item.status, 'neutral'];
@@ -41,12 +42,12 @@ export function GuideReview({ item, queue: { busy, run } }) {
   const media = Object.fromEntries(Object.entries(item.media).map(([id, value]) => [id, { ...value, url: `${value.url}?review=${item.review}` }]));
   return <ReviewLayout stage="text" badge={item.update ? 'Гайд · изменения' : 'Гайд'} title={item.title} status={{ text: status[0] + reasonNote(item.reason), tone: status[1] }} busy={busy} actions={actions}
     meta={<>{item.author?.name || 'Пользователь'} · {section(item.category)} · <a href={`./guides?id=${item.guide}&review=${item.review}`} target="_blank" rel="noreferrer">открыть на сайте<Icon name="external" size={13}/></a>
-      {' '}<button type="button" className="guide-modding-switch is-small" aria-pressed={!!item.modding} disabled={busy} onClick={mark}
-        title={item.modding ? 'Снять пометку (автор снять её не может)' : 'Поставить пометку'}><span className="guide-modding-mark" aria-hidden="true">!</span>Модификация файлов игры</button></>}
+      {moderator ? (item.modding ? <> · пометка «Модификация файлов игры»</> : null) : <>{' '}<button type="button" className="guide-modding-switch is-small" aria-pressed={!!item.modding} disabled={busy} onClick={mark}
+        title={item.modding ? 'Снять пометку (автор снять её не может)' : 'Поставить пометку'}><span className="guide-modding-mark" aria-hidden="true">!</span>Модификация файлов игры</button></>}</>}
     alert={<>{files.length > 0 && <div className="admin-files"><strong><Icon name="paperclip" size={16}/>Файлы — скачай и проверь перед публикацией</strong>
       <ul>{files.map((file) => <li key={file.id}><a href={`${file.url}?review=${item.review}`} download={file.name}>{file.name}</a> <span className="catalog-muted">{fileSize(file.size)}</span></li>)}</ul></div>}
       <ReportsAlert reports={item.reports} render={(report) => <>{report.kind === 'comment' ? <>На комментарий «{(report.body || 'удалён').slice(0, 200)}»: </> : 'На гайд: '}{report.reason}
-        {report.kind === 'comment' && report.body && <button type="button" className="catalog-link" disabled={busy} onClick={() => removeComment(report.comment)}>удалить комментарий</button>}</>}/></>}>
+        {report.kind === 'comment' && report.body && !moderator && <button type="button" className="catalog-link" disabled={busy} onClick={() => removeComment(report.comment)}>удалить комментарий</button>}</>}/></>}>
     <div className="guide-review-text guide-review"><GuideContent doc={item.doc} media={media}/></div>
   </ReviewLayout>;
 }

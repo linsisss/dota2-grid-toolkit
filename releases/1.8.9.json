@@ -1,0 +1,37 @@
+{
+  "version": "1.8.9",
+  "date": "2026-10-04",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.9",
+  "sections": [
+    {
+      "title": "Редактор",
+      "changes": [
+        {
+          "text": "Арт, нарисованный в редакторе, можно предложить в «Готовые арты» прямо оттуда",
+          "children": ["В форме «Предложить свой арт» — вкладка «Из редактора»: выделенное, слой или всё, кроме героев; строки символов сохраняются на своих местах"]
+        },
+        {
+          "text": "Если ты вошёл через Telegram, арт подписывается ником из профиля, как сетка",
+          "children": ["Можно указать, по мотивам чьей работы он сделан"]
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Editor",
+        "changes": [
+          {
+            "text": "Art drawn in the editor can be suggested for Ready-made art right from there",
+            "children": ["The Suggest your art form has a From the editor tab: the selection, a layer or everything but heroes; rows of symbols keep their places"]
+          },
+          {
+            "text": "If you signed in with Telegram, your art is signed with your profile nickname, just like a grid",
+            "children": ["You can say whose work it is based on"]
+          }
+        ]
+      }
+    ]
+  }
+}

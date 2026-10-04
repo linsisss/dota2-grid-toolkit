@@ -15,8 +15,9 @@ function fileHeaders(response, file) {
   if (file.kind === 'file') response.setHeader('Content-Disposition', `attachment; filename="${file.name.replace(/[^\x20-\x7e]/g, '_').replace(/"/g, '')}"; filename*=UTF-8''${encodeURIComponent(file.name)}`);
 }
 
-export async function guideRoutes({ request, response, url, path, method, send, user, requireUser, isAdmin, identity, guides, readJSON, readBytes, sendFile, actor }) {
-  const admin = isAdmin(user);
+export async function guideRoutes({ request, response, url, path, method, send, user, requireUser, isAdmin, canReview = isAdmin, identity, guides, readJSON, readBytes, sendFile, actor }) {
+  // A moderator reads a version under review (server/moderators.mjs) but has no other admin rights here.
+  const admin = isAdmin(user), reviewer = canReview(user);
   if (path === '/guides' && method === 'GET') {
     return send(200, guides().list({ category: url.searchParams.get('category') || '', query: url.searchParams.get('q') || '',
       sort: url.searchParams.get('sort') === 'popular' ? 'popular' : 'new', page: page(url) })), true;
@@ -44,7 +45,7 @@ export async function guideRoutes({ request, response, url, path, method, send, 
   }
   const media = /^\/guides\/media\/([A-Za-z0-9_-]{20}\.[a-z0-9]{1,8})$/.exec(path);
   if (media && ['GET', 'HEAD'].includes(method)) {
-    const file = guides().media(media[1], { account: user?.id || null, admin, review: url.searchParams.get('review') || '' });
+    const file = guides().media(media[1], { account: user?.id || null, admin: reviewer, review: url.searchParams.get('review') || '' });
     fileHeaders(response, file);
     return sendFile(request, response, file, file.type, file.public ? 'public, max-age=31536000, immutable' : 'private, no-store'), true;
   }
@@ -62,7 +63,7 @@ export async function guideRoutes({ request, response, url, path, method, send, 
   const item = /^\/guides\/([A-Za-z0-9_-]{12})(?:\/(edit|submit|publish|like|comments|report))?$/.exec(path);
   if (!item) return false;
   const [, id, action] = item;
-  if (!action && method === 'GET') return send(200, guides().view(id, { account: user?.id || null, admin, review: url.searchParams.get('review') || '' })), true;
+  if (!action && method === 'GET') return send(200, guides().view(id, { account: user?.id || null, admin: reviewer, review: url.searchParams.get('review') || '' })), true;
   if (!action && method === 'DELETE') { const member = requireUser(); return send(200, guides().remove(member.id, id, { admin: isAdmin(member) && url.searchParams.has('admin') })), true; }
   if (action === 'edit' && method === 'GET') { const member = requireUser(); return send(200, guides().editable(member.id, id, { admin: isAdmin(member) })), true; }
   if (action === 'publish' && method === 'POST') {
@@ -89,7 +90,8 @@ export async function guideRoutes({ request, response, url, path, method, send, 
 }
 
 // /admin/guides: the queue, and a decision on a version.
-export async function guideAdminRoutes({ request, url, path, method, send, guides, readJSON, actor, search }) {
+// `limit(action)` refuses what a moderator may not do (server/moderators.mjs).
+export async function guideAdminRoutes({ request, url, path, method, send, guides, readJSON, actor, search, limit = () => {} }) {
   if (path === '/admin/guides' && method === 'GET') return send(200, guides().moderation(url.searchParams.get('filter'), page(url), search)), true;
   const mark = /^\/admin\/guides\/([A-Za-z0-9_-]{12})\/modding$/.exec(path);
   if (mark && method === 'POST') {
@@ -100,6 +102,7 @@ export async function guideAdminRoutes({ request, url, path, method, send, guide
   const review = /^\/admin\/guides\/([1-9]\d{0,12})$/.exec(path);
   if (review && method === 'POST') {
     const body = await readJSON(request);
+    limit(body.action);
     const reason = catalogText(body.reason ?? '', 500, 'Причина');
     return send(200, { reviewed: true, ...guides().moderate(Number(review[1]), { action: body.action, reason }, { actor }) }), true;
   }

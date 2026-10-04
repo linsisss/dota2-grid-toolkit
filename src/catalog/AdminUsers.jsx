@@ -10,6 +10,7 @@ import { sourceColor } from './stat-sources.js';
 // (server/site-stats.mjs signup), when they joined and were here last (a green dot while on the site),
 // what they published and commented. A search, the sources as filters, three orders, 50 at a time; a row
 // opens to the details. The first page refreshes itself every 30 s while the tab is shown. Admins only.
+// The details make an account a moderator or take it back (server/moderators.mjs, asked for on 2026-10-04).
 const SORTS = [['new', 'Новые'], ['seen', 'Недавно заходили'], ['works', 'Больше работ']];
 const REFRESH = 30_000;
 const date = (at, time = false) => new Date(at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric', ...(time ? { hour: '2-digit', minute: '2-digit' } : {}) });
@@ -21,6 +22,7 @@ function ago(at) {
   if (minutes < 30 * 24 * 60) return `${Math.round(minutes / 60 / 24)} дн. назад`;
   return date(at);
 }
+const ROLES = { admin: 'админ', moderator: 'модератор' };
 const WORKS = [['grids', 'сетки', 'grid'], ['backgrounds', 'фоны', 'brush'], ['guides', 'гайды', 'guides'], ['arts', 'арты', 'art']];
 
 function Source({ came }) {
@@ -31,7 +33,20 @@ function Copy({ text }) {
   return <button type="button" className="admin-copy" onClick={(event) => { event.stopPropagation(); navigator.clipboard?.writeText(text).then(() => { setDone(true); setTimeout(() => setDone(false), 1500); }); }}
     aria-label={`Скопировать ${text}`}><Icon name={done ? 'check' : 'copy'} size={13}/></button>;
 }
-function Details({ user }) {
+// «Модератор»: approves or turns down grids, backgrounds and guides waiting for a decision, nothing else.
+function Role({ user, onRole }) {
+  const [busy, setBusy] = useState(false), [error, setError] = useState('');
+  if (user.role === 'admin') return <p className="admin-user-role">Администратор: все права в админке (список администраторов задаётся на сервере).</p>;
+  const on = user.role !== 'moderator';
+  const toggle = () => { setBusy(true); setError(''); catalogAPI(`/admin/users/${user.id}/moderator`, { method: 'POST', body: { on } })
+    .then((value) => onRole(value.moderator ? 'moderator' : null), (problem) => setError(problem.message)).finally(() => setBusy(false)); };
+  return <div className="admin-user-role">
+    <p>{on ? 'Модератор может одобрять и отклонять сетки, фоны и гайды на проверке — больше ничего в админке.' : 'Модератор: одобряет и отклоняет сетки, фоны и гайды на проверке.'}</p>
+    <button type="button" className={`catalog-button${on ? '' : ' danger'}`} disabled={busy} onClick={toggle}><Icon name="shield" size={15}/>{busy ? 'Сохраняем…' : on ? 'Сделать модератором' : 'Снять роль модератора'}</button>
+    {error && <Notice error>{error}</Notice>}
+  </div>;
+}
+function Details({ user, onRole }) {
   const came = user.came, utm = came.utm && Object.entries(came.utm).map(([key, value]) => `${key}: ${value}`).join(' · ');
   const fields = [
     ['Что привело', <><Source came={came}/>{came.site && came.source !== 'other' ? <small>{came.site}</small> : null}{came.source === 'unknown' ? <small>Аккаунт создан до того, как сайт начал это запоминать.</small> : null}</>],
@@ -41,6 +56,7 @@ function Details({ user }) {
   ];
   return <div className="admin-user-details">
     <dl>{fields.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+    <Role user={user} onRole={onRole}/>
     <div className="admin-user-links">{user.profile && <a className="catalog-button" href={profilePath(user.profile.key)} target="_blank" rel="noreferrer"><Icon name="user" size={15}/>Профиль на сайте</a>}
       {user.telegram.username && <a className="catalog-button" href={`https://t.me/${user.telegram.username}`} target="_blank" rel="noreferrer"><Icon name="telegram" size={15}/>Написать в Telegram</a>}</div>
   </div>;
@@ -83,7 +99,7 @@ export default function AdminUsers({ denied }) {
             <tr className={shown ? 'is-open' : ''} onClick={() => setOpen(shown ? '' : user.id)} aria-expanded={shown} tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpen(shown ? '' : user.id); } }}>
               <td><div className="admin-user">
                 <span className={`admin-avatar${user.online ? ' is-online' : ''}`}>{user.profile?.avatar ? <img src={user.profile.avatar} alt="" width="38" height="38" loading="lazy"/> : <Icon name="user" size={17}/>}</span>
-                <div>{user.profile ? <span className="admin-user-name"><a href={profilePath(user.profile.key)} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>{user.profile.nickname}</a><BadgeIcons badges={user.profile.badges}/></span> : <b>Без профиля</b>}
+                <div>{user.profile ? <span className="admin-user-name"><a href={profilePath(user.profile.key)} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>{user.profile.nickname}</a><BadgeIcons badges={user.profile.badges}/>{user.role && <i className={`admin-role is-${user.role}`}>{ROLES[user.role]}</i>}</span> : <b>Без профиля</b>}
                   {user.blocked > 0 ? <small className="admin-user-blocked">ограничение до {date(user.blocked)}</small> : <small>с {date(user.joined)}</small>}</div>
               </div></td>
               <td><div className="admin-user-tg">{user.telegram.username ? <a className="admin-tg" href={`https://t.me/${user.telegram.username}`} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}><Icon name="telegram" size={13}/>@{user.telegram.username}</a> : <span className="admin-tg is-none">без @username</span>}
@@ -94,7 +110,7 @@ export default function AdminUsers({ denied }) {
               <td><div className="admin-user-works">{WORKS.filter(([key]) => user.works[key]).map(([key, label, icon]) => <span key={key} title={label}><Icon name={icon} size={12}/>{user.works[key]}</span>)}{!WORKS.some(([key]) => user.works[key]) && '—'}</div></td>
               <td>{user.comments || '—'}</td>
             </tr>
-            {shown && <tr className="admin-user-open"><td colSpan={7}><Details user={user}/></td></tr>}
+            {shown && <tr className="admin-user-open"><td colSpan={7}><Details user={user} onRole={(role) => setData((current) => ({ ...current, items: current.items.map((item) => (item.id === user.id ? { ...item, role } : item)) }))}/></td></tr>}
           </Fragment>;
         })}</tbody></table></div>}
     {data?.more && <button type="button" className="catalog-button admin-users-more" disabled={busy} onClick={() => load(data.items.length)}>{busy ? 'Загружаем…' : 'Показать ещё'}</button>}

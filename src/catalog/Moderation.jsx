@@ -6,7 +6,7 @@ import { useAccount } from './Account.jsx';
 import GridPreview from './GridPreview.jsx';
 import ArtModeration from './ArtModeration.jsx';
 import BackgroundModeration from './BackgroundModeration.jsx';
-import { Queue, reasonNote, useQueue } from './ModerationQueue.jsx';
+import { Queue, reasonNote, StaffRole, useQueue } from './ModerationQueue.jsx';
 import { CompareStage, MetaFields, metaBy, ReportsAlert, ReviewLayout, SimilarAlert } from './AdminReview.jsx';
 import { creatorText } from './Creator.jsx';
 import AdminJournal from './AdminJournal.jsx';
@@ -21,22 +21,25 @@ const AdminInbox = lazy(() => import('./AdminInbox.jsx'));
 // each, «Входящие» — everything waiting for a decision in one list, oldest first — and «Журнал» of who
 // decided what. A review keeps its decision on top (src/catalog/AdminReview.jsx), keys do the usual:
 // ↑ ↓ the list, A approve, R turn down, H hide. The server checks the Telegram account on every
-// /admin request; these screens only spare everyone else from an empty page.
+// /admin request; these screens only spare everyone else from an empty page. A moderator
+// (server/moderators.mjs, 2026-10-04) gets only «Сетки», «Фоны» and «Гайды» waiting for a decision.
 export default function Moderation() {
   const auth = useAccount();
   if (auth.loading) return <p role="status">Проверяем доступ…</p>;
-  if (!auth.user) return <section className="catalog-empty"><h1>Админка</h1><p>Доступна только администраторам GridStudio. Войди через Telegram.</p>
+  if (!auth.user) return <section className="catalog-empty"><h1>Админка</h1><p>Доступна только администраторам и модераторам GridStudio. Войди через Telegram.</p>
     <button className="catalog-button primary" onClick={() => auth.requestLogin('Войди через Telegram, чтобы открыть админку.')}><Icon name="telegram"/>Войти через Telegram</button></section>;
-  if (!auth.admin) return <section className="catalog-empty"><h1>Нет доступа</h1><p>Админка доступна только администраторам GridStudio.</p>
+  if (!auth.admin && !auth.moderator) return <section className="catalog-empty"><h1>Нет доступа</h1><p>Админка доступна только администраторам и модераторам GridStudio.</p>
     <a className="catalog-button" href={CATALOG_PATH}>В мастерскую</a></section>;
-  return <AdminPanel auth={auth}/>;
+  return <StaffRole.Provider value={auth.admin ? 'admin' : 'moderator'}><AdminPanel auth={auth}/></StaffRole.Provider>;
 }
 
 const VIEWS = [['inbox', 'Входящие', 'bell'], ['works', 'Сетки', 'grid'], ['arts', 'Готовые арты', 'art'], ['backgrounds', 'Фоны', 'brush'], ['guides', 'Гайды', 'guides'], ['stats', 'Статистика', 'gauge'], ['users', 'Пользователи', 'user'], ['journal', 'Журнал', 'history']];
+const MODERATOR_VIEWS = ['works', 'backgrounds', 'guides'];
 
 function AdminPanel({ auth }) {
   const { config } = useCatalogConfig();
-  const [view, setView] = useState(() => { const value = new URLSearchParams(location.search).get('moderate'); return VIEWS.some(([id]) => id === value) ? value : 'inbox'; });
+  const moderator = !auth.admin, views = moderator ? VIEWS.filter(([id]) => MODERATOR_VIEWS.includes(id)) : VIEWS;
+  const [view, setView] = useState(() => { const value = new URLSearchParams(location.search).get('moderate'); return views.some(([id]) => id === value) ? value : views[0][0]; });
   const [summary, setSummary] = useState(null), [tick, setTick] = useState(0), [busy, setBusy] = useState(false);
   // The panel fills the window under the site's header, like an app: the lists scroll inside it and a
   // review fits on one screen (src/catalog/admin.css).
@@ -50,26 +53,28 @@ function AdminPanel({ auth }) {
   useEffect(() => { catalogAPI('/admin/summary').then(setSummary, denied); }, [tick]);
   const changed = () => setTick(x => x + 1);
   const show = value => { const url = new URL(location.href); url.searchParams.set('moderate', value === 'inbox' ? '' : value); url.searchParams.delete('filter'); history.replaceState(history.state, '', url); setView(value); };
-  const c = summary?.counts, waiting = c ? { works: c.works.pending + c.works.reports, arts: c.arts.pending, backgrounds: c.backgrounds.pending + c.backgrounds.reports, guides: c.guides.pending + c.guides.reports } : {};
+  // A moderator's counts are what waits for their decision; reports are the admins'.
+  const c = summary?.counts, waiting = c ? (moderator ? { works: c.works.pending, backgrounds: c.backgrounds.pending, guides: c.guides.pending }
+    : { works: c.works.pending + c.works.reports, arts: c.arts.pending, backgrounds: c.backgrounds.pending + c.backgrounds.reports, guides: c.guides.pending + c.guides.reports }) : {};
   waiting.inbox = c ? waiting.works + waiting.arts + waiting.backgrounds + waiting.guides : 0;
   async function pause() {
     setBusy(true);
     try { setSummary({ ...summary, ...(await catalogAPI('/admin/settings', { method: 'PATCH', body: { paused: !summary.paused } })) }); } catch (error) { denied(error); } finally { setBusy(false); }
   }
   return <div className="admin" ref={box} style={{ '--admin-offset': `${offset}px` }}>
-    <header className="admin-top"><div><h1>Модерация</h1><p>Проверяй именно ту версию, которая будет опубликована. Решения отражаются и на карточках в Telegram.</p></div>
-      <div className="admin-top-actions">
+    <header className="admin-top"><div><h1>Модерация</h1><p>{moderator ? 'Одобряй или отклоняй сетки, фоны и гайды на проверке. ' : ''}Проверяй именно ту версию, которая будет опубликована. Решения отражаются и на карточках в Telegram.</p></div>
+      {!moderator && <div className="admin-top-actions">
         <button type="button" className={`admin-pause${summary?.paused ? ' is-paused' : ''}`} role="switch" aria-checked={summary ? !summary.paused : undefined} disabled={busy || !summary} onClick={pause}
           title={summary?.paused ? 'Новые заявки не принимаются. Нажми, чтобы открыть приём.' : 'Нажми, чтобы временно не принимать новые заявки.'}><i/>{summary?.paused ? 'Приём приостановлен' : 'Приём открыт'}</button>
         {config?.moderationUrl && <a className="catalog-button" href={config.moderationUrl} target="_blank" rel="noreferrer"><Icon name="telegramLogo"/>Топик модерации<Icon name="external" size={14}/></a>}
-      </div></header>
+      </div>}</header>
     {summary?.paused && <Notice>Новые заявки, обновления, арты, фоны и гайды временно не принимаются. Просмотр и скачивание работают.</Notice>}
     <div className="admin-layout">
       <nav className="admin-nav" aria-label="Разделы админки">
-        {VIEWS.map(([id, label, icon]) => <button key={id} type="button" aria-current={view === id ? 'page' : undefined} onClick={() => show(id)}>
+        {views.map(([id, label, icon]) => <button key={id} type="button" aria-current={view === id ? 'page' : undefined} onClick={() => show(id)}>
           <Icon name={icon}/><span>{label}</span>{waiting[id] ? <span className="catalog-count">{waiting[id]}</span> : null}</button>)}
         <div className="admin-keys"><strong>Клавиши</strong>
-          <p><kbd>↑</kbd><kbd>↓</kbd> по списку</p><p><kbd>A</kbd> одобрить, оставить</p><p><kbd>R</kbd> отклонить · <kbd>H</kbd> скрыть</p><p><kbd>Ctrl</kbd> + <kbd>Enter</kbd> подтвердить</p></div>
+          <p><kbd>↑</kbd><kbd>↓</kbd> по списку</p><p><kbd>A</kbd> {moderator ? 'одобрить' : 'одобрить, оставить'}</p><p><kbd>R</kbd> отклонить{moderator ? '' : <> · <kbd>H</kbd> скрыть</>}</p><p><kbd>Ctrl</kbd> + <kbd>Enter</kbd> подтвердить</p></div>
       </nav>
       <div className="admin-main" key={view}>
         {view === 'inbox' ? <Suspense fallback={<p role="status">Собираем входящие…</p>}><AdminInbox denied={denied} onChanged={changed} counts={c}/></Suspense>

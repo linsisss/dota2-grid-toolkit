@@ -82,7 +82,7 @@ function GuidesShell() {
   const params = new URLSearchParams(location.search);
   const id = params.get('id'), write = params.has('write');
   return <div className="catalog-page guides-page">
-    <header className="catalog-nav"><Brand/><nav>{auth.admin && <a href={`${CATALOG_PATH}?moderate=guides`}>Админка</a>}<CommunityLink/>
+    <header className="catalog-nav"><Brand/><nav>{(auth.admin || auth.moderator) && <a href={`${CATALOG_PATH}?moderate=guides`}>{auth.admin ? 'Админка' : 'Модерация'}</a>}<CommunityLink/>
       <a href={CATALOG_PATH}>{t('Мастерская')}</a><a href={STUDIO_PATH}>{t('Студия')}<Icon name="arrow"/></a><AccountButton/></nav></header>
     <main className="catalog-main">{write ? <Suspense fallback={<p role="status">{t('Открываем редактор…')}</p>}><GuideWrite id={params.get('write') || ''}/></Suspense> : id ? <GuidePage id={id} review={params.get('review') || ''}/> : <GuideList mine={params.has('mine')}/>}</main>
     <footer className="catalog-footer"><span>GridStudio</span><a href={GUIDES_PATH}>{t('Гайды')}</a><span className="catalog-footer-source"><a href="https://github.com/linsisss/dota2-grid-toolkit">GitHub</a><VersionButton/><LanguageSwitch/></span></footer>

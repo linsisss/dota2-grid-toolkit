@@ -40,3 +40,14 @@ export function placeAsciiArt(layout, canvas) {
   const y = Math.max(0, (canvas.h - layout.height) / 2);
   return layout.rows.map((row) => ({ ...row, x: row.x + x, y: row.y + y }));
 }
+
+// An art's rows as they go on the canvas: a text art's lines one under another (layoutAsciiArt), an art
+// from the editor (scripts/art-document.mjs artRows) where its rows were. A one-glyph row is a symbol,
+// as in an imported grid.
+export function artLayout(art, measure = (line) => Array.from(line).length * 10.8) {
+  if (!art?.rows?.length) return layoutAsciiArt(art?.text ?? '', measure);
+  const rows = art.rows.map((row) => Array.from(row.text).length === 1
+    ? { type: 'symbol', text: row.text, name: row.text, x: row.x, y: row.y, w: 30, h: 30 }
+    : { type: 'text', text: row.text, name: row.text, x: row.x, y: row.y, w: Math.max(30, measure(row.text) + 8), h: 30 });
+  return { rows, width: Math.max(30, ...rows.map((row) => row.x + row.w)), height: Math.max(30, ...rows.map((row) => row.y + row.h)) };
+}

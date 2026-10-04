@@ -88,7 +88,7 @@ export class TelegramQueue {
       for (const art of this.store.all("SELECT * FROM arts WHERE status='pending'")) {
         const lines = art.text.split('\n');
         this.store.run("INSERT OR IGNORE INTO telegram_reviews(id,kind,work,revision,report_id,summary) VALUES(?,'art',?,?,0,?)", randomBytes(12).toString('hex'), artKey(art.id), art.id,
-          JSON.stringify({ title: art.name, author: art.author, category: art.category, rows: lines.length, width: Math.max(...lines.map(line => Array.from(line).length)) }));
+          JSON.stringify({ title: art.name, author: this.arts.author(art), credit: art.credit || '', editor: !!art.rows, category: art.category, rows: lines.length, width: Math.max(...lines.map(line => Array.from(line).length)) }));
       }
       if (this.backgrounds) for (const row of this.store.all("SELECT * FROM backgrounds WHERE status='pending'")) {
         if (queued('background', row.id)) continue;

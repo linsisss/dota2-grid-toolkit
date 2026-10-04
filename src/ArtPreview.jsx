@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { layoutAsciiArt } from '../scripts/ascii-library.mjs';
+import { artLayout } from '../scripts/ascii-library.mjs';
 import { drawCategoryLabel, measureCategoryText } from '../scripts/dota-rendering.mjs';
 import { t, translateMessage } from '../scripts/i18n.mjs';
 
-// An art drawn with the Dota label font, fitted into its box. Used by the library,
+// An art drawn with the Dota label font, fitted into its box (a text art or one from the editor, artLayout). Used by the library,
 // the submission form and the admin panel. With `canvas` the box stands for the Dota grid,
 // so a small art stays small, as it will be on the canvas.
 export const DOTA_GRID = Object.freeze({ w: 1193, h: 593 });
@@ -17,7 +17,7 @@ export function ArtPreview({ art, onLayout, canvas: frame = null }) {
     let active = true;
     const paint = () => {
       if (!active || !host.clientWidth || !host.clientHeight) return;
-      const layout = layoutAsciiArt(art.text, (text) =>
+      const layout = artLayout(art, (text) =>
         measureCategoryText(ctx, text).advances.reduce((a, b) => a + b, 0)
       );
       const w = host.clientWidth,

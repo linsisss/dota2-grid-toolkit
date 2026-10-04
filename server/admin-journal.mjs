@@ -7,9 +7,11 @@ const ACTIONS = {
   feature: 'Подборка', resolve: 'Жалобы проверены', hide: 'Скрыто', restore: 'Возвращено', keep: 'Жалоба отклонена',
   'report-keep': 'Жалоба отклонена', 'report-hide': 'Скрыто по жалобе',
   // server/moderators.mjs, given and taken back in «Пользователи».
-  'moderator-on': 'Выдана роль модератора', 'moderator-off': 'Снята роль модератора'
+  'moderator-on': 'Выдана роль модератора', 'moderator-off': 'Снята роль модератора',
+  // server/site-spot.mjs, «Реклама».
+  'spot-on': 'Реклама включена', 'spot-off': 'Реклама скрыта', 'spot-settings': 'Настройки изменены', 'spot-banner': 'Новый баннер'
 };
-const KINDS = { work: 'Сетка', art: 'Арт', bg: 'Фон', guide: 'Гайд', profile: 'Профиль' };
+const KINDS = { work: 'Сетка', art: 'Арт', bg: 'Фон', guide: 'Гайд', profile: 'Профиль', spot: 'Реклама' };
 
 function parse(entry) {
   const telegram = /^telegram:(\w+):revision:\d+:user:\d+$/.exec(entry.action);
@@ -38,6 +40,7 @@ export function adminJournal(store, { limit = 100, before = 0 } = {}) {
     else if (prefix === 'art' && has.arts) title = store.get('SELECT name FROM arts WHERE id=?', Number(key))?.name;
     else if (prefix === 'bg' && has.backgrounds) { title = store.get('SELECT title FROM backgrounds WHERE id=?', Number(key))?.title; link = 'workshop?backgrounds'; }
     else if (prefix === 'profile') { title = store.get('SELECT nickname FROM profiles WHERE key=?', key)?.nickname; link = `workshop?creator=${key}`; }
+    else if (prefix === 'spot') link = null;
     else if (prefix === 'guide' && has.guides) { title = store.get('SELECT title FROM guide_revisions WHERE guide=? ORDER BY id DESC LIMIT 1', key)?.title; link = title ? `guides?id=${key}` : null; }
     if (!(prefix in KINDS)) continue;
     items.push({ id: row.id, at: row.at, kind: prefix, kindLabel: KINDS[prefix], title: title ?? null, link: title ? link : null,

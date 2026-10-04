@@ -30,6 +30,7 @@ import { CatalogGuides } from './guides.mjs';
 import { guideAdminRoutes, guideRoutes } from './guides-api.mjs';
 import { adminJournal } from './admin-journal.mjs';
 import { MODERATOR_ACTIONS, Moderators, moderatorAllows } from './moderators.mjs';
+import { SiteSpot, SPOT_LIMITS } from './site-spot.mjs';
 import { ItemComments } from './item-comments.mjs';
 import { NICK_LIMITS } from './profiles.mjs';
 
@@ -111,7 +112,7 @@ function sendFile(request, response, { path, size }, type, cache) {
 // module does not load the canvas renderer until a picture is asked for.
 const LANDING_WIDTHS = [1440, 2160, 2880];
 export function createCatalogAPI(config, { store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null, heroMeta = new HeroMeta({ token: config.stratzToken }) } = {}) {
-  const accounts = new Accounts(store), arts = new CatalogArts(store), stats = new SiteStats(store), moderators = new Moderators(store), packs = new InstallPacks(store, { dir: config.packs || join(tmpdir(), 'gridstudio-install-packs') });
+  const accounts = new Accounts(store), arts = new CatalogArts(store), stats = new SiteStats(store), moderators = new Moderators(store), spot = new SiteSpot(store), packs = new InstallPacks(store, { dir: config.packs || join(tmpdir(), 'gridstudio-install-packs') });
   // Shared menu backgrounds keep files next to the database (config.media).
   let galleries = backgrounds;
   const gallery = () => (galleries ||= new CatalogBackgrounds(store, { dir: config.media || mkdtempSync(join(tmpdir(), 'gridstudio-backgrounds-')) }));
@@ -368,6 +369,20 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       }
       if (path === '/config' && method === 'GET') return send(200, { captcha: 'altcha', development: config.development, paused: store.paused(), tags: CATALOG_TAGS, limits: CATALOG_LIMITS,
         artCategories: ART_CATEGORIES, artLimits: ART_LIMITS, backgroundTags: BACKGROUND_TAGS, backgroundLimits: BACKGROUND_LIMITS, moderationUrl: config.moderationUrl });
+      // The advertising place (server/site-spot.mjs): what the pages draw, and its banner.
+      if (path === '/spot' && method === 'GET') {
+        const { tag, body } = spot.public(), etag = `"spot-${tag}"`;
+        response.setHeader('Cache-Control', 'no-cache'); response.setHeader('ETag', etag);
+        if (request.headers['if-none-match'] === etag) { response.writeHead(304); return response.end(); }
+        return send(200, body);
+      }
+      const spotFile = /^\/spot\/([0-9a-f]{12})(-960)?\.webp$/.exec(path);
+      if (spotFile && method === 'GET') {
+        const image = spot.file(spotFile[1], !!spotFile[2]);
+        if (!image) fail(404, 'Этого баннера уже нет.');
+        response.writeHead(200, { 'Content-Type': 'image/webp', 'Content-Length': image.length, 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' });
+        return response.end(image);
+      }
       if (path === '/arts' && method === 'GET') {
         const library = arts.library(), tag = `"arts-${library.version}"`;
         response.setHeader('Cache-Control', 'no-cache'); response.setHeader('ETag', tag);
@@ -640,6 +655,10 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
           if (changed) store.audit(`profile:${badgeMatch[1]}`, `badge-${body.on ? 'on' : 'off'}:${body.badge}`, actor);
           return send(200, { badges: store.profiles.badges(account, creatorStats(account).likes) });
         }
+        // «Реклама» (server/site-spot.mjs): admins only — a moderator's requests stop at moderatorAllows.
+        if (path === '/admin/spot' && method === 'GET') return send(200, spot.admin());
+        if (path === '/admin/spot' && method === 'PATCH') return send(200, spot.update(await readJSON(request), actor));
+        if (path === '/admin/spot/banner' && method === 'PUT') return send(200, await spot.setBanner(await readBytes(request, SPOT_LIMITS.bytes + 1024), actor));
         // Who decided what lately, on the site and in Telegram (server/admin-journal.mjs).
         if (path === '/admin/journal' && method === 'GET') return send(200, adminJournal(store, { before: Number(url.searchParams.get('before')) || 0 }));
         // «Статистика» (server/site-stats.mjs): visits, sign-ups, downloads and activity for 7, 30, 90 or 365 days.

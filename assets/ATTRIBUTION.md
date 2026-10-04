@@ -91,3 +91,5 @@ The rank medals `assets/ranks/rank1…8.webp` (Herald to Immortal) and the posit
 `scripts/coin-icons.mjs` (TON, USDT, ETH, BTC in «Поддержать разработку») comes from [Web3 Icons Branded](https://github.com/0xa3k5/web3icons) by 0xa3k5, MIT, via `@iconify-json/token-branded` (`scripts/make-icons.mjs`). QR codes are drawn with [uqr](https://github.com/unjs/uqr) (MIT).
 
 The Telegram logo of «Чат и новости» (`telegramLogo` in `scripts/icons.mjs`) is from [Simple Icons](https://simpleicons.org) (CC0 1.0), via `@iconify-json/simple-icons` (`scripts/make-icons.mjs`); Telegram is a trademark of its owner, used only to mark links to the project's Telegram chat and channel.
+
+The advertising banner in `assets/spot/` (`voip-1920.webp`, `voip-960.webp`, converted with `cwebp` from the 1920 × 800 PNG at https://0807.st/8wIh0EJ.png) was supplied by the user on 2026-10-04 for the site's advertising place (`src/Spot.jsx`). It belongs to its advertiser and is not covered by this repository's license.

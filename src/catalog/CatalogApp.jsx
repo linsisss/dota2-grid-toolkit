@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Spot } from '../Spot.jsx';
 import { CATALOG_TAGS, normalizeCatalogGrid } from '../../scripts/catalog-document.mjs';
 import { Brand, Icon, Modal, Notice, SegmentSwitch, Stats } from './Common.jsx';
 import { catalogAPI, CATALOG_PATH, CUSTOMIZE_PATH, EDITOR_PATH, GUIDES_PATH, RULES_PATH, STUDIO_PATH, countDownload, downloadGrid, forgetWork, managementLink, ownedWorks, rememberWork } from './api.js';
@@ -111,11 +112,11 @@ function Backgrounds({ mine, onMine, auth }) {
     {error && <Notice error>{error}</Notice>}
     {!items ? !error && <p role="status">{t('Загружаем фоны…')}</p> : items.length ? <>
       <div className="catalog-results"><span>{t('Фонов: {count}', { count: total })}{sort === 'popular' && ` · ${t('По числу лайков')}`}{sort === 'week' && ` · ${t('По лайкам за неделю')}`}</span><HideAdultButton/></div>
-      <section className="background-grid" aria-label={t('Фоны пользователей')}>{items.map(item => <BackgroundCard key={item.id} item={item}><div className="background-card-actions">
+      <section className="background-grid" aria-label={t('Фоны пользователей')}>{items.map((item, i) => <Fragment key={item.id}><BackgroundCard item={item}><div className="background-card-actions">
         <LikeButton item={item} path={`/backgrounds/${item.id}/like`} onChange={value => update(item.id, value)}/>
         <BackgroundCommentsButton item={item} onCount={(comments) => update(item.id, { comments })}/>
         <button className="catalog-icon" aria-label={t('Пожаловаться на фон {title}', { title: item.title })} title={t('Пожаловаться')} onClick={() => setReport(item)}><Icon name="flag"/></button>
-        <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`}>{t('Использовать')}</a></div></BackgroundCard>)}</section>
+        <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`}>{t('Использовать')}</a></div></BackgroundCard>{i === 0 && <Spot place="backgrounds" className="is-in-grid"/>}</Fragment>)}</section>
       {items.length < total && <button className="catalog-button background-more" onClick={more}>{t('Показать ещё')}</button>}
     </> : <section className="catalog-empty"><h2>{query || tag || aspect ? t('Таких фонов пока нет') : t('Здесь появятся фоны пользователей')}</h2><p>{query || tag || aspect ? `${t('Попробуй другой запрос.')} ` : ''}{t('Собери фон из картинки, GIF или видео и нажми «Опубликовать в мастерскую».')}</p><a className="catalog-button" href={CUSTOMIZE_PATH}>{t('Собрать фон')}</a></section>}
     </>}
@@ -168,7 +169,7 @@ function Gallery() {
     {error && <Notice error report>{error}<button className="catalog-link" onClick={()=>setRetry(x=>x+1)}>{t('Попробовать снова')}</button></Notice>}
     {loading ? <p role="status">{t('Загружаем сетки…')}</p> : mine ? <OwnedPublications items={privateItems} guestItems={owned} auth={auth}/> : data?.items.length ? <>
       <div className="catalog-results"><span>{t('Сеток: {count}', { count: data.total })}{sort==='popular' && ` · ${t('По числу лайков')}`}{sort==='week' && ` · ${t('По лайкам за неделю')}`}</span><HideAdultButton/><GridBackgroundSwitch/></div>
-      <section className="catalog-grid" aria-label={t('Работы пользователей')}>{data.items.map(item=><WorkCard key={item.id} item={item} onChange={value=>updateLike(item.id,value)}/>)}</section>
+      <section className="catalog-grid" aria-label={t('Работы пользователей')}>{data.items.map((item,i)=><Fragment key={item.id}><WorkCard item={item} onChange={value=>updateLike(item.id,value)}/>{i===0 && <Spot place="grids" className="is-in-grid"/>}</Fragment>)}</section>
       {data.total>12 && <nav className="catalog-pagination" aria-label={t('Страницы мастерской')}><button className="catalog-button" disabled={!page} onClick={()=>setPage(x=>x-1)}>{t('Назад')}</button><span>{page+1} / {Math.ceil(data.total/12)}</span><button className="catalog-button" disabled={(page+1)*12>=data.total} onClick={()=>setPage(x=>x+1)}>{t('Дальше')}</button></nav>}
     </> : !error && <section className="catalog-empty"><h2>{query||tag?t('Таких сеток пока нет'):t('Мастерская начинается с твоей сетки')}</h2><p>{query||tag?t('Попробуй другой запрос.'):t('Создай сетку в редакторе и отправь её на проверку.')}</p><a className="catalog-button" href={STUDIO_PATH}>{t('Открыть студию')}</a></section>}
     </>}</div>

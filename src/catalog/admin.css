@@ -44,7 +44,7 @@
 .admin-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .admin-main > * { flex: none; }
 .admin-main > .catalog-toolbar { margin-top: 0; padding-bottom: 12px; }
-.admin-main > :is(.catalog-moderation, .catalog-empty, .admin-journal) { flex: 1; min-height: 0; }
+.admin-main > :is(.catalog-moderation, .catalog-empty, .admin-journal, .admin-spot) { flex: 1; min-height: 0; }
 .admin-main > .catalog-empty { min-height: 0; }
 .admin-toolbar { gap: 14px; flex-wrap: wrap; }
 .admin-hint { margin: 0; font-size: 13px; }
@@ -339,3 +339,23 @@
 .admin-user-role p { margin: 0; flex: 1 1 320px; color: var(--ad-muted); font-size: 13px; }
 .admin-user-role .catalog-button { min-height: 34px; padding: 6px 12px; font-size: 13px; }
 @media (max-width: 760px) { .admin-user-details { padding-left: 18px; } .admin-users-count { margin-left: 0; } }
+
+/* «Реклама» (src/catalog/AdminSpot.jsx): the banner as the site shows it, the switches and the links beside it. */
+.admin-spot { overflow: auto; padding-right: 6px; }
+.admin-spot-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr); gap: 28px; align-items: start; }
+.admin-spot-preview { display: grid; gap: 10px; }
+.admin-spot-preview > .catalog-muted { margin: 0; font-size: 13px; }
+.admin-spot-preview a { color: var(--ad-accent); }
+.admin-spot-form { display: grid; gap: 18px; }
+.admin-spot-form .admin-pause { justify-self: start; }
+.admin-spot-places { display: grid; gap: 10px; margin: 0; padding: 14px 16px; border: 1px solid #ffffff17; border-radius: 12px; }
+.admin-spot-places legend { padding: 0 6px; color: var(--ad-muted); font-size: 12px; }
+.admin-spot-places:disabled { opacity: .55; }
+.admin-spot-banner { display: grid; gap: 8px; justify-items: start; }
+.admin-spot-banner p { margin: 0; font-size: 13px; }
+.admin-spot-links { display: grid; gap: 12px; }
+.admin-spot-links label { display: grid; gap: 4px; font-size: 13px; }
+.admin-spot-links label .catalog-muted { font-size: 12px; }
+.admin-spot-actions { display: flex; gap: 10px; }
+.admin-spot-done { display: flex; align-items: center; gap: 6px; margin: 0; color: #9fdcb4; font-size: 13px; }
+@media (max-width: 1100px) { .admin-spot-layout { grid-template-columns: 1fr; } }

@@ -1,4 +1,5 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Fragment, Suspense, lazy, useEffect, useState } from 'react';
+import { Spot } from '../Spot.jsx';
 import { Brand, Icon, Notice } from '../catalog/Common.jsx';
 import { AccountButton, AccountProvider, useAccount } from '../catalog/Account.jsx';
 import { CATALOG_PATH, STUDIO_PATH } from '../catalog/api.js';
@@ -68,7 +69,7 @@ function GuideList({ mine: startMine }) {
       <button className="catalog-button primary" onClick={() => auth.requestLogin()}><Icon name="telegram"/>{t('Войти через Telegram')}</button></section>
     : !items ? <p role="status">{t('Загружаем гайды…')}</p>
     : items.length ? <>
-      <section className="guide-grid" aria-label={mine ? t('Мои гайды') : t('Гайды')}>{items.map((item) => <GuideCard key={item.id} item={item} mine={mine}/>)}</section>
+      <section className="guide-grid" aria-label={mine ? t('Мои гайды') : t('Гайды')}>{items.map((item, i) => <Fragment key={item.id}><GuideCard item={item} mine={mine}/>{i === 0 && !mine && <Spot place="guides" className="is-in-grid"/>}</Fragment>)}</section>
       {!mine && items.length < data.total && <button className="catalog-button guide-more" onClick={more}>{t('Показать ещё')}</button>}
     </> : <section className="catalog-empty guide-empty"><Icon name="guides" size={30}/>
       <h2>{mine ? t('Ты ещё не писал гайдов') : query ? t('Ничего не нашлось') : t('Здесь пока пусто')}</h2>

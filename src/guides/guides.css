@@ -6,7 +6,7 @@
 /* ——— The list. */
 .guide-toolbar-end { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .catalog-tabs.is-small button { min-height: 36px; padding: 6px 12px; font-size: 14px; }
-.guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 22px; margin-top: 26px; }
+.guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 22px; margin-top: 26px; grid-auto-flow: row dense; }
 .guide-card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid #ffffff0d; border-radius: 18px;
   background: radial-gradient(120% 60% at 0% 0%, #c4b5ed0d, transparent 60%), var(--gd-glass); transition: border-color .25s, box-shadow .3s, translate .3s var(--gd-ease); }
 .guide-card:hover { border-color: #c4b5ed40; box-shadow: 0 24px 46px -30px #c4b5ed80; translate: 0 -2px; }

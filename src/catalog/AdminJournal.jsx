@@ -25,7 +25,7 @@ export default function AdminJournal({ denied }) {
       <ol>{group.items.map((item) => <li key={item.id}>
         <time>{time(item.at)}</time>
         <span className={`admin-status is-${TONES[item.action] || 'neutral'}`}>{item.label}</span>
-        <span className="admin-journal-what">{item.kindLabel} {item.link ? <a href={`./${item.link}`} target="_blank" rel="noreferrer">«{item.title}»</a> : item.title ? `«${item.title}»` : <em>удалён</em>}</span>
+        <span className="admin-journal-what">{item.kindLabel} {item.link ? <a href={`./${item.link}`} target="_blank" rel="noreferrer">«{item.title}»</a> : item.title ? `«${item.title}»` : item.kind === 'spot' ? null : <em>удалён</em>}</span>
         <span className="admin-journal-who"><Icon name={item.via === 'telegram' ? 'telegramLogo' : 'user'} size={14}/>{item.actor?.name || 'Администратор'}</span>
       </li>)}</ol></div>)}
     {more && <button className="catalog-button" onClick={() => load(items.at(-1).id)}>Показать ещё</button>}

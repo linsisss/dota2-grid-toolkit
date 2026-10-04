@@ -209,6 +209,18 @@ svg { flex-shrink: 0; display: block; }
 .stage-caption-title { font-weight: 500; }
 .stage-caption-note { color: var(--lp-muted); font-size: 12px; }
 .landing-stage .landing-footer { padding-top: 30px; }
+/* The stage and the advertising place under it (src/Spot.jsx). */
+.landing-visual { display: grid; min-width: 0; }
+.landing-visual .visual-stage { margin-top: -28px; padding: 0 0 44px; }
+/* Asked for on 2026-10-04: no scrolling on the first screen. The stage and the banner are sized by the
+   window's height: what is left between the header and the footer (--landing-room) holds the stage
+   (≈ 0.574 × its width), the banner (2.4 : 1, three quarters of the stage) and their gaps. */
+@media (min-width: 701px) {
+  .landing-visual { --landing-room: calc(100svh - 240px); --stage-width: calc((var(--landing-room) - 18px) * 1.128); }
+  .landing-visual .visual-stage { justify-self: center; width: min(112%, var(--stage-width)); margin-left: 0; margin-right: 0; }
+  /* As tall as a 2.4 : 1 banner three quarters of the stage wide, whatever the banner's proportions. */
+  .landing-visual .gs-spot.is-landing { width: min(100%, calc(var(--stage-width) * .75 * var(--spot-ratio, 2.4) / 2.4)); }
+}
 
 /* The image becomes a selected object: exact handles, no invented tool UI. */
 .landing-selection .landing-main { grid-template-columns: .83fr 1.17fr; gap: 7%; }

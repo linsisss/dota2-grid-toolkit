@@ -287,7 +287,6 @@ export default {
   'Читы, мошенничество и фишинг, продажа и обмен аккаунтов.': 'Cheats, scams and phishing, selling and trading accounts.',
   'Спам: пачки одинаковых или бессмысленных сеток, повторная отправка отклонённой сетки без изменений, обход ограничений.': 'Spam: batches of identical or meaningless grids, resubmitting a rejected grid without changes, getting around limits.',
   'Всё, что запрещено законом.': 'Anything that’s against the law.',
-  'Реклама': 'Advertising',
   'Реклама запрещена: ссылки, промокоды, названия и логотипы магазинов, сайтов, каналов и сервисов — в названии, подписи и самой сетке. Под запрет попадают в том числе казино, ставки, буст и продажа скинов.': 'Advertising isn’t allowed: links, promo codes, names and logos of shops, sites, channels and services — in the title, the credit or the grid itself. This includes casinos, betting, boosting and skin selling.',
   'Исключение — TikTok, Twitch и YouTube: ник или ссылку на канал можно указать в подписи или в сетке.': 'The exception is TikTok, Twitch and YouTube: you can put your nickname or channel link in the credit or in the grid.',
   'Решения операторов': 'Operators’ decisions',

@@ -12,6 +12,7 @@ import { creatorText } from './Creator.jsx';
 import AdminJournal from './AdminJournal.jsx';
 const AdminStats = lazy(() => import('./AdminStats.jsx'));
 const AdminUsers = lazy(() => import('./AdminUsers.jsx'));
+const AdminSpot = lazy(() => import('./AdminSpot.jsx'));
 import './admin.css';
 // Guides bring their reader and styles: loaded with their section and «Входящие».
 const GuideModeration = lazy(() => import('./GuideModeration.jsx'));
@@ -33,7 +34,7 @@ export default function Moderation() {
   return <StaffRole.Provider value={auth.admin ? 'admin' : 'moderator'}><AdminPanel auth={auth}/></StaffRole.Provider>;
 }
 
-const VIEWS = [['inbox', 'Входящие', 'bell'], ['works', 'Сетки', 'grid'], ['arts', 'Готовые арты', 'art'], ['backgrounds', 'Фоны', 'brush'], ['guides', 'Гайды', 'guides'], ['stats', 'Статистика', 'gauge'], ['users', 'Пользователи', 'user'], ['journal', 'Журнал', 'history']];
+const VIEWS = [['inbox', 'Входящие', 'bell'], ['works', 'Сетки', 'grid'], ['arts', 'Готовые арты', 'art'], ['backgrounds', 'Фоны', 'brush'], ['guides', 'Гайды', 'guides'], ['stats', 'Статистика', 'gauge'], ['users', 'Пользователи', 'user'], ['spot', 'Реклама', 'news'], ['journal', 'Журнал', 'history']];
 const MODERATOR_VIEWS = ['works', 'arts', 'backgrounds', 'guides'];
 
 function AdminPanel({ auth }) {
@@ -84,6 +85,7 @@ function AdminPanel({ auth }) {
           : view === 'guides' ? <Suspense fallback={<p role="status">Загружаем гайды…</p>}><GuideModeration denied={denied} onChanged={changed}/></Suspense>
           : view === 'stats' ? <Suspense fallback={<p role="status">Загружаем статистику…</p>}><AdminStats denied={denied}/></Suspense>
           : view === 'users' ? <Suspense fallback={<p role="status">Загружаем пользователей…</p>}><AdminUsers denied={denied}/></Suspense>
+          : view === 'spot' ? <Suspense fallback={<p role="status">Загружаем рекламу…</p>}><AdminSpot denied={denied}/></Suspense>
           : <AdminJournal denied={denied}/>}
       </div>
     </div>

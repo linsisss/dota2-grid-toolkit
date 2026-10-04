@@ -1,4 +1,5 @@
 import { Icon } from '../Icon.jsx';
+import { Spot } from '../Spot.jsx';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import editorImage from '../../assets/design/editor-landing-reference.webp';
 import linsissya from '../../assets/design/linsissya.webp';
@@ -121,7 +122,8 @@ function Landing({ variant }) {
         </div>
         <Authors />
       </div>
-      <EditorArtwork variant={variant} />
+      {/* The stage, raised, and the advertising place under it (asked for on 2026-10-04). */}
+      {variant.id === 'stage' ? <div className="landing-visual"><EditorArtwork variant={variant} /><Spot place="landing" className="is-landing"/></div> : <EditorArtwork variant={variant} />}
     </main>
     <footer className="landing-footer"><span className="landing-footer-source"><a href="https://github.com/linsisss/dota2-grid-toolkit" target="_blank" rel="noreferrer">{t('Проект на GitHub')}<Icon name="external" /></a><VersionButton/><LanguageSwitch/></span><span>gridstudio.me</span></footer>
   </div>;

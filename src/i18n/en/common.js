@@ -1,5 +1,8 @@
 // English for shared parts: catalog/Common.jsx, account, footers, the language switch, «Что нового»: 'Русский текст': 'English text' (scripts/i18n.mjs, docs/i18n.md).
 export default {
+  // src/Spot.jsx
+  'Реклама': 'Advertising',
+  'Здесь может быть ваша реклама': 'Your ad could be here',
   // catalog/Common.jsx (also the home page's brand and buttons)
   'GridStudio, главная': 'GridStudio, home',
   'Открыть студию': 'Open the Studio',

@@ -206,8 +206,11 @@ export class Profiles {
     return { key: row.key, nickname: row.nickname, bio: row.bio, avatar: this.avatarURL(row), telegram: username ? `@${username}` : '', joined: row.created };
   }
   // ——— Badges: the given ones and, with the account's likes, the earned one, in the list's order.
+  // A moderator (server/moderators.mjs, its table made by the API) has the role's badge.
   badges(account, likes = 0) {
-    return profileBadges(this.store.all('SELECT badge FROM profile_badges WHERE account=?', String(account)).map((row) => row.badge), likes);
+    this.moderated ||= !!this.store.get("SELECT 1 x FROM sqlite_master WHERE name='moderators'");
+    const moderator = this.moderated && !!this.store.get('SELECT 1 x FROM moderators WHERE account=?', String(account));
+    return profileBadges(this.store.all('SELECT badge FROM profile_badges WHERE account=?', String(account)).map((row) => row.badge), likes, { moderator });
   }
   // An admin gives (`on`) or takes back a badge → whether anything changed.
   setBadge(key, badge, on) {

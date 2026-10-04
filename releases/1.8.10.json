@@ -1,0 +1,29 @@
+{
+  "version": "1.8.10",
+  "date": "2026-10-04",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.10",
+  "sections": [
+    {
+      "title": "Профили",
+      "changes": [
+        {
+          "text": "Новый значок «Модератор» — у тех, кто проверяет сетки, фоны и гайды",
+          "children": ["Он виден в профиле и рядом с ником, пока у пользователя есть эта роль"]
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Profiles",
+        "changes": [
+          {
+            "text": "A new Moderator badge for those who review grids, backgrounds and guides",
+            "children": ["It shows on the profile and next to the nickname while the user has this role"]
+          }
+        ]
+      }
+    ]
+  }
+}

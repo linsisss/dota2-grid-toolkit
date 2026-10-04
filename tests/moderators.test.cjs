@@ -33,6 +33,10 @@ test('a moderator approves or turns down what waits, and nothing else; only admi
   const roles = Object.fromEntries((await call('/admin/users', admin)).body.items.map((item) => [item.id, item.role]));
   assert.deepEqual(roles, { 900000099: 'admin', 1301: 'moderator', 1302: null });
 
+  // The role's badge on the profile; it is not given by hand.
+  const key = store.profiles.creator('1301').key;
+  assert.ok((await call(`/profiles/${key}`)).body.badges.includes('moderator'));
+  assert.equal((await call(`/admin/profiles/${key}/badges`, admin, { method: 'POST', body: { badge: 'moderator', on: false } })).status, 400);
   const me = (await call('/auth/me', mod)).body;
   assert.deepEqual([me.admin, me.moderator], [false, true]);
   assert.deepEqual((await call('/admin/session', mod)).body, { admin: false, moderator: true });
@@ -58,4 +62,5 @@ test('a moderator approves or turns down what waits, and nothing else; only admi
   assert.deepEqual((await call('/admin/users/1301/moderator', admin, { method: 'POST', body: { on: false } })).body, { moderator: false });
   assert.equal((await call('/admin/works', mod)).status, 403);
   assert.equal((await call('/admin/journal', admin)).body.items[0].label, 'Снята роль модератора');
+  assert.equal((await call(`/profiles/${key}`)).body.badges.includes('moderator'), false, 'the badge goes with the role');
 });

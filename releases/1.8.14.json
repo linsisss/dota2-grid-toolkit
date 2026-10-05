@@ -1,0 +1,25 @@
+{
+  "version": "1.8.14",
+  "date": "2026-10-05",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.14",
+  "sections": [
+    {
+      "title": "Студия",
+      "changes": [
+        { "text": "Файлы в аккаунте теперь до 20 МБ вместо 8: большие файлы с текстовыми артами снова сохраняются" },
+        { "text": "Вместо «Мастерская сейчас недоступна» сайт честно пишет, что файл слишком большой для аккаунта" }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Studio",
+        "changes": [
+          { "text": "Account files can now be up to 20 MB instead of 8: big files with text art save to the account again" },
+          { "text": "Instead of «The Workshop is unavailable» the site now says the file is too large for the account" }
+        ]
+      }
+    ]
+  }
+}

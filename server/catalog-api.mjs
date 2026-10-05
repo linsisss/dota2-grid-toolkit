@@ -341,7 +341,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       if (spaceMatch) {
         const member = requireUser(), id = spaceMatch[1];
         if (method === 'GET') return send(200, accounts.space(id, member));
-        if (method === 'PUT') { const body = await readJSON(request, 8_500_000), saved = accounts.saveSpace(id, member, body); stats.event('studio-save', member.id); return send(200, saved); }
+        if (method === 'PUT') { const body = await readJSON(request, 20_500_000), saved = accounts.saveSpace(id, member, body); stats.event('studio-save', member.id); return send(200, saved); }
         if (method === 'PATCH') { const body = await readJSON(request); if (typeof body.archived !== 'boolean') fail(400, 'Неверная настройка архива.'); return send(200, accounts.archiveSpace(id, member, body.revision, body.archived)); }
       }
       // «Студия» backgrounds of the signed-in account: recipes and posters only (server/studio-backgrounds.mjs).

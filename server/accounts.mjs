@@ -122,7 +122,7 @@ export class Accounts {
     let document;
     try { document = C.importProject(input.document); delete document._studioSave; } catch { fail(400, 'Не удалось прочитать файл GridStudio. Локальная копия сохранена.'); }
     const raw = JSON.stringify(document);
-    if (Buffer.byteLength(raw) > 8_000_000) fail(413, 'Файл больше 8 МБ. Скачай его для резервной копии или уменьши размер подложки.');
+    if (Buffer.byteLength(raw) > 20_000_000) fail(413, 'Файл больше 20 МБ. Скачай его для резервной копии или уменьши размер подложки.');
     let preview = null; try { preview = JSON.stringify(selectedCatalogGrid(document)); if (preview.length > 150_000) preview = null; } catch { /* Large private documents still save. */ }
     const grids = JSON.stringify({ names: C.configurations(document).map((config) => config.name), configIndex: document.configIndex });
     return this.store.tx(() => {

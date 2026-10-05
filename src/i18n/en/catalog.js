@@ -18,6 +18,7 @@ export default {
 
   // api.js
   'Нет связи с мастерской. Проверь подключение и попробуй ещё раз.': 'Can’t reach the Workshop. Check your connection and try again.',
+  'Файл больше 20 МБ и не помещается в аккаунт. Изменения сохранены на этом устройстве — скачай резервную копию.': 'The file is larger than 20 MB and doesn\'t fit in the account. Your changes are saved on this device — download a backup.',
   'Мастерская сейчас недоступна. Редактор и скачивание файла продолжают работать.': 'The Workshop is unavailable right now. The editor and file downloads still work.',
   'Не удалось выполнить запрос.': 'The request failed.',
 

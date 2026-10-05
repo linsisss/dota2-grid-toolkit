@@ -13,15 +13,20 @@ export const EDITOR_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY || 'editor'}`;
 export const STUDIO_PATH = `${EDITOR_PATH}?files=1`;
 // «Гайды» (src/guides/), guides.html on static hosting.
 export const GUIDES_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'guides.html' : 'guides'}`;
+const TOO_LARGE = 'Файл больше 20 МБ и не помещается в аккаунт. Изменения сохранены на этом устройстве — скачай резервную копию.';
 // `raw`: a file sent as it is (application/octet-stream), e.g. a profile picture.
-export async function catalogAPI(path, { method = 'GET', body, raw, token, signal } = {}) {
+// `maxBytes`: a body larger than that fails here (status 413) instead of being uploaded to be refused.
+export async function catalogAPI(path, { method = 'GET', body, raw, token, signal, maxBytes } = {}) {
+  const json = body ? JSON.stringify(body) : null;
+  if (maxBytes && json && new Blob([json]).size > maxBytes) throw Object.assign(new Error(t(TOO_LARGE)), { status: 413 });
   let response;
   try { response = await fetch(`/api/catalog${path}`, { method, credentials: 'same-origin', referrerPolicy: 'no-referrer',
     headers: { ...(body ? { 'Content-Type': 'application/json' } : raw ? { 'Content-Type': 'application/octet-stream' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    ...(body ? { body: JSON.stringify(body) } : raw ? { body: raw } : {}), signal: signal || AbortSignal.timeout(raw ? 60000 : 15000) }); }
+    ...(json ? { body: json } : raw ? { body: raw } : {}), signal: signal || AbortSignal.timeout(raw ? 60000 : 15000) }); }
   catch (error) { if (signal?.aborted) throw error; throw new Error(t('Нет связи с мастерской. Проверь подключение и попробуй ещё раз.')); }
   let value;
-  try { value = await response.json(); } catch { throw new Error(t('Мастерская сейчас недоступна. Редактор и скачивание файла продолжают работать.')); }
+  // Not JSON: nginx itself answered (body over its limit, API restarting).
+  try { value = await response.json(); } catch { throw Object.assign(new Error(t(response.status === 413 ? TOO_LARGE : 'Мастерская сейчас недоступна. Редактор и скачивание файла продолжают работать.')), { status: response.status }); }
   if (!response.ok) throw Object.assign(new Error(value.error ? translateMessage(value.error) : t('Не удалось выполнить запрос.')), { status: response.status, duplicateId: value.duplicateId });
   return value;
 }

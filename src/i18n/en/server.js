@@ -48,7 +48,7 @@ const messages = {
   'Рабочее пространство не найдено в этом аккаунте.': 'This file isn’t in this account.',
   'Аккаунт или версия рабочего пространства изменились. Открой его заново.': 'The account or the file’s version has changed. Open it again.',
   'Не удалось прочитать файл GridStudio. Локальная копия сохранена.': 'Couldn’t read the GridStudio file. The local copy is kept.',
-  'Файл больше 8 МБ. Скачай его для резервной копии или уменьши размер подложки.': 'The file is larger than 8 MB. Download it as a backup or make the reference image smaller.',
+  'Файл больше 20 МБ. Скачай его для резервной копии или уменьши размер подложки.': 'The file is larger than 20 MB. Download it as a backup or make the reference image smaller.',
   'Рабочее пространство не найдено.': 'File not found.',
   'Файл изменён на другом устройстве. Твои правки остались локально; сохрани их отдельной копией.': 'The file was changed on another device. Your edits stayed on this device; save them as a separate copy.',
   'Серверная копия не найдена. Локальные данные сохранены.': 'The server copy wasn’t found. The local data is kept.',

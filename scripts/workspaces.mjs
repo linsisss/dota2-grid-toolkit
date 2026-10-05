@@ -3,6 +3,9 @@ import { createProjectStorage, openProjectDatabase } from './project-storage.mjs
 import { APP_VERSION } from './version.mjs';
 import { selectedCatalogGrid } from './catalog-document.mjs';
 import { t } from './i18n.mjs';
+// A file save above this never reaches the account (nginx 21m, server readJSON 20.5 MB): catalogAPI
+// refuses it before sending, so a too-large file isn't uploaded again on every edit.
+export const SPACE_REQUEST_BYTES = 20_500_000;
 
 const PREFIX = 'gridstudio.workspace.info.';
 const SESSION_KEY = 'gridstudio.workspace-session.v1';
@@ -111,7 +114,7 @@ export async function attachGuestWorkspaces(registry, api, user, isCurrent = () 
         const meta = await assignAccount(registry, entry.id, user);
         const snapshot = JSON.stringify(initial.doc);
         const result = await api(`/spaces/${cloudWorkspaceId(meta)}`, { method: 'PUT', body: { account: user.id, name: meta.name,
-          revision: meta.cloudRevision || 0, archived: !!meta.archived, document: initial.doc } });
+          revision: meta.cloudRevision || 0, archived: !!meta.archived, document: initial.doc }, maxBytes: SPACE_REQUEST_BYTES });
         // Another tab may have written during upload. Keep that newer local work dirty.
         const latest = await storage.load();
         await registry.update(meta.id, { cloudRevision: result.revision, pendingUpload: false, dirty: JSON.stringify(latest.doc) !== snapshot });
@@ -170,7 +173,7 @@ export async function openWorkspace(meta, registry, api, user, onStatus = () => 
       const current = await registry.get(meta.id);
       onStatus('Сохраняем в аккаунт…');
       try {
-        const result = await api(`/spaces/${cloudWorkspaceId(meta)}`, { method: 'PUT', body: { name: current.name, account: meta.account, revision: cloudRevision, document: doc } });
+        const result = await api(`/spaces/${cloudWorkspaceId(meta)}`, { method: 'PUT', body: { name: current.name, account: meta.account, revision: cloudRevision, document: doc }, maxBytes: SPACE_REQUEST_BYTES });
         cloudRevision = result.revision; retries = 0;
         await registry.update(meta.id, { cloudRevision, pendingUpload: false, dirty: generation !== revision });
         onStatus(generation === revision ? 'Сохранено в аккаунте' : 'Сохраняем в аккаунт…');

@@ -7,7 +7,7 @@ import { createProjectStorage } from '../scripts/project-storage.mjs';
 import { readGridFiles } from '../scripts/grid-import.mjs';
 import C from '../scripts/core.mjs';
 import { APP_VERSION } from '../scripts/version.mjs';
-import { cloudWorkspaceId } from '../scripts/workspaces.mjs';
+import { cloudWorkspaceId, SPACE_REQUEST_BYTES } from '../scripts/workspaces.mjs';
 import { deleteBackground, listBackgrounds, updateBackground } from '../scripts/background-library.mjs';
 import { dropRecipe, publicationStatus, pullRecipes, pushRecipe, remotePoster } from './studio-backgrounds.js';
 import LanguageSwitch from './LanguageSwitch.jsx';
@@ -160,7 +160,7 @@ export default function Workspaces({ registry, onOpen }) {
     const doc = await read(meta), account = auth.user?.id || null;
     const created = await registry.create(t('{name} — копия', { name: meta.name.slice(0, 88) }), doc, account);
     if (account) {
-      const saved = await catalogAPI(`/spaces/${created.id}`, { method: 'PUT', body: { account, name: created.name, revision: 0, document: doc } });
+      const saved = await catalogAPI(`/spaces/${created.id}`, { method: 'PUT', body: { account, name: created.name, revision: 0, document: doc }, maxBytes: SPACE_REQUEST_BYTES });
       await registry.update(created.id, { cloudRevision: saved.revision, dirty: false, pendingUpload: false });
     }
     onOpen(await registry.get(created.id));
@@ -177,7 +177,7 @@ export default function Workspaces({ registry, onOpen }) {
       if (rename.account) {
         const remote = rename.dirty ? null : await catalogAPI(`/spaces/${cloudWorkspaceId(rename)}`);
         const doc = remote?.document || await read(rename);
-        const result = await catalogAPI(`/spaces/${cloudWorkspaceId(rename)}`, { method: 'PUT', body: { account: rename.account, revision: remote?.revision || rename.cloudRevision || 0, name: name.trim(), document: doc } });
+        const result = await catalogAPI(`/spaces/${cloudWorkspaceId(rename)}`, { method: 'PUT', body: { account: rename.account, revision: remote?.revision || rename.cloudRevision || 0, name: name.trim(), document: doc }, maxBytes: SPACE_REQUEST_BYTES });
         // Keep the local content revision unchanged until the server copy is hydrated.
         await registry.update(rename.id, { name: name.trim(), cloudRevision: rename.dirty ? result.revision : rename.cloudRevision, dirty: false });
       } else await registry.update(rename.id, { name: name.trim() });

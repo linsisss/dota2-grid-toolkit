@@ -1,0 +1,23 @@
+{
+  "version": "1.8.17",
+  "date": "2026-10-06",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.17",
+  "sections": [
+    {
+      "title": "Редактор",
+      "changes": [
+        { "text": "У готовых артов появилась категория «Рамки»" }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Editor",
+        "changes": [
+          { "text": "Ready-made art now has a «Frames» category" }
+        ]
+      }
+    ]
+  }
+}

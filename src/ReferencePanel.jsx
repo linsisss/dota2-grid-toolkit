@@ -1,6 +1,8 @@
 import { NumberInput } from './NumberInput.jsx';
 import { useEffect, useId, useRef, useState } from 'react';
 import { readReferenceImage } from '../scripts/reference-image.mjs';
+import { referenceAngle } from '../scripts/edit-operations.mjs';
+import { Icon } from './Icon.jsx';
 import { t, translateMessage } from '../scripts/i18n.mjs';
 
 // Shared by the main canvas and the separate drawing draft.
@@ -73,8 +75,18 @@ export function ReferencePanel({ value, onChange, onPreview, onEdit, editing = f
             </button>
           )}
           {editing && (
-            <p className="hint">{t('Тяни картинку или маркеры рамки. Shift — сохранить пропорции.')}</p>
+            <p className="hint">{t('Тяни картинку или маркеры рамки. Shift — сохранить пропорции. Круглый маркер сверху поворачивает, с Shift — по 15°.')}</p>
           )}
+          {/* Turn and mirror it (asked for on 2026-10-05): steps here, any angle by the round handle or in «Положение фона». */}
+          <div className="reference-turns" role="group" aria-label={t('Повернуть фон')}>
+            {[[-90, '↺ 90°'], [-45, '↺ 45°'], [45, '↻ 45°'], [90, '↻ 90°'], [180, '180°']].map(([step, label]) => (
+              <button key={step} type="button" className="button secondary compact" onClick={() => onChange({ ...value, rotate: referenceAngle((value.rotate || 0) + step) })}>{label}</button>
+            ))}
+          </div>
+          <div className="reference-turns is-mirror" role="group" aria-label={t('Отразить фон')}>
+            <button type="button" className="button secondary compact" aria-pressed={!!value.flipX} onClick={() => onChange({ ...value, flipX: !value.flipX })}><Icon name="flip" size={15}/>{t('По горизонтали')}</button>
+            <button type="button" className="button secondary compact" aria-pressed={!!value.flipY} onClick={() => onChange({ ...value, flipY: !value.flipY })}><Icon name="flipVertical" size={15}/>{t('По вертикали')}</button>
+          </div>
           <label className="range-label" htmlFor={id}>
             {t('Непрозрачность')} <output>{opacity}%</output>
           </label>
@@ -140,6 +152,21 @@ export function ReferencePanel({ value, onChange, onPreview, onEdit, editing = f
                   />
                 </label>
               ))}
+              <label>
+                {t('Угол')}
+                <NumberInput
+                  aria-label={t('Угол поворота фона')}
+                  type="number"
+                  key={`rotate-${value.rotate || 0}`}
+                  defaultValue={Math.round((value.rotate || 0) * 10) / 10}
+                  min="-180"
+                  max="180"
+                  onBlur={(e) => {
+                    const n = Number(e.target.value);
+                    if (e.target.value !== '' && Number.isFinite(n) && referenceAngle(n) !== (value.rotate || 0)) onChange({ ...value, rotate: referenceAngle(n) });
+                  }}
+                />
+              </label>
             </div>
           </details>
         </>

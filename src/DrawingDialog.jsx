@@ -19,8 +19,11 @@ import {
   cropSymbols,
   alignItems,
   moveItems,
-  referenceHandles,
   referenceHit,
+  rotateReference,
+  drawReference,
+  drawReferenceFrame,
+  REFERENCE_LIFT,
   transformReference
 } from '../scripts/edit-operations.mjs';
 import { drawCategoryLabel, measureCategoryText, measureCategoryInk } from '../scripts/dota-rendering.mjs';
@@ -168,7 +171,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     if (r?.visible && image.current) {
       ctx.save();
       ctx.globalAlpha = referencePreview?.reference === r ? referencePreview.opacity : r.opacity;
-      ctx.drawImage(image.current, r.x, r.y, r.w, r.h);
+      drawReference(ctx, image.current, r);
       ctx.restore();
     }
     ctx.fillStyle = '#38465770';
@@ -185,15 +188,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
       const b = inkFrame(doc.entities.filter((e) => selected.includes(e.id)), ink), gap = (2 * board.w) / size.w;
       ctx.strokeRect(b.x - gap, b.y - gap, b.w + gap * 2, b.h + gap * 2);
     }
-    if (tool === 'reference' && r?.visible) {
-      ctx.strokeRect(r.x, r.y, r.w, r.h);
-      const half = (4 * board.w) / size.w;
-      for (const p of referenceHandles(r)) {
-        ctx.fillStyle = '#191821';
-        ctx.fillRect(p.x - half, p.y - half, half * 2, half * 2);
-        ctx.strokeRect(p.x - half, p.y - half, half * 2, half * 2);
-      }
-    }
+    if (tool === 'reference' && r?.visible) drawReferenceFrame(ctx, r, board.w / size.w, '#191821');
     if (path.length) {
       ctx.beginPath();
       path.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
@@ -263,7 +258,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
       return;
     }
     if (tool === 'reference') {
-      const handle = referenceHit(before.reference, p, (9 * board.w) / size.w);
+      const handle = referenceHit(before.reference, p, (9 * board.w) / size.w, (REFERENCE_LIFT * board.w) / size.w);
       setSelected([]);
       if (handle) stroke.current = { type: 'reference', before, start: p, handle };
       return;
@@ -319,7 +314,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     }
     if (!s) {
       if (tool === 'reference') {
-        const handle = referenceHit(doc.reference, p, (9 * board.w) / size.w);
+        const handle = referenceHit(doc.reference, p, (9 * board.w) / size.w, (REFERENCE_LIFT * board.w) / size.w);
         canvas.current.style.cursor = referenceCursor(handle);
       } else if (tool === 'select') {
         const frame = inkFrame(latest.current.entities.filter(item => selectionRef.current.includes(item.id)), ink);
@@ -338,7 +333,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
       update(next);
     } else if (s.type === 'reference') {
       const next = C.clone(s.before);
-      next.reference = transformReference(
+      next.reference = s.handle === 'rotate' ? rotateReference(s.before.reference, s.start, p, e.shiftKey) : transformReference(
         s.before.reference,
         { x: p.x - s.start.x, y: p.y - s.start.y },
         s.handle,
@@ -809,6 +804,7 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
 function referenceCursor(handle) {
   if (!handle) return 'default';
   if (handle === 'move') return 'move';
+  if (handle === 'rotate') return 'grab';
   if (['nw', 'se'].includes(handle)) return 'nwse-resize';
   if (['ne', 'sw'].includes(handle)) return 'nesw-resize';
   return ['n', 's'].includes(handle) ? 'ns-resize' : 'ew-resize';

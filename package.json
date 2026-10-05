@@ -1,6 +1,6 @@
 {
   "name": "dota2-grid-studio",
-  "version": "1.8.15",
+  "version": "1.8.16",
   "private": true,
   "description": "A unified React workspace for Dota 2 hero grids, symbol art and image conversion",
   "scripts": {

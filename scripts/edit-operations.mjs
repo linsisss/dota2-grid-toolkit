@@ -171,34 +171,79 @@ export function moveItems(items, dx = 0, dy = 0) {
   return { x: dx, y: dy };
 }
 
-export function referenceHandles(r) {
-  return [
-    ['nw', 0, 0],
-    ['n', 0.5, 0],
-    ['ne', 1, 0],
-    ['e', 1, 0.5],
-    ['se', 1, 1],
-    ['s', 0.5, 1],
-    ['sw', 0, 1],
-    ['w', 0, 0.5]
-  ].map(([key, x, y]) => ({ key, x: r.x + r.w * x, y: r.y + r.h * y }));
+// The reference turns about its centre by `rotate` degrees (clockwise) and may be mirrored (`flipX`,
+// `flipY`; asked for on 2026-10-05: a user could not turn the picture they traced). x, y, w, h stay its
+// unturned box; the handles, hits and resizes below work in that box's own axes.
+const HANDLES = [['nw', 0, 0], ['n', 0.5, 0], ['ne', 1, 0], ['e', 1, 0.5], ['se', 1, 1], ['s', 0.5, 1], ['sw', 0, 1], ['w', 0, 0.5]];
+const OPPOSITE = { nw: 'se', n: 's', ne: 'sw', e: 'w', se: 'nw', s: 'n', sw: 'ne', w: 'e' };
+const turn = (point, center, degrees) => {
+  const a = (degrees || 0) * Math.PI / 180, dx = point.x - center.x, dy = point.y - center.y;
+  return { x: center.x + dx * Math.cos(a) - dy * Math.sin(a), y: center.y + dx * Math.sin(a) + dy * Math.cos(a) };
+};
+export const referenceCenter = (r) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
+// `lift`: how far above the top edge the turning handle stands (canvas units; the caller gives a
+// fixed number of screen pixels). Without it, no turning handle.
+export function referenceHandles(r, lift = 0) {
+  const center = referenceCenter(r);
+  const handles = HANDLES.map(([key, x, y]) => ({ key, ...turn({ x: r.x + r.w * x, y: r.y + r.h * y }, center, r.rotate) }));
+  return lift ? [...handles, { key: 'rotate', ...turn({ x: center.x, y: r.y - lift }, center, r.rotate) }] : handles;
 }
-export function referenceHit(r, point, radius) {
+export function referenceHit(r, point, radius, lift = 0) {
   if (!r?.visible) return null;
-  const handle = referenceHandles(r).find(
-    (p) => Math.abs(p.x - point.x) <= radius && Math.abs(p.y - point.y) <= radius
-  );
+  const handle = referenceHandles(r, lift).find((p) => Math.hypot(p.x - point.x, p.y - point.y) <= radius * 1.42 && Math.abs(p.x - point.x) <= radius * (p.key === 'rotate' ? 1.4 : 1) && Math.abs(p.y - point.y) <= radius * (p.key === 'rotate' ? 1.4 : 1));
   if (handle) return handle.key;
-  return point.x >= r.x && point.y >= r.y && point.x <= r.x + r.w && point.y <= r.y + r.h
-    ? 'move'
-    : null;
+  const local = turn(point, referenceCenter(r), -(r.rotate || 0));
+  return local.x >= r.x && local.y >= r.y && local.x <= r.x + r.w && local.y <= r.y + r.h ? 'move' : null;
 }
 // The reference is only a guide under the drawing: it moves and stretches past every edge of the
-// canvas, left and up as well as right and down. A resize keeps the opposite side or corner in place.
+// canvas, left and up as well as right and down. A resize keeps the opposite side or corner in place,
+// turned too: the pull is read in the picture's own axes, then the box is shifted so that the opposite
+// handle stays where it was on the canvas.
 export function transformReference(r, delta, handle, proportional = false) {
   if (handle === 'move') return { ...r, x: r.x + delta.x, y: r.y + delta.y };
-  const bounds = C.resizeBounds(r, { x: /[we]/.test(handle) ? delta.x : 0, y: /[ns]/.test(handle) ? delta.y : 0 }, handle, proportional, 8);
-  return { ...r, ...bounds };
+  const local = turn({ x: delta.x, y: delta.y }, { x: 0, y: 0 }, -(r.rotate || 0));
+  const bounds = C.resizeBounds(r, { x: /[we]/.test(handle) ? local.x : 0, y: /[ns]/.test(handle) ? local.y : 0 }, handle, proportional, 8);
+  const next = { ...r, ...bounds };
+  if (!r.rotate) return next;
+  const anchor = (box) => referenceHandles(box).find((p) => p.key === OPPOSITE[handle]);
+  const before = anchor(r), after = anchor(next);
+  return { ...next, x: next.x + before.x - after.x, y: next.y + before.y - after.y };
+}
+// Turning by the handle: the angle the pointer went round the centre since `start`; Shift — by 15°.
+export function rotateReference(r, start, current, snap = false) {
+  const center = referenceCenter(r), angle = (p) => Math.atan2(p.y - center.y, p.x - center.x) * 180 / Math.PI;
+  let degrees = (r.rotate || 0) + angle(current) - angle(start);
+  if (snap) degrees = Math.round(degrees / 15) * 15;
+  return { ...r, rotate: referenceAngle(degrees) };
+}
+// Any angle into −180…180 with a tenth of a degree, 0 for none.
+export const referenceAngle = (degrees) => { const a = ((Math.round((Number(degrees) || 0) * 10) / 10 % 360) + 540) % 360 - 180; return a === -180 ? 180 : a || 0; };
+// Its frame while it is edited: the turned outline, the eight handles and the turning one on a stem.
+// `unit`: canvas units per screen pixel; REFERENCE_LIFT pixels above the top edge.
+export const REFERENCE_LIFT = 24;
+export function drawReferenceFrame(ctx, r, unit, ground = '#211e29') {
+  const half = 4 * unit, handles = referenceHandles(r, REFERENCE_LIFT * unit), corner = (key) => handles.find((p) => p.key === key);
+  ctx.save(); ctx.strokeStyle = '#c4b5ed'; ctx.lineWidth = unit;
+  ctx.beginPath(); ['nw', 'ne', 'se', 'sw'].forEach((key, i) => { const p = corner(key); i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); }); ctx.closePath(); ctx.stroke();
+  const top = corner('n'), knob = corner('rotate');
+  ctx.beginPath(); ctx.moveTo(top.x, top.y); ctx.lineTo(knob.x, knob.y); ctx.stroke();
+  ctx.fillStyle = ground;
+  for (const p of handles) {
+    if (p.key === 'rotate') { ctx.beginPath(); ctx.arc(p.x, p.y, half * 1.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); continue; }
+    ctx.fillRect(p.x - half, p.y - half, half * 2, half * 2); ctx.strokeRect(p.x - half, p.y - half, half * 2, half * 2);
+  }
+  ctx.restore();
+}
+// Draws the picture turned and mirrored in its place.
+export function drawReference(ctx, image, r) {
+  if (!r.rotate && !r.flipX && !r.flipY) return ctx.drawImage(image, r.x, r.y, r.w, r.h);
+  const center = referenceCenter(r);
+  ctx.save();
+  ctx.translate(center.x, center.y);
+  ctx.rotate((r.rotate || 0) * Math.PI / 180);
+  ctx.scale(r.flipX ? -1 : 1, r.flipY ? -1 : 1);
+  ctx.drawImage(image, -r.w / 2, -r.h / 2, r.w, r.h);
+  ctx.restore();
 }
 // Distance is measured to the middle of each glyph's own ink as it is drawn, not to the category
 // corner, so the brush ring on screen removes exactly what it covers. `ink(text)` gives the ink box

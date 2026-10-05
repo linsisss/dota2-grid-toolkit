@@ -575,7 +575,11 @@ function importProject(data) {
       Math.abs(r.y) > 100000 ||
       r.opacity < 0 ||
       r.opacity > 1 ||
-      typeof r.visible !== 'boolean'
+      typeof r.visible !== 'boolean' ||
+      // Turned and mirrored since 2026-10-05; older projects have neither.
+      (r.rotate !== undefined && (!finite(r.rotate) || Math.abs(r.rotate) > 180)) ||
+      (r.flipX !== undefined && typeof r.flipX !== 'boolean') ||
+      (r.flipY !== undefined && typeof r.flipY !== 'boolean')
     )
       throw new Error(t('Некорректный фон-ориентир.'));
   }

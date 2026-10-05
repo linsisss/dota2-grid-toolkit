@@ -118,3 +118,10 @@ body.show-library .app-layout > .library-panel { border-radius: 18px; }
   body:not(.focus-mode) .inspector-title .win-icon { animation: win-pop .5s 60ms var(--win-spring) both; }
   .app-layout > .inspector-panel .layer-section { animation: win-rise .35s var(--win-ease) both; }
 }
+
+/* «Фон для обводки»: turn and mirror (src/ReferencePanel.jsx). */
+.reference-turns { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 8px 0 0; }
+.reference-turns.is-mirror { grid-template-columns: 1fr 1fr; margin-top: 4px; }
+.reference-turns .button { min-width: 0; padding-inline: 2px; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.reference-turns .button svg { flex: none; margin-right: 4px; }
+.reference-turns .button[aria-pressed='true'] { border-color: #c4b5ed; color: #c4b5ed; }

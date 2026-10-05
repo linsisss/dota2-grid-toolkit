@@ -91,3 +91,12 @@ test('portrait layout fits scaled cells inside the hero list, below its separate
   }
   assert.equal(C.heroLayout({ w: 340, h: 195, heroIds: [] }), null);
 });
+
+// The tracing picture turned and mirrored (2026-10-05): kept by a project; a wrong turn refuses the file.
+test('a project keeps its reference turned and mirrored, and refuses a wrong turn', () => {
+  const doc = C.createDocument();
+  doc.reference = { src: 'data:image/png;base64,AAAA', name: 'Пингвин', x: 3, y: 4, w: 60, h: 70, opacity: 0.1, visible: true, rotate: -45, flipX: true };
+  assert.deepEqual(C.importProject(JSON.parse(JSON.stringify(doc))).reference, doc.reference);
+  for (const wrong of [{ rotate: 400 }, { rotate: 'a' }, { flipY: 'yes' }])
+    assert.throws(() => C.importProject(JSON.parse(JSON.stringify({ ...doc, reference: { ...doc.reference, ...wrong } }))), /фон-ориентир/);
+});

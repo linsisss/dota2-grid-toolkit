@@ -1,0 +1,35 @@
+{
+  "version": "1.8.16",
+  "date": "2026-10-05",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.16",
+  "sections": [
+    {
+      "title": "Редактор",
+      "changes": [
+        { "text": "Фон для обводки можно повернуть и отразить", "children": ["Кнопками на 45°, 90° и 180°, круглым маркером над рамкой или точным углом в «Положение фона»"] }
+      ]
+    },
+    {
+      "title": "Студия",
+      "changes": [
+        { "text": "Список файлов в аккаунте снова загружается: вчера вечером вместо него была ошибка «Не найдено»" }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Editor",
+        "changes": [
+          { "text": "The tracing background can be rotated and mirrored", "children": ["By 45°, 90° and 180° with buttons, with the round handle above its frame or to an exact angle in «Image position»"] }
+        ]
+      },
+      {
+        "title": "Studio",
+        "changes": [
+          { "text": "The account's file list loads again: last evening it showed a «Not found» error instead" }
+        ]
+      }
+    ]
+  }
+}

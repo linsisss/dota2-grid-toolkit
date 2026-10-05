@@ -53,7 +53,7 @@ import {
   alignUnits,
   distributeUnits,
   moveItems,
-  reflectItems, referenceHandles, referenceHit, transformReference
+  reflectItems, referenceHit, transformReference, rotateReference, drawReference, drawReferenceFrame, REFERENCE_LIFT
 } from './edit-operations.mjs';
 import { convertWithStats } from './converter.mjs';
 import { IMAGE_STYLES,
@@ -603,7 +603,7 @@ export function createStudio(projectStorage, initial) {
       const r = doc.reference;
       ctx.save();
       ctx.globalAlpha = referencePreview?.reference === r ? referencePreview.opacity : r.opacity;
-      ctx.drawImage(referenceImage, r.x, r.y, r.w, r.h);
+      drawReference(ctx, referenceImage, r);
       ctx.restore();
     }
     if (showGrid && !preview) {
@@ -643,16 +643,7 @@ export function createStudio(projectStorage, initial) {
         drawCategoryLabel(ctx, p.ch || brushChar(false), p.x, p.y, '#d6c8f7');
       ctx.restore();
     }
-    if (!preview && referenceEditing && doc.reference?.visible) {
-      const r = doc.reference, half = 4 / zoom;
-      ctx.save(); ctx.strokeStyle = '#c4b5ed'; ctx.lineWidth = 1 / zoom;
-      ctx.strokeRect(r.x, r.y, r.w, r.h);
-      for (const p of referenceHandles(r)) {
-        ctx.fillStyle = '#211e29'; ctx.fillRect(p.x-half,p.y-half,half*2,half*2);
-        ctx.strokeRect(p.x-half,p.y-half,half*2,half*2);
-      }
-      ctx.restore();
-    }
+    if (!preview && referenceEditing && doc.reference?.visible) drawReferenceFrame(ctx, doc.reference, 1 / zoom);
     if (!preview) {
       const items = selection().filter((e) => doc.layers.find((l) => l.id === e.layer)?.visible);
       if (items.length) {
@@ -1487,7 +1478,7 @@ export function createStudio(projectStorage, initial) {
     const p = point(event);
     lastPoint = p;
     if (referenceEditing && !spaceDown && event.button === 0) {
-      const handle = referenceHit(doc.reference, p, 8 / zoom);
+      const handle = referenceHit(doc.reference, p, 8 / zoom, REFERENCE_LIFT / zoom);
       if (handle) {
         gesture = { type: 'reference', handle, start: p, before: C.clone(doc), pointerId: event.pointerId };
         canvas.setPointerCapture(event.pointerId);
@@ -1684,8 +1675,9 @@ export function createStudio(projectStorage, initial) {
     }
     gesture.current = p;
     if (gesture.type === 'hero-reorder') updateHeroDrag(event, p);
-    if (gesture.type === 'reference') doc.reference = transformReference(gesture.before.reference,
-      { x: p.x - gesture.start.x, y: p.y - gesture.start.y }, gesture.handle, event.shiftKey);
+    if (gesture.type === 'reference') doc.reference = gesture.handle === 'rotate'
+      ? rotateReference(gesture.before.reference, gesture.start, p, event.shiftKey)
+      : transformReference(gesture.before.reference, { x: p.x - gesture.start.x, y: p.y - gesture.start.y }, gesture.handle, event.shiftKey);
     if (gesture.type === 'move') {
       let dx = p.x - gesture.start.x,
         dy = p.y - gesture.start.y;

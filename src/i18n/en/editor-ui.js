@@ -1,6 +1,14 @@
 // English for the editor and the Studio, React parts (src/*.jsx): 'Русский текст': 'English text' (scripts/i18n.mjs, docs/i18n.md).
 // Loaded with common, server, catalog and editor (src/main.jsx); a text one of those has is not repeated here.
 export default {
+  // ReferencePanel.jsx: turn and mirror the tracing picture
+  'Тяни картинку или маркеры рамки. Shift — сохранить пропорции. Круглый маркер сверху поворачивает, с Shift — по 15°.': 'Drag the picture or the frame handles. Shift keeps the proportions. The round handle on top turns it, with Shift by 15°.',
+  'Повернуть фон': 'Rotate the background',
+  'Отразить фон': 'Mirror the background',
+  'По горизонтали': 'Horizontally',
+  'По вертикали': 'Vertically',
+  'Угол': 'Angle',
+  'Угол поворота фона': 'Background rotation angle',
   // App.jsx
   'Не удалось открыть файл.': 'Couldn’t open the file.',
   'Открываем файлы…': 'Opening files…',
@@ -432,7 +440,6 @@ export default {
   'Загрузить фон': 'Upload image',
   'Фон выделен': 'Image selected',
   'Переместить / растянуть': 'Move / stretch',
-  'Тяни картинку или маркеры рамки. Shift — сохранить пропорции.': 'Drag the image or the frame handles. Shift keeps proportions.',
   'Непрозрачность': 'Opacity',
   'Непрозрачность фона': 'Reference image opacity',
   'Показывать': 'Show',

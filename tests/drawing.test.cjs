@@ -336,6 +336,29 @@ test('the reference moves and stretches past every edge; a resize keeps its oppo
   assert.equal(E.referenceHit({ ...r, visible: false }, { x: 100, y: 80 }, 3), null);
 });
 
+// Turned (2026-10-05): handles, hits and resizes in the picture's own axes; the opposite handle stays put.
+test('the reference turns: its handles turn with it, a turned resize keeps the opposite handle, the round handle turns it', () => {
+  const r = { x: 0, y: 0, w: 200, h: 100, visible: true, opacity: 0.1, src: 'data:image/png;base64,AA==', rotate: 90 };
+  const handles = E.referenceHandles(r, 20), at = (key) => handles.find((p) => p.key === key);
+  // Turned a quarter clockwise about (100, 50): the top-left corner goes to the top right.
+  near(at('nw').x, 150); near(at('nw').y, -50);
+  near(at('rotate').x, 100 + 70); near(at('rotate').y, 50);
+  for (const handle of handles) assert.equal(E.referenceHit(r, handle, 3, 20), handle.key);
+  // Inside the turned box (the box is 100 wide, 200 tall now), outside the unturned one.
+  assert.equal(E.referenceHit(r, { x: 100, y: 140 }, 3, 20), 'move');
+  assert.equal(E.referenceHit(r, { x: 190, y: 50 }, 3, 20), null);
+  // Pulling the turned «e» side (now at the bottom) down by 50 makes it 50 wider; «w» (now at the top) stays.
+  const before = E.referenceHandles(r).find((p) => p.key === 'w');
+  const wider = E.transformReference(r, { x: 0, y: 50 }, 'e');
+  near(wider.w, 250); near(wider.h, 100);
+  const after = E.referenceHandles(wider).find((p) => p.key === 'w');
+  near(after.x, before.x); near(after.y, before.y);
+  // The round handle: a quarter turn of the pointer round the centre; Shift — by 15°.
+  near(E.rotateReference({ ...r, rotate: 0 }, { x: 100, y: -50 }, { x: 200, y: 50 }).rotate, 90);
+  near(E.rotateReference({ ...r, rotate: 0 }, { x: 100, y: -50 }, { x: 110, y: -49 }, true).rotate, 0);
+  assert.deepEqual([E.referenceAngle(270), E.referenceAngle(-180), E.referenceAngle(181)], [-90, 180, -179]);
+});
+
 test('multiple brush symbols alternate by default, and strokes cannot place glyphs above or left', () => {
   const points = D.drawingPoints(
     'line',

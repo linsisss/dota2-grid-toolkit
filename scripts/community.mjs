@@ -37,6 +37,9 @@ export function watchErrors() {
   watching = true;
   addEventListener('error', (event) => {
     if (!event.message || event.message === 'Script error.' || /^(chrome|moz|safari)-extension:/.test(event.filename || '')) return;
+    // The browser's note that a resize was drawn a frame later: harmless, not the site's error, and
+    // it only confused the report («ResizeObserver loop completed with undelivered notifications»).
+    if (/^ResizeObserver loop/.test(event.message)) return;
     const file = event.filename ? ` (${event.filename.split('/').pop()}:${event.lineno})` : '';
     rememberError(`${event.message}${file}`);
   });

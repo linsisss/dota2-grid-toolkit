@@ -4,6 +4,8 @@ import { GRID_NOTE, withGridNote } from '../../scripts/grid-note.mjs';
 // The workshop lives at /workshop; nginx sends the former /catalog links there with their query and #hash.
 export const CATALOG_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'catalog.html' : 'workshop'}`;
 export const RULES_PATH = `${CATALOG_PATH}?rules`;
+// «Реклама» (src/catalog/Advertise.jsx), from the top of the landing page and the workshop.
+export const ADVERTISE_PATH = `${CATALOG_PATH}?advertise`;
 // Dota customization (menu background, font): /background (/customize until 1.6.3, which now
 // redirects), customize.html on static hosting.
 export const CUSTOMIZE_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'customize.html' : 'background'}`;

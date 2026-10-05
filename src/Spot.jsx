@@ -13,8 +13,9 @@ function loadSpot() {
   pending ||= fetch('/api/catalog/spot', { credentials: 'omit' }).then((response) => (response.ok ? response.json() : null)).catch(() => null);
   return pending;
 }
+// undefined until the answer, null without one (no API), else the place.
 export function useSpot() {
-  const [spot, setSpot] = useState(null);
+  const [spot, setSpot] = useState(undefined);
   useEffect(() => { let active = true; loadSpot().then((value) => { if (active) setSpot(value); }); return () => { active = false; }; }, []);
   return spot;
 }

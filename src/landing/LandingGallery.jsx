@@ -1,11 +1,11 @@
 import { Icon } from '../Icon.jsx';
-import { Spot } from '../Spot.jsx';
+import { Spot, useSpot } from '../Spot.jsx';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import editorImage from '../../assets/design/editor-landing-reference.webp';
 import linsissya from '../../assets/design/linsissya.webp';
 import dissonance from '../../assets/design/dissonance.webp';
 import StageArtwork from './StageArtwork.jsx';
-import { CATALOG_PATH, CUSTOMIZE_PATH, FONT_PATH, GUIDES_PATH } from '../catalog/api.js';
+import { ADVERTISE_PATH, CATALOG_PATH, CUSTOMIZE_PATH, FONT_PATH, GUIDES_PATH } from '../catalog/api.js';
 import { VersionButton } from '../ChangelogButton.jsx';
 import { openCommunity } from '../Community.jsx';
 import { COMMUNITY } from '../../scripts/community.mjs';
@@ -99,9 +99,15 @@ function EditorArtwork({ variant }) {
 }
 
 function Landing({ variant }) {
+  // With the banner (src/Spot.jsx) the stage is made smaller to leave it room; with the banner hidden
+  // in «Реклама», the stage is as large as before it (asked for on 2026-10-05). Until the answer comes,
+  // as if it were shown: the usual case, and the stage does not jump.
+  const spot = useSpot(), spotShown = spot === undefined || !!spot?.places?.landing;
   return <div className={`landing-page landing-${variant.id}`}>
     <header className="landing-nav">
       <Brand />
+      {/* «Реклама» for advertisers (src/catalog/Advertise.jsx), asked for on 2026-10-05. */}
+      <a className="landing-nav-link" href={ADVERTISE_PATH}><Icon name="news" />{t('Реклама')}</a>
     </header>
     <main className="landing-main">
       <div className="landing-copy">
@@ -123,7 +129,7 @@ function Landing({ variant }) {
         <Authors />
       </div>
       {/* The stage, raised, and the advertising place under it (asked for on 2026-10-04). */}
-      {variant.id === 'stage' ? <div className="landing-visual"><EditorArtwork variant={variant} /><Spot place="landing" className="is-landing"/></div> : <EditorArtwork variant={variant} />}
+      {variant.id === 'stage' ? <div className={`landing-visual${spotShown ? ' has-spot' : ''}`}><EditorArtwork variant={variant} /><Spot place="landing" className="is-landing"/></div> : <EditorArtwork variant={variant} />}
     </main>
     <footer className="landing-footer"><span className="landing-footer-source"><a href="https://github.com/linsisss/dota2-grid-toolkit" target="_blank" rel="noreferrer">{t('Проект на GitHub')}<Icon name="external" /></a><VersionButton/><LanguageSwitch/></span><span>gridstudio.me</span></footer>
   </div>;

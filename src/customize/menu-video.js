@@ -21,23 +21,33 @@ import { t } from '../../scripts/i18n.mjs';
 export class MenuVideoError extends Error {}
 const STILL_SECONDS = 10, FPS = 30, KEY_FRAMES = 10, MIN_BITRATE = 300_000;
 
+// The picture in its place, turned about its centre and mirrored as the frame says (framePlacement).
+function place(context, source, x, y, w, h, frame) {
+  if (!frame.rotate && !frame.flipX && !frame.flipY) return context.drawImage(source, x, y, w, h);
+  context.save();
+  context.translate(x + w / 2, y + h / 2);
+  context.rotate(frame.rotate * Math.PI / 180);
+  context.scale(frame.flipX ? -1 : 1, frame.flipY ? -1 : 1);
+  context.drawImage(source, -w / 2, -h / 2, w, h);
+  context.restore();
+}
 function paint(context, source, sourceWidth, sourceHeight, fit, look, ground = true) {
   const { width, height } = context.canvas;
   if (ground) { context.fillStyle = '#000'; context.fillRect(0, 0, width, height); }
-  const place = framePlacement(width / height, sourceWidth / sourceHeight, fit, look.zoom, look.frame);
-  const w = place.w * width, h = place.h * height, x = place.x * width, y = place.y * height;
+  const at = framePlacement(width / height, sourceWidth / sourceHeight, fit, look.zoom, look.frame);
+  const w = at.w * width, h = at.h * height, x = at.x * width, y = at.y * height;
   context.imageSmoothingQuality = 'high';
-  if (!look.sigma) return context.drawImage(source, x, y, w, h);
+  if (!look.sigma) return place(context, source, x, y, w, h, at);
   // The blur runs on a copy k times smaller (σ/k ≥ 4 pixels there), which looks the same once
   // scaled back and is many times faster; the blurred copy is smooth enough for bilinear scaling
   // ('low', bicubic costs ~5× more). Without canvas filters (older Safari) the scaling alone
   // blurs, a few pixels per σ.
   const filter = canFilter(context), k = filter ? Math.max(1, Math.floor(look.sigma / 4)) : Math.max(2, look.sigma / 1.5);
-  if (k === 1) { context.filter = `blur(${look.sigma}px)`; context.drawImage(source, x, y, w, h); context.filter = 'none'; return; }
+  if (k === 1) { context.filter = `blur(${look.sigma}px)`; place(context, source, x, y, w, h, at); context.filter = 'none'; return; }
   const small = look.small ??= new OffscreenCanvas(Math.ceil(width / k), Math.ceil(height / k)), tiny = small.getContext('2d');
   tiny.clearRect(0, 0, small.width, small.height); tiny.imageSmoothingQuality = 'high';
   if (filter) tiny.filter = `blur(${look.sigma / k}px)`;
-  tiny.drawImage(source, x / k, y / k, w / k, h / k); tiny.filter = 'none';
+  place(tiny, source, x / k, y / k, w / k, h / k, at); tiny.filter = 'none';
   context.imageSmoothingQuality = 'low'; context.drawImage(small, 0, 0, small.width * k, small.height * k);
 }
 const veil = (context, look) => { if (look.veil) { context.fillStyle = `rgba(0,0,0,${look.veil})`; context.fillRect(0, 0, context.canvas.width, context.canvas.height); } };
@@ -165,7 +175,7 @@ async function encodeVideo(file, kind, canvas, fit, look, onProgress, signal, { 
 }
 
 // file: File; size: [width, height]; fit: 'cover' | 'contain'; effects: { blur, dim } from 0 to 1;
-// frame: { zoom, x, y } (menuFrame).
+// frame: { zoom, x, y, rotate, flipX, flipY } (menuFrame).
 export async function encodeMenuVideo(file, { size: [width, height], fit, effects = {}, frame = null, piece = null, crossfade = 0, onProgress = () => {}, signal } = {}) {
   if (file.size > MENU_LIMITS.bytes) throw new MenuVideoError(t('Файл больше {size} МБ.', { size: MENU_LIMITS.bytes / 1_000_000 }));
   const kind = mediaKind(new Uint8Array(await file.slice(0, 16).arrayBuffer()));

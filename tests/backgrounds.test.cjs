@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { mkdtempSync, rmSync } = require('node:fs');
+const { existsSync, mkdtempSync, rmSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const { join } = require('node:path');
 const { spawnSync } = require('node:child_process');
@@ -70,6 +70,31 @@ test('shared backgrounds: captcha, ffprobe-checked upload, moderation, gallery, 
   assert.equal(part.status, 206); assert.equal(part.body.length, 90); assert.deepEqual([...part.body], [...video.subarray(10, 100)]);
   const cover = await call(`/backgrounds/${id}/poster.jpg`);
   assert.equal(cover.status, 200); assert.equal(cover.headers.get('content-type'), 'image/jpeg');
+  // Validators (2026-10-04): without them Chrome kept no ranged part and downloaded the video on every hover.
+  const tag = full.headers.get('etag');
+  assert.ok(tag && full.headers.get('last-modified'));
+  assert.equal((await call(`/backgrounds/${id}/video.webm`, 'GET', null, { 'If-None-Match': tag })).status, 304);
+  assert.equal((await call(`/backgrounds/${id}/video.webm`, 'GET', null, { Range: 'bytes=10-99', 'If-Range': tag })).status, 206);
+  assert.equal((await call(`/backgrounds/${id}/video.webm`, 'GET', null, { Range: 'bytes=10-99', 'If-Range': '"old"' })).status, 200, 'a stale If-Range gets the whole file');
+  // A media file sets no cookie, even for a browser without one.
+  const bare = await fetch(`${base}/backgrounds/${id}/poster.jpg`);
+  assert.equal(bare.status, 200); assert.deepEqual(bare.headers.getSetCookie(), []);
+  // The light hover copy (PREVIEW) is made after the submission; until then the full video stands in, revalidated.
+  const { PREVIEW } = await import('../server/catalog-backgrounds.mjs');
+  const copy = join(media, `${id}.preview.webm`);
+  for (let i = 0; i < 100 && !existsSync(copy); i++) await new Promise((resolve) => setTimeout(resolve, 200));
+  assert.ok(existsSync(copy), 'the hover copy is made after the submission');
+  const listed = (await call('/backgrounds')).body.items[0].preview;
+  assert.match(listed, /^[0-9a-z]+$/, 'the list gives the copy\'s version');
+  const light = await call(`/backgrounds/${id}/preview.webm?v=${listed}`);
+  assert.equal(light.status, 200); assert.match(light.headers.get('cache-control'), /immutable/); assert.ok(light.body.length < video.length);
+  const probe = JSON.parse(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=width,height,codec_name', '-of', 'json', copy]).stdout.toString()).streams[0];
+  assert.deepEqual([probe.codec_name, probe.width, probe.height], ['vp9', PREVIEW.width, 360]);
+  rmSync(copy);
+  assert.equal((await call('/backgrounds')).body.items[0].preview, null, 'no copy: the card plays the full video');
+  assert.equal((await call(`/backgrounds/${id}/preview.webm`)).status, 404);
+  assert.equal(await new CatalogBackgrounds(store, { dir: media }).previewMissing(), 1);
+  assert.ok(existsSync(copy));
   assert.equal((await call('/backgrounds?tag=Аниме')).body.total, 0);
   assert.equal((await call('/backgrounds?tag=Космос')).body.total, 1);
   assert.equal((await call('/backgrounds?tag=Нет')).status, 400);

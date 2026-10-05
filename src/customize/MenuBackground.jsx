@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, Modal, Notice, SegmentSwitch } from '../catalog/Common.jsx';
-import { GRID_DIM, MENU_FRAME, MENU_FRAME_ZOOM, MENU_LIMITS, MENU_SIZES, fitPiece, framePlacement, mediaKind, menuFrame, menuLook } from '../../scripts/menu-background.mjs';
+import { GRID_DIM, MENU_FRAME, MENU_FRAME_ZOOM, MENU_LIMITS, MENU_SIZES, fitPiece, frameAngle, framePlacement, mediaKind, menuFrame, menuLook } from '../../scripts/menu-background.mjs';
 import menuMeta from '../../assets/dota-menu/meta.json';
 import { SEASON_EVENT, downloadPack, folderOf, packBackground, removeCommand } from './background-pack.js';
 import { getBackground } from '../../scripts/background-library.mjs';
@@ -93,14 +93,38 @@ function Install({ folder, delivery, handed, onClose }) {
 // row of sliders, and a line about framing by dragging the picture in the preview, with a way back
 // to the middle.
 function Effects({ blur, onBlur, dim, onDim, frame = null, onFrame }) {
-  const value = frame && Math.round(frame.zoom * 100), max = MENU_FRAME_ZOOM * 100, moved = frame && (frame.zoom !== 1 || frame.x !== 0.5 || frame.y !== 0.5);
+  const value = frame && Math.round(frame.zoom * 100), max = MENU_FRAME_ZOOM * 100;
+  const moved = frame && (frame.zoom !== 1 || frame.x !== 0.5 || frame.y !== 0.5 || frame.rotate || frame.flipX || frame.flipY);
   return <>
     <div className={`custom-effects${frame ? ' has-zoom' : ''}`}><Slider label={t('Размытие')} value={blur} onChange={onBlur}/><Slider label={t('Затемнение')} value={dim} onChange={onDim}/>
       {frame && <label className="custom-slider"><span>{t('Масштаб')}</span>
         <input type="range" min="100" max={max} step="5" value={value} onChange={(event) => onFrame(menuFrame({ ...frame, zoom: Number(event.target.value) / 100 }))} style={{ '--fill': `${((value - 100) / (max - 100)) * 100}%` }}/>
         <output>{value}%</output></label>}</div>
+    {frame && <FrameTools frame={frame} onFrame={onFrame}/>}
     {frame && <p className="custom-hint">{t('Тяни картинку в превью, чтобы выбрать кадр.')}{moved && <> <button type="button" className="catalog-link" onClick={() => onFrame(MENU_FRAME)}>{t('Сбросить кадр')}</button></>}</p>}
   </>;
+}
+// Mirror, turn and centre the picture, as the editor does with objects (asked for on 2026-10-05):
+// mirror left to right or top to bottom, turn by a step or by hand (−180° to 180°), centre it across or
+// down. The video is drawn the same way (menu-video.js).
+const TURNS = [[-90, '↺ 90°'], [-45, '↺ 45°'], [45, '↻ 45°'], [90, '↻ 90°'], [180, '180°']];
+function FrameTools({ frame, onFrame }) {
+  const set = (change) => onFrame(menuFrame({ ...frame, ...change }));
+  const fill = `${((frame.rotate + 180) / 360) * 100}%`;
+  return <div className="custom-frame-tools">
+    <div className="custom-frame-groups"><div className="custom-frame-group"><span>{t('Отразить')}</span><div>
+      <button type="button" className="custom-tool" aria-pressed={frame.flipX} title={t('Отразить по горизонтали')} aria-label={t('Отразить по горизонтали')} onClick={() => set({ flipX: !frame.flipX })}><Icon name="flip" size={16}/></button>
+      <button type="button" className="custom-tool" aria-pressed={frame.flipY} title={t('Отразить по вертикали')} aria-label={t('Отразить по вертикали')} onClick={() => set({ flipY: !frame.flipY })}><Icon name="flipVertical" size={16}/></button></div></div>
+      <div className="custom-frame-group"><span>{t('Выровнять')}</span><div>
+      <button type="button" className="custom-tool" title={t('По центру по горизонтали')} aria-label={t('По центру по горизонтали')} disabled={frame.x === 0.5} onClick={() => set({ x: 0.5 })}><Icon name="alignHCenter" size={16}/></button>
+      <button type="button" className="custom-tool" title={t('По центру по вертикали')} aria-label={t('По центру по вертикали')} disabled={frame.y === 0.5} onClick={() => set({ y: 0.5 })}><Icon name="alignVMiddle" size={16}/></button></div></div></div>
+    <div className="custom-frame-group is-turns"><span>{t('Повернуть')}</span><div>
+      {TURNS.map(([step, label]) => <button key={step} type="button" className="custom-tool is-text" onClick={() => set({ rotate: frameAngle(frame.rotate + step) })}>{label}</button>)}</div></div>
+    <label className="custom-slider"><span>{t('Поворот вручную')}</span>
+      <input type="range" min="-180" max="180" step="1" value={Math.round(frame.rotate)} onChange={(event) => set({ rotate: Number(event.target.value) })} style={{ '--fill': fill }}/>
+      <output><input className="custom-angle" type="number" min="-180" max="180" step="1" value={Math.round(frame.rotate * 10) / 10} aria-label={t('Угол поворота в градусах')}
+        onChange={(event) => event.target.value !== '' && Number.isFinite(Number(event.target.value)) && set({ rotate: frameAngle(Number(event.target.value)) })}/>°</output></label>
+  </div>;
 }
 // A 0–100 % slider in the panel; 0 reads «нет».
 function Slider({ label, value, onChange }) {
@@ -342,7 +366,8 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
   const look = menuLook({ blur: blur / 100, dim: dim / 100 });
   // The picture where the video will have it (framePlacement, as menu-video.js draws it); until its
   // size is known, or once the video is built (it is the screen itself), over the whole screen.
-  const placed = (place) => ({ left: `${place.x * 100}%`, top: `${place.y * 100}%`, width: `${place.w * 100}%`, height: `${place.h * 100}%` });
+  const placed = (place) => ({ left: `${place.x * 100}%`, top: `${place.y * 100}%`, width: `${place.w * 100}%`, height: `${place.h * 100}%`,
+    ...(place.rotate || place.flipX || place.flipY ? { transform: `rotate(${place.rotate}deg) scale(${place.flipX ? -1 : 1}, ${place.flipY ? -1 : 1})` } : {}) });
   const WHOLE = { x: 0, y: 0, w: 1, h: 1 };
   const mediaFrame = mediaRatio ? framePlacement(screenRatio, mediaRatio, fit, look.zoom, frame) : WHOLE, mediaPlace = result ? WHOLE : mediaFrame;
   const measured = (width, height) => width && height && setMediaRatio(width / height);
@@ -367,7 +392,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
     // The picture follows the pointer: a shift of d screens moves the place by d / (1 − size).
     const shift = (d, size, value) => (Math.abs(1 - size) < 1e-3 ? value : value + d / (1 - size));
     const { place, frame: from, box } = framing;
-    framing.set(menuFrame({ ...from, x: shift((event.clientX - framing.x) / box.width, place.w, from.x), y: shift((event.clientY - framing.y) / box.height, place.h, from.y) }));
+    framing.set(menuFrame({ ...from, x: shift((event.clientX - framing.x) / box.width, place.bw ?? place.w, from.x), y: shift((event.clientY - framing.y) / box.height, place.bh ?? place.h, from.y) }));
   };
   const frameUp = () => setFraming(null);
   const drop = { onDragOver: (event) => { event.preventDefault(); setDragging(true); }, onDragLeave: () => setDragging(false),

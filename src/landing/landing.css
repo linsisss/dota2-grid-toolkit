@@ -65,6 +65,9 @@ svg { flex-shrink: 0; display: block; }
   margin: 0 auto; width: 100%; max-width: 1680px; padding: 26px 5%;
   display: flex; align-items: center; justify-content: space-between; gap: 24px; z-index: 3;
 }
+.landing-nav-link { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px; border: 1px solid var(--lp-line); border-radius: 999px; background: #15141acc; backdrop-filter: blur(8px); color: var(--lp-muted); font-size: 14px; text-decoration: none; position: relative; z-index: 3; transition: color 160ms ease, border-color 160ms ease, background 160ms ease; }
+.landing-nav-link:hover { color: var(--lp-ink); border-color: #c4b5ed66; background: #ffffff08; }
+.landing-nav-link svg { width: 17px; height: 17px; }
 .landing-brand { display: inline-flex; align-items: center; gap: 12px; white-space: nowrap; }
 .landing-brand > svg { width: 30px; height: 30px; stroke: var(--lp-accent); stroke-width: 2.4; }
 .landing-brand > span { font-size: 18px; font-weight: 700; letter-spacing: -.015em; }
@@ -211,13 +214,13 @@ svg { flex-shrink: 0; display: block; }
 .landing-stage .landing-footer { padding-top: 30px; }
 /* The stage and the advertising place under it (src/Spot.jsx). */
 .landing-visual { display: grid; min-width: 0; }
-.landing-visual .visual-stage { margin-top: -28px; padding: 0 0 44px; }
+.landing-visual.has-spot .visual-stage { margin-top: -28px; padding: 0 0 44px; }
 /* Asked for on 2026-10-04: no scrolling on the first screen. The stage and the banner are sized by the
    window's height: what is left between the header and the footer (--landing-room) holds the stage
    (≈ 0.574 × its width), the banner (2.4 : 1, three quarters of the stage) and their gaps. */
 @media (min-width: 701px) {
-  .landing-visual { --landing-room: calc(100svh - 240px); --stage-width: calc((var(--landing-room) - 18px) * 1.128); }
-  .landing-visual .visual-stage { justify-self: center; width: min(112%, var(--stage-width)); margin-left: 0; margin-right: 0; }
+  .landing-visual.has-spot { --landing-room: calc(100svh - 240px); --stage-width: calc((var(--landing-room) - 18px) * 1.128); }
+  .landing-visual.has-spot .visual-stage { justify-self: center; width: min(112%, var(--stage-width)); margin-left: 0; margin-right: 0; }
   /* As tall as a 2.4 : 1 banner three quarters of the stage wide, whatever the banner's proportions. */
   .landing-visual .gs-spot.is-landing { width: min(100%, calc(var(--stage-width) * .75 * var(--spot-ratio, 2.4) / 2.4)); }
 }

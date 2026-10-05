@@ -193,3 +193,11 @@
    rules (styles/editor-controls.css) indented them and spaced their rows apart. */
 #modal .export-guide .vg-chapters { margin: 10px 0 0; padding: 0; }
 #modal .export-guide .vg-chapters > li { margin: 0; padding: 0; }
+/* «Шрифт холста» (scripts/app.mjs openCanvasFont): Radiance and the «Шрифт для Dota 2» tab's fonts, each name in its face. */
+#modal .canvas-font-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+#modal .canvas-font-option { display: grid; gap: 2px; justify-items: start; padding: 12px 14px; border: 1px solid #ffffff17; border-radius: 10px; background: #ffffff05; color: inherit; text-align: left; cursor: pointer; transition: border-color .15s, background .15s; }
+#modal .canvas-font-option:hover { border-color: #c4b5ed66; }
+#modal .canvas-font-option[aria-pressed='true'] { border-color: #c4b5ed; background: #c4b5ed14; }
+#modal .canvas-font-option b { font-size: 20px; font-weight: 600; line-height: 1.2; }
+#modal .canvas-font-option[data-canvas-font=''] b { font-family: StudioRadiance, sans-serif; }
+#modal .canvas-font-option small { color: var(--win-muted, #afa7bf); font-size: 12px; }

@@ -35,9 +35,14 @@ function studioSource(source) {
 
 // The framing (1.6.1; recipes before it have none: the middle, not enlarged).
 function studioFrame(value) {
-  if (value == null) return { ...MENU_FRAME };
+  if (value == null) return { zoom: MENU_FRAME.zoom, x: MENU_FRAME.x, y: MENU_FRAME.y };
   const number = (v, low, high) => (Number.isFinite(v) && v >= low && v <= high ? Math.round(v * 1000) / 1000 : broken());
-  return { zoom: number(value.zoom, 1, MENU_FRAME_ZOOM), x: number(value.x, 0, 1), y: number(value.y, 0, 1) };
+  // Turned and mirrored since 2026-10-05; recipes before have neither.
+  const flag = (v) => (v == null ? false : typeof v === 'boolean' ? v : broken());
+  const frame = { zoom: number(value.zoom, 1, MENU_FRAME_ZOOM), x: number(value.x, 0, 1), y: number(value.y, 0, 1) };
+  const rotate = value.rotate == null ? 0 : number(value.rotate, -180, 180), flipX = flag(value.flipX), flipY = flag(value.flipY);
+  // Kept only when set, so recipes without them stay as they were.
+  return { ...frame, ...(rotate ? { rotate } : {}), ...(flipX ? { flipX } : {}), ...(flipY ? { flipY } : {}) };
 }
 function studioPiece(value) {
   if (value == null) return null;

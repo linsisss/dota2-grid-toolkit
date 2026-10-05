@@ -1,0 +1,47 @@
+{
+  "version": "1.8.15",
+  "date": "2026-10-05",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.8.15",
+  "sections": [
+    {
+      "title": "Редактор",
+      "changes": [
+        { "text": "Шрифт холста можно выбрать из шрифтов вкладки «Шрифт для Dota 2», а не только загрузить файлом" }
+      ]
+    },
+    {
+      "title": "Фон главного меню",
+      "changes": [
+        { "text": "Картинку фона можно отразить, повернуть и выровнять по центру, как объекты в редакторе", "children": ["Повороты на 45°, 90° и 180° кнопками или на любой угол вручную"] }
+      ]
+    },
+    {
+      "title": "Мастерская",
+      "changes": [
+        { "text": "Фоны в мастерской при наведении показывают облегчённое превью: оно грузится в разы быстрее" }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Editor",
+        "changes": [
+          { "text": "The canvas font can be picked from the «Dota 2 font» tab's fonts, not only loaded from a file" }
+        ]
+      },
+      {
+        "title": "Main menu background",
+        "changes": [
+          { "text": "The background picture can be mirrored, rotated and centred, like objects in the editor", "children": ["Turn by 45°, 90° and 180° with buttons or to any angle by hand"] }
+        ]
+      },
+      {
+        "title": "Workshop",
+        "changes": [
+          { "text": "Backgrounds in the Workshop play a light preview on hover: it loads many times faster" }
+        ]
+      }
+    ]
+  }
+}

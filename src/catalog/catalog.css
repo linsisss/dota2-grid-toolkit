@@ -583,3 +583,46 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 .background-comments video { width:100%; aspect-ratio:16 / 9; border-radius:12px; background:#0f0e13; object-fit:cover; }
 .background-comments-button { position:relative; display:inline-flex; align-items:center; gap:4px; width:auto!important; padding:0 8px; }
 .background-comments-button span { font-size:13px; font-variant-numeric:tabular-nums; }
+
+/* «Реклама» (src/catalog/Advertise.jsx): who comes, where the banner stands, how to place it. */
+.mk-page { max-width:980px; }
+.mk-head { display:flex; align-items:flex-start; justify-content:space-between; gap:28px; margin-bottom:12px; }
+.mk-head h1 { margin:0 0 12px; font-size:40px; letter-spacing:-.02em; }
+.mk-head p { margin:0; max-width:62ch; font-size:17px; line-height:1.6; color:#dcd6e6; }
+.mk-page > section { padding:30px 0; border-top:1px solid var(--cat-line); }
+.mk-page h2 { margin:0 0 16px; font-size:22px; }
+.mk-write { flex:none; }
+.mk-note { margin:12px 0 0; font-size:13px; }
+.mk-contact p { margin:0 0 16px; max-width:62ch; line-height:1.6; color:#dcd6e6; }
+/* The statistics, drawn like the admin panel's. */
+.mk-stats { margin:0; padding:20px; border:1px solid #ffffff17; border-radius:16px; background:linear-gradient(180deg,#201c29,#17151d); box-shadow:0 24px 50px -30px #000; display:grid; gap:18px; }
+.mk-stats figcaption { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--cat-muted); }
+.mk-stats figcaption small { margin-left:auto; font-weight:400; letter-spacing:0; text-transform:none; }
+.mk-days { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.mk-days section, .mk-week section { padding:16px; border:1px solid #ffffff12; border-radius:12px; background:#ffffff05; }
+.mk-stats h3 { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin:0 0 12px; font-size:16px; }
+.mk-stats h3 small { color:var(--cat-muted); font-size:13px; font-weight:400; }
+.mk-days dl { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0; }
+.mk-days dl div { display:grid; gap:2px; }
+.mk-stats dt { color:var(--cat-muted); font-size:12px; }
+.mk-stats dd { margin:0; font-size:24px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
+.mk-days dl div:first-child dd { color:var(--cat-accent); }
+.mk-week { display:grid; grid-template-columns:1fr 1.3fr; gap:14px; }
+.mk-big { display:flex; align-items:baseline; gap:8px; margin:0 0 14px; font-size:30px; font-weight:700; font-variant-numeric:tabular-nums; }
+.mk-big small { font-size:13px; font-weight:400; color:var(--cat-muted); }
+.mk-split { height:10px; border-radius:99px; background:#7fd1a0; overflow:hidden; }
+.mk-split i { display:block; height:100%; background:var(--cat-accent); }
+.mk-legend { display:flex; flex-wrap:wrap; gap:6px 16px; margin:10px 0 0; font-size:12px; color:var(--cat-muted); }
+.mk-legend span { display:inline-flex; align-items:center; gap:6px; }
+.mk-legend b { width:9px; height:9px; border-radius:50%; background:var(--cat-accent); }
+.mk-legend b.is-phone { background:#7fd1a0; }
+.mk-sources { margin:0; padding:0; list-style:none; display:grid; gap:8px; }
+.mk-sources li { display:grid; grid-template-columns:110px minmax(0,1fr) auto; align-items:center; gap:10px; font-size:13px; }
+.mk-sources i { height:8px; min-width:3px; border-radius:99px; background:linear-gradient(90deg,#8f7fd0,var(--cat-accent)); }
+.mk-sources b { font-variant-numeric:tabular-nums; color:var(--cat-muted); font-weight:500; }
+@media(max-width:760px) {
+  .mk-head { flex-direction:column; gap:18px; }
+  .mk-head h1 { font-size:32px; }
+  .mk-days, .mk-week { grid-template-columns:1fr; }
+    .mk-sources li { grid-template-columns:90px minmax(0,1fr) auto; }
+}

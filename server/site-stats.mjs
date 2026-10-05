@@ -148,6 +148,23 @@ export class SiteStats {
   }
 
   // The report for the last `days` days (today included), with the days before as the comparison.
+  // For advertisers (the workshop's «Реклама», asked for on 2026-10-05): yesterday's and the day
+  // before's visitors and views, the last 7 full days' devices and sources. Public, so nothing more;
+  // worked out once in 10 minutes.
+  audience() {
+    const now = this.store.now();
+    if (this.audienceCache && now - this.audienceCache.at < 600_000) return this.audienceCache.value;
+    const store = this.store, today = mskDay(now), from = today - 7;
+    const day = (d) => { const { visitors, views } = this.kpi(d, d + 1); return { day: d, date: d * DAY - MSK, visitors, views }; };
+    const seen = store.get('SELECT count(DISTINCT visitor) n, count(DISTINCT CASE WHEN mobile=1 THEN visitor END) mobile FROM visits WHERE day>=? AND day<?', from, today);
+    const sources = Object.entries(store.all('SELECT host, count(*) visitors FROM (SELECT max(referrer) host FROM visits WHERE day>=? AND day<? GROUP BY visitor) GROUP BY host', from, today)
+      .reduce((sum, row) => { const key = row.host ? sourceOf(row.host) : 'direct'; sum[key] = (sum[key] || 0) + row.visitors; return sum; }, {}))
+      .map(([source, visitors]) => ({ source, label: SOURCES[source], visitors })).sort((a, b) => b.visitors - a.visitors);
+    const value = { generated: now, days: [day(today - 1), day(today - 2)],
+      week: { visitors: seen.n, mobile: seen.mobile, desktop: seen.n - seen.mobile, sources } };
+    this.audienceCache = { at: now, value };
+    return value;
+  }
   report(days = 30) {
     const span = STAT_PERIODS.includes(Number(days)) ? Number(days) : 30, now = this.store.now(), cached = this.cache.get(span);
     if (cached && now - cached.at < 60_000) return cached.value;

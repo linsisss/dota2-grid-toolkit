@@ -39,19 +39,32 @@ export function menuLook({ blur = 0, dim = 0 } = {}, height = 1080) {
 // Framing (1.6.1): which part of the picture shows. `zoom` (1 to MENU_FRAME_ZOOM) enlarges it after
 // it is fitted, `x` and `y` (0 to 1, 0.5 the middle) place it: 0 puts its left (top) edge at the
 // screen's, 1 its right (bottom) edge; a picture smaller than the screen moves inside it.
-export const MENU_FRAME = Object.freeze({ zoom: 1, x: 0.5, y: 0.5 });
+// Turned and mirrored (asked for on 2026-10-05, as the editor turns and mirrors objects): `rotate` in
+// degrees (−180 to 180, clockwise), `flipX` / `flipY` mirror it left to right / top to bottom.
+export const MENU_FRAME = Object.freeze({ zoom: 1, x: 0.5, y: 0.5, rotate: 0, flipX: false, flipY: false });
 export const MENU_FRAME_ZOOM = 3;
+// Any angle into −180…180, a tenth of a degree at most.
+export const frameAngle = (degrees) => { const a = ((Math.round((Number(degrees) || 0) * 10) / 10 % 360) + 540) % 360 - 180; return a === -180 ? 180 : a || 0; };
 export function menuFrame(frame) {
   const value = (v, low, high, fallback) => (Number.isFinite(v) ? Math.min(high, Math.max(low, Math.round(v * 1000) / 1000)) : fallback);
-  return { zoom: value(frame?.zoom, 1, MENU_FRAME_ZOOM, 1), x: value(frame?.x, 0, 1, 0.5), y: value(frame?.y, 0, 1, 0.5) };
+  return { zoom: value(frame?.zoom, 1, MENU_FRAME_ZOOM, 1), x: value(frame?.x, 0, 1, 0.5), y: value(frame?.y, 0, 1, 0.5),
+    rotate: Number.isFinite(frame?.rotate) ? frameAngle(frame.rotate) : 0, flipX: frame?.flipX === true, flipY: frame?.flipY === true };
 }
 // Where the picture lies on the screen, in fractions of the screen's width and height: filling it
 // (cover) or whole in it (contain), enlarged by the look's zoom (menuLook) and the frame's, placed by
 // the frame. The builder draws the video's frames and shows its preview with the same numbers.
+// x, y, w, h: the picture's own rectangle before it is turned, about its centre, by `rotate`; turned,
+// «Заполнить» still covers the whole screen and «Целиком» shows the whole picture. bw, bh: the turned
+// picture's bounding box, which x and y of the frame move inside the screen.
 export function framePlacement(screenRatio, pictureRatio, fit, zoom = 1, frame = MENU_FRAME) {
-  const { zoom: enlarge, x, y } = menuFrame(frame), r = pictureRatio / screenRatio, pick = fit === 'cover' ? Math.max : Math.min;
-  const w = pick(1, r) * zoom * enlarge, h = pick(1, 1 / r) * zoom * enlarge;
-  return { x: (1 - w) * x, y: (1 - h) * y, w, h };
+  const { zoom: enlarge, x, y, rotate, flipX, flipY } = menuFrame(frame), a = rotate * Math.PI / 180;
+  const c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a)) < 1e-12 ? 0 : Math.abs(Math.sin(a));
+  // In the screen's height: the screen is screenRatio × 1, the picture pictureRatio × 1 before scaling.
+  const W = screenRatio, scale = fit === 'cover' ? Math.max((W * c + s) / pictureRatio, W * s + c) : Math.min(W / (pictureRatio * c + s), 1 / (pictureRatio * s + c));
+  const k = scale * zoom * enlarge, w = pictureRatio * k / W, h = k;
+  const bw = (pictureRatio * k * c + k * s) / W, bh = pictureRatio * k * s + k * c;
+  const cx = (1 - bw) * x + bw / 2, cy = (1 - bh) * y + bh / 2;
+  return { x: cx - w / 2, y: cy - h / 2, w, h, bw, bh, rotate, flipX, flipY };
 }
 export const menuBitrate = (seconds) => Math.min(MENU_LIMITS.bitrate, Math.floor(MENU_LIMITS.videoBytes * 8 / Math.max(1, seconds)));
 

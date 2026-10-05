@@ -24,7 +24,7 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .custom-screen { container-type:inline-size; position:relative; width:min(100cqw, calc(100cqh * var(--ratio))); height:min(100cqh, calc(100cqw / var(--ratio))); background:#000; border-radius:10px; overflow:hidden; box-shadow:0 0 0 1px var(--cat-line), 0 24px 60px #0007; transition:--ratio 460ms var(--ease), box-shadow 200ms ease; }
 .custom-screen > img, .custom-screen > video { position:absolute; inset:0; width:100%; height:100%; display:block; }
 /* A video plays through two elements (Trim.jsx LoopPreview) to show the crossfaded loop. */
-.custom-loop { position:absolute; inset:0; filter:blur(calc(var(--blur, 0) * 100cqw / var(--ratio))); transition:left 460ms var(--ease), top 460ms var(--ease), width 460ms var(--ease), height 460ms var(--ease), filter 200ms ease; animation:custom-media-in 420ms var(--ease) both; }
+.custom-loop { position:absolute; inset:0; filter:blur(calc(var(--blur, 0) * 100cqw / var(--ratio))); transition:left 460ms var(--ease), top 460ms var(--ease), width 460ms var(--ease), height 460ms var(--ease), transform 460ms var(--ease), filter 200ms ease; animation:custom-media-in 420ms var(--ease) both; }
 .custom-loop > video { position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:contain; }
 /* The piece of the video and its loop, under the preview. */
 .custom-trim { display:grid; gap:8px; padding:0 2px; animation:custom-enter 280ms var(--ease) both; }
@@ -43,7 +43,7 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .custom-trim-handle::after { content:''; position:absolute; left:50%; top:12px; bottom:12px; width:2px; margin-left:-1px; border-radius:1px; background:#231b35; }
 .custom-trim-playhead { position:absolute; top:3px; bottom:3px; width:2px; margin-left:-1px; border-radius:1px; background:var(--cat-accent); opacity:.55; pointer-events:none; }
 /* A new file fades in; the fit (contain ↔ cover) is a scale, so it glides. */
-.custom-media { object-fit:contain; filter:blur(calc(var(--blur, 0) * 100cqw / var(--ratio))); transition:left 460ms var(--ease), top 460ms var(--ease), width 460ms var(--ease), height 460ms var(--ease), filter 200ms ease; animation:custom-media-in 420ms var(--ease) both; }
+.custom-media { object-fit:contain; filter:blur(calc(var(--blur, 0) * 100cqw / var(--ratio))); transition:left 460ms var(--ease), top 460ms var(--ease), width 460ms var(--ease), height 460ms var(--ease), transform 460ms var(--ease), filter 200ms ease; animation:custom-media-in 420ms var(--ease) both; }
 /* Framing: the picture is dragged in the preview (MenuBackground: frameDown), without easing then. */
 .custom-screen.can-frame { cursor:grab; touch-action:none; user-select:none; }
 .custom-screen.can-frame :is(img, video) { -webkit-user-drag:none; user-select:none; }
@@ -406,3 +406,18 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .font-scene-handle span::before, .font-scene-handle span::after { content: ''; position: absolute; top: 50%; width: 0; height: 0; margin-top: -5px; border: 5px solid transparent; }
 .font-scene-handle span::before { left: 3px; border-right-color: #c4b5ed; }
 .font-scene-handle span::after { right: 3px; border-left-color: #c4b5ed; }
+
+/* Mirror, turn and centre the picture (MenuBackground.jsx FrameTools), the editor's buttons. */
+.custom-frame-tools { display:grid; gap:10px; margin-top:4px; }
+.custom-frame-groups { display:flex; flex-wrap:wrap; gap:10px 22px; }
+.custom-frame-group { display:grid; gap:5px; font-size:13px; }
+.custom-frame-group > span { color:var(--cat-muted); font-size:12px; }
+.custom-frame-group > div { display:flex; gap:5px; }
+.custom-frame-group.is-turns > div { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); }
+.custom-frame-group.is-turns .custom-tool { min-width:0; padding:0 4px; font-size:12px; }
+.custom-tool { display:inline-flex; align-items:center; justify-content:center; min-width:34px; height:32px; padding:0 9px; border:1px solid var(--cat-line); border-radius:8px; background:#ffffff08; color:var(--cat-ink); font:inherit; font-size:13px; font-variant-numeric:tabular-nums; cursor:pointer; transition:border-color 120ms ease, background 120ms ease; }
+.custom-tool:hover:not(:disabled) { border-color:#c4b5ed66; background:#ffffff10; }
+.custom-tool[aria-pressed=true] { border-color:var(--cat-accent); background:#c4b5ed1f; color:var(--cat-accent); }
+.custom-tool:disabled { opacity:.45; cursor:default; }
+.custom-frame-tools .custom-slider output { display:flex; align-items:center; }
+.custom-slider output .custom-angle { width:50px; margin:0 2px 0 0!important; padding:1px 4px!important; border:1px solid var(--cat-line); border-radius:6px; background:var(--cat-field); color:var(--cat-ink); font:inherit; font-size:12px; text-align:right; }

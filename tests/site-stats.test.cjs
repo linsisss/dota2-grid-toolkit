@@ -161,3 +161,21 @@ test('statistics: a new account keeps where it came from at its first sign-in; t
   assert.equal(users.total, 2); assert.equal(users.all, 4);
   assert.deepEqual(Object.fromEntries(users.sources.map((row) => [row.source, row.accounts])), { youtube: 2, unknown: 2 }, 'nothing known of the others');
 });
+
+// The workshop's «Реклама» (2026-10-05): yesterday and the day before, the last 7 full days, the site's totals — today not counted.
+test('the advertisers\' numbers: yesterday, the day before and the week, public', async (t) => {
+  const [{ CatalogStore }, { SiteStats, DAY, mskDay }] = await modules;
+  const store = new CatalogStore(':memory:', 'test-audience'); t.after(() => store.close());
+  let clock = Date.UTC(2026, 9, 5, 12); store.now = () => clock;
+  const stats = new SiteStats(store), today = mskDay(clock);
+  clock -= 2 * DAY; stats.visit('home', 'a', { referrer: 't.me', mobile: true }); stats.visit('workshop', 'b');
+  clock += DAY; stats.visit('home', 'a'); stats.visit('home', 'a'); stats.visit('home', 'c', { referrer: 'youtube.com' });
+  clock += DAY; stats.visit('home', 'today');
+  const value = stats.audience();
+  assert.deepEqual(value.days.map((d) => [d.day, d.visitors, d.views]), [[today - 1, 2, 3], [today - 2, 2, 2]]);
+  assert.equal(value.days[0].date, (today - 1) * DAY - 3 * 3_600_000, 'the day starts at midnight, Moscow time');
+  assert.deepEqual([value.week.visitors, value.week.mobile, value.week.desktop], [3, 1, 2], 'today aside');
+  assert.deepEqual(Object.fromEntries(value.week.sources.map((s) => [s.source, s.visitors])), { telegram: 1, youtube: 1, direct: 1 });
+  assert.deepEqual(Object.keys(value.days[0]).sort(), ['date', 'day', 'views', 'visitors'], 'visitors and views only');
+  stats.visit('home', 'later'); assert.equal(stats.audience(), value, 'kept for 10 minutes');
+});

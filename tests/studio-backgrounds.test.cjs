@@ -8,6 +8,9 @@ const recipe = (extra = {}) => ({ aspect: '16:9', fit: 'cover', blur: 40, dim: 2
 test('studio recipes: the settings and the source, nothing else', async () => {
   const { studioRecipe, defaultStudioName } = await import('../scripts/studio-background.mjs');
   assert.deepEqual(studioRecipe(recipe()), recipe());
+  // Turned and mirrored (2026-10-05): kept; a wrong turn is refused.
+  assert.deepEqual(studioRecipe(recipe({ frame: { zoom: 1, x: 0.5, y: 0.5, rotate: -90, flipX: true } })).frame, { zoom: 1, x: 0.5, y: 0.5, rotate: -90, flipX: true });
+  assert.throws(() => studioRecipe(recipe({ frame: { zoom: 1, x: 0.5, y: 0.5, rotate: 400 } })));
   const own = studioRecipe(recipe({ piece: null, crossfade: 0, source: { kind: 'file', name: 'Лес.MP4', size: 123, type: 'video', label: 'MP4', path: 'C:/x' } }));
   assert.deepEqual(own.source, { kind: 'file', name: 'Лес.MP4', size: 123, type: 'video', label: 'MP4' }, 'only what identifies the file');
   assert.equal(defaultStudioName(own.source), 'Лес');
@@ -30,7 +33,7 @@ test('studio recipes: the settings and the source, nothing else', async () => {
 });
 
 test('framing: the picture fills or fits the screen, is enlarged and placed as the builder draws it', async () => {
-  const { framePlacement, menuFrame } = await import('../scripts/menu-background.mjs');
+  const { framePlacement, menuFrame, frameAngle } = await import('../scripts/menu-background.mjs');
   const close = (actual, expected) => { for (const key of Object.keys(expected)) assert.ok(Math.abs(actual[key] - expected[key]) < 1e-9, `${key}: ${actual[key]} ≠ ${expected[key]}`); };
   // A 4:3 picture on a 16:9 screen: filling it is 4/3 of the screen high, whole it is 3/4 as wide.
   close(framePlacement(16 / 9, 4 / 3, 'cover'), { x: 0, y: -1 / 6, w: 1, h: 4 / 3 });
@@ -39,7 +42,23 @@ test('framing: the picture fills or fits the screen, is enlarged and placed as t
   close(framePlacement(16 / 9, 4 / 3, 'cover', 1, { zoom: 2, x: 0.5, y: 0 }), { x: -0.5, y: 0, w: 2, h: 8 / 3 });
   // The blur's enlargement and the frame's multiply.
   close(framePlacement(16 / 9, 16 / 9, 'cover', 1.1, { zoom: 1.5, x: 1, y: 0.5 }), { x: 1 - 1.65, y: (1 - 1.65) / 2, w: 1.65, h: 1.65 });
-  assert.deepEqual(menuFrame({ zoom: 9, x: -1, y: 'a' }), { zoom: 3, x: 0, y: 0.5 }, 'out of range: clamped; not a number: the middle');
+  assert.deepEqual(menuFrame({ zoom: 9, x: -1, y: 'a' }), { zoom: 3, x: 0, y: 0.5, rotate: 0, flipX: false, flipY: false }, 'out of range: clamped; not a number: the middle');
+  // Turned (2026-10-05): a quarter turn swaps the sides; filling still covers the screen, whole still fits in it.
+  const turned = framePlacement(16 / 9, 4 / 3, 'cover', 1, { rotate: 90 });
+  close(turned, { bw: turned.h * 9 / 16, bh: turned.w * 16 / 9 });
+  assert.ok(turned.bw >= 1 - 1e-9 && turned.bh >= 1 - 1e-9);
+  const fitted = framePlacement(16 / 9, 4 / 3, 'contain', 1, { rotate: 90 });
+  assert.ok(fitted.bw <= 1 + 1e-9 && fitted.bh <= 1 + 1e-9 && Math.max(fitted.bw, fitted.bh) > 1 - 1e-9);
+  // At 30°, filling covers every corner of the screen: the screen's corners lie inside the turned picture.
+  const slant = framePlacement(16 / 9, 16 / 9, 'cover', 1, { rotate: 30 }), a = Math.PI / 6;
+  for (const [sx, sy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+    const dx = (sx - (slant.x + slant.w / 2)) * 16 / 9, dy = sy - (slant.y + slant.h / 2);
+    const u = dx * Math.cos(a) + dy * Math.sin(a), v = -dx * Math.sin(a) + dy * Math.cos(a);
+    assert.ok(Math.abs(u) <= slant.w * 16 / 9 / 2 + 1e-9 && Math.abs(v) <= slant.h / 2 + 1e-9, `corner ${sx},${sy}`);
+  }
+  assert.deepEqual([frameAngle(270), frameAngle(-190), frameAngle(180), frameAngle(-180), frameAngle(45.04)], [-90, 170, 180, 180, 45]);
+  assert.deepEqual(menuFrame({ rotate: 400, flipX: true, flipY: 'yes' }).rotate, 40);
+  assert.equal(menuFrame({ flipY: 'yes' }).flipY, false);
 });
 
 test('studio recipes: behind the hero — the menu video by default, a video of its own, or Valve\'s picture', async () => {

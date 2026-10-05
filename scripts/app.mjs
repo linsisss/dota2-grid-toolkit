@@ -7,6 +7,7 @@ import { saveIndicator } from './save-status.mjs';
 import { steamFolderMarkup, mountSteamFolder } from './steam-folder.mjs';
 import { selectedCatalogGrid, appendCatalogGrid } from './catalog-document.mjs';
 import D from './data.mjs';
+import DOTA_FONTS from '../data/dota-fonts.json';
 import { readGridFiles } from './grid-import.mjs';
 import { clampZoom, wheelZoom } from './zoom.mjs';
 import { simplifyArtwork, simplifiableItems } from './artwork-optimization.mjs';
@@ -115,7 +116,8 @@ export function createStudio(projectStorage, initial) {
     // «Обычная или по мете?» when a group is added (src/StudioControls.jsx GroupChoice): the button's box.
     groupChoice = null,
     contextMenu = null;
-  let customCanvasFont = null;
+  // The canvas font for this tab: null — Radiance; else { name, face } from a file or the «Шрифт» tab's list.
+  let customCanvasFont = null, canvasFontName = '';
   const PRESETS_KEY = 'dota-grid-studio.presets.v1';
   // Lucide icons, shared with the React pages (scripts/icons.mjs).
   const icon = (name) => iconSVG(name);
@@ -1041,7 +1043,7 @@ export function createStudio(projectStorage, initial) {
     $('selectionCount').textContent = items.length ? t('{count} выбрано', { count: items.length }) : t('Холст');
     if (!items.length) {
       $('inspectorContent').innerHTML =
-        `<h3>${t('Настройки холста')}</h3><label class="field-label">${t('Размер рабочей области')}</label><div class="field-pair"><div class="input-unit number-field"><span>W</span><input data-canvas-axis="w" type="number" min="100" max="6000" step="1" aria-label="${t('Ширина холста')}" value="${workspace().w}">${numberButtons(t('ширину холста'))}<span class="unit">px</span></div><div class="input-unit number-field"><span>H</span><input data-canvas-axis="h" type="number" min="100" max="6000" step="1" aria-label="${t('Высота холста')}" value="${workspace().h}">${numberButtons(t('высоту холста'))}<span class="unit">px</span></div></div><p id="canvasSizeError" class="canvas-size-note" role="alert" hidden></p><button id="resetCanvasSize" class="button secondary full compact">${t('Вернуть 1193 × 593')}</button><button id="loadFont" class="button secondary full compact" style="margin-top:5px">${t('Сменить шрифт холста')}</button><p class="inspector-hint">${icon('shield')}<span>${t('Radiance SemiBold · шрифт сетки Dota 2.')}</span></p>`;
+        `<h3>${t('Настройки холста')}</h3><label class="field-label">${t('Размер рабочей области')}</label><div class="field-pair"><div class="input-unit number-field"><span>W</span><input data-canvas-axis="w" type="number" min="100" max="6000" step="1" aria-label="${t('Ширина холста')}" value="${workspace().w}">${numberButtons(t('ширину холста'))}<span class="unit">px</span></div><div class="input-unit number-field"><span>H</span><input data-canvas-axis="h" type="number" min="100" max="6000" step="1" aria-label="${t('Высота холста')}" value="${workspace().h}">${numberButtons(t('высоту холста'))}<span class="unit">px</span></div></div><p id="canvasSizeError" class="canvas-size-note" role="alert" hidden></p><button id="resetCanvasSize" class="button secondary full compact">${t('Вернуть 1193 × 593')}</button><button id="loadFont" class="button secondary full compact" style="margin-top:5px">${t('Сменить шрифт холста')}</button><p class="inspector-hint">${icon('shield')}<span>${canvasFontName ? t('{name} · шрифт холста в этой вкладке.', { name: esc(canvasFontName) }) : t('Radiance SemiBold · шрифт сетки Dota 2.')}</span></p>`;
       $('resetCanvasSize').onclick = () => resizeCanvas({ w: C.WIDTH, h: C.HEIGHT });
       $('inspectorContent')
         .querySelectorAll('[data-canvas-axis]')
@@ -1069,7 +1071,7 @@ export function createStudio(projectStorage, initial) {
             }
           };
         });
-      $('loadFont').onclick = () => $('fontInput').click();
+      $('loadFont').onclick = openCanvasFont;
       return;
     }
     const b = C.bounds(items),
@@ -3457,19 +3459,52 @@ export function createStudio(projectStorage, initial) {
       closeModal();
     };
   };
+  // The canvas font (asked for on 2026-10-05): Radiance, one of the «Шрифт для Dota 2» tab's fonts
+  // (data/dota-fonts.json, the face nearest SemiBold — as the grid's text would look with that font
+  // installed in Dota) or the user's file. For this tab only, like the file before.
+  async function useCanvasFont(source, name) {
+    const font = source ? new FontFace('StudioRadiance', source, { weight: '600' }) : null;
+    if (font) await font.load();
+    if (disposed) return;
+    if (customCanvasFont) document.fonts.delete(customCanvasFont);
+    if (font) document.fonts.add(font);
+    customCanvasFont = font; canvasFontName = font ? name : '';
+    draw(); renderInspector();
+  }
+  function openCanvasFont() {
+    const near = (files) => [...files].sort((a, b) => Math.abs(a.weight - 600) - Math.abs(b.weight - 600))[0];
+    const url = (font) => `/assets/dota-fonts/${font.id}/${near(font.files).file}`;
+    const card = (id, name, note, current) => `<button type="button" class="canvas-font-option" data-canvas-font="${id}" aria-pressed="${current}"><b data-font-sample="${id}">${esc(name)}</b><small>${esc(note)}</small></button>`;
+    openModal(
+      t('Шрифт холста'),
+      `<div class="canvas-font-options">${card('', 'Radiance', t('Шрифт Dota 2'), !canvasFontName)}${DOTA_FONTS.fonts.map((font) => card(font.id, font.family, t(font.style), canvasFontName === font.family)).join('')}</div>`,
+      `<button class="button secondary" id="canvasFontFile">${icon('upload')}${t('Из файла…')}</button><button class="button secondary" data-close>${t('Закрыть')}</button>`,
+      'canvas-font', { icon: 'font', lead: t('Как будет выглядеть сетка, если поставить этот шрифт на вкладке «Шрифт для Dota 2». Только в этой вкладке.') }
+    );
+    // Each name in its own face, as on the «Шрифт» tab.
+    for (const font of DOTA_FONTS.fonts) {
+      const face = new FontFace(`GSCanvasFont-${font.id}`, `url(${url(font)})`, { weight: String(near(font.files).weight) });
+      face.load().then(() => { document.fonts.add(face); const sample = $('modalContent').querySelector(`[data-font-sample="${font.id}"]`); if (sample) { sample.style.fontFamily = `'GSCanvasFont-${font.id}'`; sample.style.fontWeight = face.weight; } }).catch(() => {});
+    }
+    $('modalContent').querySelectorAll('[data-canvas-font]').forEach((button) => {
+      button.onclick = async () => {
+        const font = DOTA_FONTS.fonts.find((item) => item.id === button.dataset.canvasFont);
+        $('modalContent').querySelectorAll('[data-canvas-font]').forEach((other) => other.setAttribute('aria-pressed', String(other === button)));
+        try {
+          await useCanvasFont(font ? `url(${url(font)})` : null, font?.family || '');
+          toast(font ? t('Шрифт холста: {name}', { name: font.family }) : t('Шрифт холста: Radiance'));
+        } catch { toast(t('Не удалось загрузить шрифт.'), true, true); }
+      };
+    });
+    $('canvasFontFile').onclick = () => { closeModal(); $('fontInput').click(); };
+  }
   $('fontInput').onchange = async () => {
     const file = $('fontInput').files[0];
     $('fontInput').value = '';
     if (!file) return;
     try {
       if (file.size > 10 * 1024 * 1024) throw new Error();
-      const font = new FontFace('StudioRadiance', await file.arrayBuffer(), { weight: '600' });
-      await font.load();
-      if (disposed) return;
-      if (customCanvasFont) document.fonts.delete(customCanvasFont);
-      document.fonts.add(font);
-      customCanvasFont = font;
-      draw();
+      await useCanvasFont(await file.arrayBuffer(), file.name.replace(/\.[^.]+$/, ''));
       toast(t('Шрифт загружен для этой вкладки'));
     } catch {
       toast(t('Не удалось загрузить шрифт.'), true, true);

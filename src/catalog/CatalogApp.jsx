@@ -1,8 +1,8 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { Spot } from '../Spot.jsx';
 import { CATALOG_TAGS, normalizeCatalogGrid } from '../../scripts/catalog-document.mjs';
 import { Brand, Icon, Modal, Notice, SegmentSwitch, Stats } from './Common.jsx';
-import { catalogAPI, CATALOG_PATH, CUSTOMIZE_PATH, EDITOR_PATH, GUIDES_PATH, RULES_PATH, STUDIO_PATH, countDownload, downloadGrid, forgetWork, managementLink, ownedWorks, rememberWork } from './api.js';
+import { ADVERTISE_PATH, catalogAPI, CATALOG_PATH, CUSTOMIZE_PATH, EDITOR_PATH, GUIDES_PATH, RULES_PATH, STUDIO_PATH, countDownload, downloadGrid, forgetWork, managementLink, ownedWorks, rememberWork } from './api.js';
 import GridPreview from './GridPreview.jsx';
 import { foreignNoticeable, foreignSample, gridForeignGlyphs } from '../../scripts/dota-rendering.mjs';
 import { HideAdultButton, SensitiveArt } from './Sensitive.jsx';
@@ -28,6 +28,8 @@ import { GridBackgroundSwitch } from './GridBackgroundSwitch.jsx';
 import { BackgroundCard, BackgroundScreenFilter, BackgroundTagFilter, useBackgrounds } from './BackgroundGallery.jsx';
 import LanguageSwitch from '../LanguageSwitch.jsx';
 import { locale, t, translateMessage } from '../../scripts/i18n.mjs';
+// «Реклама» loads only when it is opened.
+const Advertise = lazy(() => import('./Advertise.jsx'));
 
 // A report on a grid or (kind 'background') a menu background; the captcha, then the moderators.
 function Report({ item, onClose, kind = 'grid' }) {
@@ -179,8 +181,8 @@ function Gallery() {
 export default function CatalogApp() { useAppMotion(); useLanguage(); return <AccountProvider><CatalogShell/></AccountProvider>; }
 function CatalogShell() {
   const auth = useAccount();
-  const params = new URLSearchParams(location.search), id = params.get('id'), moderation = params.has('moderate'), rules = params.has('rules'), creator = params.get('creator');
+  const params = new URLSearchParams(location.search), id = params.get('id'), moderation = params.has('moderate'), rules = params.has('rules'), advertise = params.has('advertise'), creator = params.get('creator');
   const ownerToken = new URLSearchParams(location.hash.slice(1)).get('manage');
   const managing = !!ownerToken || params.has('manage');
-  return <div className="catalog-page"><header className="catalog-nav"><Brand/><nav>{(auth.admin || auth.moderator) && <a href={`${CATALOG_PATH}?moderate`}>{auth.admin ? 'Админка' : 'Модерация'}</a>}<CommunityLink/><a href={GUIDES_PATH}>{t('Гайды')}</a><a href={STUDIO_PATH}>{t('Студия')}<Icon name="arrow"/></a><AccountButton/></nav></header><main className="catalog-main">{moderation ? <Moderation/> : rules ? <Rules/> : creator ? <CreatorProfile id={creator}/> : id ? <WorkDetail id={id} ownerToken={ownerToken} managing={managing}/> : <Gallery/>}</main><footer className="catalog-footer"><span>GridStudio</span><a href={RULES_PATH}>{t('Правила мастерской')}</a><span className="catalog-footer-source"><a href="https://github.com/linsisss/dota2-grid-toolkit">GitHub</a><VersionButton/><LanguageSwitch/></span></footer></div>;
+  return <div className="catalog-page"><header className="catalog-nav"><Brand/><nav>{(auth.admin || auth.moderator) && <a href={`${CATALOG_PATH}?moderate`}>{auth.admin ? 'Админка' : 'Модерация'}</a>}<a href={ADVERTISE_PATH} aria-current={advertise ? 'page' : undefined}>{t('Реклама')}</a><CommunityLink/><a href={GUIDES_PATH}>{t('Гайды')}</a><a href={STUDIO_PATH}>{t('Студия')}<Icon name="arrow"/></a><AccountButton/></nav></header><main className="catalog-main">{moderation ? <Moderation/> : rules ? <Rules/> : advertise ? <Suspense fallback={<p role="status">{t('Загружаем…')}</p>}><Advertise/></Suspense> : creator ? <CreatorProfile id={creator}/> : id ? <WorkDetail id={id} ownerToken={ownerToken} managing={managing}/> : <Gallery/>}</main><footer className="catalog-footer"><span>GridStudio</span><a href={RULES_PATH}>{t('Правила мастерской')}</a><span className="catalog-footer-source"><a href="https://github.com/linsisss/dota2-grid-toolkit">GitHub</a><VersionButton/><LanguageSwitch/></span></footer></div>;
 }

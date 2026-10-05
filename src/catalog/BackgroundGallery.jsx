@@ -55,14 +55,15 @@ export function BackgroundTagPicker({ value, onChange }) {
     <button type="button" key={tag} aria-pressed={value.includes(tag)} disabled={!value.includes(tag) && value.length === 3} onClick={() => onChange(value.includes(tag) ? value.filter((x) => x !== tag) : [...value, tag])}>{t(tag)}</button>)}</div></fieldset>;
 }
 
-// A card like a grid's: the poster (the video while the pointer is on it), title, author and one
+// A card like a grid's: the poster (the light hover copy of the video while the pointer is on it —
+// server/catalog-backgrounds.mjs PREVIEW), title, author and one
 // action («Использовать»), then the screen and length on the left and the tags on the right.
 // An 18+ background stays blurred (Sensitive.jsx) and does not play until the viewer confirms their age.
 // «Мои публикации» give a poster of their own (a guest's submission kept in this browser, whose
 // files the server does not show yet) and a status line (`footer`).
 export function BackgroundCard({ item, children, poster = null, playable = true, footer = null }) {
   const video = useRef(null), covered = isAdultWork(item) && !useAdultConfirmed();
-  const play = () => { const node = video.current; if (!node || covered || !playable) return; if (!node.src) node.src = backgroundMedia(item.id, 'video.webm'); node.play().catch(() => {}); };
+  const play = () => { const node = video.current; if (!node || covered || !playable) return; if (!node.src) node.src = (item.preview ? `${backgroundMedia(item.id, 'preview.webm')}?v=${item.preview}` : backgroundMedia(item.id, 'video.webm')); node.play().catch(() => {}); };
   const stop = () => { video.current?.pause(); };
   return <article className="background-card" onPointerEnter={play} onPointerLeave={stop} onFocus={play} onBlur={stop}>
     <SensitiveArt item={item} kind="background" className="background-card-nsfw"><div className="background-card-picture">

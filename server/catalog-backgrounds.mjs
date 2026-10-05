@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { setPriority } from 'node:os';
 import { mkdirSync, renameSync, rmSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
@@ -37,6 +38,25 @@ async function probe(path) {
   return info;
 }
 
+
+// A light copy for the workshop card's hover (asked for on 2026-10-04: the full 1080p video was
+// downloaded on every hover, 95% of the site's traffic): 640 px wide, 24 fps, its first 15 seconds,
+// VP9 at a low quality — about 0.3–0.7 MB instead of 2–14 MB, enough for a 320 px card on a 2× screen.
+// <id>.preview.webm, made after a submission and, for the ones sent before, by previewMissing at the
+// API's start, one at a time and at a low priority; until it exists the card plays the full video
+// (`preview` in the list, view()).
+export const PREVIEW = Object.freeze({ width: 640, fps: 24, seconds: 15, crf: 40 });
+function encodePreview(source, target) {
+  return new Promise((resolve, reject) => {
+    const child = spawn('ffmpeg', ['-v', 'error', '-y', '-i', source, '-an', '-t', String(PREVIEW.seconds),
+      '-vf', `scale=${PREVIEW.width}:-2:flags=lanczos,fps=${PREVIEW.fps}`, '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', String(PREVIEW.crf),
+      '-deadline', 'good', '-cpu-used', '4', '-row-mt', '1', '-g', String(PREVIEW.fps * 2), '-f', 'webm', target], { stdio: 'ignore' });
+    try { setPriority(child.pid, 15); } catch { /* As it is. */ }
+    const timer = setTimeout(() => child.kill('SIGKILL'), 180_000);
+    child.on('error', (error) => { clearTimeout(timer); reject(error); });
+    child.on('close', (code) => { clearTimeout(timer); code === 0 ? resolve() : reject(new Error('ffmpeg')); });
+  });
+}
 
 export class CatalogBackgrounds {
   constructor(store, { dir }) {
@@ -78,7 +98,27 @@ export class CatalogBackgrounds {
     }
     return rows.length;
   }
-  file(id, kind) { return join(this.dir, `${id}.${kind === 'poster' ? 'jpg' : 'webm'}`); }
+  file(id, kind) { return join(this.dir, `${id}.${kind === 'poster' ? 'jpg' : kind === 'preview' ? 'preview.webm' : 'webm'}`); }
+  // The hover copy (PREVIEW), queued: one ffmpeg at a time. true when made.
+  preview(id) {
+    const job = (this.previews || Promise.resolve()).then(() => this.makePreview(id));
+    this.previews = job.catch(() => false);
+    return this.previews;
+  }
+  async makePreview(id) {
+    const source = this.file(id, 'video'), target = this.file(id, 'preview');
+    if (!existsSync(source) || existsSync(target)) return false;
+    const temp = join(this.dir, `preview-${id}-${process.pid}.webm`);
+    try { await encodePreview(source, temp); renameSync(temp, target); return true; } catch { rmSync(temp, { force: true }); return false; }
+  }
+  // The hover copies of the backgrounds sent before them (2026-10-04), approved ones first.
+  async previewMissing(limit = 2000) {
+    const rows = this.store.all("SELECT id FROM backgrounds WHERE status IN ('approved','pending') ORDER BY status='approved' DESC, id DESC LIMIT ?", limit)
+      .filter((row) => !existsSync(this.file(row.id, 'preview')));
+    let made = 0;
+    for (const row of rows) if (await this.preview(row.id)) made++;
+    return made;
+  }
   // Checks and quotas before anything is written; files first, then the row, so a row always has files.
   async submit(input, poster, video, identity, account = null) {
     const meta = backgroundMeta(input), store = this.store, limits = BACKGROUND_LIMITS;
@@ -132,6 +172,8 @@ export class CatalogBackgrounds {
       renameSync(temp, this.file(id, 'video'));  // the very bytes ffprobe checked
       // Compared with the other backgrounds after this answer (server/similarity.mjs queueMatches).
       if (prints) store.similarity.saveBackground(id, prints).catch(() => {});
+      // Its hover copy, after this answer.
+      setImmediate(() => this.preview(id));
       store.audit(backgroundKey(id), 'background-submit');
       return { id, status: 'pending', token: this.token(id) };
     });
@@ -142,7 +184,13 @@ export class CatalogBackgrounds {
     return { id: row.id, title: row.title, author: row.account ? '' : row.author, credit: row.credit || '', ...(row.account ? { creator: this.store.profiles.creator(row.account) } : {}),
       tags: JSON.parse(row.tags), aspect: row.aspect, seconds: row.seconds, bytes: row.bytes, updated: row.updated,
       likes: this.store.get('SELECT count(*) n FROM background_likes WHERE background=?', row.id).n, downloads: this.store.downloads('background', row.id), comments: this.store.commentCount('background', row.id),
-      liked: !!(account && this.store.get('SELECT 1 FROM background_likes WHERE background=? AND account=?', row.id, account)), mine: !!(account && row.account === account) };
+      liked: !!(account && this.store.get('SELECT 1 FROM background_likes WHERE background=? AND account=?', row.id, account)), mine: !!(account && row.account === account),
+      preview: this.previewVersion(row.id) };
+  }
+  // The hover copy's version for its address (preview.webm?v=…), null until it is made: the card plays the
+  // full video until then, and no cache keeps a stand-in under the copy's address.
+  previewVersion(id) {
+    try { return Math.floor(statSync(this.file(id, 'preview')).mtimeMs).toString(36); } catch { return null; }
   }
   // The author's key to the moderation result of one submission (no account needed): derived from
   // the id, so nothing more is stored. The studio card keeps it (docs/customize.md).
@@ -212,7 +260,8 @@ export class CatalogBackgrounds {
     if (!row || (row.status !== 'approved' && !admin && !(account && row.account === account))) fail(404, 'Фон не найден.');
     const path = this.file(id, kind);
     if (!existsSync(path)) fail(404, 'Файл фона не найден.');
-    return { path, size: statSync(path).size, public: row.status === 'approved' };
+    const stat = statSync(path);
+    return { path, size: stat.size, mtime: stat.mtimeMs, public: row.status === 'approved' };
   }
   // The author's own backgrounds on their Telegram account, every status (the workshop's «Мои публикации»).
   mine(account) {

@@ -95,19 +95,27 @@ async function readBytes(request, limit) {
   for await (const chunk of request) { size += chunk.length; if (size > limit) fail(413, `Файл больше ${Math.floor(limit / 1_000_000)} МБ.`); chunks.push(chunk); }
   return new Uint8Array(Buffer.concat(chunks));
 }
-// Sends a file with Range support, so <video> can seek in a shared background.
-function sendFile(request, response, { path, size }, type, cache) {
-  const range = /^bytes=(\d*)-(\d*)$/.exec(request.headers.range || '');
+// Sends a file with Range support, so <video> can seek in a shared background. With `mtime` it has an
+// ETag and Last-Modified: without them Chrome keeps no part of a video it got in ranges (206) and
+// downloaded it again on every hover (2026-10-04); If-None-Match answers 304, If-Range a stale range whole.
+function sendFile(request, response, { path, size, mtime }, type, cache) {
+  const tag = mtime ? `"${size.toString(36)}-${Math.floor(mtime).toString(36)}"` : null;
+  const validators = tag ? { ETag: tag, 'Last-Modified': new Date(mtime).toUTCString() } : {};
+  if (tag && request.headers['if-none-match'] === tag) { response.writeHead(304, { ...validators, 'Cache-Control': cache }); return response.end(); }
+  const ifRange = request.headers['if-range'];
+  const range = ifRange && tag && ifRange !== tag && ifRange !== validators['Last-Modified'] ? null : /^bytes=(\d*)-(\d*)$/.exec(request.headers.range || '');
   let start = 0, end = size - 1;
   if (range && (range[1] || range[2])) {
     start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
     end = range[1] && range[2] ? Math.min(size - 1, Number(range[2])) : size - 1;
     if (start > end || start >= size) { response.writeHead(416, { 'Content-Range': `bytes */${size}` }); return response.end(); }
   }
-  response.writeHead(range ? 206 : 200, { 'Content-Type': type, 'Content-Length': end - start + 1, 'Accept-Ranges': 'bytes', 'Cache-Control': cache,
+  response.writeHead(range ? 206 : 200, { 'Content-Type': type, 'Content-Length': end - start + 1, 'Accept-Ranges': 'bytes', 'Cache-Control': cache, ...validators,
     ...(range ? { 'Content-Range': `bytes ${start}-${end}/${size}` } : {}) });
   createReadStream(path, { start, end }).pipe(response);
 }
+// A shared background's files: the poster, the full video, the light copy for the card's hover.
+const BACKGROUND_FILE = /^\/backgrounds\/([1-9]\d{0,12})\/(poster\.jpg|video\.webm|preview\.webm)$/;
 // The landing's picture sizes (server/editor-showcase.mjs SHOWCASE_WIDTHS), kept here so the API
 // module does not load the canvas renderer until a picture is asked for.
 const LANDING_WIDTHS = [1440, 2160, 2880];
@@ -177,7 +185,11 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       } else store.burst(`read:${ipHash}`, 600, 60_000);
       let browser = cookies(request).gs_catalog_browser || '';
       const [value, proof] = browser.split('.');
-      if (!value || !proof || value.length !== 43 || !equal(proof, signature(value))) {
+      // A background's or the banner's file sets no cookie: it needs none, and a response that sets one is
+      // kept by no shared cache.
+      const media = method === 'GET' && (BACKGROUND_FILE.test(path) || path.startsWith('/spot/'));
+      if (media && !(value && proof)) browser = secret();
+      else if (!value || !proof || value.length !== 43 || !equal(proof, signature(value))) {
         browser = secret(); response.setHeader('Set-Cookie', cookie('gs_catalog_browser', `${browser}.${signature(browser)}`, 365 * 86400));
       } else browser = value;
       const identity = { browser: store.identity('browser', browser), ip: ipHash };
@@ -369,6 +381,8 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       }
       if (path === '/config' && method === 'GET') return send(200, { captcha: 'altcha', development: config.development, paused: store.paused(), tags: CATALOG_TAGS, limits: CATALOG_LIMITS,
         artCategories: ART_CATEGORIES, artLimits: ART_LIMITS, backgroundTags: BACKGROUND_TAGS, backgroundLimits: BACKGROUND_LIMITS, moderationUrl: config.moderationUrl });
+      // The workshop's «Реклама» page: the site's numbers for advertisers (server/site-stats.mjs audience).
+      if (path === '/audience' && method === 'GET') { response.setHeader('Cache-Control', 'public, max-age=600'); return send(200, stats.audience()); }
       // The advertising place (server/site-spot.mjs): what the pages draw, and its banner.
       if (path === '/spot' && method === 'GET') {
         const { tag, body } = spot.public(), etag = `"spot-${tag}"`;
@@ -453,9 +467,9 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       // The author's view of a submission: pending, approved, rejected (with the reason) or hidden.
       const backgroundStatus = /^\/backgrounds\/([1-9]\d{0,12})\/status$/.exec(path);
       if (backgroundStatus && method === 'GET') { response.setHeader('Cache-Control', 'no-store'); return send(200, gallery().status(Number(backgroundStatus[1]), url.searchParams.get('token') || '')); }
-      const backgroundFile = /^\/backgrounds\/([1-9]\d{0,12})\/(poster\.jpg|video\.webm)$/.exec(path);
+      const backgroundFile = BACKGROUND_FILE.exec(path);
       if (backgroundFile && ['GET', 'HEAD'].includes(method)) {
-        const kind = backgroundFile[2] === 'poster.jpg' ? 'poster' : 'video';
+        const kind = { 'poster.jpg': 'poster', 'preview.webm': 'preview' }[backgroundFile[2]] || 'video';
         const file = gallery().media(Number(backgroundFile[1]), kind, canReview(user), user?.id || null);
         // A background's files never change; pending ones stay private to admins and moderators.
         return sendFile(request, response, file, kind === 'poster' ? 'image/jpeg' : 'video/webm', file.public ? 'public, max-age=31536000, immutable' : 'private, no-store');
@@ -737,5 +751,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   server.listen(port, '127.0.0.1', () => console.log(`Catalog API: http://127.0.0.1:${port} (${config.development ? 'local testing; ALTCHA enabled' : 'production'})`));
   // Backgrounds sent before fingerprints get theirs in the background (server/similarity.mjs).
   setTimeout(() => gallery().fingerprintMissing().then((n) => n && console.log(`Отпечатки фонов: ${n}`), () => {}), 10_000).unref();
+  // The hover copies of the backgrounds sent before them (server/catalog-backgrounds.mjs PREVIEW), after the fingerprints.
+  setTimeout(() => gallery().previewMissing().then((n) => n && console.log(`Превью фонов: ${n}`), () => {}), 30_000).unref();
   for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => server.close(() => { store.close(); process.exit(0); }));
 }

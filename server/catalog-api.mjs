@@ -565,12 +565,14 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
             meta = { title: card.nickname, description: card.bio || `${PREVIEW_TEXT.profile} ${card.stats}.`, url: `${config.origin}/workshop?creator=${card.key}`,
               image: `${config.origin}/api/catalog/preview/profile/${card.key}.jpg?v=${card.version}`, alt: `Профиль ${card.nickname}` };
           }
-          // Dotadle (nginx sends every /dotadle here): a shared result (?r=, scripts/dotadle-share.mjs) gets its
-          // score and squares as the picture; the page itself, the game's picture.
+          // Dotadle (nginx sends every /dotadle here): a shared result (?r=<code>, server/dotadle.mjs shared) gets
+          // its score and squares as the picture; the page itself, the game's picture. A result's og:url and
+          // canonical are its own address: Telegram merges links by og:url and showed /dotadle's picture for
+          // every result (2026-10-06); such pages are not for search engines (noindex below).
           if (page[1] === 'dotadle') {
             const code = url.searchParams.get('r'), result = dotadle.shared(code);
             meta = result ? { title: `Dotadle #${result.number} — ${result.solved ? result.tries : 'X'}/6`, description: 'Угадай героя Dota 2 по портрету из символов. Новый герой каждый день — сможешь быстрее?',
-              url: `${config.origin}/dotadle`, image: `${config.origin}/api/catalog/preview/dotadle/${code}.jpg`, alt: `Результат Dotadle #${result.number}` }
+              url: `${config.origin}/dotadle?r=${code}`, image: `${config.origin}/api/catalog/preview/dotadle/${code}.jpg`, alt: `Результат Dotadle #${result.number}`, noindex: true }
               : { title: 'Dotadle — угадай героя дня', description: 'Угадай героя Dota 2 по портрету из символов. Новый герой каждый день, 6 попыток: с каждой ошибкой картинка чётче.',
                 url: `${config.origin}/dotadle`, image: `${config.origin}/api/catalog/preview/dotadle.jpg`, alt: 'Dotadle — угадай героя Dota 2' };
           }
@@ -583,7 +585,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         } catch (error) { if (!(error instanceof CatalogError)) throw error; }
         // A tab with an address of its own: /workshop?backgrounds, /workshop?rules, /background?tab=font.
         if (!meta) { const tab = tabOf(page[1], url.searchParams); if (tab) meta = pageMeta(tab, config.origin); }
-        response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' });
+        response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', ...(meta?.noindex ? { 'X-Robots-Tag': 'noindex' } : {}) });
         return response.end(method === 'HEAD' ? undefined : meta ? withPreview(html, meta) : html);
       }
       const shared = /^\/preview\/dotadle(?:\/([A-Za-z0-9]{3,8}))?\.jpg$/.exec(path);

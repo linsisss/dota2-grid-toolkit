@@ -1,0 +1,27 @@
+{
+  "version": "1.9.1",
+  "date": "2026-10-06",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.9.1",
+  "sections": [
+    {
+      "title": "Dotadle",
+      "changes": [
+        {
+          "text": "Ссылка на результат в Telegram и VK показывает твой счёт, а не общую картинку игры"
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Dotadle",
+        "changes": [
+          {
+            "text": "A result link in Telegram and VK shows your score instead of the game's general picture"
+          }
+        ]
+      }
+    ]
+  }
+}

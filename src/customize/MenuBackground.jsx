@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, Modal, Notice, SegmentSwitch } from '../catalog/Common.jsx';
-import { GRID_DIM, MENU_FRAME, MENU_FRAME_ZOOM, MENU_LIMITS, MENU_SIZES, fitPiece, frameAngle, framePlacement, mediaKind, menuFrame, menuLook } from '../../scripts/menu-background.mjs';
+import { GRID_DIM, MENU_FRAME, MENU_FRAME_ZOOM, MENU_LIMITS, MENU_SIZES, fitPiece, framePlacement, mediaKind, menuFrame, menuLook } from '../../scripts/menu-background.mjs';
 import menuMeta from '../../assets/dota-menu/meta.json';
 import { SEASON_EVENT, downloadPack, folderOf, packBackground, removeCommand } from './background-pack.js';
 import { getBackground } from '../../scripts/background-library.mjs';
-import { markPublished, pullRecipes, rememberDownload, saveBuiltBackground } from '../studio-backgrounds.js';
+import { claimBuiltBackground, markPublished, pullRecipes, rememberDownload, saveBuiltBackground } from '../studio-backgrounds.js';
+import { useAccount } from '../catalog/Account.jsx';
 import { CopyField, Field, InstallWindow, Segmented, rich } from './CustomizeApp.jsx';
 import { BackgroundSteps } from './BackgroundSteps.jsx';
 import DotaMenu from './DotaMenu.jsx';
@@ -100,31 +101,8 @@ function Effects({ blur, onBlur, dim, onDim, frame = null, onFrame }) {
       {frame && <label className="custom-slider"><span>{t('Масштаб')}</span>
         <input type="range" min="100" max={max} step="5" value={value} onChange={(event) => onFrame(menuFrame({ ...frame, zoom: Number(event.target.value) / 100 }))} style={{ '--fill': `${((value - 100) / (max - 100)) * 100}%` }}/>
         <output>{value}%</output></label>}</div>
-    {frame && <FrameTools frame={frame} onFrame={onFrame}/>}
     {frame && <p className="custom-hint">{t('Тяни картинку в превью, чтобы выбрать кадр.')}{moved && <> <button type="button" className="catalog-link" onClick={() => onFrame(MENU_FRAME)}>{t('Сбросить кадр')}</button></>}</p>}
   </>;
-}
-// Mirror, turn and centre the picture, as the editor does with objects (asked for on 2026-10-05):
-// mirror left to right or top to bottom, turn by a step or by hand (−180° to 180°), centre it across or
-// down. The video is drawn the same way (menu-video.js).
-const TURNS = [[-90, '↺ 90°'], [-45, '↺ 45°'], [45, '↻ 45°'], [90, '↻ 90°'], [180, '180°']];
-function FrameTools({ frame, onFrame }) {
-  const set = (change) => onFrame(menuFrame({ ...frame, ...change }));
-  const fill = `${((frame.rotate + 180) / 360) * 100}%`;
-  return <div className="custom-frame-tools">
-    <div className="custom-frame-groups"><div className="custom-frame-group"><span>{t('Отразить')}</span><div>
-      <button type="button" className="custom-tool" aria-pressed={frame.flipX} title={t('Отразить по горизонтали')} aria-label={t('Отразить по горизонтали')} onClick={() => set({ flipX: !frame.flipX })}><Icon name="flip" size={16}/></button>
-      <button type="button" className="custom-tool" aria-pressed={frame.flipY} title={t('Отразить по вертикали')} aria-label={t('Отразить по вертикали')} onClick={() => set({ flipY: !frame.flipY })}><Icon name="flipVertical" size={16}/></button></div></div>
-      <div className="custom-frame-group"><span>{t('Выровнять')}</span><div>
-      <button type="button" className="custom-tool" title={t('По центру по горизонтали')} aria-label={t('По центру по горизонтали')} disabled={frame.x === 0.5} onClick={() => set({ x: 0.5 })}><Icon name="alignHCenter" size={16}/></button>
-      <button type="button" className="custom-tool" title={t('По центру по вертикали')} aria-label={t('По центру по вертикали')} disabled={frame.y === 0.5} onClick={() => set({ y: 0.5 })}><Icon name="alignVMiddle" size={16}/></button></div></div></div>
-    <div className="custom-frame-group is-turns"><span>{t('Повернуть')}</span><div>
-      {TURNS.map(([step, label]) => <button key={step} type="button" className="custom-tool is-text" onClick={() => set({ rotate: frameAngle(frame.rotate + step) })}>{label}</button>)}</div></div>
-    <label className="custom-slider"><span>{t('Поворот вручную')}</span>
-      <input type="range" min="-180" max="180" step="1" value={Math.round(frame.rotate)} onChange={(event) => set({ rotate: Number(event.target.value) })} style={{ '--fill': fill }}/>
-      <output><input className="custom-angle" type="number" min="-180" max="180" step="1" value={Math.round(frame.rotate * 10) / 10} aria-label={t('Угол поворота в градусах')}
-        onChange={(event) => event.target.value !== '' && Number.isFinite(Number(event.target.value)) && set({ rotate: frameAngle(Number(event.target.value)) })}/>°</output></label>
-  </div>;
 }
 // A 0–100 % slider in the panel; 0 reads «нет».
 function Slider({ label, value, onChange }) {
@@ -222,6 +200,13 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
   // What the file is (for the studio recipe), the studio background being changed, the recipe whose
   // piece and crossfade wait for the video's length, and an own file the user is asked to choose.
   const [origin, setOrigin] = useState(null), [pick, setPick] = useState(preset), [studio, setStudio] = useState(null), [wanted, setWanted] = useState(null), [note, setNote] = useState('');
+  // A guest's build is kept in this browser only: the caption asks to sign in, and once signed in
+  // here the background goes into the account at once (claimBuiltBackground).
+  const auth = useAccount(), userId = auth?.user?.id;
+  useEffect(() => {
+    if (!userId || !studio?.saved || studio.account) return;
+    claimBuiltBackground(studio.id, userId).then((claimed) => claimed && setStudio((current) => current?.id === studio.id ? { ...current, account: userId } : current)).catch(() => {});
+  }, [userId, studio?.id, studio?.saved, studio?.account]);
   // The second pages: the mode of each and, for 'own', a file of its own (useOwnBackground); under the
   // grid, how much darker for 'dim' (a percent of GRID_DIM.max) and the grid shown in the preview.
   const [page, setPage] = useState('menu'), [heroMode, setHeroMode] = useState('menu'), [gridMode, setGridMode] = useState('menu'), [gridDim, setGridDim] = useState(55), [picking, setPicking] = useState(false);
@@ -342,7 +327,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
       // Kept in the studio: this browser gets the WebMs, a signed-in account the recipe.
       const recipe = { aspect, fit, blur, dim, frame, clean, event: seasonButton, profile: profileLinks, folder, delivery, piece: duration ? piece : null, crossfade: duration ? crossfade : 0, source: origin, hero, grid };
       saving.current = saveBuiltBackground({ id: studioId.current, recipe, video: encoded.video, heroVideo: heroEncoded?.video, gridVideo: gridEncoded?.video, codec: encoded.codec, seconds: encoded.seconds });
-      saving.current.then((record) => { studioId.current = record.id; setStudio({ id: record.id, name: record.name, saved: true }); })
+      saving.current.then((record) => { studioId.current = record.id; setStudio({ id: record.id, name: record.name, saved: true, account: record.account }); })
         .catch(() => setStudio((current) => ({ ...current, failed: true })));
       const url = (video) => video ? URL.createObjectURL(new Blob([video], { type: 'video/webm' })) : null;
       setResult({ blob, webm: encoded.video, aspect, url: url(encoded.video), seconds: encoded.seconds, trimmed: encoded.trimmed, codec: encoded.codec, video: encoded.video.length,
@@ -403,7 +388,10 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
   const caption = page === 'grid'
     ? gridMode === 'own' && result?.gridUrl ? rich(t('{ready} — так он будет под сеткой.'), ready) : [{ menu: t('Под сеткой — фон главного меню, как в Dota сейчас.'), dim: t('Фон меню под сеткой темнее, чтобы сетка не сливалась.'), own: t('Так фон будет под сеткой героев на странице «Герои».') }[gridMode], preview.name && t('Сетка: «{name}».', { name: preview.name })].filter(Boolean).join(' ')
     : page === 'hero' ? (heroMode === 'off' ? t('За героем останется картинка Dota — меняется только главное меню.') : result?.heroUrl ? rich(t('{ready} — так он будет за героем.'), ready) : t('Так фон будет за героем на странице «Герои» → «Снаряжение».'))
-    : result ? <>{rich(t('{ready} — ровно то видео, что внутри файла.'), ready)}{studio?.saved ? <> <a href={`${STUDIO_PATH}&show=backgrounds`}>{t('Сохранён в студии')}</a>.</> : studio?.failed ? ` ${t('Сохранить в студии не получилось.')}` : ''}</> : shown ? t('Так фон будет выглядеть в главном меню Dota.') : t('Главное меню Dota с выбранными пропорциями экрана.');
+    : result ? <>{rich(t('{ready} — ровно то видео, что внутри файла.'), ready)}{studio?.saved ? auth && !auth.loading && !auth.user && !studio.account
+      ? <> {rich(t('{saved} только в этом браузере. {login}, чтобы он не потерялся.'), { saved: <a href={`${STUDIO_PATH}&show=backgrounds`}>{t('Сохранён в студии')}</a>,
+        login: <button type="button" className="catalog-link" onClick={() => auth.requestLogin(t('Войди через Telegram, чтобы фон сохранился в аккаунте: его настройки не пропадут вместе с браузером и откроются на другом компьютере.'))}>{t('Войди через Telegram')}</button> })}</>
+      : <> <a href={`${STUDIO_PATH}&show=backgrounds`}>{t('Сохранён в студии')}</a>.</> : studio?.failed ? ` ${t('Сохранить в студии не получилось.')}` : ''}</> : shown ? t('Так фон будет выглядеть в главном меню Dota.') : t('Главное меню Dota с выбранными пропорциями экрана.');
   return <main className="custom-work">
     <section className={`custom-stage${dragging ? ' is-over' : ''}`} {...drop} aria-label={t('Превью фона')}>
       <div className="custom-stage-area">

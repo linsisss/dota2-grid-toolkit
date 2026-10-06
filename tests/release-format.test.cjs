@@ -80,7 +80,7 @@ test('the post: «Обновление gridstudio.me», sections with their own 
   ] };
   const own = { ...config, sectionEmoji: { 'Сайт': { emojiId: '111', emoji: '🌐' } } };
   // The sections' emoji given by the user (01.10.2026), by their exact titles.
-  assert.deepEqual(Object.keys(config.sectionEmoji), ['Сайт', 'Редактор', 'Студия', 'Мастерская', 'Фон главного меню', 'Шрифт', 'Профили', 'Гайды']);
+  assert.deepEqual(Object.keys(config.sectionEmoji), ['Сайт', 'Редактор', 'Студия', 'Мастерская', 'Фон главного меню', 'Шрифт', 'Профили', 'Гайды', 'Dotadle']);
   const html = formatRelease(release, own, { 111: '🌍', [config.emojiId]: '💎' });
   assert.match(html, /^<h1><tg-emoji emoji-id="5316617119524236973">💎<\/tg-emoji> Обновление gridstudio\.me 1\.7\.0<\/h1>/, 'the sticker’s own emoji when fetched');
   assert.match(html, /<summary><b><tg-emoji emoji-id="111">🌍<\/tg-emoji> Сайт<\/b><\/summary>/);

@@ -457,6 +457,7 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 .creator-facts { display:flex; flex-wrap:wrap; gap:8px 20px; margin:0; color:var(--cat-muted); font-size:14px; }
 .creator-facts > * { display:inline-flex; align-items:center; gap:7px; }
 .creator-facts a:hover { color:var(--cat-ink); }
+.creator-facts .creator-dotadle { color:var(--cat-accent); }
 .creator-side-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
 /* Profile badges (src/catalog/Badges.jsx): a pill each, its own colour. */
 .profile-badges { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px; padding:0; list-style:none; }
@@ -626,3 +627,10 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
   .mk-days, .mk-week { grid-template-columns:1fr; }
     .mk-sources li { grid-template-columns:90px minmax(0,1fr) auto; }
 }
+
+/* «Прислать на ПК» on phones (src/SendToPC.jsx). */
+.send-pc { display:flex; align-items:center; gap:10px 12px; flex-wrap:wrap; margin:12px 16px 0; padding:12px 14px; border:1px solid var(--cat-line); border-radius:12px; background:#ffffff08; font-size:13px; }
+.send-pc > svg { flex:none; color:var(--cat-accent); }
+.send-pc p { flex:1 1 180px; margin:0; color:var(--cat-muted); }
+.send-pc .catalog-button { flex:none; }
+.catalog-main > .send-pc { margin:0 0 18px; }

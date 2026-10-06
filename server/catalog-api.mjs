@@ -19,7 +19,7 @@ import { pageMeta, tabOf } from '../scripts/og-pages.mjs';
 import { STAT_ROBOT, SiteStats } from './site-stats.mjs';
 import { adminUsers } from './admin-users.mjs';
 import { InstallPacks, PACK_LIMITS } from './install-packs.mjs';
-import { PREVIEW_TEXT, authorOf, backgroundPreviewImage, gridPreviewImage, guidePreviewImage, previewTitle, profilePreviewImage, sitePage, withPreview } from './link-preview.mjs';
+import { PREVIEW_TEXT, authorOf, backgroundPreviewImage, dotadlePreviewImage, gridPreviewImage, guidePreviewImage, previewTitle, profilePreviewImage, sitePage, withPreview } from './link-preview.mjs';
 import { badgeOf } from '../scripts/profile-badges.mjs';
 import { BACKGROUND_TAGS, BACKGROUND_LIMITS, backgroundMeta, unpackBackgroundUpload } from '../scripts/background-document.mjs';
 import { MENU_SIZES } from '../scripts/menu-background.mjs';
@@ -33,6 +33,9 @@ import { MODERATOR_ACTIONS, Moderators, moderatorAllows } from './moderators.mjs
 import { SiteSpot, SPOT_LIMITS } from './site-spot.mjs';
 import { ItemComments } from './item-comments.mjs';
 import { NICK_LIMITS } from './profiles.mjs';
+import { pcPage } from '../scripts/pc-link.mjs';
+import { robotsText, seoPage, sitemapXML } from './seo-pages.mjs';
+import { Dotadle } from './dotadle.mjs';
 
 const cookies = (request) => Object.fromEntries((request.headers.cookie || '').split(';').map(pair => {
   const at = pair.indexOf('='); return at < 0 ? ['', ''] : [pair.slice(0, at).trim(), pair.slice(at + 1)];
@@ -119,7 +122,7 @@ const BACKGROUND_FILE = /^\/backgrounds\/([1-9]\d{0,12})\/(poster\.jpg|video\.we
 // The landing's picture sizes (server/editor-showcase.mjs SHOWCASE_WIDTHS), kept here so the API
 // module does not load the canvas renderer until a picture is asked for.
 const LANDING_WIDTHS = [1440, 2160, 2880];
-export function createCatalogAPI(config, { store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null, heroMeta = new HeroMeta({ token: config.stratzToken }) } = {}) {
+export function createCatalogAPI(config, { store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null, heroMeta = new HeroMeta({ token: config.stratzToken }), dotadle = new Dotadle({ secret: config.salt, store }) } = {}) {
   const accounts = new Accounts(store), arts = new CatalogArts(store), stats = new SiteStats(store), moderators = new Moderators(store), spot = new SiteSpot(store), packs = new InstallPacks(store, { dir: config.packs || join(tmpdir(), 'gridstudio-install-packs') });
   // Shared menu backgrounds keep files next to the database (config.media).
   let galleries = backgrounds;
@@ -152,9 +155,22 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
     return landingImages.get(key);
   };
   // Link-preview pictures of shared works by revision (server/link-preview.mjs), the last 32.
+  const seoCache = new Map();
+  // The sitemap's shared pages: grids, backgrounds and guides, none 18+.
+  const seoEntries = () => {
+    const has = (name) => !!store.get('SELECT 1 x FROM sqlite_master WHERE name=?', name), adult = (tags) => `NOT EXISTS (SELECT 1 FROM json_each(${tags}) WHERE value='18+')`;
+    const works = store.all(`SELECT w.id, r.created updated FROM works w JOIN revisions r ON r.id=w.public_revision WHERE w.state='active' AND ${adult('r.tags')} ORDER BY r.created DESC`)
+      .map((row) => ({ path: `/workshop?id=${row.id}`, updated: row.updated }));
+    const backgrounds = has('backgrounds') ? store.all(`SELECT id, updated FROM backgrounds WHERE status='approved' AND ${adult('tags')} ORDER BY updated DESC`)
+      .map((row) => ({ path: `/background?background=${row.id}`, updated: row.updated })) : [];
+    const guides = has('guides') ? store.all("SELECT id, updated FROM guides WHERE status='approved' AND public_revision IS NOT NULL ORDER BY updated DESC")
+      .map((row) => ({ path: `/guides?id=${row.id}`, updated: row.updated })) : [];
+    return [...backgrounds, ...works, ...guides];
+  };
+  // 160 pictures (about 20 MB): the search pages (server/seo-pages.mjs) show up to 24 grids each.
   const previews = new Map();
   const previewImage = (key, render) => {
-    if (!previews.has(key)) { const made = render(); made.catch(() => previews.delete(key)); previews.set(key, made); if (previews.size > 32) previews.delete(previews.keys().next().value); }
+    if (!previews.has(key)) { const made = render(); made.catch(() => previews.delete(key)); previews.set(key, made); if (previews.size > 160) previews.delete(previews.keys().next().value); }
     return previews.get(key);
   };
   const captcha = new CatalogCaptcha(store, config.salt);
@@ -379,6 +395,55 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         response.setHeader('Cache-Control', 'public, max-age=3600');
         return send(200, meta);
       }
+      // Pages for search engines, robots.txt and sitemap.xml (server/seo-pages.mjs; nginx sends /backgrounds,
+      // /grids, /robots.txt and /sitemap.xml here). Kept ten minutes: the lists change slowly.
+      const seo = /^\/seo\/(?:(backgrounds|grids)(?:\/([a-z0-9-]{1,40}))?|(robots\.txt|sitemap\.xml))$/.exec(path);
+      if (seo && ['GET', 'HEAD'].includes(method)) {
+        const key = seo[3] || `${seo[1]}/${seo[2] || ''}`;
+        let cached = seoCache.get(key);
+        if (!cached || cached.at < Date.now() - 600_000) {
+          let body = null, type = 'text/html; charset=utf-8';
+          if (seo[3] === 'robots.txt') { body = robotsText(config.origin); type = 'text/plain; charset=utf-8'; }
+          else if (seo[3] === 'sitemap.xml') { body = sitemapXML(config.origin, seoEntries()); type = 'application/xml; charset=utf-8'; }
+          else body = seoPage(seo[1], seo[2] || '', { origin: config.origin, image: pageMeta(seo[1] === 'grids' ? 'workshop' : 'backgrounds', config.origin).image,
+            list: (section, tag, page) => section === 'grids' ? store.list({ tag, popular: true, page }) : gallery().list({ tag, popular: true, page }) });
+          cached = { at: Date.now(), body, type };
+          if (body) { seoCache.set(key, cached); if (seoCache.size > 64) seoCache.delete(seoCache.keys().next().value); }
+        }
+        if (!cached.body) {
+          response.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+          return response.end(method === 'HEAD' ? undefined : '<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Страница не найдена — GridStudio</title><body style="background:#15141a;color:#efeaf5;font:16px/1.5 sans-serif;padding:40px 20px"><h1>Страница не найдена</h1><p><a style="color:#c4b5ed" href="/backgrounds">Фоны для Dota 2</a> · <a style="color:#c4b5ed" href="/grids">Сетки героев</a> · <a style="color:#c4b5ed" href="/">GridStudio</a></p></body></html>');
+        }
+        response.writeHead(200, { 'Content-Type': cached.type, 'Cache-Control': 'public, max-age=600' });
+        return response.end(method === 'HEAD' ? undefined : cached.body);
+      }
+      // Dotadle (server/dotadle.mjs): signed-in only; a guest gets the day's number and the training game.
+      if (path === '/dotadle' && method === 'GET') return send(200, user ? await dotadle.state(user.id) : { login: true, number: dotadle.today() });
+      if (path === '/dotadle/guess' && method === 'POST') {
+        const member = requireUser(); store.rate(`dotadle:${member.id}`, 30, 60_000);
+        const body = await readJSON(request, 2_000), result = await dotadle.guess(member.id, body.number, body.hero);
+        if (result.error) fail(400, result.error);
+        return send(200, result);
+      }
+      if (path === '/dotadle/reminder' && method === 'POST') {
+        const member = requireUser(); store.rate(`dotadle-reminder:${member.id}`, 20, 60_000);
+        return send(200, dotadle.setReminder(member.id, !!(await readJSON(request, 200)).on));
+      }
+      const shareMatch = /^\/dotadle\/share\/([A-Za-z0-9]{3,8})$/.exec(path);
+      if (shareMatch && method === 'GET') { const result = dotadle.shared(shareMatch[1]); if (!result) fail(404, 'Не найдено.'); return send(200, result); }
+      if (path === '/dotadle/practice' && method === 'GET') return send(200, await dotadle.practice());
+      if (path === '/dotadle/practice' && method === 'POST') {
+        store.rate(`dotadle-practice:${ipHash}`, 60, 60_000);
+        const result = dotadle.practiceGuess((await readJSON(request, 2_000)).hero);
+        if (result.error) fail(400, result.error);
+        return send(200, result);
+      }
+      // «Прислать на ПК» (scripts/pc-link.mjs): to the bot with the page's code; the bot sends the link.
+      const toPC = /^\/pc\/([\w-]{1,64})$/.exec(path);
+      if (toPC && method === 'GET') {
+        if (!pcPage(toPC[1])) fail(404, 'Не найдено.');
+        response.writeHead(302, { Location: `https://t.me/${config.botUsername}?start=pc_${toPC[1]}` }); return response.end();
+      }
       if (path === '/config' && method === 'GET') return send(200, { captcha: 'altcha', development: config.development, paused: store.paused(), tags: CATALOG_TAGS, limits: CATALOG_LIMITS,
         artCategories: ART_CATEGORIES, artLimits: ART_LIMITS, backgroundTags: BACKGROUND_TAGS, backgroundLimits: BACKGROUND_LIMITS, moderationUrl: config.moderationUrl });
       // The workshop's «Реклама» page: the site's numbers for advertisers (server/site-stats.mjs audience).
@@ -478,9 +543,9 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       // picture is rendered only for grids that may be on the landing, once per revision.
       // A shared work's page with its link preview (nginx sends /workshop?id=, ?creator=, /background?background=,
       // /guides?id= and the tabs of scripts/og-pages.mjs here).
-      const page = /^\/page\/(workshop|customize|guides)$/.exec(path);
+      const page = /^\/page\/(workshop|customize|guides|dotadle)$/.exec(path);
       if (page && ['GET', 'HEAD'].includes(method)) {
-        const html = sitePage(config.site, { workshop: 'catalog', customize: 'customize', guides: 'guides' }[page[1]]);
+        const html = sitePage(config.site, { workshop: 'catalog', customize: 'customize', guides: 'guides', dotadle: 'dotadle' }[page[1]]);
         if (!html) fail(503, 'Страница временно недоступна.');
         let meta = null;
         try {
@@ -500,6 +565,15 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
             meta = { title: card.nickname, description: card.bio || `${PREVIEW_TEXT.profile} ${card.stats}.`, url: `${config.origin}/workshop?creator=${card.key}`,
               image: `${config.origin}/api/catalog/preview/profile/${card.key}.jpg?v=${card.version}`, alt: `Профиль ${card.nickname}` };
           }
+          // Dotadle (nginx sends every /dotadle here): a shared result (?r=, scripts/dotadle-share.mjs) gets its
+          // score and squares as the picture; the page itself, the game's picture.
+          if (page[1] === 'dotadle') {
+            const code = url.searchParams.get('r'), result = dotadle.shared(code);
+            meta = result ? { title: `Dotadle #${result.number} — ${result.solved ? result.tries : 'X'}/6`, description: 'Угадай героя Dota 2 по портрету из символов. Новый герой каждый день — сможешь быстрее?',
+              url: `${config.origin}/dotadle`, image: `${config.origin}/api/catalog/preview/dotadle/${code}.jpg`, alt: `Результат Dotadle #${result.number}` }
+              : { title: 'Dotadle — угадай героя дня', description: 'Угадай героя Dota 2 по портрету из символов. Новый герой каждый день, 6 попыток: с каждой ошибкой картинка чётче.',
+                url: `${config.origin}/dotadle`, image: `${config.origin}/api/catalog/preview/dotadle.jpg`, alt: 'Dotadle — угадай героя Dota 2' };
+          }
           const backgroundId = url.searchParams.get('background') || '';
           if (page[1] === 'customize' && /^[1-9]\d{0,12}$/.test(backgroundId)) {
             const row = gallery().get(Number(backgroundId));
@@ -511,6 +585,16 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         if (!meta) { const tab = tabOf(page[1], url.searchParams); if (tab) meta = pageMeta(tab, config.origin); }
         response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' });
         return response.end(method === 'HEAD' ? undefined : meta ? withPreview(html, meta) : html);
+      }
+      const shared = /^\/preview\/dotadle(?:\/([A-Za-z0-9]{3,8}))?\.jpg$/.exec(path);
+      if (shared && method === 'GET') {
+        const result = shared[1] ? dotadle.shared(shared[1]) : null;
+        if (shared[1] && !result) fail(404, 'Не найдено.');
+        const key = `dotadle:${shared[1] || ''}:${result?.rows.join('.') || ''}`;
+        if (!previews.has(key)) store.rate(`preview:${ipHash}`, 30, 60_000);
+        const image = await previewImage(key, () => dotadlePreviewImage(result));
+        response.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400', 'Cross-Origin-Resource-Policy': 'cross-origin' });
+        return response.end(image);
       }
       const preview = /^\/preview\/(?:work\/([0-9a-f-]{36})|background\/([1-9]\d{0,12})|guide\/([A-Za-z0-9_-]{12})|profile\/([A-Za-z0-9_-]{12}))\.jpg$/.exec(path);
       if (preview && method === 'GET') {
@@ -739,7 +823,9 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       .map(({ id }) => { const item = store.publicItem(id, viewer); delete item.grid; return item; });
     const backgrounds = gallery().byAccount(account, viewer), guideCards = guides().byAccount(account), stats = creatorStats(account);
     return { ...store.profiles.card(row), badges: store.profiles.badges(account, stats.likes), mine: viewer === account, stats, grids, backgrounds, guides: guideCards,
-      followable: viewer !== account, subscribed: !!(viewer && store.get('SELECT 1 x FROM subscriptions WHERE account=? AND author=?', viewer, account)) };
+      followable: viewer !== account, subscribed: !!(viewer && store.get('SELECT 1 x FROM subscriptions WHERE account=? AND author=?', viewer, account)),
+      // Dotadle (asked for on 2026-10-06): the streak and the wins, once the account has played.
+      dotadle: (({ played, won, streak, best }) => played ? { played, won, streak, best } : null)(dotadle.stats(account)) };
   }
   const server = createServer(handler); server.requestTimeout = 15000; server.headersTimeout = 10000;
   return { server, store, accounts, handler, gallery };

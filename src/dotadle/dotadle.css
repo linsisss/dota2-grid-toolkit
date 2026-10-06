@@ -1,0 +1,109 @@
+/* Dotadle (src/dotadle/DotadleApp.jsx): one screen on a computer — the picture as tall as the window
+   allows on the left, the game on the right (it scrolls inside itself on a short window). */
+.dle-page { --nav:72px; height:100dvh; }
+.dle-page .catalog-nav { padding:14px 32px; }
+.dle-page .catalog-main { display:flex; min-height:0; margin:0 auto; padding:4px 32px 22px; }
+.dle { flex:1; min-height:0; display:grid; grid-template-columns:auto minmax(0, 1fr); gap:32px; }
+
+.dle-picture { display:flex; flex-direction:column; gap:8px; margin:0; }
+.dle-frame { position:relative; height:max(420px, min(calc(100dvh - var(--nav) - 62px), calc(44vw * 376 / 284))); aspect-ratio:284 / 376; container-type:size;
+  overflow:hidden; border:1px solid var(--cat-line); border-radius:16px; background:#0d0c11; }
+/* A monospace symbol is about 0.6 of its size wide; 0.62 leaves room. */
+.dle-frame pre { position:absolute; inset:0; margin:0; padding:12px; overflow:hidden; color:var(--cat-accent);
+  font:400 calc((100cqw - 24px) / var(--columns) / .62)/1 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; white-space:pre; }
+.dle-frame img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; animation:dle-reveal 1.2s .3s ease forwards; }
+@keyframes dle-reveal { to { opacity:1; } }
+.dle-picture figcaption { max-width:100%; color:var(--cat-muted); font-size:13px; text-align:center; }
+
+.dle-side { min-height:0; overflow:auto; display:flex; flex-direction:column; gap:14px; padding-right:2px; }
+.dle-head { display:flex; align-items:center; justify-content:space-between; gap:12px 20px; flex-wrap:wrap; }
+.dle-head h1 { margin:0; font-size:clamp(30px, 3.4vw, 42px); line-height:1; letter-spacing:-.02em; }
+.dle-head h1 span { color:var(--cat-muted); font-weight:400; }
+.dle-head-actions { display:flex; gap:8px; }
+.dle-head-actions .catalog-button { min-height:38px; padding:8px 14px; font-size:14px; }
+.dle-play { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:center; gap:16px; }
+.dle-note { margin:-6px 0 0; color:var(--cat-muted); font-size:13px; }
+
+.dle-search { position:relative; display:flex; align-items:center; }
+.dle-search > svg { position:absolute; left:14px; color:var(--cat-muted); pointer-events:none; }
+.dle-page .dle-search input { width:100%; min-height:48px; padding:12px 16px 12px 42px; border:1px solid var(--cat-line); border-radius:12px; background:var(--cat-field); color:var(--cat-ink); font:inherit; font-size:16px; }
+.dle-page .dle-search input:focus { outline:2px solid var(--cat-accent); outline-offset:1px; }
+.dle-search ul { position:absolute; z-index:5; inset:calc(100% + 6px) 0 auto; margin:0; padding:6px; list-style:none; border:1px solid var(--cat-line); border-radius:12px; background:var(--cat-panel); box-shadow:0 18px 40px #0009; }
+.dle-search li { display:flex; align-items:center; gap:12px; padding:7px 10px; border-radius:8px; cursor:pointer; }
+.dle-search li[aria-selected=true] { background:#c4b5ed22; }
+.dle-search li img { border-radius:4px; }
+.dle-tries { display:flex; gap:6px; margin:0; padding:0; list-style:none; }
+.dle-tries li { width:22px; height:6px; border-radius:3px; background:#ffffff24; }
+.dle-tries li.is-used { background:#e0707a; }
+
+.dle-hints { width:100%; border-collapse:separate; border-spacing:0 4px; font-size:13px; table-layout:fixed; }
+.dle-hints thead th { padding:0 8px 2px; color:var(--cat-muted); font-size:12px; font-weight:500; text-align:center; }
+.dle-hints thead th:first-child { width:32%; text-align:left; }
+.dle-hints tbody th, .dle-hints td { height:38px; padding:6px 8px; background:var(--cat-panel); text-align:center; vertical-align:middle; }
+.dle-hints tbody th { border-radius:9px 0 0 9px; font-weight:500; text-align:left; }
+.dle-hero { display:flex; align-items:center; gap:10px; min-width:0; }
+.dle-hero span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dle-hero img { flex:none; border-radius:4px; }
+.dle-hints td:last-child { border-radius:0 9px 9px 0; }
+.dle-hints td img { display:block; margin:auto; }
+.dle-hints .is-same, .dle-guide-read .is-same { background:#2f6b45; }
+.dle-hints .is-near, .dle-guide-read .is-near { background:#7a6528; }
+.dle-hints .is-other, .dle-guide-read .is-other { background:#6b2f37; }
+.dle-hints tr.is-correct th { background:#2f6b45; }
+.dle-hints tr.is-empty th, .dle-hints tr.is-empty td { background:#ffffff07; }
+.dle-arrow { margin-left:5px; }
+
+.dle-gate, .dle-coach, .dle-result { display:grid; gap:12px; padding:18px 20px; border:1px solid var(--cat-line); border-radius:14px; background:var(--cat-panel); }
+.dle-gate h2, .dle-coach h2, .dle-result h2 { margin:0; font-size:20px; line-height:1.25; }
+.dle-gate p, .dle-coach p { margin:0; color:var(--cat-muted); }
+.dle-coach ul { display:grid; gap:4px; margin:0; padding-left:20px; }
+.dle-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.dle-share { display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+.dle-share > span { font-size:15px; line-height:1.15; white-space:pre; letter-spacing:1px; }
+.dle-result .catalog-muted { margin:0; font-size:13px; }
+.dle-reminder { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin:0; color:var(--cat-muted); font-size:13px; }
+.dle-reminder svg { color:var(--cat-accent); }
+.dle-reminder .catalog-link { padding:0; border:0; background:none; color:var(--cat-accent); font:inherit; cursor:pointer; }
+.dle-side > .dle-reminder { margin-top:-8px; }
+.dle-friend { display:flex; align-items:center; gap:14px; margin:0; padding:10px 14px; border:1px solid #c4b5ed40; border-radius:12px; background:#c4b5ed12; font-size:14px; }
+.dle-friend > span { font-size:11px; line-height:1.1; white-space:pre; letter-spacing:1px; }
+.dle-spoiler { display:flex; align-items:center; gap:10px; margin:0; padding:9px 12px; border-radius:10px; background:#c4b5ed1a; color:var(--cat-ink); font-size:13px; line-height:1.4; }
+.dle-spoiler span { font-size:18px; }
+.dle-result .catalog-muted a { color:var(--cat-accent); }
+.dle-stats { display:flex; align-items:flex-end; gap:24px; flex-wrap:wrap; }
+.dle-stats dl { display:flex; gap:22px; margin:0; }
+.dle-stats dl div { display:grid; text-align:center; }
+.dle-stats dd { margin:0; font-size:22px; font-weight:600; line-height:1.1; }
+.dle-stats dt { color:var(--cat-muted); font-size:12px; }
+.dle-dist { display:flex; align-items:flex-end; gap:5px; height:44px; margin:0; padding:0; list-style:none; }
+.dle-dist li { display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:2px; width:18px; height:100%; }
+.dle-dist i { width:100%; border-radius:3px; background:var(--cat-accent); opacity:.85; }
+.dle-dist span { color:var(--cat-muted); font-size:10px; }
+
+.dle-guide { display:grid; gap:12px; padding:18px 24px 22px; }
+.dle-guide p, .dle-guide ol { margin:0; }
+.dle-guide ol { display:grid; gap:6px; padding-left:20px; }
+.dle-guide-title { font-weight:500; }
+.dle-guide-read { display:grid; gap:6px; margin:0; padding:0; list-style:none; font-size:14px; }
+.dle-guide-read li { display:flex; align-items:center; gap:10px; }
+.dle-guide-read span { flex:none; width:14px; height:14px; border-radius:4px; }
+.dle-hints.is-sample tbody th { width:32%; }
+
+@media (max-width: 760px) {
+  .dle-page { height:auto; }
+  .dle-page .catalog-nav { padding:16px 20px; }
+  .dle-page .catalog-main { display:block; padding:0 16px 32px; }
+  .dle { grid-template-columns:1fr; gap:18px; }
+  .dle-picture { align-items:center; }
+  .dle-frame { height:min(56dvh, calc((100vw - 32px) * 376 / 284)); }
+  .dle-side { overflow:visible; }
+  .dle-head h1 { font-size:30px; }
+  .dle-play { grid-template-columns:1fr; gap:10px; }
+  .dle-hints { font-size:12px; }
+  .dle-hints thead th { padding:0 3px 2px; font-size:10px; }
+  .dle-hints thead th:first-child { width:30%; }
+  .dle-hints tbody th, .dle-hints td { padding:5px 3px; }
+  .dle-hero img { display:none; }
+  .dle-stats { gap:14px; }
+  .dle-stats dl { gap:14px; }
+}

@@ -8,5 +8,6 @@ export const NOTIFICATIONS = Object.freeze([
   { id: 'replies', label: 'Ответы на мои комментарии', hint: 'Ответили на мой комментарий' },
   { id: 'follows', label: 'Новое у авторов из моих подписок', hint: 'Новые сетки, фоны и гайды' },
   { id: 'badges', label: 'Значки', hint: 'Мне выдали значок в профиле' },
+  { id: 'milestones', label: 'Успехи моих работ', hint: 'Сетку или фон скачали 100 раз, гайд набрал 50 лайков и так далее' },
 ]);
 export const NOTIFICATION_IDS = Object.freeze(NOTIFICATIONS.map((kind) => kind.id));

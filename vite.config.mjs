@@ -13,7 +13,7 @@ export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version + (process.env.GRIDSTUDIO_BUILD_LABEL ? `-${process.env.GRIDSTUDIO_BUILD_LABEL}` : '')) },
   base: './',
   build: {
-    rollupOptions: { input: { home: 'index.html', studio: 'editor.html', catalog: 'catalog.html', customize: 'customize.html', guides: 'guides.html', design: 'design.html', landing: 'landing.html' } }
+    rollupOptions: { input: { home: 'index.html', studio: 'editor.html', catalog: 'catalog.html', customize: 'customize.html', guides: 'guides.html', dotadle: 'dotadle.html', design: 'design.html', landing: 'landing.html' } }
   },
   server: {
     proxy: { '/api/catalog': { target: `http://127.0.0.1:${process.env.CATALOG_PORT || 4174}` } },

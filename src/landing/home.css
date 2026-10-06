@@ -1,0 +1,90 @@
+/* The home page (src/landing/Home.jsx), over landing.css's «Сцена» (the stage, the footer). */
+@font-face { font-family:'GS Playfair'; src:url('/assets/dota-fonts/playfair-display/playfair-display-400.ttf'); font-display:swap; }
+@font-face { font-family:'GS Monocraft'; src:url('/assets/dota-fonts/monocraft/monocraft-400.ttf'); font-display:swap; }
+@font-face { font-family:'GS Comic'; src:url('/assets/dota-fonts/comic-relief/comic-relief-700.ttf'); font-display:swap; }
+/* The account button and the sign-in window come from the workshop (catalog.css). */
+.home-page { --cat-ground:#15141a; --cat-panel:#211e29; --cat-ink:#efeaf5; --cat-muted:#afa7bf; --cat-line:#ffffff1c; --cat-accent:#c4b5ed; --cat-field:#19171f; }
+
+.home-nav { padding-top:20px; padding-bottom:12px; }
+.home-nav nav { display:flex; align-items:center; gap:26px; font-size:14px; }
+.home-nav nav > a { display:inline-flex; align-items:center; gap:7px; color:var(--lp-muted); transition:color 160ms; }
+.home-nav nav > a:hover { color:var(--lp-ink); }
+.home-nav nav > a svg { width:16px; height:16px; }
+.home-nav .catalog-button { min-height:40px; padding:8px 14px; font-size:14px; }
+
+.home-main { padding-top:6px; padding-bottom:10px; }
+.landing-stage .home-copy { max-width:640px; }
+.landing-stage .home-copy h1 { font-size:clamp(36px, 10.5cqw, 68px) !important; }
+.home-copy .landing-description { margin-top:16px; font-size:16px; }
+
+.home-cards { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; margin-top:26px; }
+.home-card { display:flex; flex-direction:column; gap:6px; padding:10px 10px 12px; border:1px solid var(--lp-line); border-radius:14px; background:#1b1922;
+  transition:border-color 180ms, transform 180ms var(--lp-ease), background 180ms; }
+.home-card:hover { border-color:#c4b5ed59; background:#1f1c27; transform:translateY(-2px); }
+.home-card:first-child { border-color:#c4b5ed40; }
+.home-card-media { display:block; }
+.home-thumb { position:relative; display:grid; place-items:center; aspect-ratio:16 / 10; overflow:hidden; border-radius:9px; background:#0e0d12; color:var(--lp-muted); }
+.home-thumb > img, .home-thumb > video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.home-thumb > video { opacity:0; transition:opacity 200ms; }
+.home-thumb > video:hover { opacity:1; }
+.home-thumb.is-empty svg { width:28px; height:28px; }
+.home-thumb.is-grid { grid-template-columns:repeat(4, 1fr); gap:3px; padding:8px; place-items:stretch; align-content:center; background:radial-gradient(120% 90% at 50% 0%, #2c2535, #0e0d12); }
+.home-thumb.is-grid img { position:static; width:100%; height:auto; aspect-ratio:16 / 9; object-fit:cover; border-radius:3px; }
+.home-thumb.is-font { grid-auto-flow:column; gap:10px; color:var(--lp-ink); background:radial-gradient(120% 90% at 50% 0%, #2a2433, #0e0d12); }
+.home-thumb.is-font b { font-weight:400; font-size:clamp(20px, 2.1vw, 30px); line-height:1; }
+.home-thumb .is-serif { font-family:'GS Playfair', Georgia, serif; }
+.home-thumb .is-pixel { font-family:'GS Monocraft', monospace; color:var(--lp-accent); }
+.home-thumb .is-comic { font-family:'GS Comic', 'Comic Sans MS', cursive; }
+.home-card h2 { margin:6px 2px 0; font-size:16px; font-weight:600; letter-spacing:-.01em; }
+.home-card p { margin:0 2px; flex:1; color:var(--lp-muted); font-size:13px; line-height:1.4; }
+.home-card-actions { display:flex; flex-direction:column; align-items:stretch; gap:4px; margin-top:auto; padding-top:6px; }
+.home-card-action { display:inline-flex; align-items:center; justify-content:center; min-height:36px; padding:0 12px; border-radius:8px; background:var(--lp-raised); font-size:13px; font-weight:500; white-space:nowrap; transition:background 160ms; }
+.home-card:first-child .home-card-action { background:var(--lp-accent); color:var(--lp-accent-ink); }
+.home-card-action:hover { background:#383340; }
+.home-card:first-child .home-card-action:hover { background:#d4c7f6; }
+.home-card-more { display:inline-flex; align-items:center; justify-content:center; gap:4px; min-height:26px; color:var(--lp-muted); font-size:13px; white-space:nowrap; }
+.home-card-more:hover { color:var(--lp-ink); }
+.home-card-more svg { width:14px; height:14px; }
+
+.home-dotadle { display:flex; align-items:center; gap:14px; margin-top:12px; padding:10px 16px 10px 10px; border:1px solid var(--lp-line); border-radius:14px; background:#1b1922; transition:border-color 160ms, background 160ms; }
+.home-dotadle:hover { border-color:#c4b5ed59; background:#1f1c27; }
+.home-dotadle-art { display:grid; place-items:center; width:46px; height:46px; border-radius:9px; background:#0d0c11; color:var(--lp-accent); font:700 11px/1.05 ui-monospace, Menlo, Consolas, monospace; white-space:pre; }
+.home-dotadle > span:nth-child(2) { display:grid; flex:1; }
+.home-dotadle b { font-weight:600; }
+.home-dotadle small { color:var(--lp-muted); font-size:13px; }
+.home-dotadle > svg { width:18px; height:18px; color:var(--lp-muted); }
+
+.home-footer { flex-wrap:wrap; padding-top:14px !important; }
+.home-credits { display:flex; align-items:center; flex-wrap:wrap; gap:4px 20px; }
+.home-credits svg { width:14px !important; height:14px !important; }
+.home-authors { display:inline-flex; align-items:center; gap:10px; }
+.home-authors img { width:22px; height:22px; border-radius:50%; object-fit:cover; }
+.home-authors a { color:var(--lp-ink); }
+
+@media (min-width: 701px) {
+  /* The stage leaves room for the cards' column: a bit smaller than on the old page. */
+  .home-page .landing-visual.has-spot { --landing-room: calc(100svh - 230px); }
+}
+@media (max-width: 1100px) {
+  .home-nav nav { gap:16px; }
+  .home-cards { gap:8px; }
+  .home-card { padding:8px 8px 10px; }
+}
+@media (max-width: 960px) {
+  .home-nav nav > a:not(:last-of-type) { display:none; }
+}
+@media (max-width: 700px) {
+  .home-nav { flex-wrap:wrap; padding:16px 20px 6px; }
+  .home-nav nav { gap:14px; }
+  .home-nav nav > a:not(:last-of-type) { display:inline-flex; }
+  .home-nav nav > a:last-of-type { display:none; }
+  .home-nav .account-label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .landing-stage .home-copy h1 { font-size:clamp(40px, 11vw, 60px) !important; }
+  .home-cards { grid-template-columns:1fr; gap:10px; margin-top:22px; }
+  .home-card { display:grid; grid-template-columns:120px minmax(0, 1fr); grid-template-rows:auto 1fr auto; column-gap:14px; row-gap:2px; padding:10px; }
+  .home-card-media { grid-row:1 / 4; align-self:center; }
+  .home-card h2 { margin:2px 0 0; }
+  .home-card p { margin:0; }
+  .home-card-actions { flex-direction:row; align-items:center; margin-top:6px; padding-top:0; gap:14px; }
+  .home-footer { padding:20px !important; }
+}

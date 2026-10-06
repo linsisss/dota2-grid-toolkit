@@ -14,13 +14,13 @@
 export const DAY = 86_400_000;
 const MSK = 3 * 3_600_000, KEEP_DAYS = 400;
 export const mskDay = (ms) => Math.floor((ms + MSK) / DAY);
-export const STAT_PAGE = /^(?:home|editor|workshop|workshop:backgrounds|rules|background|font|guides|work:[0-9a-f-]{36}|guide:[A-Za-z0-9_-]{12}|profile:[A-Za-z0-9_-]{12})$/;
-export const STAT_EVENTS = Object.freeze(['grid-export', 'background-pack', 'font-pack', 'login', 'studio-save']);
+export const STAT_PAGE = /^(?:home|editor|workshop|workshop:backgrounds|rules|background|font|guides|work:[0-9a-f-]{36}|guide:[A-Za-z0-9_-]{12}|profile:[A-Za-z0-9_-]{12}|dotadle|seo:(?:backgrounds|grids)(?:\/[a-z0-9-]{1,40})?)$/;
+export const STAT_EVENTS = Object.freeze(['grid-export', 'background-pack', 'font-pack', 'login', 'studio-save', 'send-pc', 'dotadle-done']);
 export const STAT_PERIODS = Object.freeze([7, 30, 90, 365]);
 // User-Agents of robots, crawlers, link previews, monitors and scripts: their hits are not counted.
 export const STAT_ROBOT = /bot\b|bot\/|crawl|spider|slurp|headless|lighthouse|phantom|puppeteer|playwright|selenium|python|curl|wget|httpclient|java\/|go-http|okhttp|axios|libwww|preview|scanner|monitor|uptime|facebookexternalhit|telegrambot|whatsapp|discordbot/i;
 const PAGE_LABELS = { home: 'Главная', editor: 'Студия и редактор', workshop: 'Мастерская: сетки', 'workshop:backgrounds': 'Мастерская: фоны', rules: 'Правила мастерской',
-  background: 'Фон главного меню', font: 'Шрифт', guides: 'Гайды' };
+  background: 'Фон главного меню', font: 'Шрифт', guides: 'Гайды', dotadle: 'Dotadle' };
 // Where people come from: a site (its host, or the name in utm_source) as one of these; any other site
 // is 'other' (its host kept), no site at all 'direct', an account from before 03.10.2026 'unknown'.
 export const SOURCES = Object.freeze({ telegram: 'Telegram', tiktok: 'TikTok', youtube: 'YouTube', google: 'Google', yandex: 'Яндекс', vk: 'ВКонтакте', discord: 'Discord',
@@ -87,7 +87,7 @@ export class SiteStats {
     if (!page) return '';
     if (PAGE_LABELS[page]) return PAGE_LABELS[page];
     const [kind, id] = String(page).split(':'), title = this.itemTitle(kind, id);
-    return { work: `Сетка «${title || '—'}»`, guide: `Гайд «${title || '—'}»`, profile: `Профиль ${title || '—'}` }[kind] || page;
+    return { work: `Сетка «${title || '—'}»`, guide: `Гайд «${title || '—'}»`, profile: `Профиль ${title || '—'}`, seo: `Страница для поиска /${id}` }[kind] || page;
   }
   // The period's numbers, days [start, end).
   kpi(start, end) {

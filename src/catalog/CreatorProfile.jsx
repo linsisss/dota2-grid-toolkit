@@ -56,6 +56,7 @@ export default function CreatorProfile({ id }) {
         <h1>{profile.nickname}</h1>
         <BadgeList badges={profile.badges || []}/>
         <p className="creator-facts">{profile.telegram && <a href={telegramLink(profile.telegram)} target="_blank" rel="noreferrer"><Icon name="telegram" size={15}/>{profile.telegram}</a>}
+          {profile.dotadle && <a className="creator-dotadle" href="./dotadle" title={t('Dotadle: побед {won} из {played}, лучшая серия {best}', profile.dotadle)}><Icon name="trophy" size={15}/>{t('Dotadle: серия {streak}', profile.dotadle)}</a>}
           <span><Icon name="clock" size={15}/>{t('На сайте с {date}', { date: new Date(profile.joined).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) })}</span></p>
         {profile.bio ? <p className="creator-bio">{bioParts(profile.bio).map((part, i) => part.href ? <a key={i} href={part.href} target="_blank" rel="noopener noreferrer nofollow ugc">{part.text}</a> : part.text)}</p> : profile.mine && <p className="creator-bio catalog-muted">{t('Расскажи о себе в настройках профиля.')}</p>}
       </div>

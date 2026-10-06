@@ -18,6 +18,9 @@ import { telegramAvatar } from './telegram-profile.mjs';
 import { CatalogGuides } from './guides.mjs';
 import { guidePreviewImage } from './link-preview.mjs';
 import { FAQ, faqEdit, faqResults } from './telegram-faq.mjs';
+import { pcPage } from '../scripts/pc-link.mjs';
+import { scanMilestones } from './milestones.mjs';
+import { dotadleNumber, dotadleStats, dotadleTables, DOTADLE_TRIES } from './dotadle.mjs';
 
 export const MODERATION_CHAT = '-1004309207941', MODERATION_TOPIC = 6;
 export function telegramConfig(env = process.env) {
@@ -403,6 +406,57 @@ export class CatalogTelegram {
       reply_markup: { inline_keyboard: [[{ text: 'Открыть и ответить', url }], [{ text: 'Не присылать такие', callback_data: `nt:off:${note.reason === 'reply' ? 'replies' : 'comments'}` }]] } };
   }
   // «Не присылать такие» under a message: that kind is switched off, as in «Настройки профиля».
+  // A grid, background or guide passed a round number of downloads or likes (server/milestones.mjs):
+  // scanned every ten minutes, then sent like the other messages ('milestones' in the profile settings).
+  async deliverMilestones(limit = 20) {
+    if (!this.milestonesAt || this.store.now() - this.milestonesAt >= 600_000) {
+      this.milestonesAt = this.store.now();
+      try { scanMilestones(this.store); } catch (error) { this.log(`Рубежи работ: не удалось посчитать (${String(error?.message || error).slice(0, 200)}).`); return; }
+    }
+    const due = this.store.all("SELECT * FROM milestone_notices WHERE state='queued' AND next_at<=? ORDER BY id LIMIT ?", this.store.now(), limit);
+    for (const note of due) {
+      const work = this.followedWork(note.item);
+      if (!work || work.account !== note.account) { this.store.run("UPDATE milestone_notices SET state='dropped' WHERE id=?", note.id); continue; }
+      const kind = note.item.startsWith('bg:') ? 'background' : note.item.startsWith('guide:') ? 'guide' : 'grid', title = `<b>«${escape(work.title)}»</b>`;
+      const text = note.metric === 'downloads'
+        ? `🎉 ${kind === 'grid' ? 'Твою сетку' : 'Твой фон'} ${title} скачали уже <b>${note.level}</b> раз!`
+        : `❤️ ${{ grid: 'Твоя сетка', background: 'Твой фон', guide: 'Твой гайд' }[kind]} ${title} ${kind === 'grid' ? 'набрала' : 'набрал'} <b>${note.level}</b> лайков!`;
+      if (!await this.direct('milestone_notices', 'id', note, { text: `${text}\n\nСпасибо, что делаешь мастерскую лучше 💜`,
+        reply_markup: { inline_keyboard: [[{ text: 'Открыть', url: work.url }], [{ text: 'Не присылать такие', callback_data: 'nt:off:milestones' }]] } }, 'milestones')) return;
+    }
+  }
+  // Dotadle's morning reminder (opt-in on the game's page): at 10:00 Moscow time, to those who have not
+  // finished today's game; dropped if they play before it goes out.
+  async deliverDotadleReminders(limit = 20) {
+    if (!this.dotadleReady) { dotadleTables(this.store); this.dotadleReady = true; }
+    const now = this.store.now(), number = dotadleNumber(now), over = (account) => {
+      const play = this.store.get('SELECT guesses, solved FROM dotadle_plays WHERE account=? AND number=?', account, number);
+      return !!play && (play.solved || JSON.parse(play.guesses).length >= DOTADLE_TRIES);
+    };
+    if (new Date(now + 3 * 3_600_000).getUTCHours() >= 10 && this.queue.setting('dotadle-reminded') !== String(number)) {
+      this.store.run("INSERT OR IGNORE INTO dotadle_reminder_notices(account,number,created) SELECT account, ?, ? FROM dotadle_reminders", number, now);
+      this.queue.set('dotadle-reminded', number);
+    }
+    this.store.run("UPDATE dotadle_reminder_notices SET state='dropped' WHERE state='queued' AND number<>?", number);
+    const due = this.store.all("SELECT rowid, * FROM dotadle_reminder_notices WHERE state='queued' AND next_at<=? ORDER BY created LIMIT ?", now, limit);
+    for (const note of due) {
+      if (over(note.account) || !this.store.get('SELECT 1 x FROM dotadle_reminders WHERE account=?', note.account)) { this.store.run("UPDATE dotadle_reminder_notices SET state='dropped' WHERE rowid=?", note.rowid); continue; }
+      const { streak } = dotadleStats(this.store, note.account, number);
+      if (!await this.direct('dotadle_reminder_notices', 'rowid', note, {
+        text: `🦸 <b>Dotadle #${number}</b> — новый герой дня готов.\n\n${streak ? `Твоя серия: <b>${streak}</b> 🔥 Не потеряй её!` : 'Угадай героя по портрету из символов — 6 попыток.'}`,
+        reply_markup: { inline_keyboard: [[{ text: 'Играть', url: `${this.config.origin}/dotadle` }], [{ text: 'Не напоминать', callback_data: 'dl:off' }]] } })) return;
+    }
+  }
+  async dotadleCallback(query) {
+    const answer = (text) => this.api.answerCallbackQuery({ callback_query_id: query.id, text, show_alert: false }).catch(() => {});
+    const m = query.message;
+    if (m?.chat.type !== 'private' || m.chat.id !== query.from?.id || m.from?.id !== this.botId || query.from.is_bot) return answer('Эта кнопка работает только в личном чате с ботом.');
+    if (!this.dotadleReady) { dotadleTables(this.store); this.dotadleReady = true; }
+    this.store.run('DELETE FROM dotadle_reminders WHERE account=?', String(query.from.id));
+    await answer('Больше не напомню. Включить снова можно на странице Dotadle.');
+    const open = m.reply_markup?.inline_keyboard?.[0];
+    await this.api.editMessageReplyMarkup({ chat_id: m.chat.id, message_id: m.message_id, reply_markup: { inline_keyboard: open ? [open] : [] } }).catch(() => {});
+  }
   async notificationCallback(query) {
     const answer = (text) => this.api.answerCallbackQuery({ callback_query_id: query.id, text, show_alert: false }).catch(() => {});
     const match = /^nt:off:(\w+)$/.exec(query.data || ''), m = query.message, kind = NOTIFICATIONS.find((item) => item.id === match?.[1]);
@@ -441,6 +495,7 @@ export class CatalogTelegram {
     if (query.data?.startsWith('login:')) return this.loginCallback(query);
     if (query.data?.startsWith('sub:')) return this.subscriptionCallback(query);
     if (query.data?.startsWith('nt:')) return this.notificationCallback(query);
+    if (query.data === 'dl:off') return this.dotadleCallback(query);
     const answer = text => this.api.answerCallbackQuery({ callback_query_id: query.id, text, show_alert: true }).catch(() => {});
     // gs:<action>:<job>, gs:rj:<reason code>:<job> (a rejection with that reason), gs:back:<job>.
     const parsed = /^gs:(?:(approve|reject|keep|hide|back)|rj:([a-z])):([a-f0-9]{24})$/.exec(query.data || '');
@@ -511,6 +566,30 @@ export class CatalogTelegram {
     try { await this.api.editMessageText({ inline_message_id: chosen.inline_message_id, ...edit }); }
     catch (error) { this.log(`Быстрые ответы: не удалось добавить иконки (${errorCode(error) || 'нет связи'} ${String(error?.description || error?.message || '').slice(0, 200)}).`); }
   }
+  // «Прислать на ПК» (scripts/pc-link.mjs): /start pc_<code> from the site on a phone. The answer is
+  // the page's link, to press in Telegram on the computer.
+  pcTitle({ kind, id }) {
+    const has = (name) => !!this.store.get('SELECT 1 x FROM sqlite_master WHERE name=?', name);
+    const row = kind === 'work' ? this.store.get("SELECT r.title FROM works w JOIN revisions r ON r.id=w.public_revision WHERE w.id=? AND w.state='active'", id)
+      : kind === 'background' ? has('backgrounds') && this.store.get("SELECT title FROM backgrounds WHERE id=? AND status='approved'", id)
+      : kind === 'guide' ? has('guides') && this.store.get("SELECT r.title FROM guides g JOIN guide_revisions r ON r.id=g.public_revision WHERE g.id=? AND g.status='approved'", id)
+      : kind === 'creator' ? has('profiles') && this.store.get('SELECT nickname title FROM profiles WHERE key=?', id) : null;
+    const what = { work: 'Сетка героев', background: 'Фон главного меню', guide: 'Гайд', creator: 'Профиль автора' }[kind];
+    if (row?.title) return `${what} «${row.title}»`;
+    return { h: 'GridStudio', e: 'Редактор сеток героев', k: 'Мастерская', s: 'Фоны в мастерской', m: 'Фон главного меню Dota', f: 'Шрифт для Dota', u: 'Гайды' }[id] || what || 'GridStudio';
+  }
+  async pcMessage(message) {
+    const match = /^\/start(?:@\w+)? pc_([\w-]{1,64})$/.exec(message.text || ''), page = match && pcPage(match[1]);
+    if (!page || message.chat?.type !== 'private' || message.from?.is_bot || message.chat.id !== message.from?.id) return;
+    try {
+      this.store.rate(`tg-pc:${message.from.id}`, 20, 600_000);
+      await this.api.sendMessage({ chat_id: message.chat.id, parse_mode: 'HTML', link_preview_options: { is_disabled: true },
+        text: `<b>${escape(this.pcTitle(page))}</b>\n\nОткрой этот чат в Telegram на компьютере и нажми кнопку — страница откроется в браузере. Фоны, шрифты и сетки ставятся в Dota только с ПК.`,
+        reply_markup: { inline_keyboard: [[{ text: 'Открыть на GridStudio', url: `${this.config.origin}${page.path}` }]] } });
+    } catch (error) {
+      if (error.status) await this.api.sendMessage({ chat_id: message.chat.id, text: error.message }).catch(() => {});
+    }
+  }
   async loginMessage(message) {
     const match = /^\/start(?:@\w+)? login_([\w-]{32})$/.exec(message.text || '');
     if (!match || message.chat?.type !== 'private' || message.from?.is_bot || message.chat.id !== message.from?.id) return;
@@ -555,7 +634,7 @@ export class CatalogTelegram {
     try {
       while (!signal.aborted) {
         if (leaseLost || !this.queue.lease(this.owner)) throw new Error('Процесс потерял право обрабатывать очередь.');
-        await this.faqMedia(); await this.deliverOne(); await this.refreshCards(); await this.deliverAuthorNotices(); await this.deliverArtNotices(); await this.deliverGuideNotices(); await this.deliverRejectNotices(); await this.deliverBadgeNotices(); await this.deliverCommentNotices(); await this.deliverNotifications();
+        await this.faqMedia(); await this.deliverOne(); await this.refreshCards(); await this.deliverAuthorNotices(); await this.deliverArtNotices(); await this.deliverGuideNotices(); await this.deliverRejectNotices(); await this.deliverBadgeNotices(); await this.deliverCommentNotices(); await this.deliverNotifications(); await this.deliverMilestones(); await this.deliverDotadleReminders();
         let updates;
         try { updates = await this.api.getUpdates({ offset: Number(this.queue.setting('offset') || 0), timeout: 10, limit: 20, allowed_updates: ['callback_query', 'message', 'inline_query', 'chosen_inline_result'] }); }
         catch (error) {
@@ -566,7 +645,7 @@ export class CatalogTelegram {
         for (const update of updates) {
           if (signal.aborted) break;
           if (update.callback_query) await this.callback(update.callback_query);
-          if (update.message) await this.loginMessage(update.message);
+          if (update.message) { await this.loginMessage(update.message); await this.pcMessage(update.message); }
           if (update.inline_query) await this.inlineQuery(update.inline_query);
           if (update.chosen_inline_result) await this.chosenInline(update.chosen_inline_result);
           this.queue.set('offset', update.update_id + 1);

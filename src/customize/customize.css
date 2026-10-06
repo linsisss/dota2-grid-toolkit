@@ -21,7 +21,7 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .custom-stage.is-over { background:#1b1923; }
 .custom-stage-area { container-type:size; min-height:0; display:grid; place-items:center; }
 /* The largest screen of the chosen shape that fits the area. */
-.custom-screen { container-type:inline-size; position:relative; width:min(100cqw, calc(100cqh * var(--ratio))); height:min(100cqh, calc(100cqw / var(--ratio))); background:#000; border-radius:10px; overflow:hidden; box-shadow:0 0 0 1px var(--cat-line), 0 24px 60px #0007; transition:--ratio 460ms var(--ease), box-shadow 200ms ease; }
+.custom-screen { container-type:size; position:relative; width:min(100cqw, calc(100cqh * var(--ratio))); height:min(100cqh, calc(100cqw / var(--ratio))); background:#000; border-radius:10px; overflow:hidden; box-shadow:0 0 0 1px var(--cat-line), 0 24px 60px #0007; transition:--ratio 460ms var(--ease), box-shadow 200ms ease; }
 .custom-screen > img, .custom-screen > video { position:absolute; inset:0; width:100%; height:100%; display:block; }
 /* A video plays through two elements (Trim.jsx LoopPreview) to show the crossfaded loop. */
 .custom-loop { position:absolute; inset:0; filter:blur(calc(var(--blur, 0) * 100cqw / var(--ratio))); transition:left 460ms var(--ease), top 460ms var(--ease), width 460ms var(--ease), height 460ms var(--ease), transform 460ms var(--ease), filter 200ms ease; animation:custom-media-in 420ms var(--ease) both; }
@@ -60,7 +60,10 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .custom-drop svg { opacity:.75; transition:opacity 200ms ease, transform 240ms var(--ease); }
 .custom-drop-pick:hover svg { opacity:1; }
 .custom-stage.is-over .custom-drop svg { opacity:1; transform:scale(1.12); }
-.custom-drop-sources { position:absolute; left:0; right:0; top:calc(50% + 70px); margin:0 auto; max-width:none!important; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:6px 8px; padding:0 16px; font-size:13px; }
+/* «Где взять» stays between the menu's panels (asked for on 2026-10-06: on a wide Mac screen it went under
+   the friends list): DotaMenu.jsx draws them at min(width / 1920, height / 1080) — the friends up to 398 px
+   from the left, the news column 388 px from the right. */
+.custom-drop-sources { --dm:min(100cqw / 1920, 100cqh / 1080); position:absolute; left:calc(var(--dm) * 410); right:calc(var(--dm) * 400); top:calc(50% + 70px); margin:0 auto; max-width:none!important; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:6px 8px; padding:0 16px; font-size:13px; }
 .custom-drop-sources span { color:var(--cat-muted); margin-right:2px; }
 .custom-drop-sources a { padding:4px 10px; border:1px solid var(--cat-line); border-radius:999px; background:#211e29cc; color:var(--cat-ink); transition:border-color 180ms ease, background 180ms ease; }
 .custom-drop-sources a:hover { border-color:var(--cat-accent); background:#2c2935; }
@@ -332,7 +335,9 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
   .custom-app { height:auto; min-height:100dvh; }
   html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overflow:auto; }
   .custom-top { flex-wrap:wrap; gap:12px 18px; padding:14px 16px; }
-  .custom-links { gap:16px; font-size:13px; }
+  .custom-links { flex-wrap:wrap; gap:10px 16px; font-size:13px; }
+  /* The sign-in button (1.8.18) is only its icon here; the name stays for screen readers. */
+  .custom-links .account-label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
   .custom-work { grid-template-columns:1fr; }
   .custom-stage { padding:16px; }
   .custom-stage-area { container-type:normal; }
@@ -407,17 +412,3 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .font-scene-handle span::before { left: 3px; border-right-color: #c4b5ed; }
 .font-scene-handle span::after { right: 3px; border-left-color: #c4b5ed; }
 
-/* Mirror, turn and centre the picture (MenuBackground.jsx FrameTools), the editor's buttons. */
-.custom-frame-tools { display:grid; gap:10px; margin-top:4px; }
-.custom-frame-groups { display:flex; flex-wrap:wrap; gap:10px 22px; }
-.custom-frame-group { display:grid; gap:5px; font-size:13px; }
-.custom-frame-group > span { color:var(--cat-muted); font-size:12px; }
-.custom-frame-group > div { display:flex; gap:5px; }
-.custom-frame-group.is-turns > div { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); }
-.custom-frame-group.is-turns .custom-tool { min-width:0; padding:0 4px; font-size:12px; }
-.custom-tool { display:inline-flex; align-items:center; justify-content:center; min-width:34px; height:32px; padding:0 9px; border:1px solid var(--cat-line); border-radius:8px; background:#ffffff08; color:var(--cat-ink); font:inherit; font-size:13px; font-variant-numeric:tabular-nums; cursor:pointer; transition:border-color 120ms ease, background 120ms ease; }
-.custom-tool:hover:not(:disabled) { border-color:#c4b5ed66; background:#ffffff10; }
-.custom-tool[aria-pressed=true] { border-color:var(--cat-accent); background:#c4b5ed1f; color:var(--cat-accent); }
-.custom-tool:disabled { opacity:.45; cursor:default; }
-.custom-frame-tools .custom-slider output { display:flex; align-items:center; }
-.custom-slider output .custom-angle { width:50px; margin:0 2px 0 0!important; padding:1px 4px!important; border:1px solid var(--cat-line); border-radius:6px; background:var(--cat-field); color:var(--cat-ink); font:inherit; font-size:12px; text-align:right; }

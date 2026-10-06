@@ -6,6 +6,8 @@ import { useAppMotion } from '../useAppMotion.js';
 import { t } from '../../scripts/i18n.mjs';
 import LanguageSwitch from '../LanguageSwitch.jsx';
 import { CommunityLink } from '../Community.jsx';
+import { AccountButton } from '../catalog/Account.jsx';
+import SendToPC from '../SendToPC.jsx';
 import MenuBackground from './MenuBackground.jsx';
 import FontPicker from './FontPicker.jsx';
 
@@ -63,8 +65,9 @@ export default function CustomizeApp() {
   return <div className="catalog-page custom-app">
     <header className="custom-top">
       <Brand/>
-      <nav className="custom-links"><CommunityLink/><a href={CATALOG_PATH}>{t('Мастерская')}</a><a href={GUIDES_PATH}>{t('Гайды')}</a><a href={STUDIO_PATH}>{t('Студия')}<Icon name="arrow"/></a><LanguageSwitch/></nav>
+      <nav className="custom-links"><CommunityLink/><a href={CATALOG_PATH}>{t('Мастерская')}</a><a href={GUIDES_PATH}>{t('Гайды')}</a><a href={STUDIO_PATH}>{t('Студия')}<Icon name="arrow"/></a><LanguageSwitch/><AccountButton/></nav>
     </header>
+    <SendToPC code={LINKED ? `b${LINKED}` : PAGE === 'font' ? 'f' : 'm'} text={PAGE === 'font' ? t('Шрифт собирается и ставится на компьютере. Пришлём ссылку в Telegram — открой её на ПК.') : t('Фон собирается и ставится на компьютере. Пришлём ссылку в Telegram — открой её на ПК.')}/>
     {PAGE === 'font' ? <FontPicker/> : <MenuBackground preset={preset} studioItem={ITEM} onRemove={() => setPreset(null)}/>}
   </div>;
 }

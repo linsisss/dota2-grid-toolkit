@@ -486,4 +486,7 @@ export default {
   'Новое у авторов из моих подписок': 'New from authors I follow',
   'Новые сетки, фоны и гайды': 'New grids, backgrounds and guides',
   'Мне выдали значок в профиле': 'I was given a profile badge',
+  'Dotadle: серия {streak}': 'Dotadle: streak {streak}',
+  'Dotadle: побед {won} из {played}, лучшая серия {best}': 'Dotadle: {won} wins of {played}, best streak {best}',
+  'Успехи моих работ': 'My works’ milestones', 'Сетку или фон скачали 100 раз, гайд набрал 50 лайков и так далее': 'A grid or background downloaded 100 times, a guide reaching 50 likes and so on',
 };

@@ -1,0 +1,123 @@
+{
+  "version": "1.9.0",
+  "date": "2026-10-06",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.9.0",
+  "sections": [
+    {
+      "title": "Dotadle",
+      "changes": [
+        {
+          "text": "Новая ежедневная игра: угадай героя дня по портрету из символов",
+          "children": [
+            "Герой один на всех, 6 попыток, с каждой ошибкой портрет чётче, а подсказки — как в Wordle"
+          ]
+        },
+        {
+          "text": "«Как играть» и тренировка без входа: каждая подсказка объяснена словами"
+        },
+        {
+          "text": "Результат копируется квадратами с короткой ссылкой — в Telegram и VK она разворачивается в картинку со счётом"
+        },
+        {
+          "text": "Серия побед видна в профиле, а бот по желанию напомнит о новом герое в 10:00 по Москве"
+        }
+      ]
+    },
+    {
+      "title": "Сайт",
+      "changes": [
+        {
+          "text": "Новая главная: разделы в шапке, карточки «Фон меню», «Сетка героев», «Шрифт» и Dotadle"
+        },
+        {
+          "text": "Подборки фонов и сеток по темам: /backgrounds и /grids"
+        },
+        {
+          "text": "На телефоне — «Прислать в Telegram»: бот пришлёт ссылку, чтобы открыть страницу на компьютере"
+        }
+      ]
+    },
+    {
+      "title": "Фон главного меню",
+      "changes": [
+        {
+          "text": "Вход через Telegram прямо в конструкторе: собранный фон сразу сохраняется в аккаунт"
+        },
+        {
+          "text": "Строка «Где взять» больше не заезжает под панель друзей на широких экранах"
+        }
+      ]
+    },
+    {
+      "title": "Профили",
+      "changes": [
+        {
+          "text": "Бот поздравляет, когда твою сетку или фон скачали 100 раз, а работа набрала 50 лайков",
+          "children": [
+            "Выключается в настройках профиля — «Успехи моих работ»"
+          ]
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Dotadle",
+        "changes": [
+          {
+            "text": "A new daily game: guess the hero of the day from a portrait made of symbols",
+            "children": [
+              "One hero for everyone, 6 tries; every miss sharpens the portrait, and the hints work like Wordle"
+            ]
+          },
+          {
+            "text": "«How to play» and a training game without signing in: every hint explained in words"
+          },
+          {
+            "text": "The result is copied as squares with a short link — Telegram and VK show it as a picture of the score"
+          },
+          {
+            "text": "Your streak shows in your profile, and the bot can remind you about the new hero at 10:00 Moscow time"
+          }
+        ]
+      },
+      {
+        "title": "Site",
+        "changes": [
+          {
+            "text": "A new home page: sections in the header, cards for the menu background, the hero grid, the font and Dotadle"
+          },
+          {
+            "text": "Backgrounds and grids by theme: /backgrounds and /grids"
+          },
+          {
+            "text": "On a phone — «Send to Telegram»: the bot sends the link so you can open the page on a computer"
+          }
+        ]
+      },
+      {
+        "title": "Main menu background",
+        "changes": [
+          {
+            "text": "Sign in with Telegram right in the builder: the background you build goes straight into your account"
+          },
+          {
+            "text": "«Where to get one» no longer slides under the friends panel on wide screens"
+          }
+        ]
+      },
+      {
+        "title": "Profiles",
+        "changes": [
+          {
+            "text": "The bot congratulates you when your grid or background is downloaded 100 times or a work reaches 50 likes",
+            "children": [
+              "Switch it off in profile settings — «My works’ milestones»"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

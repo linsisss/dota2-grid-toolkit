@@ -39,5 +39,12 @@ export default {
   'Панорама': 'Panorama',
   'Акцент': 'Accent',
   'Лента': 'Ribbon',
-  'Крупный план': 'Close-up'
+  'Крупный план': 'Close-up',
+  // The home page (src/landing/Home.jsx).
+  'Разделы': 'Sections', 'Мастерская': 'Workshop', 'Гайды': 'Guides', 'Студия': 'Studio', 'Чат и новости': 'Chat and news', 'Реклама': 'Advertising',
+  'Фоны главного меню, сетки героев и шрифты — бесплатно, прямо в браузере.': 'Main menu backgrounds, hero grids and fonts — free, right in the browser.',
+  'Фон меню': 'Menu background', 'Живой фон из видео, GIF или картинки.': 'A live background from a video, GIF or picture.', 'Сделать фон': 'Make a background', 'Готовые': 'Ready ones',
+  'Сетка героев': 'Hero grid', 'Герои, рисунки и ASCII-арты из символов.': 'Heroes, drawings and ASCII art from symbols.', 'Создать сетку': 'Create a grid',
+  'Шрифт': 'Font', 'Любой шрифт с кириллицей в чате и меню.': 'Any font with Cyrillic in chat and menus.', 'Выбрать шрифт': 'Pick a font',
+  'Dotadle #{number}': 'Dotadle #{number}', 'Угадай героя дня по портрету из символов': 'Guess the hero of the day from a portrait made of symbols',
 };

@@ -59,6 +59,17 @@ export const dropRecipe = (id) => catalogAPI(`/studio/backgrounds/${id}`, { meth
 let account;
 const signedIn = () => (account ||= catalogAPI('/auth/me').then((result) => result.user?.id || null).catch(() => null));
 
+// Signed in on the builder page after a build (1.8.18): the background just built goes into the
+// account at once — the studio would take it only when opened.
+export async function claimBuiltBackground(id, user) {
+  account = Promise.resolve(user);
+  const record = await getBackground(id);
+  if (!record || (record.account && record.account !== user)) return false;
+  const saved = await pushRecipe(record);
+  await updateBackground(id, { account: user, synced: true, updated: saved.updated });
+  return true;
+}
+
 // After a build: the background (new, or the one opened from the studio) is kept in this browser
 // with its WebM; a signed-in account gets the recipe. Syncing failures are left to the studio,
 // which uploads anything not yet synced when it opens.

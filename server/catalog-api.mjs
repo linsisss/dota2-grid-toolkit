@@ -215,7 +215,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       // gets the queues waiting for a decision and the decision itself (server/moderators.mjs).
       const requireStaff = () => {
         const member = accounts.user(session), role = roleOf(member);
-        if (!member) fail(401, 'Войди через Telegram, чтобы открыть админку.');
+        if (!member) fail(401, 'Войди, чтобы открыть админку.');
         if (!role) fail(403, 'Админка доступна только администраторам и модераторам GridStudio.');
         if (role === 'moderator' && !moderatorAllows(method, path)) fail(403, 'Модератору доступны только сетки, арты, фоны и гайды на проверке.');
         return { member, role };
@@ -431,6 +431,11 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       }
       const shareMatch = /^\/dotadle\/share\/([A-Za-z0-9]{3,8})$/.exec(path);
       if (shareMatch && method === 'GET') { const result = dotadle.shared(shareMatch[1]); if (!result) fail(404, 'Не найдено.'); return send(200, result); }
+      if (path === '/dotadle/miss' && method === 'POST') {
+        store.rate(`dotadle-miss:${ipHash}`, 30, 600_000);
+        const body = await readJSON(request, 500);
+        return send(200, dotadle.miss(body.text, body.hero));
+      }
       if (path === '/dotadle/practice' && method === 'GET') return send(200, await dotadle.practice());
       if (path === '/dotadle/practice' && method === 'POST') {
         store.rate(`dotadle-practice:${ipHash}`, 60, 60_000);
@@ -672,7 +677,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
           if (method === 'DELETE') { store.remove(id, token(request), user?.id); return send(200, { deleted: true }); }
           if (method === 'PATCH') {
             const work = store.owned(id, token(request), user?.id);
-            if (work.public_revision && (!user || work.account !== user.id)) fail(401, 'Для изменения опубликованной сетки войди через Telegram и привяжи её к аккаунту.');
+            if (work.public_revision && (!user || work.account !== user.id)) fail(401, 'Для изменения опубликованной сетки войди и привяжи её к аккаунту.');
             const body = await readJSON(request);
             await captcha.verify(body.captcha, identity, 'submit');
             return send(200, store.save(body, identity, id, token(request), body.revision, user?.id));
@@ -764,6 +769,8 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         // «Статистика» (server/site-stats.mjs): visits, sign-ups, downloads and activity for 7, 30, 90 or 365 days.
         if (path === '/admin/stats' && method === 'GET') return send(200, stats.report(Number(url.searchParams.get('days')) || 30));
         if (path === '/admin/stats/live' && method === 'GET') return send(200, stats.live());
+        // What Dotadle's hero search did not find this week (server/dotadle.mjs miss).
+        if (path === '/admin/dotadle/misses' && method === 'GET') return send(200, { items: dotadle.misses(7) });
         // «Пользователи» (server/admin-users.mjs): everyone who signed in with Telegram, their profile and Telegram.
         if (path === '/admin/users' && method === 'GET') return send(200, adminUsers(store, stats, { q: url.searchParams.get('q') || '', sort: url.searchParams.get('sort') || 'new',
           offset: Number(url.searchParams.get('offset')) || 0, source: url.searchParams.get('source') || '', admins: config.admins || new Set() }));

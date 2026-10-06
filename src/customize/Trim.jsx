@@ -14,7 +14,8 @@ const clock = (seconds) => {
   const whole = Math.max(0, seconds), minutes = Math.floor(whole / 60), rest = whole - minutes * 60;
   return `${minutes}:${rest.toFixed(1).padStart(4, '0').replace('.', DECIMAL())}`;
 };
-export function LoopPreview({ src, piece, crossfade, style, onMeta, onTime }) {
+// `seek`: a ref the trim bar's playhead calls while dragged (asked for on 2026-10-06), to jump the preview.
+export function LoopPreview({ src, piece, crossfade, style, onMeta, onTime, seek }) {
   const first = useRef(null), second = useRef(null), front = useRef(0), time = useRef(onTime);
   time.current = onTime;
   useEffect(() => {
@@ -41,7 +42,12 @@ export function LoopPreview({ src, piece, crossfade, style, onMeta, onTime }) {
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    if (seek) seek.current = (to) => {
+      const [a, b] = videos(); if (!a || !b) return;
+      const main = front.current ? b : a, next = front.current ? a : b, at = Math.max(piece.start, Math.min(piece.end - 0.05, to));
+      next.pause(); next.style.opacity = 0; main.currentTime = at; time.current?.(at);
+    };
+    return () => { cancelAnimationFrame(frame); if (seek) seek.current = null; };
   }, [piece.start, piece.end, crossfade]);
   return <div className="custom-loop" style={style}>
     <video ref={first} src={src} muted playsInline autoPlay preload="auto" onLoadedMetadata={(event) => onMeta?.(event.target)}/>
@@ -50,7 +56,7 @@ export function LoopPreview({ src, piece, crossfade, style, onMeta, onTime }) {
 }
 
 // The timeline: the whole video, the chosen piece with two handles, the playhead.
-export function TrimBar({ duration, piece, crossfade, playhead, onChange, onCrossfade }) {
+export function TrimBar({ duration, piece, crossfade, playhead, onChange, onCrossfade, onSeek }) {
   const track = useRef(null), drag = useRef(null);
   const at = (event) => { const box = track.current.getBoundingClientRect(); return Math.max(0, Math.min(1, (event.clientX - box.left) / box.width)) * duration; };
   const down = (what) => (event) => {
@@ -61,7 +67,8 @@ export function TrimBar({ duration, piece, crossfade, playhead, onChange, onCros
   const move = (event) => {
     const d = drag.current; if (!d) return;
     const now = at(event), shift = now - d.from;
-    if (d.what === 'start') onChange(fitPiece({ start: now, end: d.piece.end }, duration, 'start'));
+    if (d.what === 'seek') onSeek?.(now);
+    else if (d.what === 'start') onChange(fitPiece({ start: now, end: d.piece.end }, duration, 'start'));
     else if (d.what === 'end') onChange(fitPiece({ start: d.piece.start, end: now }, duration, 'end'));
     else {
       const length = d.piece.end - d.piece.start, start = Math.max(0, Math.min(duration - length, d.piece.start + shift));
@@ -93,8 +100,8 @@ export function TrimBar({ duration, piece, crossfade, playhead, onChange, onCros
       </span>
       <span className="custom-trim-handle" role="slider" tabIndex={0} aria-label={t('Начало')} aria-valuemin={0} aria-valuemax={duration} aria-valuenow={piece.start} style={{ left: percent(piece.start) }} onPointerDown={down('start')} onKeyDown={key('start')}/>
       <span className="custom-trim-handle" role="slider" tabIndex={0} aria-label={t('Конец')} aria-valuemin={0} aria-valuemax={duration} aria-valuenow={piece.end} style={{ left: percent(piece.end) }} onPointerDown={down('end')} onKeyDown={key('end')}/>
-      {/* Moved by the preview itself (LoopPreview onTime), not by React. */}
-      <span className="custom-trim-playhead" ref={playhead}/>
+      {/* Moved by the preview itself (LoopPreview onTime), not by React; dragged, it moves the preview. */}
+      <span className="custom-trim-playhead" ref={playhead} role="slider" tabIndex={-1} aria-label={t('Позиция просмотра')} onPointerDown={(event) => { down('seek')(event); onSeek?.(at(event)); }}/>
     </div>
   </div>;
 }

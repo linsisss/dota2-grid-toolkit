@@ -214,7 +214,7 @@ test('followers get one message for an author\'s new work, none for updates or g
   const approve = saved => f.store.moderate(saved.id, { action: 'approve', revision: saved.revision });
   const first = f.store.save(input(40), identity, null, null, null, '501'); approve(first);
   approve(f.saved);
-  assert.throws(() => f.store.subscribe('502', f.saved.id, true), /не входил через Telegram/);
+  assert.throws(() => f.store.subscribe('502', f.saved.id, true), /не входил на сайт/);
   assert.throws(() => f.store.subscribe('501', first.id, true), /твоя/);
   assert.deepEqual(f.store.subscribe('502', first.id, true), { followable: true, subscribed: true });
   assert.deepEqual(f.store.subscribe('502', first.id, true), { followable: true, subscribed: true });

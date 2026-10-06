@@ -10,6 +10,8 @@ import { useAppMotion } from '../useAppMotion.js';
 import { countAction } from '../site-stats.js';
 import { t } from '../../scripts/i18n.mjs';
 import { SHARE_CODE, shareRow } from '../../scripts/dotadle-share.mjs';
+import { BADGES } from '../../scripts/profile-badges.mjs';
+import { heroIndex, nearestHeroes, searchHeroes } from '../../scripts/hero-search.mjs';
 
 // Dotadle (1.8.18): today's hero in symbols from its portrait, sharper after every miss, with hints
 // like Wordle's. Signed-in only: the server keeps each account's game (server/dotadle.mjs). The guide
@@ -20,7 +22,6 @@ const ATTRS = { str: 'strength', agi: 'agility', int: 'intelligence', all: 'univ
 const ATTR_NAMES = () => ({ str: t('Сила'), agi: t('Ловкость'), int: t('Интеллект'), all: t('Универсал') });
 const ROLE_NAMES = () => ({ Carry: t('Керри'), Support: t('Саппорт'), Nuker: t('Нюкер'), Disabler: t('Дизейблер'), Durable: t('Танк'), Escape: t('Побег'), Pusher: t('Пушер'), Initiator: t('Инициатор') });
 const SHARE_URL = 'https://gridstudio.me/dotadle';
-const fold = (text) => text.toLowerCase().replace(/ё/g, 'е').replace(/[^a-zа-я0-9]+/g, '');
 const clock = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map((n) => String(n).padStart(2, '0')).join(':'); };
 const seen = () => { try { return !!localStorage.getItem(GUIDE_SEEN); } catch { return true; } };
 const markSeen = () => { try { localStorage.setItem(GUIDE_SEEN, '1'); } catch { /* Shown again next time. */ } };
@@ -56,25 +57,37 @@ function explain({ hero, hints, correct }) {
   return [
     hints.attr === 'same' ? t('Атрибут зелёный: загаданный тоже {attr}.', { attr: attrs[hero.attr] }) : t('Атрибут красный: загаданный не {attr}.', { attr: attrs[hero.attr] }),
     hints.attack === 'same' ? (melee ? t('Атака зелёная: загаданный тоже бьёт вблизи.') : t('Атака зелёная: загаданный тоже стреляет издалека.')) : (melee ? t('Атака красная: значит, загаданный бьёт издалека.') : t('Атака красная: значит, загаданный бьёт вблизи.')),
-    hints.roles.same ? t('Роли зелёные: набор ролей тот же.') : hints.roles.common ? t('Роли жёлтые: {count} общих, но набор не тот же.', { count: hints.roles.common }) : t('Роли красные: ни одной общей роли.'),
+    hints.roles.same ? t('Роли зелёные: набор ролей тот же.') : hints.roles.common ? t('Роли жёлтые: у загаданного тоже есть {roles}, но набор не тот же.', { roles: (hints.roles.shared || []).map((role) => `«${ROLE_NAMES()[role] || role}»`).join(', ') }) : t('Роли красные: ни одной общей роли.'),
     number(hints.speed, hero.speed, t('Скорость')),
     number(hints.range, hero.range, t('Дальность атаки')),
   ];
 }
 
+const reported = new Set();
+function reportMiss(text, hero = 0) {
+  const key = `${text.toLowerCase()}\0${hero}`;
+  if (reported.has(key)) return;
+  reported.add(key);
+  catalogAPI('/dotadle/miss', { method: 'POST', body: { text, hero } }).catch(() => {});
+}
 function HeroSearch({ heroes, used, disabled, onPick }) {
   const [text, setText] = useState(''), [at, setAt] = useState(0), [open, setOpen] = useState(false);
   const input = useRef(null);
-  const matches = useMemo(() => {
-    const query = fold(text);
-    if (!query) return [];
-    return heroes.filter((hero) => !used.has(hero.id)).map((hero) => {
-      const name = fold(hero.name), words = hero.aliases.split(/\s+/).map(fold);
-      const rank = name.startsWith(query) || words.some((word) => word.startsWith(query)) ? 0 : name.includes(query) || words.some((word) => word.includes(query)) ? 1 : 2;
-      return { hero, rank };
-    }).filter((item) => item.rank < 2).sort((a, b) => a.rank - b.rank || a.hero.name.localeCompare(b.hero.name)).slice(0, 7).map((item) => item.hero);
-  }, [text, heroes, used]);
-  const pick = (hero) => { if (!hero) return; onPick(hero); setText(''); setOpen(false); setAt(0); setTimeout(() => input.current?.focus()); };
+  // English names typed in Russian, nicknames, typos (scripts/hero-search.mjs); the heroes already named are left out.
+  const index = useMemo(() => heroIndex(heroes), [heroes]);
+  const found = useMemo(() => searchHeroes(index, text, 7 + used.size), [index, text, used.size]);
+  // Nothing found: the nearest heroes anyway, under «Может, ты имел в виду» (never a dead end).
+  const near = useMemo(() => found.length ? [] : nearestHeroes(index, text).filter((hero) => !used.has(hero.id)), [found, index, text, used]);
+  const matches = (found.length ? found.filter((hero) => !used.has(hero.id)) : near).slice(0, 7), guessing = !found.length && near.length > 0;
+  // A search that found nothing goes to the admins' list (server/dotadle.mjs miss) once the typing stops,
+  // and again with the hero picked from «Может, ты имел в виду» — so nicknames come from real searches.
+  useEffect(() => {
+    const words = text.trim();
+    if (found.length || words.length < 2) return;
+    const timer = setTimeout(() => reportMiss(words), 2000);
+    return () => clearTimeout(timer);
+  }, [text, found.length]);
+  const pick = (hero) => { if (!hero) return; if (guessing) reportMiss(text.trim(), hero.id); onPick(hero); setText(''); setOpen(false); setAt(0); setTimeout(() => input.current?.focus()); };
   return <div className="dle-search">
     <Icon name="search" size={18}/>
     <input ref={input} value={text} disabled={disabled} placeholder={t('Имя героя: «пудж», «Invoker», «сф»…')} aria-label={t('Герой')} autoComplete="off"
@@ -85,7 +98,8 @@ function HeroSearch({ heroes, used, disabled, onPick }) {
         if (event.key === 'Enter') { event.preventDefault(); pick(matches[at]); }
         if (event.key === 'Escape') setOpen(false);
       }}/>
-    {open && matches.length > 0 && <ul id="dle-options" role="listbox">{matches.map((hero, i) => <li key={hero.id} role="option" aria-selected={i === at}
+    {open && text.trim() && !matches.length && <p className="dle-search-none">{found.length ? t('Этого героя ты уже называл.') : t('Такого героя не нашли — попробуй английское имя или как его зовут в пабах.')}</p>}
+    {open && matches.length > 0 && <ul id="dle-options" role="listbox">{guessing && <li className="dle-search-maybe" role="presentation">{t('Может, ты имел в виду:')}</li>}{matches.map((hero, i) => <li key={hero.id} role="option" aria-selected={i === at}
       onPointerDown={(event) => { event.preventDefault(); pick(hero); }} onPointerEnter={() => setAt(i)}><img src={`./assets/heroes/${hero.id}.webp`} alt="" width="40" height="22"/>{hero.name}</li>)}</ul>}
   </div>;
 }
@@ -103,7 +117,7 @@ function Hints({ guesses, tries }) {
       <th scope="row"><div className="dle-hero"><img src={`./assets/heroes/${hero.id}.webp`} alt="" width="44" height="25"/><span>{hero.name}</span></div></th>
       <td className={tone(hints.attr === 'same')} title={attrs[hero.attr]}><img src={`./assets/attributes/${ATTRS[hero.attr]}.png`} alt={attrs[hero.attr]} width="20" height="20"/></td>
       <td className={tone(hints.attack === 'same')}>{hero.attack === 'Melee' ? t('Ближний') : t('Дальний')}</td>
-      <td className={tone(hints.roles.same, hints.roles.common > 0)} title={hero.roles.map((role) => roles[role] || role).join(', ')}>{t('{common} из {total}', { common: hints.roles.common, total: hero.roles.length })}</td>
+      <td className={`dle-roles ${tone(hints.roles.same, hints.roles.common > 0)}`}>{hero.roles.map((role, i) => <span key={role} className={(hints.roles.shared || []).includes(role) ? 'is-common' : ''}>{roles[role] || role}{i < hero.roles.length - 1 ? ', ' : ''}</span>)}</td>
       <td className={tone(hints.speed === 'same')} title={word(hints.speed)}>{hero.speed}<Arrow hint={hints.speed}/></td>
       <td className={tone(hints.range === 'same')} title={word(hints.range)}>{hero.range}<Arrow hint={hints.range}/></td>
     </tr>)}
@@ -136,25 +150,28 @@ function Guide({ onClose, onPractice }) {
     <table className="dle-hints is-sample"><tbody><tr>
       <th scope="row"><div className="dle-hero"><img src="./assets/heroes/14.webp" alt="" width="44" height="25"/><span>Pudge</span></div></th>
       <td className="is-same"><img src="./assets/attributes/strength.png" alt="" width="20" height="20"/></td><td className="is-other">{t('Ближний')}</td>
-      <td className="is-near">{t('{common} из {total}', { common: 2, total: 4 })}</td><td className="is-other">280<b className="dle-arrow">↑</b></td><td className="is-same">150</td>
+      <td className="dle-roles is-near"><span>{t('Дизейблер')}, </span><span className="is-common">{t('Инициатор')}, </span><span className="is-common">{t('Танк')}, </span><span>{t('Нюкер')}</span></td><td className="is-other">280<b className="dle-arrow">↑</b></td><td className="is-same">150</td>
     </tr></tbody></table>
     <ul className="dle-guide-read">
       <li><span className="is-same"/>{t('Атрибут зелёный — загаданный тоже Сила.')}</li>
       <li><span className="is-other"/>{t('Атака красная — загаданный не бьёт вблизи, значит, стреляет издалека.')}</li>
-      <li><span className="is-near"/>{t('Роли жёлтые — 2 роли из 4 у них общие.')}</li>
+      <li><span className="is-near"/>{t('Роли жёлтые — часть совпала: у загаданного тоже есть выделенные «Инициатор» и «Танк».')}</li>
       <li><span className="is-other"/>{t('Скорость 280 и стрелка ↑ — у загаданного скорость больше 280.')}</li>
       <li><span className="is-same"/>{t('Дальность зелёная — такая же, 150.')}</li>
     </ul>
-    <p className="catalog-muted">{t('Играть можно, войдя через Telegram: серия побед хранится в аккаунте. Новый герой — каждый день в полночь по Москве. Результат можно скопировать и отправить друзьям: героя он не выдаёт.')}</p>
+    <p className="catalog-muted">{t('Играть можно после входа: серия побед хранится в аккаунте. Новый герой — каждый день в полночь по Москве. Результат можно скопировать и отправить друзьям: героя он не выдаёт.')}</p>
     <div className="dle-actions"><button className="catalog-button primary" onClick={onPractice}><Icon name="sparkle"/>{t('Попробовать на тренировке')}</button><button className="catalog-button" onClick={onClose}>{t('Понятно')}</button></div>
   </div></Modal>;
 }
 
 function Stats({ stats }) {
   const most = Math.max(1, ...stats.dist);
+  // The next streak badge (7 and 21 days, scripts/profile-badges.mjs), while the best streak has not reached it.
+  const next = BADGES.find((badge) => badge.streak && stats.best < badge.streak);
   return <div className="dle-stats">
     <dl><div><dd>{stats.played}</dd><dt>{t('Сыграно')}</dt></div><div><dd>{stats.played ? Math.round(stats.won / stats.played * 100) : 0}%</dd><dt>{t('Побед')}</dt></div>
       <div><dd>{stats.streak}</dd><dt>{t('Серия')}</dt></div><div><dd>{stats.best}</dd><dt>{t('Лучшая')}</dt></div></dl>
+    {next && <p className="dle-next"><Icon name={next.icon} size={14}/>{t('До значка «{label}» осталось побед подряд: {left}', { label: t(next.label), left: next.streak - stats.streak })}</p>}
     <ol className="dle-dist" aria-label={t('С какой попытки угадано')}>{stats.dist.map((count, i) => <li key={i} title={t('С {try}-й попытки: {count}', { try: i + 1, count })}><i style={{ height: `${Math.max(8, count / most * 100)}%` }}/><span>{i + 1}</span></li>)}</ol>
   </div>;
 }
@@ -179,14 +196,12 @@ function Result({ game, left, onReminder }) {
   return <div className="dle-result">
     <h2>{game.solved ? t('Это {name}! Угадано с {count}\u2011й попытки', { name: game.answer.name, count: game.guesses.length }) : t('Не угадано — это был {name}', { name: game.answer.name })}</h2>
     <div className="dle-share"><span aria-hidden="true">{game.guesses.map(squares).join('\n')}</span>
-      <div className="dle-actions"><button className="catalog-button primary" onClick={copy}><Icon name={copied ? 'check' : 'copy'}/>{copied ? t('Скопировано') : t('Скопировать результат')}</button>
-        <a className="catalog-button" href={`https://t.me/share/url?url=${encodeURIComponent(resultUrl(game.share))}&text=${encodeURIComponent(text.replace(/\n[^\n]*$/, ''))}`} target="_blank" rel="noopener"><Icon name="telegram"/>{t('В Telegram')}</a></div></div>
+      <div className="dle-actions"><button className="catalog-button primary" onClick={copy}><Icon name={copied ? 'check' : 'copy'}/>{copied ? t('Скопировано') : t('Скопировать результат')}</button></div></div>
     {/* Asked for on 2026-10-06: the hero is the same for everyone today. */}
     <p className="dle-spoiler"><span aria-hidden="true">🤫</span>{t('Не называй героя, когда делишься: сегодня он у всех один. Скопированный результат его не выдаёт — отправляй смело.')}</p>
     {error && <Notice error>{error}</Notice>}
     <Stats stats={game.stats}/>
-    <Reminder on={game.reminder} onChange={onReminder}/>
-    <p className="catalog-muted">{t('Новый герой через {time}', { time: clock(left) })} · <a href={STUDIO_PATH}>{t('собери свою сетку героев')}</a></p>
+    <div className="dle-result-foot"><span className="catalog-muted">{t('Новый герой через {time}', { time: clock(left) })}</span><Reminder on={game.reminder} onChange={onReminder}/></div>
   </div>;
 }
 
@@ -218,8 +233,8 @@ function Daily({ onGuide, onPractice }) {
       <Head title={<>Dotadle <span>#{game.number}</span></>} onGuide={onGuide} other={<button className="catalog-button" onClick={onPractice}><Icon name="sparkle"/>{t('Тренировка')}</button>}/>
       <Friend number={game.number}/>
       <div className="dle-gate"><h2>{t('Войди, чтобы играть')}</h2>
-        <p>{t('Герой дня один на всех, попыток — 6. Войди через Telegram: попытки и серия побед сохранятся в аккаунте, играть можно с любого устройства.')}</p>
-        <div className="dle-actions"><button className="catalog-button primary" onClick={() => auth.requestLogin(t('Войди через Telegram, чтобы играть в Dotadle.'))}><Icon name="telegram"/>{t('Войти через Telegram')}</button>
+        <p>{t('Герой дня один на всех, попыток — 6. Войди — попытки и серия побед сохранятся в аккаунте, играть можно с любого устройства. Вход в один клик через нашего бота, без пароля.')}</p>
+        <div className="dle-actions"><button className="catalog-button primary" onClick={() => auth.requestLogin(t('Войди, чтобы играть в Dotadle.'))}><Icon name="user"/>{t('Войти')}</button>
           <button className="catalog-button" onClick={onPractice}>{t('Тренировка без входа')}</button></div></div>
     </section>
   </div>;
@@ -235,7 +250,7 @@ function Daily({ onGuide, onPractice }) {
       caption={game.done ? (game.solved ? t('Угадано!') : t('Это был {name}', { name: game.answer.name })) : t('Попытка {at} из {tries}: с каждой ошибкой картинка чётче', { at: game.guesses.length + 1, tries: game.tries })}/>
     <section className="dle-side">
       <Head title={<>Dotadle <span>#{game.number}</span></>} onGuide={onGuide} other={<button className="catalog-button" onClick={onPractice}><Icon name="sparkle"/>{t('Тренировка')}</button>}/>
-      {!game.done && <Friend number={game.number}/>}
+      {!game.done && !game.guesses.length && <Friend number={game.number}/>}
       {game.done ? <Result game={game} left={left} onReminder={(reminder) => setGame((current) => ({ ...current, reminder }))}/> : <>
         <div className="dle-play"><HeroSearch heroes={game.heroes} used={used} disabled={busy} onPick={guess}/><Tries used={game.guesses.length} tries={game.tries}/></div>
         <p className="dle-note">{t('Новый герой через {time}', { time: clock(left) })}</p>

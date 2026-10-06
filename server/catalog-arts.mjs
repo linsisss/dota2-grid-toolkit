@@ -33,8 +33,8 @@ export class CatalogArts {
       const same = store.get("SELECT status FROM arts WHERE hash=? AND status IN ('pending','approved')", hash);
       if (same) fail(409, same.status === 'approved' ? 'Этот арт уже есть в «Готовых артах».' : 'Такой арт уже ждёт проверки.');
       if (store.trusted(account)) { /* No account budget; the network cap below still applies. */ }
-      else if (account) store.rate(`art-account:${account}`, ART_LIMITS.accountDaily, 86_400_000, { message: `С Telegram можно предложить ${ART_LIMITS.accountDaily} артов за 24 часа.`, code: 'art_account_limit' });
-      else store.rate(`art:${identity.browser}`, ART_LIMITS.daily, 86_400_000, { message: `Без входа можно предложить ${ART_LIMITS.daily} артов за 24 часа. С Telegram — до ${ART_LIMITS.accountDaily}.`, code: 'art_guest_limit' });
+      else if (account) store.rate(`art-account:${account}`, ART_LIMITS.accountDaily, 86_400_000, { message: `После входа можно предложить ${ART_LIMITS.accountDaily} артов за 24 часа.`, code: 'art_account_limit' });
+      else store.rate(`art:${identity.browser}`, ART_LIMITS.daily, 86_400_000, { message: `Без входа можно предложить ${ART_LIMITS.daily} артов за 24 часа. После входа — до ${ART_LIMITS.accountDaily}.`, code: 'art_guest_limit' });
       store.rate(`art-ip:${identity.ip}`, 40, 86_400_000, { message: 'Достигнут общий лимит отправки артов из этой сети за 24 часа.', code: 'art_network_limit' });
       if (store.get("SELECT count(*) n FROM arts WHERE status='pending'").n >= 1000) fail(503, 'Очередь проверки артов заполнена. Попробуй позже.');
       const now = store.now();

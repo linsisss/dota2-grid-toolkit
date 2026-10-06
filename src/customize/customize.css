@@ -41,7 +41,12 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .custom-trim-handle { position:absolute; top:50%; width:12px; height:40px; margin:-20px 0 0 -6px; border-radius:4px; background:var(--cat-accent); box-shadow:0 2px 8px #0008; cursor:ew-resize; transition:transform 120ms ease; }
 .custom-trim-handle:hover, .custom-trim-handle:focus-visible { transform:scaleX(1.25); }
 .custom-trim-handle::after { content:''; position:absolute; left:50%; top:12px; bottom:12px; width:2px; margin-left:-1px; border-radius:1px; background:#231b35; }
-.custom-trim-playhead { position:absolute; top:3px; bottom:3px; width:2px; margin-left:-1px; border-radius:1px; background:var(--cat-accent); opacity:.55; pointer-events:none; }
+.custom-trim-handle { z-index:2; }
+/* The playhead can be dragged (2026-10-06): a wide invisible grip around the line, a knob on top. */
+.custom-trim-playhead { position:absolute; z-index:1; top:-6px; bottom:-6px; width:16px; margin-left:-8px; cursor:ew-resize; touch-action:none; }
+.custom-trim-playhead::before { content:''; position:absolute; left:7px; top:9px; bottom:9px; width:2px; border-radius:1px; background:var(--cat-accent); opacity:.7; }
+.custom-trim-playhead::after { content:''; position:absolute; left:3px; top:2px; width:10px; height:10px; border-radius:50%; background:var(--cat-accent); box-shadow:0 1px 4px #0008; transition:transform 120ms ease; }
+.custom-trim-playhead:hover::after { transform:scale(1.25); }
 /* A new file fades in; the fit (contain ↔ cover) is a scale, so it glides. */
 .custom-media { object-fit:contain; filter:blur(calc(var(--blur, 0) * 100cqw / var(--ratio))); transition:left 460ms var(--ease), top 460ms var(--ease), width 460ms var(--ease), height 460ms var(--ease), transform 460ms var(--ease), filter 200ms ease; animation:custom-media-in 420ms var(--ease) both; }
 /* Framing: the picture is dragged in the preview (MenuBackground: frameDown), without easing then. */

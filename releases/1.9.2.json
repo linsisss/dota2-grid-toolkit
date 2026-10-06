@@ -1,0 +1,83 @@
+{
+  "version": "1.9.2",
+  "date": "2026-10-07",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.9.2",
+  "sections": [
+    {
+      "title": "Dotadle",
+      "changes": [
+        {
+          "text": "Поиск героя понимает английские имена русскими буквами, опечатки, клички и лорные имена",
+          "children": [
+            "«чаос найт», «папич», «миреска»; если ничего не нашлось — «Может, ты имел в виду»"
+          ]
+        },
+        {
+          "text": "Роли в таблице перечислены словами, совпавшие выделены"
+        },
+        {
+          "text": "Значки «7 дней в Dotadle» и «21 день в Dotadle» за серию побед"
+        },
+        {
+          "text": "«Друг угадал» видно только до первой попытки, кнопка «В Telegram» убрана"
+        }
+      ]
+    },
+    {
+      "title": "Сайт",
+      "changes": [
+        {
+          "text": "Вход стал понятнее: кнопка «Войти», вход через нашего бота без пароля, почты и телефона"
+        }
+      ]
+    },
+    {
+      "title": "Фон главного меню",
+      "changes": [
+        {
+          "text": "Позицию просмотра на шкале видео можно перетаскивать"
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Dotadle",
+        "changes": [
+          {
+            "text": "The hero search understands English names typed in Russian, typos, nicknames and lore names",
+            "children": [
+              "If nothing fits, «Did you mean» shows the nearest heroes"
+            ]
+          },
+          {
+            "text": "Roles in the table are listed by name, the shared ones highlighted"
+          },
+          {
+            "text": "«7 days in Dotadle» and «21 days in Dotadle» badges for win streaks"
+          },
+          {
+            "text": "«A friend guessed» shows only before the first try; the «To Telegram» button is gone"
+          }
+        ]
+      },
+      {
+        "title": "Site",
+        "changes": [
+          {
+            "text": "Signing in is clearer: a «Sign in» button, through our bot, with no password, email or phone"
+          }
+        ]
+      },
+      {
+        "title": "Main menu background",
+        "changes": [
+          {
+            "text": "The playback position on the video timeline can be dragged"
+          }
+        ]
+      }
+    ]
+  }
+}

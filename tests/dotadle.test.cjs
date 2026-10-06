@@ -51,9 +51,9 @@ test('an account plays once a day: pictures up to the try, the answer and the st
 test('hints compare like Wordle', async () => {
   const { dotadleHints } = await game;
   const a = { attr: 'str', attack: 'Melee', roles: ['Carry', 'Durable'], speed: 300, range: 150 };
-  assert.deepEqual(dotadleHints(a, a), { attr: 'same', attack: 'same', roles: { common: 2, same: true }, speed: 'same', range: 'same' });
+  assert.deepEqual(dotadleHints(a, a), { attr: 'same', attack: 'same', roles: { common: 2, shared: ['Carry', 'Durable'], same: true }, speed: 'same', range: 'same' });
   assert.deepEqual(dotadleHints(a, { attr: 'int', attack: 'Ranged', roles: ['Durable', 'Support'], speed: 280, range: 600 }),
-    { attr: 'other', attack: 'other', roles: { common: 1, same: false }, speed: 'lower', range: 'higher' });
+    { attr: 'other', attack: 'other', roles: { common: 1, shared: ['Durable'], same: false }, speed: 'lower', range: 'higher' });
 });
 
 test('the picture is the portrait in symbols, as wide as asked', async () => {
@@ -77,5 +77,30 @@ test('a finished game gets a short share code; the result is read back from the 
   assert.deepEqual({ ...shared, rows: undefined }, { number, solved: true, tries: 2, rows: undefined });
   assert.equal(shared.rows.length, 2); assert.equal(shared.rows[1], '22222'); assert.match(shared.rows[0], /^[0-2]{5}$/);
   assert.equal(dotadle.shared('zzz'), null); assert.equal(dotadle.shared('a b'), null); assert.equal(dotadle.shared(''), null);
+  store.close();
+});
+
+test('seven wins in a row give the «7 дней в Dotadle» badge, once, and it stays', async () => {
+  const [{ Dotadle }, { CatalogStore }] = await Promise.all([game, import('../server/catalog-store.mjs')]);
+  const store = new CatalogStore(':memory:', 'test-only-salt');
+  let now = Date.UTC(2026, 9, 10, 12, 0);
+  const dotadle = new Dotadle({ secret: 'x'.repeat(40), store, now: () => now });
+  for (let day = 0; day < 7; day++) { await dotadle.guess('77', dotadle.today(), dotadle.answer(dotadle.today()).id); now += 86_400_000; }
+  assert.deepEqual(store.profiles.badges('77'), ['dotadle7']);
+  assert.deepEqual(store.all('SELECT badge FROM badge_notices WHERE account=?', '77').map((row) => row.badge), ['dotadle7']);
+  now += 3 * 86_400_000; // the streak breaks, the badge stays
+  assert.equal(dotadle.stats('77').streak, 0);
+  assert.deepEqual(store.profiles.badges('77'), ['dotadle7']);
+  store.close();
+});
+
+test('searches that found nothing are kept for the admins, with the hero picked after', async () => {
+  const [{ Dotadle }, { CatalogStore }] = await Promise.all([game, import('../server/catalog-store.mjs')]);
+  const store = new CatalogStore(':memory:', 'test-only-salt'); let now = Date.UTC(2026, 9, 10, 12, 0);
+  const dotadle = new Dotadle({ secret: 'x'.repeat(40), store, now: () => now });
+  dotadle.miss('Миреска!!'); dotadle.miss('миреска'); dotadle.miss('миреска', 119); dotadle.miss('x'); dotadle.miss('пуджище', 99999);
+  assert.deepEqual(dotadle.misses().map(({ text, hero, count, name }) => [text, hero, count, name]), [['миреска', 0, 2, null], ['миреска', 119, 1, 'Dark Willow'], ['пуджище', 0, 1, null]]);
+  now += 8 * 86_400_000;
+  assert.deepEqual(dotadle.misses(), []);
   store.close();
 });

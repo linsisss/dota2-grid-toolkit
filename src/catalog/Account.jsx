@@ -57,7 +57,7 @@ export function AccountAvatar({ user }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [user?.id, user?.avatar]);
   const name = accountLabel(user);
-  return <span className="account-avatar" aria-hidden="true">{user?.avatar && !failed ? <img src={user.avatar} alt="" width="32" height="32" onError={() => setFailed(true)}/> : user ? name[0].toUpperCase() : <Icon name="telegram"/>}</span>;
+  return <span className="account-avatar" aria-hidden="true">{user?.avatar && !failed ? <img src={user.avatar} alt="" width="32" height="32" onError={() => setFailed(true)}/> : user ? name[0].toUpperCase() : <Icon name="user"/>}</span>;
 }
 function LoginDialog({ telegramWindow, reason, onClose, onSuccess }) {
   const [request, setRequest] = useState(null), [error, setError] = useState(''), [finishing, setFinishing] = useState(false), [attempt, setAttempt] = useState(0);
@@ -83,10 +83,13 @@ function LoginDialog({ telegramWindow, reason, onClose, onSuccess }) {
     }).catch(e => { if (active) { setError(e.message); try { telegramWindow.current?.close(); } catch { /* Already closed. */ } } });
     return () => { active = false; clearTimeout(timer); controller.abort(); window.removeEventListener('focus', focus); };
   }, [attempt]);
-  return <Modal title={t('Войти через Telegram')} icon="telegram" onClose={onClose}><div className="catalog-login-flow">
+  // Worded without «через Telegram» (asked for on 2026-10-06: it scared people off): one press in our bot,
+  // no password, mail or phone.
+  return <Modal title={t('Вход на GridStudio')} icon="user" onClose={onClose}><div className="catalog-login-flow">
     {reason && <p>{reason}</p>}
+    <p>{t('Откроется наш бот — нажми в нём «Войти», и всё. Без пароля, почты и номера телефона: сайт получит только имя, ник и аватар.')}</p>
     <p className="catalog-muted">{t('После входа файлы этого браузера сохранятся в аккаунте.')}</p>
-    {request ? <><p>{t('Нажми «Войти» в боте. Сайт подключит аккаунт автоматически.')}</p><p role="status">{finishing ? t('Входим…') : t('Ждём подтверждение в Telegram…')}</p><a className="catalog-link" href={request.url} target="_blank" rel="noreferrer">{t('Telegram не открылся?')}<Icon name="arrow"/></a></> : !error && <p role="status">{t('Открываем Telegram…')}</p>}
+    {request ? <><p role="status">{finishing ? t('Входим…') : t('Ждём, пока нажмёшь «Войти» в боте…')}</p><a className="catalog-link" href={request.url} target="_blank" rel="noreferrer">{t('Бот не открылся?')}<Icon name="arrow"/></a></> : !error && <p role="status">{t('Открываем бота…')}</p>}
     {error && <><Notice error>{error}</Notice><button className="catalog-button" onClick={() => { telegramWindow.current = openTelegramWindow(); setAttempt(x => x + 1); }}>{t('Начать заново')}</button></>}
     <button className="catalog-link" onClick={onClose}>{t('Продолжить без входа')}</button>
   </div></Modal>;
@@ -121,7 +124,7 @@ export function AccountButton() {
   return <div className="account-wrap" ref={box}>
     <button ref={button} className="catalog-button account-button" disabled={auth.loading} aria-haspopup={auth.user ? 'menu' : undefined} aria-expanded={auth.user ? open : undefined}
       onClick={() => auth.user ? setOpen((value) => !value) : auth.requestLogin()}>
-      {auth.user ? <AccountAvatar user={auth.user}/> : <Icon name="telegram"/>}<span className="account-label">{auth.user ? accountLabel(auth.user) : t('Войти через Telegram')}</span>
+      {auth.user ? <AccountAvatar user={auth.user}/> : <Icon name="user"/>}<span className="account-label">{auth.user ? accountLabel(auth.user) : t('Войти')}</span>
       {auth.user && <Icon name="chevron" size={15} className="account-chevron"/>}</button>
     {open && auth.user && <div className="account-menu" role="menu" ref={menu} aria-label={t('Аккаунт')}>
       <div className="account-menu-head"><AccountAvatar user={auth.user}/><span><b>{accountLabel(auth.user)}</b>{auth.user.username && <small>{t('Telegram: @{username}', { username: auth.user.username })}</small>}</span></div>
@@ -146,7 +149,7 @@ export function LikeButton({ item, onChange, path = `/works/${item.id}/like`, ow
   const auth = useAccount(); const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const own = item.mine ? ownLabel || t('Свою работу лайкнуть нельзя') : '';
   return <span className="catalog-like-wrap"><button className={`catalog-like${item.liked ? ' is-liked' : ''}${own ? ' is-own' : ''}`} aria-label={own || (item.liked ? t('Убрать лайк') : t('Поставить лайк'))} title={own || undefined} aria-pressed={!!item.liked} disabled={busy || !!own} onClick={async () => {
-    if (!auth.user) return auth.requestLogin(t('Войди через Telegram, чтобы поставить лайк.'));
+    if (!auth.user) return auth.requestLogin(t('Войди, чтобы поставить лайк.'));
     setBusy(true); setError(''); try { const result = await catalogAPI(path, { method: 'PUT', body: { liked: !item.liked } }); onChange(result); }
     catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }
   }}><Icon name="heart"/>{item.likes || 0}</button>{error && <span className="catalog-like-error" role="alert">{error}</span>}</span>;
@@ -158,7 +161,7 @@ export function SubscribeButton({ item, onChange, path = `/works/${item.id}/subs
   if (!item.followable) return null;
   return <div className="catalog-subscribe">
     <button className={`catalog-button${item.subscribed ? ' is-subscribed' : ''}`} aria-pressed={!!item.subscribed} disabled={busy} onClick={async () => {
-      if (!auth.user) return auth.requestLogin(t('Войди через Telegram, чтобы подписаться на автора. О новых работах напишет бот.'));
+      if (!auth.user) return auth.requestLogin(t('Войди, чтобы подписаться на автора. О новых работах напишет бот.'));
       setBusy(true); setError('');
       try { onChange(await catalogAPI(path, { method: 'PUT', body: { subscribed: !item.subscribed } })); }
       catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }

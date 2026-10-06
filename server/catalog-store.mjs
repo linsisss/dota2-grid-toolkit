@@ -153,7 +153,7 @@ export class CatalogStore {
       if (boundary) rateExceeded(boundary.at, 86_400_000, this.now(),
         `Лимит аккаунта — ${CATALOG_LIMITS.accountDaily} отправок за 24 часа, включая обновления сеток.`, 'submission_account_limit');
     } else this.rate(`submit:${identity.browser}`, CATALOG_LIMITS.daily, 86_400_000, {
-      message: `Без входа можно отправить ${CATALOG_LIMITS.daily} сетки за 24 часа, включая обновления. С Telegram — до ${CATALOG_LIMITS.accountDaily} отправок.`, code: 'submission_guest_limit'
+      message: `Без входа можно отправить ${CATALOG_LIMITS.daily} сетки за 24 часа, включая обновления. После входа — до ${CATALOG_LIMITS.accountDaily} отправок.`, code: 'submission_guest_limit'
     });
     // Shared networks have a deliberately higher budget than one browser.
     this.rate(`submit-ip:${identity.ip}`, 60, 86_400_000, {
@@ -260,7 +260,7 @@ export class CatalogStore {
   subscribe(account, id, subscribed) {
     const work = this.get("SELECT * FROM works WHERE id=? AND state='active' AND public_revision IS NOT NULL", id);
     if (!work) fail(404, 'Сетка не найдена или ещё не опубликована.');
-    if (!work.account) fail(409, 'Автор этой сетки не входил через Telegram, поэтому подписаться на него пока нельзя.');
+    if (!work.account) fail(409, 'Автор этой сетки не входил на сайт, поэтому подписаться на него пока нельзя.');
     if (work.account === account) fail(400, 'Это твоя сетка.');
     return this.follow(account, work.account, subscribed);
   }
@@ -315,7 +315,7 @@ export class CatalogStore {
     return { total, page, items: rows.map(({ id }) => { const item = this.publicItem(id, account); delete item.grid; return item; }) };
   }
   like(id, account, liked) {
-    if (!account) fail(401, 'Войди через Telegram, чтобы поставить лайк.');
+    if (!account) fail(401, 'Войди, чтобы поставить лайк.');
     return this.tx(() => {
       // A like on your own grid would only lift it in «Популярные» and onto the landing. Taking a
       // like back always works.

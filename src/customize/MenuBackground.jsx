@@ -144,7 +144,7 @@ function useOwnBackground(setError) {
   const [file, setFile] = useState(null), [kind, setKind] = useState(null), [source, setSource] = useState(''), [fit, setFit] = useState('cover');
   const [blur, setBlur] = useState(0), [dim, setDim] = useState(0), [frame, setFrame] = useState(MENU_FRAME), [ratio, setRatio] = useState(0), [origin, setOrigin] = useState(null), [wanted, setWanted] = useState(null);
   const [duration, setDuration] = useState(0), [piece, setPiece] = useState({ start: 0, end: 0 }), [crossfade, setCrossfade] = useState(0);
-  const input = useRef(null), playhead = useRef(null), pending = useRef(null);
+  const input = useRef(null), playhead = useRef(null), pending = useRef(null), seek = useRef(null);
   useEffect(() => () => source && URL.revokeObjectURL(source), [source]);
   async function choose(next) {
     setError('');
@@ -167,7 +167,7 @@ function useOwnBackground(setError) {
     setDuration(length); setPiece(fitPiece(restored?.piece || { start: 0, end: length }, length, 'start'));
     if (restored) { setCrossfade(restored.crossfade); pending.current = null; }
   }
-  return { file, kind, source, video: kind?.type === 'video', fit, setFit, blur, setBlur, dim, setDim, frame, setFrame, ratio, setRatio, wanted, duration, piece, setPiece, crossfade, setCrossfade, input, playhead,
+  return { file, kind, source, video: kind?.type === 'video', fit, setFit, blur, setBlur, dim, setDim, frame, setFrame, ratio, setRatio, wanted, duration, piece, setPiece, crossfade, setCrossfade, input, playhead, seek,
     choose, remove, restore, onMeta,
     // What the encoder and the studio recipe take, and what makes a built result stale.
     encoding: { fit, effects: { blur: blur / 100, dim: dim / 100 }, frame, piece: duration ? piece : null, crossfade },
@@ -196,7 +196,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
   const [clean, setClean] = useState(false), [seasonButton, setSeasonButton] = useState(true), [profileLinks, setProfileLinks] = useState(true), [folder, setFolder] = useState(lang === 'en' ? 'english' : 'russian'), [delivery, setDelivery] = useState('file');
   const [duration, setDuration] = useState(0), [piece, setPiece] = useState({ start: 0, end: 0 }), [crossfade, setCrossfade] = useState(0);
   const [mediaRatio, setMediaRatio] = useState(0), [progress, setProgress] = useState(null), [result, setResult] = useState(null), [error, setErrorText] = useState(''), [failed, setFailed] = useState(false), [install, setInstall] = useState(false), [handed, setHanded] = useState(null), [sources, setSources] = useState(false), [share, setShare] = useState(false), [dragging, setDragging] = useState(false), [fetching, setFetching] = useState(null), [sending, setSending] = useState(null);
-  const input = useRef(null), running = useRef(null), playhead = useRef(null);
+  const input = useRef(null), running = useRef(null), playhead = useRef(null), seek = useRef(null);
   // What the file is (for the studio recipe), the studio background being changed, the recipe whose
   // piece and crossfade wait for the video's length, and an own file the user is asked to choose.
   const [origin, setOrigin] = useState(null), [pick, setPick] = useState(preset), [studio, setStudio] = useState(null), [wanted, setWanted] = useState(null), [note, setNote] = useState('');
@@ -390,7 +390,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
     : page === 'hero' ? (heroMode === 'off' ? t('За героем останется картинка Dota — меняется только главное меню.') : result?.heroUrl ? rich(t('{ready} — так он будет за героем.'), ready) : t('Так фон будет за героем на странице «Герои» → «Снаряжение».'))
     : result ? <>{rich(t('{ready} — ровно то видео, что внутри файла.'), ready)}{studio?.saved ? auth && !auth.loading && !auth.user && !studio.account
       ? <> {rich(t('{saved} только в этом браузере. {login}, чтобы он не потерялся.'), { saved: <a href={`${STUDIO_PATH}&show=backgrounds`}>{t('Сохранён в студии')}</a>,
-        login: <button type="button" className="catalog-link" onClick={() => auth.requestLogin(t('Войди через Telegram, чтобы фон сохранился в аккаунте: его настройки не пропадут вместе с браузером и откроются на другом компьютере.'))}>{t('Войди через Telegram')}</button> })}</>
+        login: <button type="button" className="catalog-link" onClick={() => auth.requestLogin(t('Войди, чтобы фон сохранился в аккаунте: его настройки не пропадут вместе с браузером и откроются на другом компьютере.'))}>{t('Войди')}</button> })}</>
       : <> <a href={`${STUDIO_PATH}&show=backgrounds`}>{t('Сохранён в студии')}</a>.</> : studio?.failed ? ` ${t('Сохранить в студии не получилось.')}` : ''}</> : shown ? t('Так фон будет выглядеть в главном меню Dota.') : t('Главное меню Dota с выбранными пропорциями экрана.');
   return <main className="custom-work">
     <section className={`custom-stage${dragging ? ' is-over' : ''}`} {...drop} aria-label={t('Превью фона')}>
@@ -406,7 +406,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
                 setDuration(length); setPiece(fitPiece(restored?.piece || { start: 0, end: length }, length, 'start'));
                 if (restored) { setCrossfade(restored.crossfade); pending.current = null; }
               } }}
-              onTime={(t) => { if (playhead.current && duration) playhead.current.style.left = `${(t / duration) * 100}%`; }}/>
+              seek={seek} onTime={(t) => { if (playhead.current && duration) playhead.current.style.left = `${(t / duration) * 100}%`; }}/>
             : <img key={shown} className="custom-media" src={shown} alt="" draggable={false} style={mediaStyle} onLoad={(event) => measured(event.target.naturalWidth, event.target.naturalHeight)}/>
             : !fetching && <div className="custom-drop"><button type="button" className="custom-drop-pick" onClick={() => input.current?.click()}><Icon name="plus"/><strong>{t('Перетащи сюда картинку, GIF или видео')}</strong><span>{t('или нажми, чтобы выбрать файл')}</span></button>
               <p className="custom-drop-sources"><span>{t('Где взять:')}</span><a className="is-workshop" href={`${CATALOG_PATH}?backgrounds`}>{t('Готовые в мастерской')}</a>{SOURCES().map((source) => <a key={source.name} href={source.url} target="_blank" rel="noreferrer">{source.name}</a>)}</p></div>}
@@ -415,7 +415,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
           {page === 'grid' && <div className="custom-veil custom-grid-veil" style={{ opacity: gridMode === 'dim' ? (gridDim / 100) * GRID_DIM.max : 0 }}/>}
           {second?.mode === 'own' && (ownShown ? second.built ? <video key={ownShown} className="custom-media" src={ownShown} autoPlay loop muted playsInline/>
             : own.video ? <LoopPreview key={own.source} src={own.source} piece={own.duration ? own.piece : { start: 0, end: 1e9 }} crossfade={own.duration ? own.crossfade : 0} style={ownStyle}
-              onMeta={own.onMeta} onTime={(t) => { if (own.playhead.current && own.duration) own.playhead.current.style.left = `${(t / own.duration) * 100}%`; }}/>
+              seek={own.seek} onMeta={own.onMeta} onTime={(t) => { if (own.playhead.current && own.duration) own.playhead.current.style.left = `${(t / own.duration) * 100}%`; }}/>
             : <img key={ownShown} className="custom-media" src={ownShown} alt="" draggable={false} style={ownStyle} onLoad={(event) => own.setRatio(event.target.naturalWidth / event.target.naturalHeight)}/>
             : <div className="custom-drop"><button type="button" className="custom-drop-pick" onClick={() => own.input.current?.click()}><Icon name="plus"/><strong>{page === 'grid' ? t('Фон под сеткой') : t('Фон за героем')}</strong><span>{t('Перетащи картинку, GIF или видео или нажми, чтобы выбрать')}</span></button></div>)}
           {second?.mode === 'own' && ownShown && <div className="custom-veil" style={{ opacity: second.built ? 0 : ownLook.veil }}/>}
@@ -427,8 +427,8 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
           {fetching && <div className="custom-fetching" role="status"><b>{fetching.title ? t('Загружаем «{title}»', { title: fetching.title }) : t('Загружаем фон…')}</b><span><i style={{ width: `${Math.round(fetching.progress * 100)}%` }}/></span></div>}
         </div>
       </div>
-      {second?.mode === 'own' && own.video && own.duration > 0 && !second.built ? <TrimBar duration={own.duration} piece={own.piece} crossfade={own.crossfade} playhead={own.playhead} onChange={own.setPiece} onCrossfade={own.setCrossfade}/>
-      : !second && video && duration > 0 && !result ? <TrimBar duration={duration} piece={piece} crossfade={crossfade} playhead={playhead} onChange={setPiece} onCrossfade={setCrossfade}/>
+      {second?.mode === 'own' && own.video && own.duration > 0 && !second.built ? <TrimBar duration={own.duration} piece={own.piece} crossfade={own.crossfade} playhead={own.playhead} onChange={own.setPiece} onCrossfade={own.setCrossfade} onSeek={(t) => own.seek.current?.(t)}/>
+      : !second && video && duration > 0 && !result ? <TrimBar duration={duration} piece={piece} crossfade={crossfade} playhead={playhead} onChange={setPiece} onCrossfade={setCrossfade} onSeek={(t) => seek.current?.(t)}/>
       : <p className="custom-caption">{caption}</p>}
     </section>
     <aside className="custom-panel">

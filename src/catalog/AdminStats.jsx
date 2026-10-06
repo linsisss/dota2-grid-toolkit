@@ -135,6 +135,17 @@ function Fresh({ at }) {
 const TODAY = [['visitors', 'Посетители', 'user'], ['views', 'Просмотры', 'eye'], ['registrations', 'Регистрации', 'idCard'], ['downloads', 'Скачивания', 'download'],
   ['installs', 'Установки командой', 'terminal'], ['works', 'Новые работы', 'sparkle'], ['likes', 'Лайки', 'heart'], ['comments', 'Комментарии', 'comment']];
 
+// What Dotadle's hero search did not find this week (server/dotadle.mjs miss): add them as nicknames in
+// server/dotadle.mjs ALIASES. «→ Hero» — the one picked from «Может, ты имел в виду».
+function DotadleMisses() {
+  const [items, setItems] = useState(null);
+  useEffect(() => { catalogAPI('/admin/dotadle/misses').then((value) => setItems(value.items)).catch(() => setItems([])); }, []);
+  if (!items) return null;
+  return <><div className="admin-section-title"><h2>Dotadle: поиск не нашёл</h2><span>за 7 дней · что вводили и кого потом выбрали — кандидаты в клички</span></div>
+    <div className="admin-grid admin-tops"><Card title="Запросы без результата" hint="раз">{items.length ? <Bars rows={items.map((row) => ({ key: `${row.text}:${row.hero}`, name: `«${row.text}»${row.name ? ` → ${row.name}` : ''}`, value: row.count }))} unit="раз"/>
+      : <p className="catalog-muted">Пока пусто: всё, что вводили, нашлось.</p>}</Card></div></>;
+}
+
 export default function AdminStats({ denied }) {
   const [days, setDays] = useState(30), [data, setData] = useState(null), [live, setLive] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false);
   const load = (quiet = false) => {
@@ -246,6 +257,8 @@ export default function AdminStats({ denied }) {
       <Card title="Гайды: просмотры"><Bars rows={t.guides.map((row) => ({ key: row.id, name: row.title, href: `${GUIDES_PATH}?id=${row.id}`, value: row.visitors }))} unit="чел."/></Card>
       <Card title="Профили: просмотры"><Bars rows={t.profiles.map((row) => ({ key: row.id, name: row.title, href: `${CATALOG_PATH}?creator=${row.id}`, value: row.visitors }))} unit="чел."/></Card>
     </div>
+
+    <DotadleMisses/>
 
     <div className="admin-section-title"><h2>За всё время</h2></div>
     <div className="admin-totals">{[

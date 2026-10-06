@@ -64,11 +64,11 @@ export default {
   'Масштаб': 'Zoom',
   'Тяни картинку в превью, чтобы выбрать кадр.': 'Drag the picture in the preview to frame it.',
   'Сбросить кадр': 'Reset framing',
-  'Войди через Telegram': 'Sign in with Telegram',
+  'Войди': 'Sign in',
   'Шрифт собирается и ставится на компьютере. Пришлём ссылку в Telegram — открой её на ПК.': 'The font is made and installed on a computer. We will send the link to Telegram — open it on your PC.',
   'Фон собирается и ставится на компьютере. Пришлём ссылку в Telegram — открой её на ПК.': 'The background is made and installed on a computer. We will send the link to Telegram — open it on your PC.',
   '{saved} только в этом браузере. {login}, чтобы он не потерялся.': '{saved} in this browser only. {login} so it is not lost.',
-  'Войди через Telegram, чтобы фон сохранился в аккаунте: его настройки не пропадут вместе с браузером и откроются на другом компьютере.': 'Sign in with Telegram to keep the background in your account: its settings will not be lost with the browser and will open on another computer.',
+  'Войди, чтобы фон сохранился в аккаунте: его настройки не пропадут вместе с браузером и откроются на другом компьютере.': 'Sign in to keep the background in your account: its settings will not be lost with the browser and will open on another computer.',
   'нет': 'off',
   'Заполнить': 'Fill',
   'Целиком': 'Fit',
@@ -290,5 +290,6 @@ export default {
   'Это не шрифт TrueType или OpenType.': 'This is not a TrueType or OpenType font.',
   'Шрифт повреждён.': 'The font is damaged.',
   'В шрифте нет таблицы {table}.': 'The font has no {table} table.',
-  'Это вариативный шрифт. Dota понимает только статичные: скачай отдельные начертания (Regular, Bold…).': 'This is a variable font. Dota only understands static ones: download the separate weights (Regular, Bold…).'
+  'Это вариативный шрифт. Dota понимает только статичные: скачай отдельные начертания (Regular, Bold…).': 'This is a variable font. Dota only understands static ones: download the separate weights (Regular, Bold…).',
+  'Позиция просмотра': 'Playback position',
 };

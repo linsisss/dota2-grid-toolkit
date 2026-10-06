@@ -27,8 +27,8 @@ const AdminInbox = lazy(() => import('./AdminInbox.jsx'));
 export default function Moderation() {
   const auth = useAccount();
   if (auth.loading) return <p role="status">Проверяем доступ…</p>;
-  if (!auth.user) return <section className="catalog-empty"><h1>Админка</h1><p>Доступна только администраторам и модераторам GridStudio. Войди через Telegram.</p>
-    <button className="catalog-button primary" onClick={() => auth.requestLogin('Войди через Telegram, чтобы открыть админку.')}><Icon name="telegram"/>Войти через Telegram</button></section>;
+  if (!auth.user) return <section className="catalog-empty"><h1>Админка</h1><p>Доступна только администраторам и модераторам GridStudio. Войди.</p>
+    <button className="catalog-button primary" onClick={() => auth.requestLogin('Войди, чтобы открыть админку.')}><Icon name="user"/>Войти</button></section>;
   if (!auth.admin && !auth.moderator) return <section className="catalog-empty"><h1>Нет доступа</h1><p>Админка доступна только администраторам и модераторам GridStudio.</p>
     <a className="catalog-button" href={CATALOG_PATH}>В мастерскую</a></section>;
   return <StaffRole.Provider value={auth.admin ? 'admin' : 'moderator'}><AdminPanel auth={auth}/></StaffRole.Provider>;

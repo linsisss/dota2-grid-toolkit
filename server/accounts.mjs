@@ -36,7 +36,7 @@ export class Accounts {
     this.store.run('INSERT INTO account_avatars VALUES(?,?,?) ON CONFLICT(account) DO UPDATE SET image=excluded.image,version=excluded.version', String(id), image, digest(image).slice(0, 16));
   }
   avatar(user) { return this.store.get('SELECT image FROM account_avatars WHERE account=?', user.id)?.image; }
-  require(session) { const user = this.user(session); if (!user) fail(401, 'Войди через Telegram.'); return user; }
+  require(session) { const user = this.user(session); if (!user) fail(401, 'Сначала войди на сайт.'); return user; }
   begin(ip, browser) {
     return this.store.tx(() => {
       this.store.rate(`login-tg:${ip}`, 20, 3_600_000); this.store.rate(`login-browser:${browser}`, 5, 600_000);

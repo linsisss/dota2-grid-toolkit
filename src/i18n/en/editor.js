@@ -82,7 +82,7 @@ export default {
   'Восстановление прежнего проекта': 'Recovered earlier project',
   'Файл уже привязан к другому аккаунту.': 'This file is already linked to another account.',
   'Сначала восстанови сохранённый проект.': 'Restore the saved project first.',
-  'Войди в Telegram-аккаунт, к которому привязан файл.': 'Sign in with the Telegram account this file is linked to.',
+  'Войди в аккаунт, к которому привязан файл.': 'Sign in to the account this file is linked to.',
   'Файл находится в архиве. Восстанови его в списке файлов.': 'The file is archived. Restore it in the file list.',
   'Конфликт версий. Твоя работа сохранена локально; создай копию в списке файлов.': 'Version conflict. Your work is saved locally; make a copy in the file list.',
   'Не удалось сохранить серверную копию локально.': 'Couldn’t save the server copy locally.',

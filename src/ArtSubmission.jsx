@@ -86,7 +86,7 @@ export function ArtSubmission({ onClose, editor = null }) {
         {signed ? <CreditField value={credit} onChange={setCredit} nickname={nickname}/>
           : <label>{t('Автор')} <span className="catalog-muted">{t('необязательно')}</span><input value={author} onChange={event => setAuthor(event.target.value)} maxLength={40} placeholder={t('Никнейм')} autoComplete="nickname"/></label>}
         <p className="catalog-muted">{t('Арт проверят модераторы; после одобрения его сможет вставить любой пользователь.')} {rulesBefore}<a className="catalog-inline-link" href={RULES_PATH} target="_blank" rel="noreferrer">{t('правила мастерской')}</a>{rulesAfter}</p>
-        {!auth.user && <p className="catalog-muted">{t('Можно и без входа.')} {loginBefore}<button type="button" className="catalog-link art-submit-login" onClick={() => auth.requestLogin(t('Войди через Telegram, чтобы бот сообщил, когда арт одобрят.'))}>{t('Войди через Telegram')}</button>{loginAfter}</p>}
+        {!auth.user && <p className="catalog-muted">{t('Можно и без входа.')} {loginBefore}<button type="button" className="catalog-link art-submit-login" onClick={() => auth.requestLogin(t('Войди, чтобы бот сообщил, когда арт одобрят.'))}>{t('Войди')}</button>{loginAfter}</p>}
         <Captcha config={config} action="art" onToken={setCaptcha} reset={reset} hideSuccess/>
         {(error || configError) && <Notice error>{error || configError}</Notice>}
         {config?.paused && <Notice>{t('Приём временно приостановлен. Попробуй позже.')}</Notice>}

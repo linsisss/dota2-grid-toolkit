@@ -80,14 +80,14 @@ export default function Comments({ id, api, Report, total: initial = 0, onCount,
     catch (e) { setError(e.message); }
   }
   const answer = (item) => {
-    if (!auth.user) return auth.requestLogin(t('Войди через Telegram, чтобы отвечать.'));
+    if (!auth.user) return auth.requestLogin(t('Войди, чтобы отвечать.'));
     setReply(item); field.current?.focus();
   };
   return <section className="guide-comments" aria-labelledby="guideComments">
     <h2 id="guideComments">{t('Комментарии')}{total ? <small>{total}</small> : null}</h2>
     {error && <Notice error>{error}</Notice>}
     {!items ? <p role="status">{t('Загружаем комментарии…')}</p> : threads(items).length ? <ol className="guide-comment-list">{threads(items).map(({ item, replies }) => {
-      const props = { authorLabel, onReply: answer, onRemove: remove, onReport: (row) => (auth.user ? setReport(row) : auth.requestLogin(t('Войди через Telegram, чтобы пожаловаться.'))) };
+      const props = { authorLabel, onReply: answer, onRemove: remove, onReport: (row) => (auth.user ? setReport(row) : auth.requestLogin(t('Войди, чтобы пожаловаться.'))) };
       return <li key={item.id} className="guide-thread"><Comment item={item} flash={item.id === fresh} {...props}/>
         {replies.length > 0 && <ol className="guide-replies">{replies.map((row) => <li key={row.id}><Comment item={row} nested flash={row.id === fresh} {...props}/></li>)}</ol>}</li>;
     })}</ol>
@@ -99,7 +99,7 @@ export default function Comments({ id, api, Report, total: initial = 0, onCount,
         onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) send(event); }}/>
       <div className="guide-comment-send"><small>{text.length > GUIDE_LIMITS.comment - 200 ? t('Осталось: {count}', { count: tn(GUIDE_LIMITS.comment - text.length, ['символ', 'символа', 'символов'], ['character', 'characters']) }) : t('Ctrl + Enter — отправить')}</small>
         <button className="catalog-button primary" disabled={busy || !text.trim()}><Icon name="send"/>{busy ? t('Отправляем…') : t('Отправить')}</button></div>
-    </form> : <div className="guide-comment-login"><p>{t('Комментировать можно после входа через Telegram.')}</p><button className="catalog-button" onClick={() => auth.requestLogin(t('Войди через Telegram, чтобы комментировать.'))}><Icon name="telegram"/>{t('Войти через Telegram')}</button></div>}
+    </form> : <div className="guide-comment-login"><p>{t('Комментировать можно после входа.')}</p><button className="catalog-button" onClick={() => auth.requestLogin(t('Войди, чтобы комментировать.'))}><Icon name="user"/>{t('Войти')}</button></div>}
     {report && <Report comment={report.id} onClose={() => setReport(null)}/>}
   </section>;
 }

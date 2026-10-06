@@ -29,6 +29,8 @@
 .dle-page .dle-search input { width:100%; min-height:48px; padding:12px 16px 12px 42px; border:1px solid var(--cat-line); border-radius:12px; background:var(--cat-field); color:var(--cat-ink); font:inherit; font-size:16px; }
 .dle-page .dle-search input:focus { outline:2px solid var(--cat-accent); outline-offset:1px; }
 .dle-search ul { position:absolute; z-index:5; inset:calc(100% + 6px) 0 auto; margin:0; padding:6px; list-style:none; border:1px solid var(--cat-line); border-radius:12px; background:var(--cat-panel); box-shadow:0 18px 40px #0009; }
+.dle-search-none { position:absolute; z-index:5; inset:calc(100% + 6px) 0 auto; margin:0; padding:12px 14px; border:1px solid var(--cat-line); border-radius:12px; background:var(--cat-panel); color:var(--cat-muted); font-size:13px; }
+.dle-search li.dle-search-maybe { padding:4px 10px; color:var(--cat-muted); font-size:12px; cursor:default; }
 .dle-search li { display:flex; align-items:center; gap:12px; padding:7px 10px; border-radius:8px; cursor:pointer; }
 .dle-search li[aria-selected=true] { background:#c4b5ed22; }
 .dle-search li img { border-radius:4px; }
@@ -38,8 +40,13 @@
 
 .dle-hints { width:100%; border-collapse:separate; border-spacing:0 4px; font-size:13px; table-layout:fixed; }
 .dle-hints thead th { padding:0 8px 2px; color:var(--cat-muted); font-size:12px; font-weight:500; text-align:center; }
-.dle-hints thead th:first-child { width:32%; text-align:left; }
-.dle-hints tbody th, .dle-hints td { height:38px; padding:6px 8px; background:var(--cat-panel); text-align:center; vertical-align:middle; }
+.dle-hints thead th:first-child { width:26%; text-align:left; }
+.dle-hints thead th:nth-child(2) { width:10%; } .dle-hints thead th:nth-child(4) { width:30%; }
+/* The guessed hero's roles; the ones the hidden hero has too stand out. */
+.dle-hints td.dle-roles { font-size:11.5px; line-height:1.25; }
+.dle-roles span { color:#ffffff99; }
+.dle-roles span.is-common { color:#fff; font-weight:600; }
+.dle-hints tbody th, .dle-hints td { height:36px; padding:5px 8px; background:var(--cat-panel); text-align:center; vertical-align:middle; }
 .dle-hints tbody th { border-radius:9px 0 0 9px; font-weight:500; text-align:left; }
 .dle-hero { display:flex; align-items:center; gap:10px; min-width:0; }
 .dle-hero span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -53,7 +60,7 @@
 .dle-hints tr.is-empty th, .dle-hints tr.is-empty td { background:#ffffff07; }
 .dle-arrow { margin-left:5px; }
 
-.dle-gate, .dle-coach, .dle-result { display:grid; gap:12px; padding:18px 20px; border:1px solid var(--cat-line); border-radius:14px; background:var(--cat-panel); }
+.dle-gate, .dle-coach, .dle-result { display:grid; gap:10px; padding:16px 20px; border:1px solid var(--cat-line); border-radius:14px; background:var(--cat-panel); }
 .dle-gate h2, .dle-coach h2, .dle-result h2 { margin:0; font-size:20px; line-height:1.25; }
 .dle-gate p, .dle-coach p { margin:0; color:var(--cat-muted); }
 .dle-coach ul { display:grid; gap:4px; margin:0; padding-left:20px; }
@@ -67,7 +74,7 @@
 .dle-side > .dle-reminder { margin-top:-8px; }
 .dle-friend { display:flex; align-items:center; gap:14px; margin:0; padding:10px 14px; border:1px solid #c4b5ed40; border-radius:12px; background:#c4b5ed12; font-size:14px; }
 .dle-friend > span { font-size:11px; line-height:1.1; white-space:pre; letter-spacing:1px; }
-.dle-spoiler { display:flex; align-items:center; gap:10px; margin:0; padding:9px 12px; border-radius:10px; background:#c4b5ed1a; color:var(--cat-ink); font-size:13px; line-height:1.4; }
+.dle-spoiler { display:flex; align-items:center; gap:10px; margin:0; padding:7px 12px; border-radius:10px; background:#c4b5ed1a; color:var(--cat-ink); font-size:13px; line-height:1.4; }
 .dle-spoiler span { font-size:18px; }
 .dle-result .catalog-muted a { color:var(--cat-accent); }
 .dle-stats { display:flex; align-items:flex-end; gap:24px; flex-wrap:wrap; }
@@ -75,6 +82,8 @@
 .dle-stats dl div { display:grid; text-align:center; }
 .dle-stats dd { margin:0; font-size:22px; font-weight:600; line-height:1.1; }
 .dle-stats dt { color:var(--cat-muted); font-size:12px; }
+.dle-next { display:flex; align-items:center; gap:6px; margin:0; max-width:260px; color:var(--cat-muted); font-size:12px; }
+.dle-next svg { color:var(--cat-accent); }
 .dle-dist { display:flex; align-items:flex-end; gap:5px; height:44px; margin:0; padding:0; list-style:none; }
 .dle-dist li { display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:2px; width:18px; height:100%; }
 .dle-dist i { width:100%; border-radius:3px; background:var(--cat-accent); opacity:.85; }
@@ -104,6 +113,10 @@
   .dle-hints thead th:first-child { width:30%; }
   .dle-hints tbody th, .dle-hints td { padding:5px 3px; }
   .dle-hero img { display:none; }
+  .dle-hints td.dle-roles { font-size:10px; }
   .dle-stats { gap:14px; }
   .dle-stats dl { gap:14px; }
 }
+
+.dle-result-foot { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px 16px; font-size:13px; }
+.dle-result-foot .dle-reminder { margin:0; }

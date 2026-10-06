@@ -3,13 +3,15 @@ import { readFileSync } from 'node:fs';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import data from '../scripts/data.mjs';
 import { SHARE_CODE, shareRow } from '../scripts/dotadle-share.mjs';
+import { streakBadge } from '../scripts/profile-badges.mjs';
 
 // Dotadle (1.8.18, asked for on 2026-10-06): a hero a day, the same for everyone, drawn in symbols from
 // its portrait — coarse first, sharper after every miss — with hints like Wordle's after each guess.
 // Only the server knows the answer: the page gets the pictures, sends a guess and gets the hints.
 // A day is Moscow's; puzzle #1 is 2026-10-06. The order is a shuffle keyed by the catalog's secret, a
 // new one every pass through all the heroes, so the next hero cannot be read from the code.
-export const DOTADLE_TRIES = 6;
+import { DOTADLE_TRIES, dotadleStats } from './dotadle-stats.mjs';
+export { DOTADLE_TRIES, dotadleStats };
 const FIRST_DAY = Date.UTC(2026, 9, 6) / 86_400_000, MSK = 3 * 3_600_000;
 // Columns of each picture; rows follow the portrait (284 × 376) and a monospace cell (0.6 × 1).
 export const DOTADLE_COLUMNS = [14, 18, 24, 32, 42, 56];
@@ -18,20 +20,37 @@ const STATS = JSON.parse(readFileSync(new URL('../data/heroes-source.json', impo
 
 // What people call heroes in Russian (the search also takes the English name and its initials).
 const ALIASES = {
-  1: 'ам антимаг магина', 2: 'акс топор', 3: 'бейн', 4: 'бладсикер сикер бс', 5: 'цм кристалка рилай', 6: 'дровка траксес', 7: 'шейкер ес', 8: 'джагер джаг юрнеро',
-  9: 'мирана мира', 10: 'морф', 11: 'сф невермор', 12: 'пл лансер', 13: 'пак', 14: 'пудж пудге', 15: 'разор', 16: 'ск сенд кинг', 17: 'шторм', 18: 'свен',
-  19: 'тини', 20: 'венга', 21: 'вр виндраннер виндра', 22: 'зевс', 23: 'кунка', 25: 'лина', 26: 'лион', 27: 'шаман раста', 28: 'слардар', 29: 'тайд тайдхантер',
-  30: 'вд доктор', 31: 'лич', 32: 'рики', 33: 'энигма', 34: 'тинкер', 35: 'снайпер кардел', 36: 'некр некрофос', 37: 'варлок', 38: 'бм бистмастер', 39: 'квопа акаша',
-  40: 'веник веном веномансер', 41: 'войд фв', 42: 'вк скелет', 43: 'дп', 44: 'па фантомка морта', 45: 'пугна', 46: 'та ланая', 47: 'вайпер', 48: 'луна',
-  49: 'дк драгон', 50: 'даззл', 51: 'клок', 52: 'лешрак', 53: 'фура профет', 54: 'гуль лайфстилер', 55: 'дарк сир', 56: 'клинкз', 57: 'омник', 58: 'энча энчантресс',
-  59: 'хускар хуск', 60: 'нс найт сталкер', 61: 'бруда паучиха', 62: 'бх баунти', 63: 'вивер', 64: 'джакиро', 65: 'бэт батрайдер', 66: 'чен', 67: 'спектра спектр',
-  68: 'аа апарат', 69: 'дум', 70: 'урса', 71: 'бара баратрум', 72: 'гиро', 73: 'алхимик алх', 74: 'инвокер карл', 75: 'сайленсер', 76: 'од', 77: 'ликан',
-  78: 'панда брюмастер', 79: 'сд шадоу демон', 80: 'друид лд', 81: 'цк хаос', 82: 'мипо', 83: 'трент', 84: 'огр огр маги', 85: 'андаинг', 86: 'рубик',
-  87: 'дизраптор', 88: 'никс', 89: 'нага', 90: 'котл кипер', 91: 'ио висп', 92: 'визаж', 93: 'сларк', 94: 'медуза дуза', 95: 'тролль', 96: 'кентавр цента',
-  97: 'магнус', 98: 'тимбер пила', 99: 'бб бристл ежик', 100: 'туск', 101: 'скай', 102: 'абаддон абадон', 103: 'титан ет', 104: 'легионка лк', 105: 'техис минер',
-  106: 'эмбер', 107: 'ерс земля', 108: 'андерлорд питлорд', 109: 'тб террорблейд', 110: 'феникс', 111: 'оракл', 112: 'виверна', 113: 'арк варден зет', 114: 'мк манки',
-  119: 'вилоу ива', 120: 'панго панголиер', 121: 'грим гримстрок', 123: 'худвинк белка', 126: 'воид спирит', 128: 'снапфаер бабка', 129: 'марс', 131: 'ринг мастер',
-  135: 'дб доунбрейкер валора', 136: 'марси', 137: 'праймал бист', 138: 'муэрта', 145: 'кез', 155: 'ларго',
+  1: 'ам антимаг антимаге магина маг антимейдж', 2: 'акс топор аксе мистер акс могул хан', 3: 'бейн бэйн бейн элементал атропос баня', 4: 'бладсикер сикер бс блад стригвир',
+  5: 'цм кристалка рилай кристал мейден цмка деви майданка', 6: 'дровка дроу траксес дров тракса', 7: 'шейкер ес эртшейкер раигор бубна', 8: 'джагер джаг юрнеро джаггер джагернаут джага юра',
+  9: 'мирана мира мираночка принцесса луны потма', 10: 'морф морфлинг вода', 11: 'сф невермор шадоу финд финд гуль канеки сфка', 12: 'пл лансер фантом лансер азвал эпилептик',
+  13: 'пак пук фея', 14: 'пудж пудге мясник пуджик крюк буч бутчер бучка мясо падж паджерс рудге хукер', 15: 'разор рейзор', 16: 'ск сенд кинг сэнд кинг краб скорпион скорп криксалис',
+  17: 'шторм штормик сторм рейдж райдзин рэйдзин', 18: 'свен свенчик рогатый', 19: 'тини тайни камень тиник', 20: 'венга венж шенди вс',
+  21: 'вр виндраннер виндра винда лирелея врка', 22: 'зевс зеус дед зус', 23: 'кунка кункка адмирал капитан', 25: 'лина линка слэйерс', 26: 'лион лиончик демон пальчик леня',
+  27: 'шаман раста шадоу шаман рхаста шам', 28: 'слардар слар селедка', 29: 'тайд тайдхантер тайдик левиафан арбуз', 30: 'вд доктор витч доктор знахарь замбо док вич ком жарвакко',
+  31: 'лич этрейн', 32: 'рики невидимка рикимару крыса', 33: 'энигма энига черная дыра блэкхол', 34: 'тинкер бузя бойш',
+  35: 'снайпер дед кардел снайп гном', 36: 'некр некрофос некрофус ротунд некроль некролит ротунджер', 37: 'варлок вар демнок чернокнижник', 38: 'бм бистмастер бист мастер карроч рексар каррок',
+  39: 'квопа акаша квин пейн', 40: 'веник веном веномансер лесейл змея', 41: 'войд фв фейслес дарк войд дарктеррор', 42: 'вк скелет скелетон кинг остарион папич леорик величайший вика',
+  43: 'дп краб дез профет кробелус профетка баньша', 44: 'па фантомка морта пашка фантом ассасин асасинка мортра мортред', 45: 'пугна сосун', 46: 'та ланая темпларка темплар ассасин ассасин',
+  47: 'вайпер вайп змей', 48: 'луна ланка', 49: 'дк драгон драгон найт давион дракон довакин', 50: 'даззл дазл чеснок',
+  51: 'клок клокверк ратлтрап часовщик', 52: 'лешрак леш леший', 53: 'фура профет фурион натурс профет', 54: 'гуль лайфстилер лс наикс гуля найкс',
+  55: 'дарк сир дс ишкафел', 56: 'клинкз клинкс скелет лучник боник боня', 57: 'омник омникнайт пурист паладин вышка', 58: 'энча энчантресс олениха айшьях коза айушта',
+  59: 'хускар хуск гаргульмен хусик', 60: 'нс найт сталкер баланар', 61: 'бруда паучиха бродмазер брудка паук арахния', 62: 'бх баунти баунти хантер гондар',
+  63: 'вивер вивер жук скитскуирл ткач таракан скитскур', 64: 'джакиро джак двуглавый дракон тхд', 65: 'бэт батрайдер бэтрайдер', 66: 'чен чечен',
+  67: 'спектра спектр мерседес меркуриал', 68: 'аа апарат аппарат ансиент эншент апарейшн апарейшен каден холодильник калдр', 69: 'дум дуум люцифер', 70: 'урса медведь улфсаар ульфсаар',
+  71: 'бара баратрум такси пиво спирит брейкер бар корова бык космобык', 72: 'гиро гирокоптер аурел вертолет', 73: 'алхимик алх алхим разззил химик алч раззил', 74: 'инвокер карл инвик кварта вокер колдун инвок каэль',
+  75: 'сайленсер сало нортром', 76: 'од обсидиан аутворлд девоурер харбингер птица', 77: 'ликан волк банехаллоу ликантроп люкан версута собака', 78: 'панда брюмастер брю мангикс',
+  79: 'сд шадоу демон шд димон', 80: 'друид лд лон друид сильвестр медведь друль', 81: 'цк хаос кнайт хаос найт аргенталь чаос нессай', 82: 'мипо джеоф мипа мипарь',
+  83: 'трент трэнт дерево энт руфтреллен', 84: 'огр огр маги аггрон огрмаг', 85: 'андаинг андед дирж сема семадог зомби бомж', 86: 'рубик грэнд мэгус рубен рубэн',
+  87: 'дизраптор раптор тралл', 88: 'никс никс ассасин жук нюкс скарабей', 89: 'нага нага сирена слитис', 90: 'котл кипер эзалор котел гендальф',
+  91: 'ио висп виспа шарик шар', 92: 'визаж визаг гаргулья', 93: 'сларк сларик рыба мурлок', 94: 'медуза дуза горгона змея',
+  95: 'тролль троль трольварлорд джа джаракал', 96: 'кентавр цента бредвин кент брэдварден', 97: 'магнус магнусик мага таксист магнотавр мамонт', 98: 'тимбер пила риззрак тимберсау резак кастрюля шредер',
+  99: 'бб бристл ежик бристлбэк ригвардж брист ёж ёжик ригварл', 100: 'туск тускар морж тусик таск имир', 101: 'скай скайрат драгонус петух птица', 102: 'абаддон абадон аба абба',
+  103: 'титан ет элдер титан', 104: 'легионка лк легион тресдин лега коммандир', 105: 'техис минер течис мины течка техник сквии спличи спун', 106: 'эмбер ксин эмбер спирит',
+  107: 'ерс земля каолин эрс земеля ерш землепанда земледух пандарин ес', 108: 'андерлорд питлорд вреб врогрос', 109: 'тб террорблейд терор тер террор', 110: 'феникс фен феня птица',
+  111: 'оракл нериф оракул', 112: 'виверна ww вв винтер виверна ауророс аурот', 113: 'арк варден зет арк вард', 114: 'мк манки кинг обезьяна сунь укун макака мартышка',
+  119: 'вилоу ива дарк вилоу минфиллер вилка дв миреска санбриз', 120: 'панго панголиер донте', 121: 'грим гримстрок', 123: 'худвинк белка',
+  126: 'воид спирит войд спирит инаи вс', 128: 'снапфаер бабка беатрикс снэпка', 129: 'марс', 131: 'ринг мастер рингмастер',
+  135: 'дб доунбрейкер валора дона', 136: 'марси', 137: 'праймал бист праймал пб', 138: 'муэрта', 145: 'кез', 155: 'ларго',
 };
 export const DOTADLE_HEROES = data.heroes.filter((hero) => hero.id !== 127 && STATS[hero.id]).map((hero) => ({
   id: hero.id, name: hero.name, attr: hero.attr, attack: hero.attack, roles: hero.roles, portrait: hero.portrait,
@@ -57,11 +76,12 @@ export function dotadleHero(number, secret) {
 // How a guess compares with the answer: same or not; for numbers, whether the answer's is higher.
 export function dotadleHints(guess, answer) {
   const compare = (a, b) => a === b ? 'same' : b > a ? 'higher' : 'lower';
-  const common = guess.roles.filter((role) => answer.roles.includes(role)).length;
+  // The roles in common by name (asked for on 2026-10-06: «1 из 4» said nothing), and how many.
+  const shared = guess.roles.filter((role) => answer.roles.includes(role)), common = shared.length;
   return {
     attr: guess.attr === answer.attr ? 'same' : 'other',
     attack: guess.attack === answer.attack ? 'same' : 'other',
-    roles: { common, same: common === answer.roles.length && common === guess.roles.length },
+    roles: { common, shared, same: common === answer.roles.length && common === guess.roles.length },
     speed: compare(guess.speed, answer.speed),
     range: compare(guess.range, answer.range),
   };
@@ -102,22 +122,9 @@ export function dotadleTables(store) {
     CREATE TABLE IF NOT EXISTS dotadle_reminders(account TEXT PRIMARY KEY, created INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS dotadle_reminder_notices(account TEXT NOT NULL, number INTEGER NOT NULL, created INTEGER NOT NULL,
       state TEXT NOT NULL DEFAULT 'queued', attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(account, number));
-    CREATE TABLE IF NOT EXISTS dotadle_shares(code TEXT PRIMARY KEY, account TEXT NOT NULL, number INTEGER NOT NULL, UNIQUE(account, number))`);
-}
-// Finished games only: played, won, the current streak (today's game, or up to yesterday while today's
-// is not over), the best one, and how many tries the wins took.
-export function dotadleStats(store, account, today) {
-  const dist = Array(DOTADLE_TRIES).fill(0);
-  const rows = store.all('SELECT number, guesses, solved FROM dotadle_plays WHERE account=? ORDER BY number', account)
-    .map((row) => ({ number: row.number, tries: JSON.parse(row.guesses).length, solved: !!row.solved })).filter((row) => row.solved || row.tries >= DOTADLE_TRIES);
-  let best = 0, run = 0, last = null;
-  for (const row of rows) {
-    run = row.solved ? (last !== null && row.number === last + 1 && run > 0 ? run + 1 : 1) : 0;
-    if (row.solved) dist[row.tries - 1] += 1;
-    best = Math.max(best, run); last = row.number;
-  }
-  const end = rows.at(-1), streak = end && end.solved && end.number >= today - 1 ? run : 0;
-  return { played: rows.length, won: rows.filter((row) => row.solved).length, streak, best, dist };
+    CREATE TABLE IF NOT EXISTS dotadle_shares(code TEXT PRIMARY KEY, account TEXT NOT NULL, number INTEGER NOT NULL, UNIQUE(account, number));
+    CREATE TABLE IF NOT EXISTS dotadle_misses(text TEXT NOT NULL, hero INTEGER NOT NULL DEFAULT 0, count INTEGER NOT NULL DEFAULT 0, first INTEGER NOT NULL, last INTEGER NOT NULL,
+      PRIMARY KEY(text, hero))`);
 }
 
 // Signed-in only (asked for on 2026-10-06): each account's guesses are kept here, so the streak follows
@@ -192,10 +199,27 @@ export class Dotadle {
     const play = this.play(account, today);
     if (finished(play.guesses, play.solved)) return { error: 'Сегодняшняя игра уже закончена. Новый герой — в полночь по Москве.' };
     if (play.guesses.includes(Number(heroId))) return { error: 'Этого героя ты уже называл.' };
-    const guesses = [...play.guesses, Number(heroId)], solved = Number(heroId) === this.answer(today).id;
+    const guesses = [...play.guesses, Number(heroId)], solved = Number(heroId) === this.answer(today).id, before = solved ? this.stats(account).best : 0;
     this.store.run(`INSERT INTO dotadle_plays(account, number, guesses, solved, updated) VALUES(?,?,?,?,?)
       ON CONFLICT(account, number) DO UPDATE SET guesses=excluded.guesses, solved=excluded.solved, updated=excluded.updated`, account, today, JSON.stringify(guesses), solved ? 1 : 0, this.now());
+    // A streak badge just reached (scripts/profile-badges.mjs): the bot tells (badge_notices, server/profiles.mjs).
+    const badge = solved && streakBadge(before, this.stats(account).best);
+    if (badge && this.store.get("SELECT 1 x FROM sqlite_master WHERE name='badge_notices'")) this.store.run('INSERT OR IGNORE INTO badge_notices(account,badge,created) VALUES(?,?,?)', account, badge.id, this.now());
     return this.state(account);
+  }
+  // What the hero search did not find (asked for on 2026-10-06, to add nicknames from real searches): the
+  // words typed and, when the page offered the nearest heroes, the one picked. Admins see the last week's.
+  miss(text, heroId = 0) {
+    const words = String(text || '').toLowerCase().replace(/ё/g, 'е').replace(/[^a-zа-я0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
+    const hero = BY_ID.has(Number(heroId)) ? Number(heroId) : 0;
+    if (words.length < 2) return { ok: false };
+    this.store.run(`INSERT INTO dotadle_misses(text, hero, count, first, last) VALUES(?,?,1,?,?)
+      ON CONFLICT(text, hero) DO UPDATE SET count=count+1, last=excluded.last`, words, hero, this.now(), this.now());
+    return { ok: true };
+  }
+  misses(days = 7) {
+    return this.store.all('SELECT text, hero, count, last FROM dotadle_misses WHERE last>=? ORDER BY count DESC, last DESC LIMIT 80', this.now() - days * 86_400_000)
+      .map((row) => ({ ...row, name: BY_ID.get(row.hero)?.name || null }));
   }
   // The training game: all the pictures at once, the answer told with every guess (the page shows it at the end).
   async practice() {

@@ -21,6 +21,7 @@ import { FAQ, faqEdit, faqResults } from './telegram-faq.mjs';
 import { pcPage } from '../scripts/pc-link.mjs';
 import { scanMilestones } from './milestones.mjs';
 import { dotadleNumber, dotadleStats, dotadleTables, DOTADLE_TRIES } from './dotadle.mjs';
+import { dotadleBest } from './dotadle-stats.mjs';
 
 export const MODERATION_CHAT = '-1004309207941', MODERATION_TOPIC = 6;
 export function telegramConfig(env = process.env) {
@@ -359,11 +360,12 @@ export class CatalogTelegram {
     if (!this.store.get("SELECT 1 x FROM sqlite_master WHERE name='badge_notices'")) return;
     const due = this.store.all("SELECT rowid, * FROM badge_notices WHERE state='queued' AND next_at<=? ORDER BY created LIMIT ?", this.store.now(), limit);
     for (const note of due) {
-      const badge = badgeOf(note.badge), given = this.store.get('SELECT 1 x FROM profile_badges WHERE account=? AND badge=?', note.account, note.badge);
+      const badge = badgeOf(note.badge), given = badge?.streak ? dotadleBest(this.store, note.account) >= badge.streak : this.store.get('SELECT 1 x FROM profile_badges WHERE account=? AND badge=?', note.account, note.badge);
       if (!badge || !given) { this.store.run("UPDATE badge_notices SET state='dropped' WHERE rowid=?", note.rowid); continue; }
       const url = `${this.config.origin}/workshop?creator=${this.store.profiles.ensure(note.account).key}`;
       if (!await this.direct('badge_notices', 'rowid', note, {
-        text: `🏅 На GridStudio тебе выдали значок <b>«${escape(badge.label)}»</b>.\n\n${escape(badge.hint)}. Значок виден в профиле рядом с ником.`,
+        text: badge.streak ? `🔥 Ты угадываешь героя дня в Dotadle ${badge.streak === 21 ? '21 день' : `${badge.streak} дней`} подряд — в профиле новый значок <b>«${escape(badge.label)}»</b>.\n\nОн остаётся навсегда и виден рядом с ником.`
+          : `🏅 На GridStudio тебе выдали значок <b>«${escape(badge.label)}»</b>.\n\n${escape(badge.hint)}. Значок виден в профиле рядом с ником.`,
         reply_markup: { inline_keyboard: [[{ text: 'Открыть профиль', url }]] } }, 'badges')) return;
     }
   }

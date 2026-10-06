@@ -161,8 +161,8 @@ export class CatalogBackgrounds {
     return store.tx(() => {
       guard();
       if (store.trusted(account)) { /* No account budget; the network cap below still applies. */ }
-      else if (account) store.rate(`bg-account:${account}`, limits.accountDaily, 86_400_000, { message: `С Telegram можно отправить ${limits.accountDaily} фонов за 24 часа.`, code: 'background_account_limit' });
-      else store.rate(`bg:${identity.browser}`, limits.daily, 86_400_000, { message: `Без входа можно отправить ${limits.daily} фона за 24 часа. С Telegram — до ${limits.accountDaily}.`, code: 'background_guest_limit' });
+      else if (account) store.rate(`bg-account:${account}`, limits.accountDaily, 86_400_000, { message: `После входа можно отправить ${limits.accountDaily} фонов за 24 часа.`, code: 'background_account_limit' });
+      else store.rate(`bg:${identity.browser}`, limits.daily, 86_400_000, { message: `Без входа можно отправить ${limits.daily} фона за 24 часа. После входа — до ${limits.accountDaily}.`, code: 'background_guest_limit' });
       store.rate(`bg-ip:${identity.ip}`, limits.networkDaily, 86_400_000, { message: 'Достигнут общий лимит отправки фонов из этой сети за 24 часа.', code: 'background_network_limit' });
       // A signed-in author is their profile (server/profiles.mjs): no signature, only «по мотивам».
       const { lastInsertRowid } = store.run('INSERT INTO backgrounds(title,author,credit,tags,aspect,seconds,bytes,hash,account,browser,ip,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
@@ -206,7 +206,7 @@ export class CatalogBackgrounds {
     return this.view(row, account);
   }
   like(id, account, liked) {
-    if (!account) fail(401, 'Войди через Telegram, чтобы поставить лайк.');
+    if (!account) fail(401, 'Войди, чтобы поставить лайк.');
     return this.store.tx(() => {
       if (this.item(id, account).mine && liked) fail(403, 'Свою работу лайкнуть нельзя.');
       if (liked) this.store.run('INSERT OR IGNORE INTO background_likes VALUES(?,?,?)', id, account, this.store.now());

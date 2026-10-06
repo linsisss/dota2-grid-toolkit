@@ -92,8 +92,8 @@ export default function GuideWrite({ id: startId }) {
   }
 
   if (!auth.user) return auth.loading ? <p role="status">{t('Загружаем…')}</p> : <section className="catalog-empty guide-empty"><Icon name="penLine" size={30}/>
-    <h1>{t('Войди, чтобы писать гайды')}</h1><p>{t('Гайды привязаны к Telegram: черновик сохраняется в аккаунте, а бот напишет, когда гайд проверят.')}</p>
-    <button className="catalog-button primary" onClick={() => auth.requestLogin(t('Войди через Telegram, чтобы написать гайд.'))}><Icon name="telegram"/>{t('Войти через Telegram')}</button></section>;
+    <h1>{t('Войди, чтобы писать гайды')}</h1><p>{t('Гайды привязаны к аккаунту: черновик сохраняется в аккаунте, а бот напишет, когда гайд проверят.')}</p>
+    <button className="catalog-button primary" onClick={() => auth.requestLogin(t('Войди, чтобы написать гайд.'))}><Icon name="user"/>{t('Войти')}</button></section>;
   if (error && !loaded) return <section className="catalog-empty guide-empty"><h1>{t('Гайд не открылся')}</h1><p>{error}</p><a className="catalog-button" href={`${GUIDES_PATH}?mine=1`}>{t('Мои гайды')}</a></section>;
   if (!loaded) return <p role="status">{t('Открываем черновик…')}</p>;
   if (sent) return <section className="catalog-empty guide-empty guide-sent"><span className="win-icon" aria-hidden="true"><Icon name="check"/></span>

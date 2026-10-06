@@ -40,7 +40,7 @@ export default function OwnedBackgrounds({ auth }) {
   const items = [...remote, ...local.filter((item) => !remote.some((own) => own.id === item.id))];
   return <section className="catalog-owned" aria-label={t('Мои фоны')}>
     <div className="catalog-results publication-summary"><span>{t('Публикаций: {count}', { count: items.length })}</span>
-      {!auth.user && <p>{t('Без входа видны фоны, опубликованные из этого браузера.')} <button className="catalog-link" onClick={() => auth.requestLogin()}>{t('Войти через Telegram')}</button></p>}
+      {!auth.user && <p>{t('Без входа видны фоны, опубликованные из этого браузера.')} <button className="catalog-link" onClick={() => auth.requestLogin()}>{t('Войти')}</button></p>}
     </div>
     {error && <Notice error report>{error}<button className="catalog-link" onClick={() => setRetry((x) => x + 1)}>{t('Попробовать снова')}</button></Notice>}
     {items.length ? <div className="background-grid">{items.map((item) => {

@@ -35,7 +35,7 @@ export default function PublishTarget({ grid }) {
       <label>{t('Куда отправить')}<select value={target} onChange={event => setTarget(event.target.value)}>
         <option value="">{t('Новая публикация')}</option>
         {works.map(item => <option key={item.id} value={item.id} disabled={!item.canEdit}>
-          {t('Обновить «{title}» — {status}', { title: item.title, status: STATUS()[item.status] || item.status })}{item.canEdit ? '' : ` ${t('(изменить можно после входа через Telegram)')}`}
+          {t('Обновить «{title}» — {status}', { title: item.title, status: STATUS()[item.status] || item.status })}{item.canEdit ? '' : ` ${t('(изменить можно после входа)')}`}
         </option>)}
       </select></label>
       {existing && <p className="catalog-muted">{t('Заявка обновится на месте: сетка, название и теги заменятся, и она снова пройдёт проверку.')}{existing.published ? ` ${t('До одобрения в мастерской останется прежняя версия.')}` : ''}</p>}

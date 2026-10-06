@@ -140,7 +140,7 @@ export async function openWorkspaceRegistry() {
 // Server writes are serialized and compare revisions. Local autosave completes
 // independently; a network failure never discards or rolls back local edits.
 export async function openWorkspace(meta, registry, api, user, onStatus = () => {}, { retryDelay = 2000 } = {}) {
-  if (meta.account && meta.account !== user?.id) throw new Error(t('Войди в Telegram-аккаунт, к которому привязан файл.'));
+  if (meta.account && meta.account !== user?.id) throw new Error(t('Войди в аккаунт, к которому привязан файл.'));
   const storage = await createProjectStorage(C.importProject, APP_VERSION, meta.id);
   let initial = await storage.load(), cloudRevision = meta.cloudRevision || 0, generation = 0, cloudQueue = Promise.resolve(), paused = false;
   let latestDocument = initial.doc;

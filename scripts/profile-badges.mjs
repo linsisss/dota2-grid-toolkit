@@ -12,13 +12,19 @@ export const BADGES = Object.freeze([
   { id: 'sponsor', label: 'Поддержавший', hint: 'Поддерживает разработку сайта', icon: 'badgeSponsor', color: '#f78fb3' },
   { id: 'likes100', label: '100 лайков', hint: 'Работы собрали 100 лайков', icon: 'heart', likes: 100, color: '#e9a3c9' },
   { id: 'likes500', label: '500 лайков', hint: 'Работы собрали 500 лайков', icon: 'trophy', likes: 500, color: '#ffcf5a' },
+  // Dotadle (asked for on 2026-10-06): the best streak of guessed heroes of the day; kept once reached.
+  { id: 'dotadle7', label: '7 дней в Dotadle', hint: 'Угадал героя дня 7 дней подряд', icon: 'sparkle', streak: 7, color: '#7fd3b0' },
+  { id: 'dotadle21', label: '21 день в Dotadle', hint: 'Угадал героя дня 21 день подряд', icon: 'crown', streak: 21, color: '#ffb86b' },
 ]);
 // The ones an admin gives (the moderator one comes with the role, given in «Пользователи»).
-export const GRANTED_BADGES = Object.freeze(BADGES.filter((badge) => !badge.likes && !badge.role).map((badge) => badge.id));
+export const GRANTED_BADGES = Object.freeze(BADGES.filter((badge) => !badge.likes && !badge.role && !badge.streak).map((badge) => badge.id));
 export const badgeOf = (id) => BADGES.find((badge) => badge.id === id) || null;
-// The badges to show: the given ones and the role's in the list's order, then the highest like badge reached.
-export function profileBadges(granted, likes = 0, { moderator = false } = {}) {
-  const given = BADGES.filter((badge) => (badge.role ? moderator : !badge.likes && granted.includes(badge.id))).map((badge) => badge.id);
-  const earned = BADGES.filter((badge) => badge.likes && likes >= badge.likes).at(-1);
-  return earned ? [...given, earned.id] : given;
+// The badges to show: the given ones and the role's in the list's order, then the highest like badge
+// reached, then the highest Dotadle streak badge (by the best streak).
+export function profileBadges(granted, likes = 0, { moderator = false, streak = 0 } = {}) {
+  const given = BADGES.filter((badge) => (badge.role ? moderator : !badge.likes && !badge.streak && granted.includes(badge.id))).map((badge) => badge.id);
+  const earned = BADGES.filter((badge) => badge.likes && likes >= badge.likes).at(-1), played = BADGES.filter((badge) => badge.streak && streak >= badge.streak).at(-1);
+  return [...given, ...(earned ? [earned.id] : []), ...(played ? [played.id] : [])];
 }
+// The streak badge a best streak of `best` has just reached, or null.
+export const streakBadge = (before, after) => BADGES.find((badge) => badge.streak && before < badge.streak && after >= badge.streak) || null;

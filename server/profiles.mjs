@@ -3,6 +3,7 @@ import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { fail } from './catalog-store.mjs';
 import { GRANTED_BADGES, profileBadges } from '../scripts/profile-badges.mjs';
 import { NOTIFICATION_IDS } from '../scripts/profile-notifications.mjs';
+import { dotadleBest } from './dotadle-stats.mjs';
 
 // Creator profiles (asked for on 2026-10-02): every account signed in with Telegram has one — a nickname
 // (a neutral two-word one at first, like ScoutingDuck; changed at most once a NICK_DAYS days), a short
@@ -210,7 +211,7 @@ export class Profiles {
   badges(account, likes = 0) {
     this.moderated ||= !!this.store.get("SELECT 1 x FROM sqlite_master WHERE name='moderators'");
     const moderator = this.moderated && !!this.store.get('SELECT 1 x FROM moderators WHERE account=?', String(account));
-    return profileBadges(this.store.all('SELECT badge FROM profile_badges WHERE account=?', String(account)).map((row) => row.badge), likes, { moderator });
+    return profileBadges(this.store.all('SELECT badge FROM profile_badges WHERE account=?', String(account)).map((row) => row.badge), likes, { moderator, streak: dotadleBest(this.store, String(account)) });
   }
   // An admin gives (`on`) or takes back a badge → whether anything changed.
   setBadge(key, badge, on) {

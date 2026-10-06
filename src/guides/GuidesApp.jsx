@@ -47,7 +47,7 @@ function GuideList({ mine: startMine }) {
     try { const next = await guidesAPI(`?${new URLSearchParams({ category, q: query, sort, page: String(extra.page + 1) })}`); setExtra((current) => ({ page: current.page + 1, items: [...current.items, ...next.items] })); }
     catch (e) { setError(e.message); }
   }
-  const write = () => (auth.user ? location.assign(`${GUIDES_PATH}?write`) : auth.requestLogin(t('Войди через Telegram, чтобы написать гайд.')));
+  const write = () => (auth.user ? location.assign(`${GUIDES_PATH}?write`) : auth.requestLogin(t('Войди, чтобы написать гайд.')));
   const items = data ? [...data.items, ...extra.items] : null;
   return <>
     <header className="catalog-heading"><div><div className="catalog-title"><span className="win-icon page-icon" aria-hidden="true"><Icon name="guides"/></span><h1>{mine ? t('Мои гайды') : t('Гайды')}</h1></div>
@@ -65,8 +65,8 @@ function GuideList({ mine: startMine }) {
       </div>}
     </div>
     {error && <Notice error report>{error}<button className="catalog-link" onClick={() => setRetry((x) => x + 1)}>{t('Попробовать снова')}</button></Notice>}
-    {mine && !auth.user && !auth.loading ? <section className="catalog-empty"><h2>{t('Войди, чтобы увидеть свои гайды')}</h2><p>{t('Гайды привязаны к Telegram: так их можно писать и править с любого устройства.')}</p>
-      <button className="catalog-button primary" onClick={() => auth.requestLogin()}><Icon name="telegram"/>{t('Войти через Telegram')}</button></section>
+    {mine && !auth.user && !auth.loading ? <section className="catalog-empty"><h2>{t('Войди, чтобы увидеть свои гайды')}</h2><p>{t('Гайды привязаны к аккаунту: так их можно писать и править с любого устройства.')}</p>
+      <button className="catalog-button primary" onClick={() => auth.requestLogin()}><Icon name="user"/>{t('Войти')}</button></section>
     : !items ? <p role="status">{t('Загружаем гайды…')}</p>
     : items.length ? <>
       <section className="guide-grid" aria-label={mine ? t('Мои гайды') : t('Гайды')}>{items.map((item, i) => <Fragment key={item.id}><GuideCard item={item} mine={mine}/>{i === 0 && !mine && <Spot place="guides" className="is-in-grid"/>}</Fragment>)}</section>

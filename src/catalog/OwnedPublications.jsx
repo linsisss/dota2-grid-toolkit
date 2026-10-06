@@ -40,7 +40,7 @@ function PublicationCard({ entry, token, accountId }) {
       <a className="catalog-icon publication-action" href={href} aria-label={canEdit ? t('Изменить публикацию «{title}»', { title: item.title }) : t('Управлять публикацией «{title}»', { title: item.title })}><Icon name={canEdit ? 'edit' : 'sliders'}/><span className="publication-action-tooltip" aria-hidden="true">{canEdit ? t('Изменить публикацию') : t('Управление')}</span></a>
       <button className="catalog-icon publication-action" disabled={!detail?.grid} onClick={() => downloadGrid(detail.grid)} aria-label={t('Скачать сетку «{title}»', { title: item.title })}><Icon name="download"/><span className="publication-action-tooltip" aria-hidden="true">{t('Скачать сетку')}</span></button>
       {item.published && !item.blocked && <a className="catalog-icon publication-action" href={`${CATALOG_PATH}?id=${entry.id}`} aria-label={t('Открыть «{title}» в мастерской', { title: item.title })}><Icon name="external"/><span className="publication-action-tooltip" aria-hidden="true">{t('Открыть в мастерской')}</span></a>}
-      {!item.linked && token && <a className="catalog-link" href={href}>{t('Привязать Telegram')}</a>}
+      {!item.linked && token && <a className="catalog-link" href={href}>{t('Привязать к аккаунту')}</a>}
     </div>
     {error && <p className="publication-error">{error} <button className="catalog-link" onClick={() => setRetry(value => value + 1)}>{t('Попробовать снова')}</button></p>}
     {item.reason && !error && <p className="publication-reason">{translateMessage(item.reason)}</p>}
@@ -51,7 +51,7 @@ export default function OwnedPublications({ items, guestItems, auth }) {
   const count = items.length + guestItems.length;
   return <section className="catalog-owned" aria-label={t('Мои публикации')}>
     <div className="catalog-results publication-summary"><span>{t('Публикаций: {count}', { count })}</span>
-      {!auth.user && <p>{t('Без входа доступны заявки этого браузера.')} <button className="catalog-link" onClick={() => auth.requestLogin()}>{t('Войти через Telegram')}</button></p>}
+      {!auth.user && <p>{t('Без входа доступны заявки этого браузера.')} <button className="catalog-link" onClick={() => auth.requestLogin()}>{t('Войти')}</button></p>}
     </div>
     {count ? <div className="catalog-grid publication-files">
       {items.map(item => <PublicationCard key={`${auth.user?.id}:${item.id}`} entry={item} accountId={auth.user?.id}/>)}

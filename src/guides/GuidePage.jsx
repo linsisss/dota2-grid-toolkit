@@ -124,7 +124,7 @@ export default function GuidePage({ id, review }) {
     {guide.mine && <a className="catalog-button" href={`${GUIDES_PATH}?write=${id}`}><Icon name="penLine"/>{t('Редактировать')}</a>}
     {guide.mine && <button className="catalog-button guide-delete" title={t('Удалить гайд')} aria-label={t('Удалить гайд')} onClick={() => setDeleting(true)}><Icon name="trash"/><span>{t('Удалить')}</span></button>}
     {guide.public && !guide.mine && <button className="catalog-button guide-report" title={t('Пожаловаться на гайд')} aria-label={t('Пожаловаться на гайд')}
-      onClick={() => (auth.user ? setReporting(true) : auth.requestLogin(t('Войди через Telegram, чтобы пожаловаться.')))}><Icon name="flag"/><span>{t('Пожаловаться')}</span></button>}
+      onClick={() => (auth.user ? setReporting(true) : auth.requestLogin(t('Войди, чтобы пожаловаться.')))}><Icon name="flag"/><span>{t('Пожаловаться')}</span></button>}
   </>;
   const back = <a className="guide-back" href={GUIDES_PATH}><Icon name="back" size={16}/>{t('Все гайды')}</a>, chip = <span className="guide-chip">{section(guide.category)}</span>;
   return <div className="guide-layout">

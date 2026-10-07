@@ -83,3 +83,23 @@ test('install packs over HTTP: uploaded in parts, resumed, checked, downloaded b
   assert.equal((await call('/install/packs', { method: 'POST', body: { kind: 'exe', sha256: hash, size: 1 } })).status, 400);
   assert.equal((await call('/install/packs', { method: 'POST', body: { kind: 'font', sha256: hash, size: PACK_LIMITS.font + 1 } })).status, 413);
 });
+
+// A full store makes room (2026-10-07: 5 GB filled up and every new pack was refused for a day):
+// the oldest ready packs go, an upload in progress stays; refused only when uploads fill it all.
+test('a full pack store drops its oldest ready packs for a new one', async (t) => {
+  const [{ CatalogStore }, { InstallPacks }] = await Promise.all([import('../server/catalog-store.mjs'), import('../server/install-packs.mjs')]);
+  const { mkdtempSync, rmSync, existsSync, writeFileSync } = require('node:fs'), { join } = require('node:path'), { tmpdir } = require('node:os');
+  const dir = mkdtempSync(join(tmpdir(), 'gridstudio-packs-')), store = new CatalogStore(':memory:', 'test-pack-room');
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }); });
+  let clock = 1_000_000; store.now = () => clock;
+  const packs = new InstallPacks(store, { dir, storage: 300 }), sha = (n) => String(n).repeat(64).slice(0, 64);
+  const ready = (n, size) => { const { id } = packs.start('font', sha(n), size, `ip-${n}`); writeFileSync(packs.file(id), 'x'); store.run("UPDATE install_packs SET state='ready', received=size WHERE id=?", id); clock += 1000; return id; };
+  const oldest = ready(1, 100), middle = ready(2, 100), newest = ready(3, 100);
+  // 300 used: a 150 one needs two of them gone, the oldest first.
+  packs.start('font', sha(4), 150, 'ip-4');
+  assert.deepEqual([oldest, middle, newest].map((id) => !!store.get('SELECT 1 x FROM install_packs WHERE id=?', id)), [false, false, true]);
+  assert.equal(existsSync(packs.file(oldest)), false, 'its file goes too');
+  // Only uploads in progress (and the newest ready one) left: what does not fit is refused.
+  packs.start('font', sha(5), 50, 'ip-5');
+  assert.throws(() => packs.start('font', sha(6), 200, 'ip-6'), /не получается сохранить/);
+});

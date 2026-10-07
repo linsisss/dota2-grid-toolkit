@@ -1,0 +1,23 @@
+{
+  "version": "1.9.4",
+  "date": "2026-10-07",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.9.4",
+  "sections": [
+    {
+      "title": "Фон главного меню",
+      "changes": [
+        { "text": "Установка командой PowerShell снова работает: сегодня сайт отвечал «Сейчас не получается сохранить файл» и «Слишком много команд подряд»" }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Main menu background",
+        "changes": [
+          { "text": "Installing with a PowerShell command works again: today the site answered «Can't save the file right now» and «Too many commands in a row»" }
+        ]
+      }
+    ]
+  }
+}

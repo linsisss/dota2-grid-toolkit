@@ -16,7 +16,9 @@ import { DOTA_FONT_FILES } from '../scripts/dota-font.mjs';
 // can hand out anything else under gridstudio.me: a background is a VPK of MENU_PACK_PATHS (WebM videos
 // and Panorama files without outside addresses, network calls or handlers but the site's own), a font
 // a ZIP of fonts/<Dota's font>.otf, OFL.txt and the read-me.
-export const PACK_LIMITS = Object.freeze({ bg: 80_000_000, font: 30_000_000, part: 4 * 1024 * 1024, days: 7, storage: 5_000_000_000, startsHourly: 30 });
+// `storage`: 15 GB since 2026-10-07 (5 GB filled up and every new pack was refused for a day); when a
+// new pack does not fit, the oldest ready ones make room (evict).
+export const PACK_LIMITS = Object.freeze({ bg: 80_000_000, font: 30_000_000, part: 4 * 1024 * 1024, days: 7, storage: 15_000_000_000, startsHourly: 30 });
 const EXT = { bg: 'vpk', font: 'zip' };
 const DAY = 86_400_000;
 
@@ -87,8 +89,8 @@ function fontProblem(bytes) {
 export const packProblem = (kind, bytes) => (kind === 'bg' ? backgroundProblem(bytes) : fontProblem(bytes));
 
 export class InstallPacks {
-  constructor(store, { dir }) {
-    this.store = store; this.dir = dir;
+  constructor(store, { dir, storage = PACK_LIMITS.storage }) {
+    this.store = store; this.dir = dir; this.storage = storage;
     store.db.exec(`CREATE TABLE IF NOT EXISTS install_packs(id TEXT PRIMARY KEY, kind TEXT NOT NULL, size INTEGER NOT NULL, received INTEGER NOT NULL DEFAULT 0,
       state TEXT NOT NULL DEFAULT 'upload', created INTEGER NOT NULL, expires INTEGER NOT NULL)`);
     this.pruned = 0;
@@ -108,7 +110,11 @@ export class InstallPacks {
       return this.view(row);
     }
     store.rate(`install-pack:${ipHash}`, PACK_LIMITS.startsHourly, 3_600_000, { message: 'Слишком много команд подряд. Подожди немного.', code: 'install_pack_limit' });
-    if (store.get('SELECT coalesce(sum(size),0) n FROM install_packs').n + size > PACK_LIMITS.storage) fail(503, 'Сейчас не получается сохранить файл. Попробуй через несколько минут или скачай его.');
+    // Then room: the oldest ready packs go to make it, so the store no longer refuses everyone once it is
+    // full (2026-10-07: 5 GB filled, every new pack was refused for a day, and users retrying used up
+    // their hourly starts). Refused only while uploads in progress fill it all.
+    this.evict(size);
+    if (this.used() + size > this.storage) fail(503, 'Сейчас не получается сохранить файл. Попробуй через несколько минут или скачай его.');
     mkdirSync(this.dir, { recursive: true });
     closeSync(openSync(this.file(id, true), 'w'));
     store.run('INSERT OR REPLACE INTO install_packs(id,kind,size,received,state,created,expires) VALUES(?,?,?,0,?,?,?)', id, kind, size, 'upload', now, now + PACK_LIMITS.days * DAY);
@@ -142,6 +148,18 @@ export class InstallPacks {
   forget(id) {
     rmSync(this.file(id, true), { force: true }); rmSync(this.file(id), { force: true });
     this.store.run('DELETE FROM install_packs WHERE id=?', id);
+  }
+  used() { return this.store.get('SELECT coalesce(sum(size),0) n FROM install_packs').n; }
+  // Makes room for `size` more bytes: ready packs, the soonest to expire first (the oldest); a pack
+  // being uploaded is never cut short. Its command, if someone still has it, then says the file is gone.
+  evict(size) {
+    let over = this.used() + size - this.storage;
+    if (over <= 0) return;
+    for (const row of this.store.all("SELECT id, size FROM install_packs WHERE state='ready' ORDER BY expires, created")) {
+      this.forget(row.id);
+      over -= row.size;
+      if (over <= 0) return;
+    }
   }
   // Out-of-date packs and uploads left for a day go, at most once an hour.
   prune(now = this.store.now()) {

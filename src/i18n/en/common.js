@@ -191,4 +191,6 @@ export default {
   'Ошибок не было': 'No errors',
   'Вход на GridStudio': 'Sign in to GridStudio',
   'Откроется наш бот — нажми в нём «Войти», и всё. Без пароля, почты и номера телефона: сайт получит только имя, ник и аватар.': 'Our bot opens — press «Войти» (Sign in) there, and that’s it. No password, email or phone number: the site gets only your name, username and avatar.',
+  'Открыть в приложении Telegram': 'Open in the Telegram app', 'Открыть в браузере': 'Open in the browser',
+  'Или найди в Telegram бота @{bot} и отправь ему:': 'Or find the bot @{bot} in Telegram and send it:', 'Скопировать': 'Copy', 'Скопировано': 'Copied',
 };

@@ -34,3 +34,18 @@ test('the bot answers /start pc_<code> in a private chat with the page link', as
   assert.equal(sent[1].reply_markup.inline_keyboard[0][0].url, 'https://gridstudio.me/workshop?id=003ab57d-2da9-4b4d-82f5-f06631a2efb7');
   store.close();
 });
+
+test('a bare /start gets a greeting; a pasted login code works without /start', async () => {
+  const [{ CatalogStore }, { CatalogTelegram }] = await Promise.all([import('../server/catalog-store.mjs'), import('../server/catalog-telegram.mjs')]);
+  const store = new CatalogStore(':memory:', 'test-only-salt');
+  const sent = [], worker = new CatalogTelegram(store, { chatId: '-1', topicId: 6, origin: 'https://gridstudio.me', token: 't' }, { sendMessage: async (params) => { sent.push(params); return { message_id: sent.length }; } }, { log: () => {}, avatar: async () => { throw new Error('no photo'); } });
+  const from = { id: 7, is_bot: false, first_name: 'A' }, chat = { id: 7, type: 'private' };
+  await worker.helloMessage({ text: '/start', from, chat });
+  assert.match(sent[0].text, /Чтобы войти на сайт/);
+  await worker.helloMessage({ text: '/start login_x', from, chat });
+  assert.equal(sent.length, 1);
+  const login = worker.accounts.begin('ip', 'browser');
+  await worker.loginMessage({ text: `login_${login.id}`, from, chat });
+  assert.match(sent.at(-1).text, /Войти в GridStudio\?/);
+  store.close();
+});

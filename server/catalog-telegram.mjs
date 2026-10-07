@@ -592,8 +592,20 @@ export class CatalogTelegram {
       if (error.status) await this.api.sendMessage({ chat_id: message.chat.id, text: error.message }).catch(() => {});
     }
   }
+  // A bare /start (the bot opened by hand, «Старт» pressed) used to get no answer at all: now it says
+  // what the bot is and how signing in works (asked for on 2026-10-07 after «вход не работает»).
+  async helloMessage(message) {
+    if (!/^\/(?:start|help)(?:@\w+)?\s*$/.test(message.text || '') || message.chat?.type !== 'private' || message.from?.is_bot) return;
+    try {
+      this.store.rate(`tg-hello:${message.from.id}`, 10, 600_000);
+      await this.api.sendMessage({ chat_id: message.chat.id, parse_mode: 'HTML', link_preview_options: { is_disabled: true },
+        text: '👋 Это бот <b>GridStudio</b> — сетки героев, фоны меню и шрифты для Dota 2.\n\nЧтобы войти на сайт, нажми «Войти» на gridstudio.me — я пришлю сюда кнопку подтверждения. Если окно входа уже открыто, скопируй из него код и отправь мне.',
+        reply_markup: { inline_keyboard: [[{ text: 'Открыть GridStudio', url: this.config.origin }]] } });
+    } catch { /* Rate limit or Telegram: nothing to add. */ }
+  }
   async loginMessage(message) {
-    const match = /^\/start(?:@\w+)? login_([\w-]{32})$/.exec(message.text || '');
+    // «/start login_…» from the site's link, or the code pasted by hand from the login window (2026-10-07).
+    const match = /^(?:\/start(?:@\w+)?\s+)?login_([\w-]{32})\s*$/.exec(message.text || '');
     if (!match || message.chat?.type !== 'private' || message.from?.is_bot || message.chat.id !== message.from?.id) return;
     try {
       this.store.rate(`tg-login:${message.from.id}`, 10, 600_000);
@@ -647,7 +659,7 @@ export class CatalogTelegram {
         for (const update of updates) {
           if (signal.aborted) break;
           if (update.callback_query) await this.callback(update.callback_query);
-          if (update.message) { await this.loginMessage(update.message); await this.pcMessage(update.message); }
+          if (update.message) { await this.loginMessage(update.message); await this.pcMessage(update.message); await this.helloMessage(update.message); }
           if (update.inline_query) await this.inlineQuery(update.inline_query);
           if (update.chosen_inline_result) await this.chosenInline(update.chosen_inline_result);
           this.queue.set('offset', update.update_id + 1);

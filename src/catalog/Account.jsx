@@ -59,6 +59,21 @@ export function AccountAvatar({ user }) {
   const name = accountLabel(user);
   return <span className="account-avatar" aria-hidden="true">{user?.avatar && !failed ? <img src={user.avatar} alt="" width="32" height="32" onError={() => setFailed(true)}/> : user ? name[0].toUpperCase() : <Icon name="user"/>}</span>;
 }
+// When the bot did not open by itself (asked for on 2026-10-07: «ссылка не открывается»): the Telegram app
+// directly (tg://, without the t.me page that does not load for some), or the code to send to the bot by hand.
+function LoginHelp({ url }) {
+  const [copied, setCopied] = useState(false), [open, setOpen] = useState(false);
+  const link = new URL(url), bot = link.pathname.slice(1), start = link.searchParams.get('start'), command = `/start ${start}`;
+  const copy = async () => { try { await navigator.clipboard.writeText(command); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* Selectable below. */ } };
+  // A button, not <details>: the site animates every <details> (scripts/disclosure-motion.mjs) and kept this one shut.
+  return <div className="login-help"><button type="button" className="catalog-link login-help-toggle" aria-expanded={open} onClick={() => setOpen((value) => !value)}>{t('Бот не открылся?')}<Icon name="chevron" size={15}/></button>
+    {open && <div className="login-help-ways">
+      <div className="login-help-links"><a className="catalog-button primary" href={`tg://resolve?domain=${bot}&start=${start}`}><Icon name="telegram"/>{t('Открыть в приложении Telegram')}</a>
+        <a className="catalog-button" href={url} target="_blank" rel="noreferrer">{t('Открыть в браузере')}<Icon name="external"/></a></div>
+      <p className="catalog-muted">{t('Или найди в Telegram бота @{bot} и отправь ему:', { bot })}</p>
+      <div className="login-help-code"><code>{command}</code><button type="button" className="catalog-button" onClick={copy}><Icon name={copied ? 'check' : 'copy'}/>{copied ? t('Скопировано') : t('Скопировать')}</button></div>
+    </div>}</div>;
+}
 function LoginDialog({ telegramWindow, reason, onClose, onSuccess }) {
   const [request, setRequest] = useState(null), [error, setError] = useState(''), [finishing, setFinishing] = useState(false), [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -89,7 +104,7 @@ function LoginDialog({ telegramWindow, reason, onClose, onSuccess }) {
     {reason && <p>{reason}</p>}
     <p>{t('Откроется наш бот — нажми в нём «Войти», и всё. Без пароля, почты и номера телефона: сайт получит только имя, ник и аватар.')}</p>
     <p className="catalog-muted">{t('После входа файлы этого браузера сохранятся в аккаунте.')}</p>
-    {request ? <><p role="status">{finishing ? t('Входим…') : t('Ждём, пока нажмёшь «Войти» в боте…')}</p><a className="catalog-link" href={request.url} target="_blank" rel="noreferrer">{t('Бот не открылся?')}<Icon name="arrow"/></a></> : !error && <p role="status">{t('Открываем бота…')}</p>}
+    {request ? <><p role="status">{finishing ? t('Входим…') : t('Ждём, пока нажмёшь «Войти» в боте…')}</p><LoginHelp url={request.url}/></> : !error && <p role="status">{t('Открываем бота…')}</p>}
     {error && <><Notice error>{error}</Notice><button className="catalog-button" onClick={() => { telegramWindow.current = openTelegramWindow(); setAttempt(x => x + 1); }}>{t('Начать заново')}</button></>}
     <button className="catalog-link" onClick={onClose}>{t('Продолжить без входа')}</button>
   </div></Modal>;

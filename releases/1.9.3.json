@@ -1,0 +1,33 @@
+{
+  "version": "1.9.3",
+  "date": "2026-10-07",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.9.3",
+  "sections": [
+    {
+      "title": "Сайт",
+      "changes": [
+        {
+          "text": "Если бот не открылся при входе — кнопка «Открыть в приложении Telegram» и код, который можно отправить боту самому"
+        },
+        {
+          "text": "Бот отвечает на /start и объясняет, как войти"
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Site",
+        "changes": [
+          {
+            "text": "If the bot didn’t open when signing in — an «Open in the Telegram app» button and a code to send to the bot yourself"
+          },
+          {
+            "text": "The bot answers /start and explains how to sign in"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -638,3 +638,16 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 .send-pc p { flex:1 1 180px; margin:0; color:var(--cat-muted); }
 .send-pc .catalog-button { flex:none; }
 .catalog-main > .send-pc { margin:0 0 18px; }
+
+/* The login window's other ways to the bot (src/catalog/Account.jsx LoginHelp). */
+.catalog-login-flow > * { min-width:0; }
+.login-help-toggle { display:inline-flex; align-items:center; gap:4px; padding:0; border:0; background:none; color:var(--cat-accent); font:inherit; font-weight:500; cursor:pointer; }
+.login-help-toggle svg { transition:rotate 160ms ease; }
+.login-help-toggle[aria-expanded=true] svg { rotate:180deg; }
+.login-help-ways { display:grid; grid-template-columns:minmax(0, 1fr); gap:12px; margin-top:12px; }
+.login-help-ways > * { min-width:0; }
+.login-help-links { display:flex; flex-wrap:wrap; gap:8px; }
+.login-help-links .catalog-button { min-height:40px; padding:8px 14px; font-size:14px; }
+.login-help-code { display:flex; align-items:center; gap:8px; }
+.login-help-code code { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:8px 10px; border:1px solid var(--cat-line); border-radius:8px; background:var(--cat-field); font-size:12px; user-select:all; }
+.login-help-code .catalog-button { min-height:36px; padding:6px 12px; font-size:13px; }

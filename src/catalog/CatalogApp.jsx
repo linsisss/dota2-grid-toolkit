@@ -32,12 +32,12 @@ import { locale, t, translateMessage } from '../../scripts/i18n.mjs';
 // «Реклама» loads only when it is opened.
 const Advertise = lazy(() => import('./Advertise.jsx'));
 
-// A report on a grid or (kind 'background') a menu background; the captcha, then the moderators.
+// A report on a grid or (kind 'background') a menu background; signed-in only since 2026-10-07 (no captcha).
 function Report({ item, onClose, kind = 'grid' }) {
   const background = kind === 'background';
-  return <ReportDialog kind={kind} captcha onClose={onClose} title={background ? t('Пожаловаться на фон') : t('Пожаловаться на сетку')}
+  return <ReportDialog kind={kind} onClose={onClose} title={background ? t('Пожаловаться на фон') : t('Пожаловаться на сетку')}
     question={background ? t('Что не так с фоном «{title}»?', { title: item.title }) : t('Что не так с работой «{title}»?', { title: item.title })}
-    send={(reason, captcha) => catalogAPI(background ? `/backgrounds/${item.id}/report` : `/works/${item.id}/report`, { method: 'POST', body: { reason, captcha } })}/>;
+    send={(reason) => catalogAPI(background ? `/backgrounds/${item.id}/report` : `/works/${item.id}/report`, { method: 'POST', body: { reason } })}/>;
 }
 function WorkDetail({ id, ownerToken, managing }) {
   const auth = useAccount();
@@ -71,7 +71,7 @@ function WorkDetail({ id, ownerToken, managing }) {
           <button className="catalog-link danger" onClick={() => setDeleting(true)}>{t('Удалить публикацию')}</button>
         </> : <><LikeButton item={item} onChange={value => setItem(current => ({...current,...value}))}/><SubscribeButton item={item} onChange={value => setItem(current => ({...current,...value}))}/><AdminEditButton item={item} onSaved={value => setItem(current => ({...current,...value}))}/>{item.mine && <a className="catalog-button" href={`${CATALOG_PATH}?id=${id}&manage=1`}>{t('Управлять публикацией')}</a>}<button className="catalog-button primary" onClick={() => { downloadGrid(item.grid); countDownload('work', item.id); }}><Icon name="download"/>{t('Скачать грид')}</button><InstallButton item={item}/>
           <a className="catalog-button" href={`${EDITOR_PATH}?catalog=${id}`}>{t('Открыть в редакторе')}<Icon name="arrow"/></a><p className="catalog-muted">{t('В редакторе сетка добавится к твоему файлу после подтверждения.')}</p>
-          <button className="catalog-link" onClick={() => setReport(true)}>{t('Пожаловаться')}</button></>}
+          <button className="catalog-link" onClick={() => (auth.user ? setReport(true) : auth.requestLogin(t('Войди, чтобы пожаловаться.')))}>{t('Пожаловаться')}</button></>}
         {error && <Notice error>{error}</Notice>}
       </div></section>
     {!managing && <div id="comments" className="catalog-comments"><ItemComments kind="work" id={item.id} total={item.comments || 0}/></div>}
@@ -118,7 +118,7 @@ function Backgrounds({ mine, onMine, auth }) {
       <section className="background-grid" aria-label={t('Фоны пользователей')}>{items.map((item, i) => <Fragment key={item.id}><BackgroundCard item={item}><div className="background-card-actions">
         <LikeButton item={item} path={`/backgrounds/${item.id}/like`} onChange={value => update(item.id, value)}/>
         <BackgroundCommentsButton item={item} onCount={(comments) => update(item.id, { comments })}/>
-        <button className="catalog-icon" aria-label={t('Пожаловаться на фон {title}', { title: item.title })} title={t('Пожаловаться')} onClick={() => setReport(item)}><Icon name="flag"/></button>
+        <button className="catalog-icon" aria-label={t('Пожаловаться на фон {title}', { title: item.title })} title={t('Пожаловаться')} onClick={() => (auth.user ? setReport(item) : auth.requestLogin(t('Войди, чтобы пожаловаться.')))}><Icon name="flag"/></button>
         <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`}>{t('Использовать')}</a></div></BackgroundCard>{i === 0 && <Spot place="backgrounds" className="is-in-grid"/>}</Fragment>)}</section>
       {items.length < total && <button className="catalog-button background-more" onClick={more}>{t('Показать ещё')}</button>}
     </> : <section className="catalog-empty"><h2>{query || tag || aspect ? t('Таких фонов пока нет') : t('Здесь появятся фоны пользователей')}</h2><p>{query || tag || aspect ? `${t('Попробуй другой запрос.')} ` : ''}{t('Собери фон из картинки, GIF или видео и нажми «Опубликовать в мастерскую».')}</p><a className="catalog-button" href={CUSTOMIZE_PATH}>{t('Собрать фон')}</a></section>}

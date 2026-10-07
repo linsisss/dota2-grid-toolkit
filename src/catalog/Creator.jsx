@@ -11,7 +11,12 @@ export const creatorText = (item, fallback = '') => item?.creator?.name || item?
 
 export function CreatorName({ item, fallback = t('Без подписи'), avatar = true }) {
   const credit = item?.credit ? <span className="creator-credit"> · {t('по мотивам: {credit}', { credit: item.credit })}</span> : null;
-  if (!item?.creator) return <>{item?.author || fallback}{credit}</>;
+  // An author without an account (a signature only): a letter in a circle in place of the avatar, so the row
+  // looks like a signed-in author's (2026-10-07: «пусто почему то»).
+  if (!item?.creator) {
+    const name = item?.author || '';
+    return <><span className={`creator-name is-guest${name ? '' : ' is-unsigned'}`}>{avatar && <i aria-hidden="true">{(name || '?').trim().charAt(0).toUpperCase()}</i>}<span>{name || fallback}</span></span>{credit}</>;
+  }
   return <><a className="creator-name" href={profilePath(item.creator.key)} onClick={(event) => event.stopPropagation()}>
     {avatar && <img src={item.creator.avatar} alt="" width="20" height="20" loading="lazy"/>}<span>{item.creator.name}</span><BadgeIcons badges={item.creator.badges}/></a>{credit}</>;
 }

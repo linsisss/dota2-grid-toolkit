@@ -162,7 +162,8 @@ test('HTTP flow protects origin, Telegram admin access, owner tokens and retries
   assert.equal((await call(`/admin/works/${saved.body.id}`, 'POST', { action: 'approve', revision: saved.body.revision })).status, 200);
   assert.deepEqual(JSON.parse(store.get("SELECT actor FROM audit WHERE action='approve'").actor), { id: '1253427', name: 'U1253427 · сайт' });
   assert.equal((await call('/works','POST',{...input(40),captcha:request.captcha})).status,400);
-  assert.equal((await call(`/works/${saved.body.id}/report`,'POST',{reason:'Test report',captcha:await proof(call,'report')})).status,200);
+  assert.equal((await call(`/works/${saved.body.id}/report`,'POST',{reason:'Guest report'},{Cookie:cookie.replace(/; gs_account=[^;]*/g,'')})).status,401);
+  assert.equal((await call(`/works/${saved.body.id}/report`,'POST',{reason:'Test report'})).status,200);
   const download = await call(`/works/${saved.body.id}/download`); assert.equal(download.body.configs.length, 1); assert.match(download.headers.get('content-disposition'), /attachment/);
   const edited = { ...input(42), revision: saved.body.revision };
   assert.equal((await call(`/manage/${saved.body.id}`, 'PATCH', edited, { Authorization: `Bearer ${'z'.repeat(43)}` })).status, 404);

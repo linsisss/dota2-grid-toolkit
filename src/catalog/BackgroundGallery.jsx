@@ -55,9 +55,10 @@ export function BackgroundTagPicker({ value, onChange }) {
     <button type="button" key={tag} aria-pressed={value.includes(tag)} disabled={!value.includes(tag) && value.length === 3} onClick={() => onChange(value.includes(tag) ? value.filter((x) => x !== tag) : [...value, tag])}>{t(tag)}</button>)}</div></fieldset>;
 }
 
-// A card like a grid's: the poster (the light hover copy of the video while the pointer is on it —
-// server/catalog-backgrounds.mjs PREVIEW), title, author and one
-// action («Использовать»), then the screen and length on the left and the tags on the right.
+// A card: the poster (the light hover copy of the video while the pointer is on it — server/catalog-
+// backgrounds.mjs PREVIEW) with the tags and the screen · length · downloads laid over it, then the title,
+// the author on a row of their own and the actions («Использовать» on the right). Redone on 2026-10-07: the
+// title and the nickname were cut to three letters beside the buttons; then «большие и пусто» — so compact.
 // An 18+ background stays blurred (Sensitive.jsx) and does not play until the viewer confirms their age.
 // «Мои публикации» give a poster of their own (a guest's submission kept in this browser, whose
 // files the server does not show yet) and a status line (`footer`).
@@ -69,9 +70,12 @@ export function BackgroundCard({ item, children, poster = null, playable = true,
     <SensitiveArt item={item} kind="background" className="background-card-nsfw"><div className="background-card-picture">
       <img src={poster || backgroundMedia(item.id, 'poster.jpg')} alt="" loading="lazy"/>
       <video ref={video} muted loop playsInline preload="none"/>
+      {item.tags.length > 0 && <span className="background-card-tags">{item.tags.slice(0, 2).map((tag) => <i key={tag}>{t(tag)}</i>)}{item.tags.length > 2 && <i>+{item.tags.length - 2}</i>}</span>}
+      <span className="background-card-facts">{item.aspect}{item.seconds ? ` · ${seconds(item.seconds)}` : ''}<Downloads count={item.downloads}/></span>
     </div></SensitiveArt>
-    <div className="background-card-info"><div><h3 title={item.title}>{item.title}</h3><p><CreatorName item={item}/></p></div>{children}</div>
-    <div className="background-card-meta"><span>{item.aspect}{item.seconds ? ` · ${seconds(item.seconds)}` : ''}<Downloads count={item.downloads}/></span><span>{item.tags.map((tag) => t(tag)).join(', ')}</span></div>
+    <h3 className="background-card-title" title={item.title}>{item.title}</h3>
+    <p className="background-card-author"><CreatorName item={item}/></p>
+    {children}
     {footer}
   </article>;
 }

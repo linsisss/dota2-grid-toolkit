@@ -78,8 +78,8 @@
 :root :is(.catalog-card, .background-card, .workspace-file):hover { border-color: #c4b5ed40; box-shadow: 0 24px 46px -30px #c4b5ed80; }
 :root .catalog-card-art, :root .workspace-file-preview, :root .background-card-picture { border-radius: 12px; }
 :root .catalog-card-art:hover, :root .workspace-file-preview:hover:not(:disabled) { outline: none; }
-:root :is(.catalog-card-info, .background-card-info) { margin-inline: 4px; }
-:root :is(.catalog-card-meta, .background-card-meta) { margin-inline: 4px; }
+:root .catalog-card-info, :root .background-card > :is(.background-card-title, .background-card-author, .background-card-actions, .background-card-status) { margin-inline: 4px; }
+:root .catalog-card-meta { margin-inline: 4px; }
 :root .workspace-file-info { margin-inline: 4px; }
 :root .catalog-grid { gap: 24px; }
 :root .workspace-files { gap: 22px; }

@@ -193,4 +193,8 @@ export default {
   'Откроется наш бот — нажми в нём «Войти», и всё. Без пароля, почты и номера телефона: сайт получит только имя, ник и аватар.': 'Our bot opens — press «Войти» (Sign in) there, and that’s it. No password, email or phone number: the site gets only your name, username and avatar.',
   'Открыть в приложении Telegram': 'Open in the Telegram app', 'Открыть в браузере': 'Open in the browser',
   'Или найди в Telegram бота @{bot} и отправь ему:': 'Or find the bot @{bot} in Telegram and send it:', 'Скопировать': 'Copy', 'Скопировано': 'Copied',
+  'Нажми «Перейти в бота» — откроется наш бот в Telegram.': 'Press «Go to the bot» — our bot opens in Telegram.',
+  'Нажми в нём «Войти» — и ты на сайте.': 'Press «Войти» (Sign in) there — and you are in.',
+  'Без пароля, почты и номера телефона: сайт получит только имя, ник и аватар. Файлы этого браузера сохранятся в аккаунте.': 'No password, email or phone number: the site gets only your name, username and avatar. This browser’s files will be saved to your account.',
+  'Перейти в бота': 'Go to the bot', 'Готовим вход…': 'Preparing sign-in…',
 };

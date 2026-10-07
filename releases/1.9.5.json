@@ -1,0 +1,55 @@
+{
+  "version": "1.9.5",
+  "date": "2026-10-07",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.9.5",
+  "sections": [
+    {
+      "title": "Мастерская",
+      "changes": [
+        {
+          "text": "Карточки фонов компактнее: теги и длительность на картинке, название и ник автора видны целиком"
+        },
+        {
+          "text": "Комментарии к фону — в окне в две колонки: видео слева, комментарии справа"
+        },
+        {
+          "text": "Пожаловаться на сетку или фон можно только после входа"
+        }
+      ]
+    },
+    {
+      "title": "Сайт",
+      "changes": [
+        {
+          "text": "«Войти» открывает окно с кнопкой «Перейти в бота», а не сразу Telegram"
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Workshop",
+        "changes": [
+          {
+            "text": "Background cards are more compact: tags and length on the picture, the title and the author’s name shown in full"
+          },
+          {
+            "text": "A background’s comments open in a two-column window: the video on the left, the comments on the right"
+          },
+          {
+            "text": "Reporting a grid or a background needs signing in"
+          }
+        ]
+      },
+      {
+        "title": "Site",
+        "changes": [
+          {
+            "text": "«Sign in» opens a window with a «Go to the bot» button instead of Telegram right away"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -191,9 +191,9 @@ test('background likes, the popular order and reports, moderated in Telegram and
   assert.deepEqual((await call(`/backgrounds/${older}/like`, 'PUT', { liked: false })).body, { likes: 1, liked: false });
   as(null); assert.deepEqual((await call(`/backgrounds/${older}`)).body.liked, false);
 
-  // Reports: the captcha, one open report per browser, then the Telegram topic and the admin tab.
-  assert.equal((await call(`/backgrounds/${newer}/report`, 'POST', { reason: 'Чужое видео' })).status, 400, 'no captcha');
-  assert.deepEqual((await call(`/backgrounds/${newer}/report`, 'POST', { reason: 'Чужое видео', captcha: await proof(call, 'report') })).body, { reported: true });
+  // Reports: signed-in only (2026-10-07), one open report per browser, then the Telegram topic and the admin tab.
+  assert.equal((await call(`/backgrounds/${newer}/report`, 'POST', { reason: 'Чужое видео' })).status, 401, 'a guest cannot report');
+  as(bob); assert.deepEqual((await call(`/backgrounds/${newer}/report`, 'POST', { reason: 'Чужое видео' })).body, { reported: true });
   const queue = new TelegramQueue(store, { backgrounds: gallery }); queue.sync();
   const card = store.get("SELECT * FROM telegram_reviews WHERE kind='background-report'");
   assert.equal(card.revision, newer); assert.equal(JSON.parse(card.summary).reason, 'Чужое видео');
@@ -204,7 +204,7 @@ test('background likes, the popular order and reports, moderated in Telegram and
   assert.equal((await call('/admin/backgrounds?filter=reports')).body.counts.reports, 0, 'kept: the report is closed');
   assert.equal((await call(`/backgrounds/${newer}`)).status, 200);
   // A new report, hidden from the site this time; the Telegram card follows.
-  as(null); await call(`/backgrounds/${newer}/report`, 'POST', { reason: 'Снова', captcha: await proof(call, 'report') });
+  as(alice); await call(`/backgrounds/${newer}/report`, 'POST', { reason: 'Снова' });
   queue.sync(); const second = store.get("SELECT * FROM telegram_reviews WHERE kind='background-report' AND state!='finished'");
   as(signIn(1253427)); assert.equal((await call(`/admin/backgrounds/${newer}`, 'POST', { action: 'hide', reason: 'Жалоба подтвердилась' })).body.status, 'hidden');
   queue.sync(); assert.equal(queue.get(second.id).outcome, 'hide');

@@ -530,9 +530,11 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         store.countDownload('background', row.id, user ? `a:${user.id}` : `b:${identity.browser}`, row.account);
         return send(200, { downloads: store.downloads('background', row.id) });
       }
+      // Reports only from signed-in accounts, everywhere (asked for on 2026-10-07; guides and comments already were).
       if (backgroundAction && backgroundAction[2] === 'report' && method === 'POST') {
+        requireUser();
         const body = await readJSON(request), reason = catalogText(body.reason, 500, 'Причина жалобы', true);
-        await captcha.verify(body.captcha, identity, 'report'); return send(200, gallery().report(Number(backgroundAction[1]), identity, reason));
+        return send(200, gallery().report(Number(backgroundAction[1]), identity, reason));
       }
       // The author's view of a submission: pending, approved, rejected (with the reason) or hidden.
       const backgroundStatus = /^\/backgrounds\/([1-9]\d{0,12})\/status$/.exec(path);
@@ -714,8 +716,9 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
           store.rate(`subscribe:${member.id}`, 60, 60_000); return send(200, store.subscribe(member.id, id, body.subscribed));
         }
         if (scope === 'works' && operation === 'report' && method === 'POST') {
+          requireUser(); // signed-in only, like every report (2026-10-07)
           const body = await readJSON(request), reason = catalogText(body.reason, 500, 'Причина жалобы', true);
-          await captcha.verify(body.captcha, identity, 'report'); store.report(id, identity, reason);
+          store.report(id, identity, reason);
           return send(200, { reported: true });
         }
       }

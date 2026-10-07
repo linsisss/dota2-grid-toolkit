@@ -377,11 +377,20 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 .background-card-picture img, .background-card-picture video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .background-card-picture video { opacity:0; transition:opacity 240ms ease; }
 .background-card:hover .background-card-picture video, .background-card:focus-within .background-card-picture video { opacity:1; }
-.background-card-info { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; }
-.background-card-info > div { min-width:0; }
-.background-card-info h3 { margin:0!important; font-size:15px!important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.background-card-info p { margin:2px 0 0; color:var(--cat-muted); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.background-card-meta { display:flex; justify-content:space-between; gap:12px; margin-top:-4px; font-size:12px; color:var(--cat-muted); }
+/* Compact (2026-10-07): the tags and the facts over the poster, then title, author, actions. */
+.background-card { gap:6px; }
+.background-card-title { margin:4px 4px 0!important; font-size:15px!important; font-weight:600; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.background-card-author { min-width:0; margin:-1px 0 0; color:var(--cat-muted); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.background-card-picture > :is(.background-card-tags, .background-card-facts) { position:absolute; bottom:8px; z-index:1; display:inline-flex; align-items:center; gap:4px; pointer-events:none; }
+.background-card-tags { left:8px; max-width:calc(100% - 130px); overflow:hidden; }
+.background-card-tags i, .background-card-facts { padding:3px 7px; border-radius:6px; background:#0d0c11c4; backdrop-filter:blur(6px); color:#efeaf5; font-size:11px; font-style:normal; line-height:1.2; white-space:nowrap; }
+.background-card-facts { right:8px; font-variant-numeric:tabular-nums; }
+.background-card-facts .catalog-downloads { margin-left:6px; padding:0; gap:3px; color:inherit; font-size:inherit; }
+.background-card-facts .catalog-downloads svg { width:12px; height:12px; }
+.background-card > .background-card-actions { margin-top:0; }
+.background-card-actions .catalog-button { margin-left:auto; min-height:32px!important; padding:0 12px!important; font-size:13px!important; }
+.background-card-actions .catalog-icon { width:32px!important; height:32px!important; }
+.background-card-actions .catalog-like { min-height:32px; padding:6px 8px; }
 .background-more { display:flex; margin:28px auto 0; }
 
 /* «Сетки / Фоны» next to the workshop's title: a pill whose thumb slides to the chosen side. */
@@ -438,16 +447,18 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
    author's name with their avatar opens their profile; the profile page; its settings. */
 .creator-name { display:inline-flex; align-items:center; gap:7px; max-width:100%; min-width:0; vertical-align:middle; color:inherit; }
 .creator-name img { flex:none; width:20px; height:20px; border-radius:50%; object-fit:cover; background:#2a2633; box-shadow:0 0 0 1px #ffffff1a; }
+.creator-name.is-guest > i { flex:none; display:grid; place-items:center; width:20px; height:20px; border-radius:50%; background:linear-gradient(135deg, #3a3347, #26222e); box-shadow:0 0 0 1px #ffffff1a; color:#d9d0ee; font-size:11px; font-style:normal; font-weight:600; }
+.creator-name.is-unsigned > span { font-style:italic; }
 .creator-name > span:not(.badge-icons) { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.creator-name:hover > span:not(.badge-icons) { color:var(--cat-ink); text-decoration:underline; text-underline-offset:3px; text-decoration-color:#c4b5ed80; }
+a.creator-name:hover > span:not(.badge-icons) { color:var(--cat-ink); text-decoration:underline; text-underline-offset:3px; text-decoration-color:#c4b5ed80; }
 .creator-credit { color:var(--cat-muted); }
 .catalog-card-info > div { min-width:0; }
 .catalog-card-actions { flex:none; }
-.catalog-card-info p, .background-card-info p { display:flex; align-items:center; min-width:0; white-space:nowrap; }
-.catalog-card-info p .creator-credit, .background-card-info p .creator-credit { overflow:hidden; text-overflow:ellipsis; white-space:pre; }
+.catalog-card-info p, .background-card-author { display:flex; align-items:center; min-width:0; white-space:nowrap; }
+.catalog-card-info p .creator-credit, .background-card-author .creator-credit { overflow:hidden; text-overflow:ellipsis; white-space:pre; }
 /* The name and its badges stay whole; «по мотивам» is cut first. */
-:is(.catalog-card-info, .background-card-info) p .creator-name { flex-shrink:0; }
-:is(.catalog-card-info, .background-card-info) p .creator-credit { min-width:0; }
+:is(.catalog-card-info p, .background-card-author) .creator-name { flex-shrink:0; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+:is(.catalog-card-info p, .background-card-author) .creator-credit { min-width:0; }
 .creator-credit-note { display:block; margin-top:6px; font-size:13px; font-weight:400; }
 
 .creator-head { display:grid; grid-template-columns:112px minmax(0,1fr) auto; gap:28px; align-items:start; margin-bottom:34px; padding:28px; border:1px solid var(--cat-line); border-radius:14px; background:linear-gradient(135deg,#221e2b,#18161e 70%); }
@@ -572,8 +583,6 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 /* Downloads beside a card's like (src/catalog/Creator.jsx Downloads). */
 .catalog-downloads { display:inline-flex; align-items:center; gap:5px; padding:0 4px; color:var(--cat-muted); font-size:14px; font-variant-numeric:tabular-nums; cursor:default; }
 .catalog-downloads svg { width:16px; height:16px; opacity:.85; }
-.background-card-meta .catalog-downloads { margin-left:8px; padding:0; font-size:inherit; }
-.background-card-meta .catalog-downloads svg { width:13px; height:13px; }
 
 /* Before sending: a published work this one looks like (src/catalog/Creator.jsx SimilarWarning). */
 .similar-warning { display:grid; gap:8px; justify-items:start; padding:14px 16px; border-radius:12px; background:#f5b94a14; box-shadow:inset 0 0 0 1px #f5b94a4d; color:var(--cat-ink, #efeaf5); font-size:14px; line-height:1.45; }
@@ -584,8 +593,16 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 
 /* Comments under a grid's page and in a background's window (src/catalog/ItemComments.jsx). */
 .catalog-comments { max-width:820px; margin:48px 0 0; }
-.background-comments { display:grid; gap:20px; padding:4px 22px 22px; }
-.background-comments video { width:100%; aspect-ratio:16 / 9; border-radius:12px; background:#0f0e13; object-fit:cover; }
+.background-comments { display:grid; grid-template-columns:minmax(0, 1.25fr) minmax(300px, 1fr); gap:20px; align-items:start; padding:4px 22px 22px; }
+.background-comments video { position:sticky; top:0; width:100%; aspect-ratio:16 / 9; border-radius:12px; background:#0f0e13; object-fit:cover; }
+.background-comments-list { min-width:0; max-height:min(560px, calc(100dvh - 170px)); overflow:auto; padding-right:4px; }
+.background-comments-list .guide-comments { margin-top:0; padding-top:0; border-top:0; }
+.background-comments-list .guide-comments h2 { margin-top:0; }
+@media (max-width: 760px) {
+  .background-comments { grid-template-columns:1fr; gap:14px; padding:4px 16px 16px; }
+  .background-comments video { position:static; max-height:28dvh; }
+  .background-comments-list { max-height:none; overflow:visible; }
+}
 .background-comments-button { position:relative; display:inline-flex; align-items:center; gap:4px; width:auto!important; padding:0 8px; }
 .background-comments-button span { font-size:13px; font-variant-numeric:tabular-nums; }
 
@@ -646,8 +663,14 @@ a.catalog-inline-link { color:var(--cat-accent); text-decoration:underline; text
 .login-help-toggle[aria-expanded=true] svg { rotate:180deg; }
 .login-help-ways { display:grid; grid-template-columns:minmax(0, 1fr); gap:12px; margin-top:12px; }
 .login-help-ways > * { min-width:0; }
-.login-help-links { display:flex; flex-wrap:wrap; gap:8px; }
-.login-help-links .catalog-button { min-height:40px; padding:8px 14px; font-size:14px; }
+.login-help-ways > .catalog-button { justify-self:start; min-height:40px; padding:8px 14px; font-size:14px; }
 .login-help-code { display:flex; align-items:center; gap:8px; }
 .login-help-code code { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:8px 10px; border:1px solid var(--cat-line); border-radius:8px; background:var(--cat-field); font-size:12px; user-select:all; }
 .login-help-code .catalog-button { min-height:36px; padding:6px 12px; font-size:13px; }
+
+/* The login window (2026-10-07): two steps, then the big button to the bot. */
+.login-reason { font-weight:500; }
+.login-steps { display:grid; gap:6px; margin:0; padding-left:22px; }
+.login-steps li::marker { color:var(--cat-accent); font-weight:600; }
+.login-go { width:100%; min-height:50px; font-size:16px; }
+.login-wait { color:var(--cat-muted); font-size:14px; }

@@ -35,6 +35,7 @@ import { ItemComments } from './item-comments.mjs';
 import { NICK_LIMITS } from './profiles.mjs';
 import { pcPage } from '../scripts/pc-link.mjs';
 import { robotsText, seoPage, sitemapXML } from './seo-pages.mjs';
+import { seoGuide, seoGuidePaths } from './seo-guides.mjs';
 import { Dotadle } from './dotadle.mjs';
 
 const cookies = (request) => Object.fromEntries((request.headers.cookie || '').split(';').map(pair => {
@@ -397,14 +398,15 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
       }
       // Pages for search engines, robots.txt and sitemap.xml (server/seo-pages.mjs; nginx sends /backgrounds,
       // /grids, /robots.txt and /sitemap.xml here). Kept ten minutes: the lists change slowly.
-      const seo = /^\/seo\/(?:(backgrounds|grids)(?:\/([a-z0-9-]{1,40}))?|(robots\.txt|sitemap\.xml))$/.exec(path);
+      const seo = /^\/seo\/(?:(backgrounds|grids)(?:\/([a-z0-9-]{1,40}))?|(robots\.txt|sitemap\.xml)|guide\/([a-z0-9-]{1,60}))$/.exec(path);
       if (seo && ['GET', 'HEAD'].includes(method)) {
-        const key = seo[3] || `${seo[1]}/${seo[2] || ''}`;
+        const key = seo[3] || (seo[4] ? `guide/${seo[4]}` : `${seo[1]}/${seo[2] || ''}`);
         let cached = seoCache.get(key);
         if (!cached || cached.at < Date.now() - 600_000) {
           let body = null, type = 'text/html; charset=utf-8';
           if (seo[3] === 'robots.txt') { body = robotsText(config.origin); type = 'text/plain; charset=utf-8'; }
-          else if (seo[3] === 'sitemap.xml') { body = sitemapXML(config.origin, seoEntries()); type = 'application/xml; charset=utf-8'; }
+          else if (seo[3] === 'sitemap.xml') { body = sitemapXML(config.origin, [...seoGuidePaths().map((path) => ({ path })), ...seoEntries()]); type = 'application/xml; charset=utf-8'; }
+          else if (seo[4]) body = seoGuide(seo[4], { origin: config.origin });
           else body = seoPage(seo[1], seo[2] || '', { origin: config.origin, image: pageMeta(seo[1] === 'grids' ? 'workshop' : 'backgrounds', config.origin).image,
             list: (section, tag, page) => section === 'grids' ? store.list({ tag, popular: true, page }) : gallery().list({ tag, popular: true, page }) });
           cached = { at: Date.now(), body, type };

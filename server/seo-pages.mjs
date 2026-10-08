@@ -49,7 +49,7 @@ export const SEO_SECTIONS = {
     steps: ['Открой сетку и нажми «Скачать грид».', 'Положи файл в папку Dota по инструкции на странице сетки (сайт подскажет путь для твоего Steam).', 'Перезапусти Dota 2: сетка появится на экране выбора героя.'] },
 };
 
-const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+export const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const adult = (item) => (item.tags || []).includes(ADULT);
 const authorName = (item) => item.creator?.name || item.author || '';
 const count = (n) => Number(n || 0).toLocaleString('ru-RU');
@@ -73,7 +73,7 @@ function card(section, item) {
     + `<b>${escape(item.title)}</b><span>${by ? `${escape(by)} · ` : ''}♥ ${count(item.likes)} · ↓ ${count(item.downloads)}</span></a></li>`;
 }
 
-const STYLE = `*{box-sizing:border-box}body{margin:0;background:#15141a;color:#efeaf5;font:15px/1.55 'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+export const STYLE = `*{box-sizing:border-box}body{margin:0;background:#15141a;color:#efeaf5;font:15px/1.55 'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 a{color:inherit}header,main,footer{max-width:1180px;margin:0 auto;padding:0 20px}header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding-block:16px;border-bottom:1px solid #ffffff1c}
 header>a{font-weight:600;font-size:17px;text-decoration:none}nav{display:flex;flex-wrap:wrap;gap:6px 18px;margin-left:auto;font-size:14px}nav a{text-decoration:none;color:#afa7bf}nav a:hover,nav a[aria-current]{color:#c4b5ed}
 h1{margin:34px 0 10px;font-size:clamp(26px,4vw,38px);line-height:1.15}.lead{max-width:760px;margin:0 0 18px;color:#afa7bf;font-size:16px}
@@ -84,7 +84,7 @@ h1{margin:34px 0 10px;font-size:clamp(26px,4vw,38px);line-height:1.15}.lead{max-
 h2{margin:40px 0 10px;font-size:22px}ol{margin:0;padding-left:22px;color:#afa7bf}ol li{margin:4px 0}.empty{color:#afa7bf}footer{margin-top:48px;padding-block:20px;border-top:1px solid #ffffff1c;color:#afa7bf;font-size:13px}`;
 
 // The visit goes into the site's statistics like the other pages' (src/site-stats.js countVisit).
-const counter = (page) => `<script>(function(){try{var k='gridstudio.visitor',v=localStorage.getItem(k);if(!/^[A-Za-z0-9_-]{22}$/.test(v||'')){v=btoa(String.fromCharCode.apply(null,crypto.getRandomValues(new Uint8Array(16)))).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');localStorage.setItem(k,v)}
+export const counter = (page) => `<script>(function(){try{var k='gridstudio.visitor',v=localStorage.getItem(k);if(!/^[A-Za-z0-9_-]{22}$/.test(v||'')){v=btoa(String.fromCharCode.apply(null,crypto.getRandomValues(new Uint8Array(16)))).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');localStorage.setItem(k,v)}
 var r='';try{var h=new URL(document.referrer).hostname;if(h&&h!==location.hostname)r=h}catch(e){}
 fetch('/api/catalog/hit',{method:'POST',keepalive:true,credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({page:${JSON.stringify(page)},referrer:r,mobile:matchMedia('(pointer: coarse)').matches,lang:'ru',visitor:v})}).catch(function(){})}catch(e){}})()</script>`;
 
@@ -113,6 +113,7 @@ export function seoPage(section, slug, { list, origin, image }) {
 <ul class="tags">${tags}</ul>
 ${items.length ? `<ul class="items">${items.map((item) => card(section, item)).join('')}</ul>` : '<p class="empty">Здесь пока пусто — загляни в мастерскую.</p>'}
 <h2>Как поставить</h2><ol>${def.steps.map((step) => `<li>${escape(step)}</li>`).join('')}</ol>
+<p class="lead">Как это сделать: <a href="/sozdat-setku-geroev">создать сетку героев</a> · <a href="/kak-postavit-setku-geroev">поставить сетку в Dota 2</a> · <a href="/fon-glavnogo-menyu-dota-2">сделать фон меню</a> · <a href="/shrift-dota-2">поменять шрифт</a></p>
 <h2>Ещё для Dota 2</h2><p class="lead">${section === 'grids' ? 'Фон главного меню и шрифт тоже можно поменять:' : 'Сетку героев и шрифт тоже можно поменять:'} <a href="/${other}">${escape(SEO_SECTIONS[other].label)}</a> · <a href="/background?tab=font">Шрифт для Dota</a> · <a href="/guides">Гайды по оформлению</a></p>
 </main><footer>GridStudio — сетки героев, фоны и шрифты для Dota 2. Бесплатно, в браузере.</footer>${counter(`seo:${section}${slug ? `/${slug}` : ''}`)}</body></html>`;
 }

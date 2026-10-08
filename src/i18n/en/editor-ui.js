@@ -550,6 +550,7 @@ export default {
   'Сетка {number} из {count}': 'Grid {number} of {count}',
   '{name} — копия': '{name} — copy',
   'Студия — GridStudio': 'Studio — GridStudio',
+  'Редактор сетки героев Dota 2 онлайн — создать свою сетку | GridStudio': 'Dota 2 hero grid editor online — make your own grid | GridStudio',
 
   // MetaDialog.jsx: the hero meta from STRATZ.
   'Упорядочить по мете': 'Sort by meta',

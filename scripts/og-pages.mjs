@@ -19,7 +19,7 @@ export const OG_PAGES = {
   },
   editor: {
     entry: 'editor.html', path: '/editor', label: 'Студия', icon: 'studio',
-    title: 'Студия — редактор сеток героев Dota 2',
+    title: 'Редактор сетки героев Dota 2 онлайн',
     description: 'Собери свою сетку героев Dota 2 прямо в браузере: группы героев, рисунки из символов, ASCII-арты из картинок и сетка «По мете». Бесплатно.',
     alt: 'Редактор сеток героев GridStudio',
     headline: ['Редактор', 'сеток героев', 'для Dota 2'],

@@ -14,7 +14,7 @@
 export const DAY = 86_400_000;
 const MSK = 3 * 3_600_000, KEEP_DAYS = 400;
 export const mskDay = (ms) => Math.floor((ms + MSK) / DAY);
-export const STAT_PAGE = /^(?:home|editor|workshop|workshop:backgrounds|rules|background|font|guides|work:[0-9a-f-]{36}|guide:[A-Za-z0-9_-]{12}|profile:[A-Za-z0-9_-]{12}|dotadle|seo:(?:backgrounds|grids)(?:\/[a-z0-9-]{1,40})?)$/;
+export const STAT_PAGE = /^(?:home|editor|workshop|workshop:backgrounds|rules|background|font|guides|work:[0-9a-f-]{36}|guide:[A-Za-z0-9_-]{12}|profile:[A-Za-z0-9_-]{12}|dotadle|seo:(?:backgrounds|grids)(?:\/[a-z0-9-]{1,40})?|seo:guide\/[a-z0-9-]{1,60})$/;
 export const STAT_EVENTS = Object.freeze(['grid-export', 'background-pack', 'font-pack', 'login', 'studio-save', 'send-pc', 'dotadle-done']);
 export const STAT_PERIODS = Object.freeze([7, 30, 90, 365]);
 // User-Agents of robots, crawlers, link previews, monitors and scripts: their hits are not counted.
@@ -87,7 +87,7 @@ export class SiteStats {
     if (!page) return '';
     if (PAGE_LABELS[page]) return PAGE_LABELS[page];
     const [kind, id] = String(page).split(':'), title = this.itemTitle(kind, id);
-    return { work: `Сетка «${title || '—'}»`, guide: `Гайд «${title || '—'}»`, profile: `Профиль ${title || '—'}`, seo: `Страница для поиска /${id}` }[kind] || page;
+    return { work: `Сетка «${title || '—'}»`, guide: `Гайд «${title || '—'}»`, profile: `Профиль ${title || '—'}`, seo: `Страница для поиска /${String(id).replace(/^guide\//, '')}` }[kind] || page;
   }
   // The period's numbers, days [start, end).
   kpi(start, end) {

@@ -1,0 +1,27 @@
+{
+  "version": "1.9.6",
+  "date": "2026-10-08",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.9.6",
+  "sections": [
+    {
+      "title": "Сайт",
+      "changes": [
+        {
+          "text": "Инструкции: как создать и поставить сетку героев, сделать фон меню и поменять шрифт в Dota 2"
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Site",
+        "changes": [
+          {
+            "text": "How-to pages: making and installing a hero grid, a menu background and a font in Dota 2"
+          }
+        ]
+      }
+    ]
+  }
+}

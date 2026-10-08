@@ -29,3 +29,17 @@ test('robots.txt points at the sitemap, and the sitemap lists the search pages',
   for (const path of seoPaths()) assert.ok(xml.includes(`<loc>https://gridstudio.me${path}</loc>`), path);
   assert.match(xml, /<loc>https:\/\/gridstudio.me\/workshop\?id=a&amp;b<\/loc><lastmod>2026-10-05<\/lastmod>/);
 });
+
+test('the answer pages: plain HTML with the steps, FAQ and HowTo data, a button into the tool', async () => {
+  const { seoGuide, seoGuidePaths, SEO_GUIDES } = await import('../server/seo-guides.mjs');
+  assert.deepEqual(seoGuidePaths(), ['/sozdat-setku-geroev', '/kak-postavit-setku-geroev', '/fon-glavnogo-menyu-dota-2', '/shrift-dota-2']);
+  for (const slug of Object.keys(SEO_GUIDES)) {
+    const html = seoGuide(slug, { origin: 'https://gridstudio.me' });
+    assert.match(html, new RegExp(`<link rel="canonical" href="https://gridstudio.me/${slug}">`));
+    assert.match(html, /"@type":"FAQPage"/); assert.match(html, /"@type":"HowTo"/);
+    assert.match(html, /<h2>Частые вопросы<\/h2>/);
+    assert.match(html, new RegExp(`"seo:guide/${slug}"`));
+  }
+  assert.match(seoGuide('sozdat-setku-geroev', { origin: '' }), /<a href="\/editor">Открыть редактор<\/a>/);
+  assert.equal(seoGuide('nope', { origin: '' }), null);
+});

@@ -22,8 +22,11 @@ const FILES = ['dashboard.xml', 'dashboard_page_home.xml', 'dashboard_page_hero_
 const local = (file) => file.split('/').pop();  // our copies lie flat in assets/dota-menu/
 const assets = new URL('../assets/dota-menu/', import.meta.url);
 const args = process.argv.slice(2), flag = (name) => args.includes(name), option = (name) => args[args.indexOf(name) + 1];
-// Our copies drop Source 2 Viewer's first comment line; the override is ours to set.
-const normalize = (text) => text.replace(/^<!--[^\n]*-->\r?\n/, '').replace(/\r\n/g, '\n').trim();
+// Our copies drop Source 2 Viewer's first comment line; the override is ours to set. Source 2 Viewer
+// 12 (2026-10-07) writes the compiled resources' references without «_c» (`dotastyles.vcss`): ours,
+// like the compiled files, keep «_c», so both read the same.
+const normalize = (text) => text.replace(/^<!--[^\n]*-->\r?\n/, '').replace(/\r\n/g, '\n')
+  .replace(/(s2r:\/\/[^"')\s]+\.(?:vcss|vxml|vjs|vtex|vsvg|vpcf|vmdl|vsnd|vmat))(?!_c)/g, '$1_c').trim();
 const withoutOverride = (text) => text.replace(/(<DOTADashboardBackgroundManager\b[^>]*\boverride-background=")[^"]*"/, '$1"');
 
 async function fetchText(url) {

@@ -193,7 +193,7 @@ function OwnFields({ own, aspect, where }) {
 export default function MenuBackground({ preset = null, studioItem = null, onRemove }) {
   const [file, setFile] = useState(null), [kind, setKind] = useState(null), [source, setSource] = useState(''), [aspect, setAspect] = useState('16:9'), [fit, setFit] = useState('cover');
   const [blur, setBlur] = useState(0), [dim, setDim] = useState(0), [frame, setFrame] = useState(MENU_FRAME), [framing, setFraming] = useState(null);
-  const [clean, setClean] = useState(false), [seasonButton, setSeasonButton] = useState(true), [profileLinks, setProfileLinks] = useState(true), [folder, setFolder] = useState(lang === 'en' ? 'english' : 'russian'), [delivery, setDelivery] = useState('file');
+  const [carnival, setCarnival] = useState(true), [seasonCard, setSeasonCard] = useState(true), clean = !carnival && !seasonCard, [seasonButton, setSeasonButton] = useState(true), [profileLinks, setProfileLinks] = useState(true), [folder, setFolder] = useState(lang === 'en' ? 'english' : 'russian'), [delivery, setDelivery] = useState('file');
   const [duration, setDuration] = useState(0), [piece, setPiece] = useState({ start: 0, end: 0 }), [crossfade, setCrossfade] = useState(0);
   const [mediaRatio, setMediaRatio] = useState(0), [progress, setProgress] = useState(null), [result, setResult] = useState(null), [error, setErrorText] = useState(''), [failed, setFailed] = useState(false), [install, setInstall] = useState(false), [handed, setHanded] = useState(null), [sources, setSources] = useState(false), [share, setShare] = useState(false), [dragging, setDragging] = useState(false), [fetching, setFetching] = useState(null), [sending, setSending] = useState(null);
   const input = useRef(null), running = useRef(null), playhead = useRef(null), seek = useRef(null);
@@ -218,7 +218,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
   useEffect(() => () => source && URL.revokeObjectURL(source), [source]);
   useEffect(() => () => { if (result) for (const url of [result.url, result.heroUrl, result.gridUrl]) if (url) URL.revokeObjectURL(url); }, [result]);
   // Changing anything that is baked into the videos or the pack makes the result stale.
-  useEffect(() => { setResult(null); }, [file, aspect, fit, blur, dim, clean, seasonButton, profileLinks, piece.start, piece.end, crossfade, frame,
+  useEffect(() => { setResult(null); }, [file, aspect, fit, blur, dim, carnival, seasonCard, seasonButton, profileLinks, piece.start, piece.end, crossfade, frame,
     heroMode, ...heroOwn.stale, gridMode, gridDim, ...gridOwn.stale]);
   useEffect(() => () => running.current?.abort(), []);
   // A background from the studio: settings now, the source next (see `pending`).
@@ -230,7 +230,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
       if (stopped) return;
       if (!record) return setError(t('Этого фона нет в студии: возможно, его удалили.'));
       const recipe = record.recipe;
-      setAspect(recipe.aspect); setFit(recipe.fit); setBlur(recipe.blur); setDim(recipe.dim); setClean(recipe.clean); setSeasonButton(recipe.event ?? true); setProfileLinks(recipe.profile ?? true); setFolder(folderOf(recipe.folder).client); setDelivery(recipe.delivery === 'installer' ? 'command' : recipe.delivery); setFrame(menuFrame(recipe.frame));
+      setAspect(recipe.aspect); setFit(recipe.fit); setBlur(recipe.blur); setDim(recipe.dim); setCarnival(recipe.news?.carnival ?? !recipe.clean); setSeasonCard(recipe.news?.season ?? !recipe.clean); setSeasonButton(recipe.event ?? true); setProfileLinks(recipe.profile ?? true); setFolder(folderOf(recipe.folder).client); setDelivery(recipe.delivery === 'installer' ? 'command' : recipe.delivery); setFrame(menuFrame(recipe.frame));
       pending.current = recipe; studioId.current = record.id; setStudio({ id: record.id, name: record.name, saved: false });
       const hero = recipe.hero || { mode: 'menu' }, grid = recipe.grid || { mode: 'menu' };
       setHeroMode(hero.mode);
@@ -323,9 +323,9 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
       const gridEncoded = ownGrid ? await encode(gridOwn.file, gridOwn.encoding) : null;
       const hero = ownHero ? { mode: 'own', ...heroOwn.recipe } : { mode: heroMode === 'off' ? 'off' : 'menu' };
       const grid = ownGrid ? { mode: 'own', ...gridOwn.recipe } : gridMode === 'dim' ? { mode: 'dim', dim: gridDim } : { mode: 'menu' };
-      const blob = packBackground(encoded.video, { clean, hero, event: seasonButton, profile: profileLinks, grid }, heroEncoded?.video, gridEncoded?.video);
+      const blob = packBackground(encoded.video, { news: { carnival, season: seasonCard }, hero, event: seasonButton, profile: profileLinks, grid }, heroEncoded?.video, gridEncoded?.video);
       // Kept in the studio: this browser gets the WebMs, a signed-in account the recipe.
-      const recipe = { aspect, fit, blur, dim, frame, clean, event: seasonButton, profile: profileLinks, folder, delivery, piece: duration ? piece : null, crossfade: duration ? crossfade : 0, source: origin, hero, grid };
+      const recipe = { aspect, fit, blur, dim, frame, clean, news: { carnival, season: seasonCard }, event: seasonButton, profile: profileLinks, folder, delivery, piece: duration ? piece : null, crossfade: duration ? crossfade : 0, source: origin, hero, grid };
       saving.current = saveBuiltBackground({ id: studioId.current, recipe, video: encoded.video, heroVideo: heroEncoded?.video, gridVideo: gridEncoded?.video, codec: encoded.codec, seconds: encoded.seconds });
       saving.current.then((record) => { studioId.current = record.id; setStudio({ id: record.id, name: record.name, saved: true, account: record.account }); })
         .catch(() => setStudio((current) => ({ ...current, failed: true })));
@@ -423,7 +423,7 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
           {/* The hero can be turned once there is a background behind it; until then it stands behind the «+». */}
           {page === 'hero' ? <DotaHeroPage interactive={heroMode === 'off' || Boolean(heroMode === 'own' ? ownShown : shown)}/>
             : page === 'grid' ? <DotaGridPage grid={preview.grid} name={preview.name}/>
-            : <DotaMenu clean={clean} event={SEASON_EVENT ? seasonButton : null}/>}
+            : <DotaMenu news={{ carnival, season: seasonCard }} event={SEASON_EVENT ? seasonButton : null}/>}
           {fetching && <div className="custom-fetching" role="status"><b>{fetching.title ? t('Загружаем «{title}»', { title: fetching.title }) : t('Загружаем фон…')}</b><span><i style={{ width: `${Math.round(fetching.progress * 100)}%` }}/></span></div>}
         </div>
       </div>
@@ -460,7 +460,9 @@ export default function MenuBackground({ preset = null, studioItem = null, onRem
         <Field label={t('Картинка')} aside={FITS()[fit]}><Segmented label={t('Как вписать')} value={fit} onChange={setFit} options={FIT_OPTIONS()}/>
           <Effects blur={blur} onBlur={setBlur} dim={dim} onDim={setDim} frame={file ? frame : null} onFrame={setFrame}/></Field>
         <div className="custom-switches">
-          <label className="custom-toggle"><input type="checkbox" role="switch" checked={!clean} onChange={(event) => setClean(!event.target.checked)}/><span><b>{t('Отображать новости на главной')}</b><small>{t('Выключи, чтобы колонка справа не закрывала фон')}</small></span></label>
+          {/* The news column's two cards, each its own switch (2026-10-08): Dark Carnival and Valve's own «Диковинки Квортеро». */}
+          <label className="custom-toggle"><input type="checkbox" role="switch" checked={carnival} onChange={(event) => setCarnival(event.target.checked)}/><span><b>{t('Карточка Dark Carnival на главной')}</b><small>{t('Выключи, чтобы она не закрывала фон')}</small></span></label>
+          <label className="custom-toggle"><input type="checkbox" role="switch" checked={seasonCard} onChange={(event) => setSeasonCard(event.target.checked)}/><span><b>{t('Карточка «Диковинки Квортеро» на главной')}</b><small>{t('Выключи, чтобы она не закрывала фон')}</small></span></label>
           {SEASON_EVENT && <label className="custom-toggle"><input type="checkbox" role="switch" checked={seasonButton} onChange={(event) => setSeasonButton(event.target.checked)}/><span><b>{t('Кнопка «{name}»', { name: t(SEASON_EVENT.name) })}</b><small>{t('Ивент с наградами в один клик — нажми в превью')}</small></span></label>}
           <Peek src={profilePreview} width={480} height={144} caption={t('Так кнопки встанут в профиле любого пользователя Dota, под статусом: открывают его страницу на Stratz и Dotabuff.')}>
             <label className="custom-toggle"><input type="checkbox" role="switch" checked={profileLinks} onChange={(event) => setProfileLinks(event.target.checked)}/><span><b>{t('Кнопки Stratz и Dotabuff в профилях')}</b><small>{t('Наведи, чтобы увидеть, как это выглядит')}</small></span></label>

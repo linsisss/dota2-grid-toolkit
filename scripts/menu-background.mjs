@@ -343,6 +343,20 @@ export function menuDashboard(dashboard) {
   if ((dashboard.match(pattern) || []).length !== 1) throw new Error('В dashboard.xml не найден DOTADashboardBackgroundManager с override-background.');
   return dashboard.replace(pattern, `$1s2r://${MENU_LAYOUT}$2`);
 }
+// The news column's two cards, one by one (asked for on 2026-10-08, after Dota's update of 2026-10-07
+// put Valve's own «Диковинки Квортеро» cell under the Dark Carnival card). Both hidden: the column goes
+// as before (cleanHomePage). One hidden: the home page keeps the column and takes a style of ours that
+// collapses that card's cell (the column's flow moves the other one up); the cells come from Valve's
+// banner layouts (banners/front_page_dark_carnival.xml, front_page_seasonal_reward_line.xml) inside the
+// home page, so the style reaches them from it.
+export const HOME_STYLE = 'panorama/styles/gridstudio_home.vcss_c';
+export const NEWS_CELLS = Object.freeze({ carnival: 'FrontPageDarkCarnivalCell', season: 'FrontPageSeasonalRewardLineCell' });
+const HOME_STYLE_TEXT = (hidden) => `/* GridStudio: news cards hidden on the home page. */\n${hidden.map((cell) => `.${NEWS_CELLS[cell]}\n{\n\tvisibility: collapse;\n}\n`).join('\n')}`;
+export function newsHomePage(home) {
+  const styled = home.replace(/(\n[ \t]*)<\/styles>/, `$1\t<include src="s2r://${HOME_STYLE}" />$1</styles>`);
+  if (styled === home) throw new Error('В dashboard_page_home.xml не найден блок <styles>.');
+  return styled;
+}
 export function cleanHomePage(home) {
   const cleaned = home.replace(/\n?[ \t]*<Panel id="TodayPages"[\s\S]*?\n[ \t]*<\/Panel>(?=\n[ \t]*<\/DOTAHomePage>)/, '');
   if (cleaned === home) throw new Error('В dashboard_page_home.xml не найден блок #TodayPages.');
@@ -539,7 +553,7 @@ const PROFILE_STYLE_TEXT = `/* GridStudio: buttons to the player's Stratz and Do
 
 // Every file menuBackgroundPack may write: the server takes a pack for the PowerShell command only with
 // these (server/install-packs.mjs), so nobody can hand out anything else under gridstudio.me.
-export const MENU_PACK_PATHS = Object.freeze(['panorama/layout/dashboard.vxml_c', 'panorama/layout/dashboard_page_home.vxml_c', MENU_LAYOUT, MENU_STYLE, MENU_UI_STYLE,
+export const MENU_PACK_PATHS = Object.freeze(['panorama/layout/dashboard.vxml_c', 'panorama/layout/dashboard_page_home.vxml_c', HOME_STYLE, MENU_LAYOUT, MENU_STYLE, MENU_UI_STYLE,
   MENU_VIDEO, HERO_PAGE, HERO_STYLE, HERO_VIDEO, GRID_PAGE, GRID_STYLE, GRID_VIDEO, PROFILE_PAGE, PROFILE_STYLE, ...Object.values(PROFILE_ICONS)]);
 export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDEO]);
 
@@ -550,7 +564,11 @@ export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDE
 // (Valve's showcase layout and the logos' SVG text) for the Stratz and Dotabuff buttons, or null.
 // grid: null keeps the «Герои» page as it is; { page, dim } darkens the menu's background there,
 // { page, video } shows a video of its own.
-export function menuBackgroundPack({ video, dashboard, home = null, hero = null, event = null, profile = null, grid = null, md5 }) {
+// news: { carnival, season } — which news cards stay on the home page (needs `home`); without it, a given
+// `home` hides the whole column, as before 2026-10-08.
+export function menuBackgroundPack({ video, dashboard, home = null, news = null, hero = null, event = null, profile = null, grid = null, md5 }) {
+  const hidden = home ? (news ? Object.keys(NEWS_CELLS).filter((cell) => news[cell] === false) : Object.keys(NEWS_CELLS)) : [];
+  const clean = hidden.length === Object.keys(NEWS_CELLS).length;
   const season = menuEvent(dashboard, event), board = menuDashboard(season ? eventDashboard(dashboard, season) : dashboard);
   const files = [
     panoramaFile('panorama/layout/dashboard.vxml_c', board, true),
@@ -558,8 +576,9 @@ export function menuBackgroundPack({ video, dashboard, home = null, hero = null,
     panoramaFile(MENU_STYLE, STYLE(season)),
     { path: MENU_VIDEO, data: video }
   ];
-  if (season) files.splice(3, 0, panoramaFile(MENU_UI_STYLE, MENU_UI(season, !!home)));
-  if (home) files.splice(1, 0, panoramaFile('panorama/layout/dashboard_page_home.vxml_c', cleanHomePage(home), true));
+  if (season) files.splice(3, 0, panoramaFile(MENU_UI_STYLE, MENU_UI(season, clean)));
+  if (clean) files.splice(1, 0, panoramaFile('panorama/layout/dashboard_page_home.vxml_c', cleanHomePage(home), true));
+  else if (hidden.length) files.splice(1, 0, panoramaFile('panorama/layout/dashboard_page_home.vxml_c', newsHomePage(home), true), panoramaFile(HOME_STYLE, HOME_STYLE_TEXT(hidden)));
   if (hero) {
     files.push(panoramaFile(HERO_PAGE, heroPage(hero.page, hero.video ? HERO_VIDEO : MENU_VIDEO), true), panoramaFile(HERO_STYLE, HERO_STYLE_TEXT));
     if (hero.video) files.push({ path: HERO_VIDEO, data: hero.video });

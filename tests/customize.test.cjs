@@ -56,8 +56,13 @@ test('the menu pack points Valve\'s dashboard at our video layout', async () => 
 
 test('the season event stays one click away: a button in Valve\'s dashboard, the event nested in our layout', async () => {
   const [{ readVPK, panoramaSource }, { menuBackgroundPack, menuEvent, MENU_LAYOUT, MENU_STYLE, MENU_UI_STYLE }] = await modules;
-  const dashboard = readFileSync('assets/dota-menu/dashboard.xml', 'utf8'), home = readFileSync('assets/dota-menu/dashboard_page_home.xml', 'utf8');
+  const current = readFileSync('assets/dota-menu/dashboard.xml', 'utf8'), home = readFileSync('assets/dota-menu/dashboard_page_home.xml', 'utf8');
   const heroPage = readFileSync('assets/dota-menu/dashboard_page_hero_new_v2.xml', 'utf8'), event = JSON.parse(readFileSync('assets/dota-menu/event.json', 'utf8'));
+  // Since Dota's update of 2026-10-07 the menu shows another layout (Monster Hoard) and Valve's own
+  // news cell opens Quartero: the current menu gets no button. The button itself is checked on a menu
+  // that still shows the event.
+  assert.equal(menuEvent(current, event), null, 'the current menu has no event of ours');
+  const dashboard = current.replace(/(override-background=")[^"]*(")/, `$1${event.layout}$2`);
   const sources = (options) => Object.fromEntries(readVPK(menuBackgroundPack({ video: new Uint8Array([1]), dashboard, md5, ...options })).files
     .filter(file => !file.path.endsWith('.webm')).map(file => [file.path, panoramaSource(file.data)]));
   // event.json is the event Valve's menu shows now (check-dota-menu.mjs --update keeps them apart until it is).
@@ -393,3 +398,32 @@ test('every grid the site hands out carries its note first; reading a grid ignor
   assert.doesNotThrow(() => (C.default || C).importDota(noted));
 });
 
+
+// The news column's cards one by one (2026-10-08): one hidden — the column stays with a style of ours
+// that collapses that cell; both hidden — the column goes, as before; none — Valve's home page as it is.
+test('news cards hide one by one; both hidden is the clean home page of before', async () => {
+  const [{ readVPK, panoramaSource }, { menuBackgroundPack, HOME_STYLE, NEWS_CELLS, MENU_PACK_PATHS }] = await modules;
+  const dashboard = readFileSync('assets/dota-menu/dashboard.xml', 'utf8'), home = readFileSync('assets/dota-menu/dashboard_page_home.xml', 'utf8');
+  const video = new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 0, 1, 2, 3]);
+  const pack = (news) => Object.fromEntries(readVPK(menuBackgroundPack({ video, dashboard, home, news, md5 })).files.map((file) => [file.path, file.data]));
+  const homeOf = (files) => panoramaSource(files['panorama/layout/dashboard_page_home.vxml_c']);
+  const one = pack({ carnival: false, season: true });
+  assert.match(homeOf(one), new RegExp(`<include src="s2r://${HOME_STYLE}" />`));
+  assert.match(homeOf(one), /<Panel id="TodayPages"/, 'the column stays');
+  const style = panoramaSource(one[HOME_STYLE]);
+  assert.match(style, new RegExp(`\\.${NEWS_CELLS.carnival}\\s*\\{\\s*visibility: collapse;`));
+  assert.doesNotMatch(style, new RegExp(NEWS_CELLS.season));
+  assert.match(panoramaSource(pack({ carnival: true, season: false })[HOME_STYLE]), new RegExp(NEWS_CELLS.season));
+  const both = pack({ carnival: false, season: false });
+  assert.doesNotMatch(homeOf(both), /TodayPages/, 'both hidden: no column');
+  assert.equal(both[HOME_STYLE], undefined);
+  const none = pack({ carnival: true, season: true });
+  assert.equal(none['panorama/layout/dashboard_page_home.vxml_c'], undefined, 'nothing hidden: Valve\'s home page');
+  assert.ok(MENU_PACK_PATHS.includes(HOME_STYLE), 'the server takes the style in a PowerShell pack');
+  // Studio recipes keep the choice; recipes before it have `clean` only.
+  const { studioRecipe } = await import('../scripts/studio-background.mjs');
+  const recipe = { aspect: '16:9', fit: 'cover', blur: 0, dim: 0, clean: false, folder: 'russian', delivery: 'file', crossfade: 0, source: { kind: 'file', name: 'a.png', size: 1, type: 'image', label: 'PNG' } };
+  assert.deepEqual(studioRecipe({ ...recipe, news: { carnival: false, season: true } }).news, { carnival: false, season: true });
+  assert.equal('news' in studioRecipe(recipe), false);
+  assert.throws(() => studioRecipe({ ...recipe, news: { carnival: 'no', season: true } }));
+});

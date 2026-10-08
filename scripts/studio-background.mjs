@@ -81,7 +81,9 @@ export function studioRecipe(input) {
   if (input.folder === 'custom') input = { ...input, folder: 'russian' };
   if (!MENU_SIZES[input.aspect] || !['cover', 'contain'].includes(input.fit) || !STUDIO_FOLDERS.includes(input.folder)
     || !['file', 'installer'].includes(input.delivery) || typeof input.clean !== 'boolean' || !STUDIO_CROSSFADES.includes(input.crossfade)) broken();
-  return { aspect: input.aspect, fit: input.fit, blur: percent(input.blur), dim: percent(input.dim), frame: studioFrame(input.frame), clean: input.clean, folder: input.folder,
+  // news (2026-10-08): which of the home page's news cards stay; recipes before it have `clean` only (both or none).
+  const news = input.news == null ? null : (typeof input.news === 'object' && typeof input.news.carnival === 'boolean' && typeof input.news.season === 'boolean' ? { carnival: input.news.carnival, season: input.news.season } : broken());
+  return { aspect: input.aspect, fit: input.fit, blur: percent(input.blur), dim: percent(input.dim), frame: studioFrame(input.frame), clean: input.clean, ...(news ? { news } : {}), folder: input.folder,
     delivery: input.delivery, piece: studioPiece(input.piece), crossfade: input.crossfade, source: studioSource(input.source), hero: studioHero(input.hero), event: studioSwitch(input.event), profile: studioSwitch(input.profile), grid: studioGrid(input.grid) };
 }
 

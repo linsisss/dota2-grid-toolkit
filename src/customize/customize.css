@@ -249,6 +249,8 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
   transition:opacity 340ms var(--ease) 140ms, transform 440ms var(--ease) 140ms; }
 /* Hiding the news: the card leaves first and the event button glides up into its place; showing
    them: the button goes down first and the card comes back after it (the delays below). */
+.dm-season { top:600px; height:234px; transition:opacity 340ms var(--ease) 140ms, transform 440ms var(--ease) 140ms, top 440ms var(--ease); }
+.dm-season.is-top { top:100px; }
 .dm-news.is-hidden { opacity:0; transform:translateX(24px) scale(.98); transition:opacity 220ms ease-in, transform 300ms ease-in; }
 /* The season event (DotaMenu `event`): the screen between the friends rail and the news column, its
    own picture blurred behind the edges, under the panels; the button and its «НАЗАД» state. The

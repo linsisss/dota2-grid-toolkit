@@ -3,7 +3,8 @@ import bar from '../../assets/dota-menu/ui/bar.webp';
 import barMid from '../../assets/dota-menu/ui/bar-mid.webp';
 import play from '../../assets/dota-menu/ui/play.webp';
 import chat from '../../assets/dota-menu/ui/chat.webp';
-import news from '../../assets/dota-menu/ui/news.webp';
+import newsCell from '../../assets/dota-menu/ui/news.webp';
+import seasonCell from '../../assets/dota-menu/ui/season.webp';
 import rail from '../../assets/dota-menu/ui/rail.webp';
 import railParty from '../../assets/dota-menu/ui/rail-party.webp';
 import avatar from '../../assets/dota-menu/ui/avatar.webp';
@@ -26,7 +27,10 @@ import eventScreen from '../../assets/dota-menu/ui/event-screen.webp';
 // «НАЗАД», like in the game: drawn in CSS like the pack's, with the logo and the texts from
 // scripts/make-menu-event.mjs (the screen loads on the first hover). `event` is null when the site
 // has no event; false keeps the button mounted but away, so turning it on and off both animate.
-export default function DotaMenu({ clean, event = null }) {
+// news: { carnival, season } — which cards of the news column show (2026-10-08); hiding Dark Carnival
+// moves the Quartero card up to the column's top, like the column's flow in the game.
+export default function DotaMenu({ news = { carnival: true, season: true }, event = null }) {
+  const clean = !news.carnival;
   const frame = useRef(null), layer = useRef(null), mail = useRef(null), [open, setOpen] = useState(false);
   const [season, setSeason] = useState(false), [warm, setWarm] = useState(false), [loaded, setLoaded] = useState(false);
   useEffect(() => { if (!event) setSeason(false); }, [event]);
@@ -59,8 +63,10 @@ export default function DotaMenu({ clean, event = null }) {
     <div className="dm-bar-right" style={{ backgroundImage: `url(${bar})` }}/>
     <div className="dm-rail"><img src={rail} alt=""/></div>
     <div className="dm-party"><img src={railParty} alt=""/><img className="dm-party-me" src={avatar} alt=""/></div>
-    {/* Stays mounted, so hiding and showing the news both animate. */}
-    <img className={`dm-news${clean ? ' is-hidden' : ''}`} src={news} alt=""/>
+    {/* Stays mounted, so hiding and showing the news both animate. Under the event card, since Dota's
+        update of 2026-10-07, Valve's own «Диковинки Квортеро» cell (scripts/make-menu-season.mjs). */}
+    <img className={`dm-news${news.carnival ? '' : ' is-hidden'}`} src={newsCell} alt=""/>
+    <img className={`dm-news dm-season${news.season ? '' : ' is-hidden'}${news.carnival ? '' : ' is-top'}`} src={seasonCell} alt=""/>
     {/* Under the event card, or at the column's top when the news are hidden (MENU_UI in menu-background.mjs). */}
     {event !== null && <button type="button" tabIndex={-1} className={`dm-event-toggle${clean ? ' is-top' : ''}${event ? '' : ' is-off'}`} onPointerEnter={() => setWarm(true)}
       onPointerDown={(e) => e.stopPropagation()} onClick={() => { setWarm(true); setSeason((value) => !value); }}>

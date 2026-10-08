@@ -40,7 +40,10 @@ export function saveFile(blob, name) {
 export const SEASON_EVENT = menuEvent(dashboard, season);
 const gridOption = (grid, gridVideo) => grid?.mode === 'dim' ? { page: heroesPage, dim: (grid.dim / 100) * GRID_DIM.max }
   : grid?.mode === 'own' && gridVideo ? { page: heroesPage, video: gridVideo } : null;
-export const packBackground = (video, { clean, hero = { mode: 'menu' }, event = true, profile = true, grid = { mode: 'menu' } }, heroVideo = null, gridVideo = null) => new Blob([menuBackgroundPack({ video, dashboard, home: clean ? home : null,
+// news: { carnival, season } — the home page's news cards that stay (2026-10-08); `clean` (before it)
+// hides both.
+export const packBackground = (video, { clean, news = null, hero = { mode: 'menu' }, event = true, profile = true, grid = { mode: 'menu' } }, heroVideo = null, gridVideo = null) => new Blob([menuBackgroundPack({ video, dashboard, home,
+  news: clean ? { carnival: false, season: false } : { carnival: news?.carnival !== false, season: news?.season !== false },
   hero: hero?.mode === 'off' ? null : { page: heroPage, video: hero?.mode === 'own' ? heroVideo : null }, event: event ? season : null,
   profile: profile ? { page: showcase, icons: { stratz, dotabuff } } : null, grid: gridOption(grid, gridVideo), md5 })], { type: 'application/octet-stream' });
 // «Командой PowerShell» (and the .bat installer's 'installer' of before): the pack goes to the site and

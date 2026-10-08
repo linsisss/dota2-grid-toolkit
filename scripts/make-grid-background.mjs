@@ -1,7 +1,11 @@
 // The Dota 2 hero-grid backdrop under the grid area (1193×593 grid units), as the game shows it at 1080p.
-//   node scripts/make-grid-background.mjs <fall_background.png> <clean 1080p screenshot> <out dir>
-// Source: the PNG inside panorama/images/…/backgrounds/fall_background_png.vtex_c (VTEX format 16
-// stores a plain PNG after the resource blocks), 3840×2164, drawn over the whole screen at 0.5 scale.
+//   node scripts/make-grid-background.mjs <background.png> <1080p screenshot> <out dir> [--blur px] [--content]
+// Source: the PNG inside the menu background's .vtex_c (VTEX format 16 stores a plain PNG after the
+// resource blocks), drawn over the whole screen `cover`, centred: until 2026-10-07 fall_background
+// (3840×2164, scale 0.5); since Dota's update of 2026-10-07 panorama/images/backgrounds/
+// monster_hoard_2026_background_png.vtex_c (3840×1620), which every page but the home page blurs by
+// 6 px (--blur 6, dashboard_background_monster_hoard_2026.css). --content: the screenshot shows a grid,
+// so its bright pixels (glyphs, portraits, stars) are masked too, not only the game's UI.
 // Tone: fast guided upsampling (He et al., guided filter): per channel a local linear map fitted
 // from a clean 1080p screenshot of the empty hero grid (low frequencies: the game's dimming and
 // vignette) applied to the 4K source (detail). Writes dota-grid.png (2×) and dota-grid-1x.png;
@@ -9,12 +13,15 @@
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-const [sourcePath, shotPath, outDir = '.'] = process.argv.slice(2);
-if (!sourcePath || !shotPath) throw new Error('Usage: make-grid-background.mjs <fall_background.png> <screenshot> [out dir]');
+const args = process.argv.slice(2), option = (name) => { const i = args.indexOf(name); return i < 0 ? null : args.splice(i, name === '--content' ? 1 : 2)[1] ?? true; };
+const blur = Number(option('--blur')) || 0, content = !!option('--content');
+const [sourcePath, shotPath, outDir = '.'] = args;
+if (!sourcePath || !shotPath) throw new Error('Usage: make-grid-background.mjs <background.png> <screenshot> [out dir] [--blur px] [--content]');
 const src = await loadImage(sourcePath);
 const shot = await loadImage(shotPath);
 const GX = 269, GY = 174, GW = 1193 * 1.1497, GH = 593 * 1.1497; // grid rect on the 1080p screen (fitted to an in-game grid)
-const BG = { s: 0.5, ox: 0, oy: -1 };                             // background placement on the screen
+// Background placement on the screen: `cover`, centred (fall_background: 0.5, 0, −1).
+const BG = (() => { const s = Math.max(1920 / src.width, 1080 / src.height); return { s, ox: (1920 - src.width * s) / 2, oy: (1080 - src.height * s) / 2 }; })();
 // Fits the game's tone over one screen region and returns render(w, h) for the source under it.
 // masked(X, Y): screen pixels covered by the game's UI. Where a window sees too little background
 // (under the top menu), wider windows carry the tone over.
@@ -23,7 +30,10 @@ function fitRegion(RX, RY, RW, RH, masked) {
   const lo = createCanvas(LW, LH), lx = lo.getContext('2d');
   lx.drawImage(shot, RX, RY, RW, RH, 0, 0, LW, LH); const P = lx.getImageData(0, 0, LW, LH).data;
   const guideAt = (w, h) => { const c = createCanvas(w, h), x = c.getContext('2d');
-    x.drawImage(src, (RX - BG.ox) / BG.s, (RY - BG.oy) / BG.s, RW / BG.s, RH / BG.s, 0, 0, w, h); return x.getImageData(0, 0, w, h).data; }; // premultiplied over transparent black
+    // The page's blur, in screen pixels scaled to this canvas; drawn from a margin around the region so the edges blur like the rest.
+    const m = blur * 3, k = w / RW; if (blur) x.filter = `blur(${blur * k}px)`;
+    x.drawImage(src, (RX - m - BG.ox) / BG.s, (RY - m - BG.oy) / BG.s, (RW + 2 * m) / BG.s, (RH + 2 * m) / BG.s, -m * k, -m * h / RH, w + 2 * m * k, h + 2 * m * h / RH);
+    x.filter = 'none'; return x.getImageData(0, 0, w, h).data; }; // premultiplied over transparent black
   const I = guideAt(LW, LH), valid = new Float32Array(LW * LH);
   for (let y = 0; y < LH; y++) for (let x = 0; x < LW; x++) valid[y * LW + x] = masked(RX + (x + 0.5) * RW / LW, RY + (y + 0.5) * RH / LH) ? 0 : 1;
   const box = (arr, r) => { // box sums via integral images
@@ -70,7 +80,24 @@ function fitRegion(RX, RY, RW, RH, masked) {
 
 const r = 28, eps = 4; // window radius (screen px) and regularisation: small eps keeps the source detail
 // The game's UI on the clean screenshot: top menu, bans, the «НЕ ВИДНО N ГЕРОЕВ» badge, the bottom bar.
-const ui = (X, Y) => Y < 112 || Y > 872 || (X > 1235 && Y < 170) || (X > 835 && X < 1090 && Y > 832);
+const chrome = (X, Y) => Y < 112 || Y > 872 || (X > 1235 && Y < 170) || (X > 835 && X < 1090 && Y > 832);
+// --content: a screenshot with a grid on it. Its glyphs, portraits and stars are bright on this dark page;
+// they and 8 px round them are masked (portraits also have dark parts: their frames are found by the bright edges around).
+const bright = (() => {
+  if (!content) return null;
+  const c = createCanvas(1920, 1080), x = c.getContext('2d'); x.drawImage(shot, 0, 0, 1920, 1080);
+  const d = x.getImageData(0, 0, 1920, 1080).data, hit = new Uint8Array(1920 * 1080), R = 8;
+  for (let i = 0; i < 1920 * 1080; i++) if (Math.max(d[i * 4], d[i * 4 + 1], d[i * 4 + 2]) > 70) hit[i] = 1;
+  const out = new Uint8Array(1920 * 1080);
+  for (let y = 0; y < 1080; y++) for (let X = 0; X < 1920; X++) if (hit[y * 1920 + X])
+    for (let dy = -R; dy <= R; dy++) { const yy = y + dy; if (yy < 0 || yy >= 1080) continue; for (let dx = -R; dx <= R; dx++) { const xx = X + dx; if (xx >= 0 && xx < 1920) out[yy * 1920 + xx] = 1; } }
+  return out;
+})();
+// The hero cards of the user's screenshot of 2026-10-08 (their dark parts are under the brightness
+// threshold): the top row and the two big cards, with a margin.
+const CARDS = [[455, 190, 1000, 135], [375, 468, 130, 205], [1375, 464, 132, 205]];
+const card = (X, Y) => content && CARDS.some(([x, y, w, h]) => X >= x && X < x + w && Y >= y && Y < y + h);
+const ui = (X, Y) => chrome(X, Y) || card(X, Y) || (bright ? bright[Math.min(1079, Y | 0) * 1920 + Math.min(1919, X | 0)] === 1 : false);
 const gridFit = fitRegion(GX, GY, GW, GH, ui), screenFit = fitRegion(0, 0, 1920, 1080, ui);
 const hi = gridFit.render(2386, 1186);
 writeFileSync(join(outDir, 'dota-grid.png'), await hi.encode('png'));

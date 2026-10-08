@@ -125,6 +125,9 @@ export default {
   'Экран': 'Screen',
   'Как вписать': 'How to fit',
   'Отображать новости на главной': 'Show news on the home page',
+  'Карточка Dark Carnival на главной': 'Dark Carnival card on the home page',
+  'Карточка «Диковинки Квортеро» на главной': 'Quartero\'s Curios card on the home page',
+  'Выключи, чтобы она не закрывала фон': 'Turn off so it does not cover the background',
   'Выключи, чтобы колонка справа не закрывала фон': 'Turn off so the right column doesn’t cover the background',
   // The event's English name in the client is not known here: the button is named by what it is.
   'Кнопка «{name}»': '“{name}” button',

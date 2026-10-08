@@ -1,0 +1,35 @@
+{
+  "version": "1.9.8",
+  "date": "2026-10-08",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v1.9.8",
+  "sections": [
+    {
+      "title": "Фон главного меню",
+      "changes": [
+        { "text": "Конструктор обновлён под новое главное меню Dota 7 октября", "children": ["Карточки Dark Carnival и «Диковинки Квортеро» можно скрыть по отдельности; в Квортеро теперь ведёт родная карточка Dota"] }
+      ]
+    },
+    {
+      "title": "Мастерская",
+      "changes": [
+        { "text": "Фон «Как в Dota» под сетками обновлён: теперь он такой же, как в игре после обновления 7 октября" }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Main menu background",
+        "changes": [
+          { "text": "The builder follows Dota's new main menu of October 7", "children": ["The Dark Carnival and Quartero's Curios cards can be hidden one by one; Dota's own card now leads to Quartero"] }
+        ]
+      },
+      {
+        "title": "Workshop",
+        "changes": [
+          { "text": "The «As in Dota» backdrop under grids is updated to match the game after the October 7 update" }
+        ]
+      }
+    ]
+  }
+}

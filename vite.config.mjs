@@ -4,6 +4,7 @@ import { cpSync, readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { editorRoute } from './scripts/editor-route.mjs';
 import { OG_PAGES, ogTags, pageMeta } from './scripts/og-pages.mjs';
+import { withMetrika } from './scripts/metrika.mjs';
 
 // Each page's link preview tags (scripts/og-pages.mjs) by its HTML file.
 const OG_ENTRIES = new Map(Object.entries(OG_PAGES).filter(([, page]) => page.entry).map(([key, page]) => [page.entry, key]));
@@ -33,6 +34,11 @@ export default defineConfig({
       // shared work and for the tabs that share a page (server/catalog-api.mjs, /page/…).
       name: 'studio-link-previews',
       transformIndexHtml(html, { filename }) { const key = OG_ENTRIES.get(basename(filename)); return key ? ogTags(html, pageMeta(key)) : html; }
+    },
+    {
+      // Yandex Metrika in every page of a production build (scripts/metrika.mjs); staging builds are labelled.
+      name: 'studio-metrika', apply: 'build',
+      transformIndexHtml(html) { return withMetrika(html, !process.env.GRIDSTUDIO_BUILD_LABEL); }
     },
     {
       name: 'studio-static-assets',

@@ -1,4 +1,5 @@
 import { STYLE, counter, escape } from './seo-pages.mjs';
+import { METRIKA_ORIGIN, withMetrika } from '../scripts/metrika.mjs';
 
 // Answers to what people search (asked for on 2026-10-08: «создать сетку дота 2» and the like found only
 // articles and forums): a page per question, drawn here as plain HTML like the workshop's search pages
@@ -101,7 +102,7 @@ export function seoGuide(slug, { origin }) {
     ...(page.sections || []).map(([title, list]) => `<h2>${escape(title)}</h2><ol>${list.map((step) => `<li>${escape(step)}</li>`).join('')}</ol>`),
     `<h2>Частые вопросы</h2><dl class="faq">${page.faq.map(([q, a]) => `<dt>${escape(q)}</dt><dd>${escape(a)}</dd>`).join('')}</dl>`,
   ].join('\n');
-  return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  return withMetrika(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escape(page.title)} | GridStudio</title><meta name="description" content="${escape(page.lead)}"><link rel="canonical" href="${escape(url)}">
 <meta property="og:type" content="article"><meta property="og:site_name" content="GridStudio"><meta property="og:locale" content="ru_RU"><meta property="og:title" content="${escape(page.title)}">
 <meta property="og:description" content="${escape(page.lead)}"><meta property="og:url" content="${escape(url)}"><meta property="og:image" content="${escape(image)}"><meta name="twitter:card" content="summary_large_image">
@@ -117,5 +118,5 @@ ${structured.map((item) => `<script type="application/ld+json">${JSON.stringify(
 <img src="${escape(image)}" alt="${escape(page.h1)}" width="1200" height="630"></div>
 ${body}
 <h2>Ещё о Dota 2 на GridStudio</h2><p class="others">${others}</p>
-</main><footer>GridStudio — сетки героев, фоны и шрифты для Dota 2. Бесплатно, в браузере.</footer>${counter(`seo:guide/${slug}`)}</body></html>`;
+</main><footer>GridStudio — сетки героев, фоны и шрифты для Dota 2. Бесплатно, в браузере.</footer>${counter(`seo:guide/${slug}`)}</body></html>`, origin === METRIKA_ORIGIN);
 }

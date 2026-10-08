@@ -3,6 +3,7 @@
 // items with their pictures and links — so a crawler reads them without JavaScript. Also robots.txt
 // and sitemap.xml (the site had neither: both answered with the home page). Nothing 18+ is listed.
 // nginx sends /backgrounds, /grids, /robots.txt and /sitemap.xml to /api/catalog/seo/….
+import { METRIKA_ORIGIN, withMetrika } from '../scripts/metrika.mjs';
 const ADULT = '18+';
 const BACKGROUND_COPY = {
   '': { tag: '', h1: 'Фоны для главного меню Dota 2', title: 'Живые фоны для меню Dota 2 — скачать бесплатно',
@@ -101,7 +102,7 @@ export function seoPage(section, slug, { list, origin, image }) {
   const structured = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: copy.h1, description: copy.text, url, inLanguage: 'ru',
     mainEntity: { '@type': 'ItemList', itemListElement: items.map((item, i) => ({ '@type': 'ListItem', position: i + 1, name: item.title,
       url: `${origin}${section === 'grids' ? `/workshop?id=${item.id}` : `/background?background=${item.id}`}` })) } };
-  return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  return withMetrika(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escape(title)}</title><meta name="description" content="${escape(copy.text)}"><link rel="canonical" href="${escape(url)}">
 <meta property="og:type" content="website"><meta property="og:site_name" content="GridStudio"><meta property="og:locale" content="ru_RU"><meta property="og:title" content="${escape(copy.title)}">
 <meta property="og:description" content="${escape(copy.text)}"><meta property="og:url" content="${escape(url)}"><meta property="og:image" content="${escape(image)}"><meta name="twitter:card" content="summary_large_image">
@@ -115,7 +116,7 @@ ${items.length ? `<ul class="items">${items.map((item) => card(section, item)).j
 <h2>Как поставить</h2><ol>${def.steps.map((step) => `<li>${escape(step)}</li>`).join('')}</ol>
 <p class="lead">Как это сделать: <a href="/sozdat-setku-geroev">создать сетку героев</a> · <a href="/kak-postavit-setku-geroev">поставить сетку в Dota 2</a> · <a href="/fon-glavnogo-menyu-dota-2">сделать фон меню</a> · <a href="/shrift-dota-2">поменять шрифт</a></p>
 <h2>Ещё для Dota 2</h2><p class="lead">${section === 'grids' ? 'Фон главного меню и шрифт тоже можно поменять:' : 'Сетку героев и шрифт тоже можно поменять:'} <a href="/${other}">${escape(SEO_SECTIONS[other].label)}</a> · <a href="/background?tab=font">Шрифт для Dota</a> · <a href="/guides">Гайды по оформлению</a></p>
-</main><footer>GridStudio — сетки героев, фоны и шрифты для Dota 2. Бесплатно, в браузере.</footer>${counter(`seo:${section}${slug ? `/${slug}` : ''}`)}</body></html>`;
+</main><footer>GridStudio — сетки героев, фоны и шрифты для Dota 2. Бесплатно, в браузере.</footer>${counter(`seo:${section}${slug ? `/${slug}` : ''}`)}</body></html>`, origin === METRIKA_ORIGIN);
 }
 
 // Every SEO page's address, for the sitemap.

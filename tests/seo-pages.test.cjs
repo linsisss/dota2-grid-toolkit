@@ -43,3 +43,13 @@ test('the answer pages: plain HTML with the steps, FAQ and HowTo data, a button 
   assert.match(seoGuide('sozdat-setku-geroev', { origin: '' }), /<a href="\/editor">Открыть редактор<\/a>/);
   assert.equal(seoGuide('nope', { origin: '' }), null);
 });
+
+test('Yandex Metrika: in the site\'s own pages on production only', async () => {
+  const [{ seoGuide }, { seoPage }, { withMetrika, METRIKA_ID }] = await Promise.all([import('../server/seo-guides.mjs'), import('../server/seo-pages.mjs'), import('../scripts/metrika.mjs')]);
+  const tag = `mc.yandex.ru/metrika/tag.js?id=${METRIKA_ID}`, list = () => ({ items: [] });
+  assert.ok(seoGuide('shrift-dota-2', { origin: 'https://gridstudio.me' }).includes(tag));
+  assert.ok(!seoGuide('shrift-dota-2', { origin: 'https://dev.gridstudio.me' }).includes(tag));
+  assert.ok(seoPage('grids', '', { list, origin: 'https://gridstudio.me', image: '' }).includes(tag));
+  assert.ok(!seoPage('grids', '', { list, origin: 'https://dev.gridstudio.me', image: '' }).includes(tag));
+  assert.match(withMetrika('<html><head><title>x</title></head></html>'), /<head>\n<!-- Yandex\.Metrika counter -->/);
+});

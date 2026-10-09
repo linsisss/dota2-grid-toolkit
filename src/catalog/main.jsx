@@ -9,6 +9,7 @@ import '../site-kit.css';
 import { SITE_SLIDES, autoSlides } from '../../scripts/slide-indicator.mjs';
 import { watchErrors } from '../../scripts/community.mjs';
 import { countVisit } from '../site-stats.js';
+import { loadYandexAds } from '../yandex-ads.js';
 
 // The statistics' page (server/site-stats.mjs): a grid, a profile, the rules, the backgrounds or the
 // workshop; the admin panel is not counted.
@@ -26,3 +27,5 @@ languageReady(() => import('../i18n/en/common.js'), () => import('../i18n/en/ser
 autoSlides(document.body, SITE_SLIDES);
 // Errors nothing caught go into the note «Сообщить о баге» copies (scripts/community.mjs).
 watchErrors();
+// Yandex's ads (src/yandex-ads.js): not in the editor or the admin panel, only on gridstudio.me.
+loadYandexAds();

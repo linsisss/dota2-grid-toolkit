@@ -7,6 +7,7 @@ import './home.css';
 import '../site-kit.css';
 import { watchErrors } from '../../scripts/community.mjs';
 import { countVisit } from '../site-stats.js';
+import { loadYandexAds } from '../yandex-ads.js';
 
 countVisit('home');
 
@@ -15,3 +16,5 @@ languageReady(() => import('../i18n/en/common.js'), () => import('../i18n/en/cat
   .then(() => createRoot(document.getElementById('landing-root')).render(<Home />));
 // Errors nothing caught go into the note «Сообщить о баге» copies (scripts/community.mjs).
 watchErrors();
+// Yandex's ads (src/yandex-ads.js): not in the editor or the admin panel, only on gridstudio.me.
+loadYandexAds();

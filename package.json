@@ -1,6 +1,6 @@
 {
   "name": "dota2-grid-studio",
-  "version": "1.9.9",
+  "version": "1.9.10",
   "private": true,
   "description": "A unified React workspace for Dota 2 hero grids, symbol art and image conversion",
   "scripts": {
@@ -19,6 +19,8 @@
   },
   "license": "GPL-3.0-only",
   "dependencies": {
+    "@cap.js/wasm": "0.0.8",
+    "@cap.js/widget": "0.1.58",
     "@napi-rs/canvas": "1.0.9",
     "@tiptap/core": "3.31.4",
     "@tiptap/extensions": "3.31.4",

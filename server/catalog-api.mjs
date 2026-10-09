@@ -8,7 +8,7 @@ import { CatalogStore, CatalogError, digest, equal, secret, fail } from './catal
 import { CATALOG_TAGS, CATALOG_LIMITS, catalogText, normalizeCatalogGrid } from '../scripts/catalog-document.mjs';
 import { BACKGROUND_FRAMES, FRAME_H, FRAME_W, backgroundFingerprint, backgroundFrame } from '../scripts/similarity.mjs';
 import { Accounts, SESSION_AGE } from './accounts.mjs';
-import { CatalogCaptcha } from './catalog-captcha.mjs';
+import { CapCaptcha, CatalogCaptcha } from './catalog-captcha.mjs';
 import { SteamProfiles } from './steam-profile.mjs';
 import { CatalogArts } from './catalog-arts.mjs';
 import { ART_CATEGORIES, ART_LIMITS, artSubmission } from '../scripts/art-document.mjs';
@@ -74,6 +74,10 @@ export function catalogConfig(env = process.env) {
   return { development, origin, salt, admins: new Set(adminIds), unlimited: new Set(unlimitedIds), botUsername, steamApiKey: env.STEAM_WEB_API_KEY || '',
     // STRATZ's key for the hero meta (server/hero-meta.mjs); without it the meta answers 503.
     stratzToken: env.STRATZ_API_TOKEN || '',
+    // Cap Standalone (server/catalog-captcha.mjs CapCaptcha, /home/code/gridstudio/cap): all three set — the
+    // forms use Cap; otherwise ALTCHA as before (tests, local runs).
+    cap: env.CATALOG_CAP_URL && env.CATALOG_CAP_SITE_KEY && env.CATALOG_CAP_SECRET
+      ? { url: env.CATALOG_CAP_URL.replace(/\/$/, ''), siteKey: env.CATALOG_CAP_SITE_KEY, secret: env.CATALOG_CAP_SECRET } : null,
     moderationUrl: `https://t.me/c/${moderationChat.slice(4)}/${moderationTopic}`,
     trustProxy: env.CATALOG_TRUST_PROXY === 'loopback', database: env.CATALOG_DB || '.catalog-data/catalog.sqlite',
     // Shared menu backgrounds' files, next to the database unless set.
@@ -174,7 +178,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
     if (!previews.has(key)) { const made = render(); made.catch(() => previews.delete(key)); previews.set(key, made); if (previews.size > 160) previews.delete(previews.keys().next().value); }
     return previews.get(key);
   };
-  const captcha = new CatalogCaptcha(store, config.salt);
+  const captcha = config.cap ? new CapCaptcha(store, config.cap) : new CatalogCaptcha(store, config.salt);
   const gridInstalls = new GridInstalls(store, config.salt);
   const signature = (value) => createHmac('sha256', config.salt).update(value).digest('base64url');
   const cookie = (name, value, age) => `${name}=${value}; Path=/api/catalog; HttpOnly; SameSite=Strict; Max-Age=${age}${config.development ? '' : '; Secure'}`;
@@ -451,7 +455,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         if (!pcPage(toPC[1])) fail(404, 'Не найдено.');
         response.writeHead(302, { Location: `https://t.me/${config.botUsername}?start=pc_${toPC[1]}` }); return response.end();
       }
-      if (path === '/config' && method === 'GET') return send(200, { captcha: 'altcha', development: config.development, paused: store.paused(), tags: CATALOG_TAGS, limits: CATALOG_LIMITS,
+      if (path === '/config' && method === 'GET') return send(200, { captcha: captcha.kind, ...(captcha.endpoint ? { captchaEndpoint: captcha.endpoint } : {}), development: config.development, paused: store.paused(), tags: CATALOG_TAGS, limits: CATALOG_LIMITS,
         artCategories: ART_CATEGORIES, artLimits: ART_LIMITS, backgroundTags: BACKGROUND_TAGS, backgroundLimits: BACKGROUND_LIMITS, moderationUrl: config.moderationUrl });
       // The workshop's «Реклама» page: the site's numbers for advertisers (server/site-stats.mjs audience).
       if (path === '/audience' && method === 'GET') { response.setHeader('Cache-Control', 'public, max-age=600'); return send(200, stats.audience()); }

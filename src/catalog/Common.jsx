@@ -69,6 +69,15 @@ export function Captcha({ config, onToken, action = 'submit', reset = 0, hideSuc
     if (!config) return;
     let cancelled = false, widget;
     (async () => {
+      // Cap (server/catalog-captcha.mjs CapCaptcha): solved without its own widget, like ALTCHA below;
+      // its WASM comes from the site (src/cap-captcha.js), not from a CDN.
+      if (config.captcha === 'cap') {
+        const { solveCap } = await import('../cap-captcha.js');
+        const token = await solveCap(config.captchaEndpoint);
+        if (cancelled) return;
+        callback.current(token); setStatus('verified');
+        return;
+      }
       if (config.captcha !== 'altcha') throw new Error('Unsupported verification');
       await import('altcha');
       if (cancelled) return;

@@ -285,3 +285,13 @@ Telegram: 13 дополнительных тестов с подставным A
 
 - **Рубежи работ** (`server/milestones.mjs`): бот раз в 10 минут считает скачивания и лайки сеток, фонов и гайдов авторов с аккаунтом; прошли круглое число (скачивания 50…25000, лайки 10…2500) — автору сообщение, только о самом высоком новом. Первый проход молча записывает уже достигнутое (таблица `milestones`), очередь — `milestone_notices`. Выключается в настройках профиля («Успехи моих работ», `milestones`).
 - **Напоминание Dotadle**: включается на странице игры (`POST /dotadle/reminder {on}`, таблица `dotadle_reminders`). В 10:00 по Москве бот пишет тем, кто не закончил сегодняшнюю игру (`dotadle_reminder_notices`), с серией; кнопка «Не напоминать» (`dl:off`).
+
+## Капча: Cap Standalone (с 9 октября 2026)
+
+Пользователь попросил 9 октября 2026 года поставить Cap (trycap.dev) вместо ALTCHA — в тех же формах: отправка сетки, фона, арта и жалобы.
+
+- Сервис: Cap Standalone в Docker с Valkey, `/home/code/gridstudio/cap/docker-compose.yml` (образ `tiago2/cap`, слушает только `127.0.0.1:3011`). Логин панели (`ADMIN_KEY`) — в `cap/.env`, ключи сайтов и их секреты — в `cap/keys.json` (оба 600, не в git). Панель — через SSH-туннель: `ssh -L 3011:127.0.0.1:3011 <сервер>` и `http://localhost:3011`.
+- Ключи: `gridstudio.me` (проверка браузера и блокировка автоматизированных браузеров включены) и `dev.gridstudio.me` (блокировка автоматизированных браузеров выключена, чтобы проверять сайт Playwright'ом). Задача — HashWX, плюс инструментирующие проверки Cap.
+- nginx отдаёт наружу только `POST /cap/<ключ>/challenge` и `/redeem` (IP посетителя — `X-Real-IP`; на dev за Cloudflare — `CF-Connecting-IP`); `/siteverify` и панель остаются локальными.
+- API: `CATALOG_CAP_URL`, `CATALOG_CAP_SITE_KEY`, `CATALOG_CAP_SECRET` в окружении — тогда `server/catalog-captcha.mjs` `CapCaptcha` проверяет токен один раз через `/siteverify`, а `/config` отдаёт `captcha: 'cap'` и `captchaEndpoint`. Без них — ALTCHA, как раньше (тесты, локальный запуск). Лимиты сайта на отправку остаются нашими.
+- Страница (`src/catalog/Common.jsx` `Captcha`, `src/cap-captcha.js`) решает задачу через `@cap.js/widget` без его рамки и показывает свою строку статуса; WASM (`@cap.js/wasm`) отдаёт наш сайт, не jsDelivr.

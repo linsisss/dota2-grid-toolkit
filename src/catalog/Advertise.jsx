@@ -7,7 +7,7 @@ import { locale, t } from '../../scripts/i18n.mjs';
 // позавчера, расписано всё для рекламодателей и куда писать»), from the button at the top of the
 // landing page and the workshop. The numbers are not a picture: they come from GET /audience
 // (server/site-stats.mjs audience), so they are yesterday's every day. Classes are `mk-*` («media
-// kit»), never `mk-*`: EasyList hides `.mk-list` and the like, even from the owner.
+// kit»), never `ad-*`: EasyList hides `.ad-list` and the like, even from the owner.
 export const ADVERTISE_CONTACT = 'https://t.me/gridstudiome?direct';
 const number = (value) => Number(value || 0).toLocaleString(locale);
 const date = (ms) => new Date(ms).toLocaleDateString(locale, { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' });

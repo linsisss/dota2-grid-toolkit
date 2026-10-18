@@ -27,7 +27,7 @@ import tauntSound from '../../assets/dota-hero/sounds/taunt-fiendish-swag.mp3';
 // vignette (.DarkEdges).
 // A small secret: the set's taunt icon plays the taunt «Fiendish Swag!» with its sound, quietly.
 const TAUNT_VOLUME = 0.12;
-export default function DotaHeroPage({ interactive = true }) {
+export default function DotaHeroPage({ interactive = true, model = true }) {
   const frame = useRef(null), layer = useRef(null), hero = useRef(null), sound = useRef(null);
   // One sound for the taunt: clicking again restarts it (and the taunt) instead of layering another.
   const taunt = () => {
@@ -53,7 +53,7 @@ export default function DotaHeroPage({ interactive = true }) {
   return <div className="dota-hero" ref={frame} aria-hidden="true">
     <div className="dota-hero-dim" style={{ opacity: 1 - HERO_OPACITY }}/>
     <div className="dota-hero-edges"/>
-    <DotaHeroModel interactive={interactive} api={hero}/>
+    {model && <DotaHeroModel interactive={interactive} api={hero}/>}
     <div className="dh-layer" ref={layer}>
       <div className="dh-shard"/>
       <div className="dh-content">

@@ -1,0 +1,116 @@
+/* «Крылатые гонки»: Valve's bp_popup_crownfall_encounter_minigame.css and
+   bp_popup_crownfall_encounter_flappy_skywrath.css in browser CSS. The popup is Valve's MainContents,
+   1244×700, scaled by Fit; the scene is a canvas of the same size under the HUD and the menu. */
+.rc-popup { position: relative; width: 1244px; height: 700px; font-family: 'MGRadiance', sans-serif; color: var(--lightest-grey); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.rc-main { position: relative; width: 100%; height: 100%; box-sizing: border-box; overflow: hidden; border: 1px solid; border-image: linear-gradient(var(--gold1), var(--gold2), var(--gold3)) 1;
+  background: linear-gradient(var(--charcoal-light), var(--charcoal-dark)); box-shadow: 0 16px 80px -4px rgba(0, 0, 0, 0.5); }
+.rc-gold-dash { position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 5; background: linear-gradient(90deg, var(--gold3), var(--gold1), var(--gold3)); }
+.rc-scene { position: absolute; inset: 0; touch-action: none; cursor: pointer; }
+.rc-canvas { display: block; width: 1244px; height: 700px; }
+/* IntroMenu: the scene behind the menu blurred, brighter and less saturated, teal at the top. */
+.rc-intro .rc-canvas { filter: blur(6px) brightness(1.4) saturate(0.7); transform: scale(1.03); }
+.rc-intro .rc-scene::after { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(31, 99, 117, 0.85), rgba(31, 99, 117, 0.35) 70%, rgba(11, 17, 26, 0.6)); pointer-events: none; }
+.rc-intro .rc-scene { cursor: default; }
+.rc-menu-heroes { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.rc-menu-heroes img { position: absolute; bottom: -40px; filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5)); animation: rc-hover 4s ease-in-out infinite; }
+.rc-menu-sky { left: -60px; height: 700px; }
+.rc-menu-bat { right: -40px; height: 520px; bottom: 60px !important; animation-delay: -2s !important; }
+@keyframes rc-hover { 50% { transform: translateY(-12px); } }
+
+/* #FlappyMainMenu (MainMenu): 700 px wide; in the endless mode two columns. */
+.rc-menu-area { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; animation: rc-menu-in 0.2s ease-in-out; }
+@keyframes rc-menu-in { from { opacity: 0; transform: translateY(-20px); } }
+.rc-menu { box-sizing: border-box; width: 700px; height: 600px; padding: 0 30px; display: flex; flex-direction: column;
+  border: 2px solid; border-image: linear-gradient(var(--gold1), var(--gold2), var(--gold3)) 1; background: linear-gradient(var(--charcoal-light), var(--charcoal-dark)); }
+.rc-menu-header { position: relative; display: flex; flex-direction: column; align-items: center; }
+.rc-title-box { display: flex; flex-direction: column; align-items: center; z-index: 1; }
+.rc-title { margin: 22px 0 0; text-align: center; font: 700 34px 'MGReaver', 'MGRadiance', serif; letter-spacing: 4px; text-transform: uppercase;
+  background: linear-gradient(#f9e7cd, var(--gold2)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(2px 6px 4px #000); }
+.rc-endless-open .rc-title { font-size: 24px; }
+.rc-subtitle { margin: -2px 0 0; font: 700 14px 'MGReaver', 'MGRadiance', serif; letter-spacing: 5px; text-transform: uppercase;
+  background: linear-gradient(#f9e7cd, var(--gold2)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(2px 6px 4px #000); }
+.rc-encounter-graphic { height: 60px; margin: -6px 0 6px; opacity: 0.95; }
+.rc-columns { display: flex; height: 400px; }
+.rc-column1 { width: 100%; padding: 0 70px; box-sizing: border-box; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #ffffff30 transparent; }
+.rc-endless-open .rc-column1 { width: 45%; padding: 0 10px 0 0; }
+.rc-column2 { width: 55%; padding-left: 20px; box-sizing: border-box; }
+.rc-howto-title { margin: 6px 0 6px; font: 600 20px 'MGRadiance', sans-serif; letter-spacing: 2px; text-transform: uppercase; color: var(--gold1); }
+.rc-howto { margin: 0; font-size: 16px; line-height: 1.2; color: var(--lighter-grey); }
+.rc-line { display: block; }
+.rc-line b { color: var(--lightest-grey); font-weight: 700; }
+.rc-keys { margin: 10px 0 0; font-size: 14px; color: var(--light-grey); }
+.rc-desc { margin: 18px 0 0; font-size: 15px; font-style: italic; line-height: 1.25; color: var(--lighter-grey); }
+.rc-unlock { margin: 10px 0 0; font-size: 14px; color: var(--gold2); }
+.rc-rewards-label { margin-top: 30px; }
+.rc-rewards { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+.rc-reward-row { display: flex; align-items: center; color: var(--lightest-grey); }
+.rc-reward-row span { width: 80px; font-weight: 700; }
+.rc-reward-row i, .rc-pips { display: flex; gap: 3px; }
+.rc-reward-row em, .rc-pips em { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #6fe08a, #2b7c45 60%, #173f26); box-shadow: inset 0 0 0 2px #0b2416, 0 1px 3px #000; }
+.rc-reward-done { filter: brightness(0.45); }
+.rc-leader-head { display: flex; justify-content: space-between; margin: 8px 6px 8px 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: var(--lighter-grey); }
+.rc-leader-row { display: flex; justify-content: space-between; height: 24px; align-items: center; padding: 0 12px 0 4px; font-size: 16px; color: var(--lightest-grey); }
+.rc-leader-row.rc-odd { background: #0005; }
+.rc-bottom-buttons { margin-top: auto; margin-bottom: 26px; display: flex; justify-content: center; gap: 14px; }
+
+/* .OverlayHUD .ScoreSection (the endless mode). */
+.rc-hud { position: absolute; inset: 0; pointer-events: none; }
+.rc-score-section { position: absolute; left: 20px; top: 20px; width: 222px; animation: rc-slide 0.3s ease-out; }
+@keyframes rc-slide { from { transform: translateX(-40px); opacity: 0; } }
+.rc-score-header { display: flex; flex-direction: column; align-items: center; padding: 10px 10px 4px; background: linear-gradient(90deg, rgb(52, 66, 83), rgb(12, 17, 28)); }
+.rc-score-header img { width: 160px; height: auto; margin-top: 2px; }
+.rc-score-title { font: 700 18px 'MGReaver', 'MGRadiance', serif; white-space: nowrap; text-transform: uppercase; background: linear-gradient(var(--gold1), var(--gold3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.rc-score-main { display: flex; flex-direction: column; align-items: center; padding: 10px; background: #000a; border-bottom: 2px solid var(--gold1); }
+.rc-score-label, .rc-next-label { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold1); text-shadow: 1px 1px 4px #000; }
+.rc-score-value { min-height: 58px; font: 400 48px/58px 'MGRadiance', sans-serif; letter-spacing: 2px; font-variant-numeric: tabular-nums;
+  background: linear-gradient(var(--gold1), var(--gold3)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(1px 1px 4px #000); }
+.rc-score-sep { width: 100%; height: 1px; border: 1px solid #ccc1; box-sizing: border-box; }
+.rc-high-label { position: relative; width: 100%; margin-top: 10px; text-align: center; font-size: 14px; text-transform: uppercase; color: var(--gold1); text-shadow: 2px 2px 3px #000; }
+.rc-high-label em { position: absolute; right: 0; font-style: normal; opacity: 0; transform: translateY(-20px); transition: opacity 0.4s, transform 0.4s; }
+.rc-new-high .rc-high-label em { opacity: 1; transform: none; filter: brightness(1.2); }
+.rc-high-value { height: 35px; margin: -2px 0 10px; font: 700 27px/35px 'MGReaver', 'MGRadiance', serif; letter-spacing: 2px; font-variant-numeric: tabular-nums;
+  background: linear-gradient(var(--gold1), var(--gold3)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(2px 2px 3px #000); }
+.rc-next { display: flex; align-items: center; gap: 5px; margin-top: 4px; }
+.rc-next b { font-size: 27px; font-weight: 400; background: linear-gradient(var(--gold1), var(--gold3)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(2px 2px 3px #000); }
+.rc-pips em { width: 22px; height: 22px; }
+
+/* #BigRaceBarContainer (a race): 800 px at the top, the heroes' icons ride the bar. */
+.rc-racebar-box { position: absolute; top: 16px; left: 50%; width: 800px; transform: translateX(-50%); height: 76px; animation: rc-bar-in 0.5s ease-in; }
+@keyframes rc-bar-in { from { width: 700px; opacity: 0; } }
+.rc-racebar { position: relative; height: 100%; margin: 0 24px 0 10px; }
+.rc-progress { position: absolute; left: 0; right: 0; top: 14px; height: 24px; box-sizing: border-box; border: 3px solid #444; border-radius: 4px; overflow: hidden;
+  background: #000000cc url('../../../../assets/minigames/race/images/bar_black.webp') center / 100% 100% no-repeat; box-shadow: inset #000 0 1px 0 1px; }
+.rc-progress-left { height: 100%; width: 0; border-radius: 2px; background: url('../../../../assets/minigames/race/images/bar_black.webp') center / 100% 100% no-repeat; filter: brightness(2.4); }
+.rc-hero-icon { position: absolute; top: 0; width: 32px; height: 32px; margin-left: -16px; filter: drop-shadow(0 2px 3px #000); }
+.rc-icon-sky { transform: translateY(5px); z-index: 1; }
+.rc-icon-bat { transform: translateY(30px); }
+.rc-finish-icon { position: absolute; right: -26px; top: 10px; width: 32px; height: 32px; }
+.rc-finish-toast { position: absolute; left: 0; right: 0; top: 210px; text-align: center; font: 700 64px 'MGReaver', 'MGRadiance', serif; letter-spacing: 4px; text-transform: uppercase;
+  background: linear-gradient(#fff2df, var(--gold2) 60%, var(--gold3)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 10px #000); animation: rc-toast 2.2s ease-out forwards; pointer-events: none; }
+@keyframes rc-toast { 0% { opacity: 0; transform: scale(1.6); } 15% { opacity: 1; transform: none; } 75% { opacity: 1; } 100% { opacity: 0; } }
+
+/* The visual novel's line (VisualNovelOuterContainer: a 220 px band 100 px from the top). */
+.rc-novel-box { position: absolute; inset: 0; z-index: 8; padding: 0; border: 0; background: #0005; cursor: pointer; font: inherit; color: #fff; animation: rc-fade 0.5s; }
+@keyframes rc-fade { from { opacity: 0; } }
+.rc-novel-band { position: absolute; left: 0; right: 0; top: 100px; height: 220px; border-block: 1px solid var(--gold2); background: linear-gradient(var(--charcoal-light), var(--charcoal-dark)); opacity: 0.99; }
+.rc-novel-text { position: absolute; left: 80px; right: 330px; top: 160px; text-align: left; font-size: 26px; line-height: 1.35; text-shadow: 0 2px 4px #000; }
+.rc-novel-portrait { position: absolute; right: 90px; top: 62px; width: 200px; height: 225px; }
+.rc-novel-portrait img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top;
+  -webkit-mask: url('../../../../assets/minigames/novel/images/portrait_mask.webp') center / 100% 100%; mask: url('../../../../assets/minigames/novel/images/portrait_mask.webp') center / 100% 100%; }
+.rc-border-under, .rc-border-over { position: absolute; inset: -6px -8px; background: center / 100% 100% no-repeat; }
+.rc-border-under { background-image: url('../../../../assets/minigames/novel/images/border_under_simple.webp'); }
+.rc-border-over { background-image: url('../../../../assets/minigames/novel/images/border_over_simple.webp'); }
+.rc-name-plate { position: absolute; left: 50%; bottom: -26px; transform: translateX(-50%); white-space: nowrap; padding: 6px 22px; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold1);
+  background: linear-gradient(#2d3a6a, #1a2140); border-top: 2px solid var(--gold2); border-bottom: 2px solid #6a4518; }
+.rc-novel-next { position: absolute; right: 60px; top: 330px; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: var(--lighter-grey); }
+.rc-novel .rc-canvas { filter: brightness(0.8) blur(2px); }
+
+.rc-pause { position: absolute; inset: 0; z-index: 9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 50px; background: #000000c8; animation: rc-fade 0.2s; }
+.rc-pause b { font-size: 50px; font-weight: 700; color: #fff; text-shadow: 0 1px 4px #000; }
+.rc-pause-buttons { display: flex; gap: 14px; }
+.rc-results { position: absolute; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; background: #000; animation: rc-fade 0.4s; }
+.rc-results .mg-band-message { font-variant-numeric: tabular-nums; }
+.rc-corner { position: absolute; right: 20px; bottom: 16px; z-index: 10; display: flex; align-items: center; gap: 14px; }
+.rc-intro .rc-corner { bottom: 14px; }
+
+@media (prefers-reduced-motion: reduce) { .rc-menu-heroes img, .rc-finish-toast { animation: none !important; } }

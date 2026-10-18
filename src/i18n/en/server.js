@@ -205,6 +205,9 @@ const messages = {
   'В архиве нет шрифтов Dota.': 'There are no Dota fonts in the archive.',
   'Шрифт в архиве повреждён.': 'A font in the archive is damaged.',
   'В архиве шрифта есть лишний файл.': 'The font archive holds a file it shouldn’t.',
+  'Это не моды d2pfx.': 'These are not d2pfx mods.',
+  'В модах d2pfx есть лишний файл.': 'The d2pfx mods hold a file they shouldn’t.',
+  'Файл мода d2pfx не совпадает с d2pfx.': 'A d2pfx mod file doesn’t match d2pfx’s.',
   'Файл уже загружен.': 'The file is already uploaded.',
   'Хранилище гайдов заполнено. Попробуй позже.': 'Guide storage is full. Try again later.',
   'Части файла пришли не по порядку. Загрузи его ещё раз.': 'Parts of the file arrived out of order. Upload it again.',
@@ -229,6 +232,15 @@ const messages = {
   'Арт из редактора повреждён. Возьми его из редактора ещё раз.': 'The art from the editor is damaged. Take it from the editor again.',
   'В арте пока нет символов: выдели символы или текст в редакторе.': 'The art has no symbols yet: select symbols or text in the editor.',
   'Арт больше экрана сетки. Выдели один рисунок, а не всю сетку.': 'The art is bigger than the grid screen. Select one drawing, not the whole grid.',
+  // server/minigames.mjs: the minigames' tables of records (2026-10-18)
+  'Результат не похож на настоящий.': 'The result doesn’t look real.',
+  'Слишком быстро для такого счёта.': 'Too fast for such a score.', 'Слишком быстро для такого времени.': 'Too fast for such a time.',
+  'Слишком быстро для такого этапа.': 'Too fast for such a stage.', 'Слишком быстро для такого улова.': 'Too fast for such a catch.',
+  'Слишком быстро для победы над Заугом.': 'Too fast to beat Zaug.', 'Слишком быстро для победы.': 'Too fast for a win.', 'Слишком быстро.': 'Too fast.',
+  'Нет токена забега.': 'The run has no token.', 'Забег не найден. Начни новый.': 'Run not found. Start a new one.', 'Этот забег уже записан.': 'This run is already recorded.',
+  'Забег слишком долгий для таблицы.': 'The run is too long for the table.', 'Таблица рекордов этой игры для тебя закрыта.': 'This game’s table of records is closed to you.',
+  'Время забега не сходится.': 'The run’s time doesn’t add up.', 'Нет такого уровня.': 'No such level.', 'Нет такой таблицы.': 'No such table.', 'Нет такой игры.': 'No such game.',
+  'Слишком много результатов подряд. Подожди немного.': 'Too many results in a row. Wait a little.',
 };
 export default messages;
 

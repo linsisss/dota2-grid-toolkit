@@ -1,0 +1,316 @@
+{
+ "about": "Made by scripts/make-minigame-assets.mjs from Valve’s Dota 2 files; see docs/minigames.md.",
+ "files": {
+  "data.json": {
+   "from": "scripts/events/crownfall/minesweeper/game.vdata",
+   "bytes": 1733
+  },
+  "images/board_background.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/board_background_psd.png",
+   "width": 1920,
+   "height": 1080,
+   "quality": 88,
+   "stamp": "b9b72272a87d6fe6",
+   "bytes": 48798
+  },
+  "images/cell_background_hidden_1.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/cell_background_hidden_1_psd.png",
+   "width": 28,
+   "height": 28,
+   "lossless": true,
+   "stamp": "be41821a421bd04b",
+   "bytes": 820
+  },
+  "images/cell_background_hidden_2.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/cell_background_hidden_2_psd.png",
+   "width": 28,
+   "height": 28,
+   "lossless": true,
+   "stamp": "d9ba0ce38846b508",
+   "bytes": 844
+  },
+  "images/cell_background_hidden_3.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/cell_background_hidden_3_psd.png",
+   "width": 28,
+   "height": 28,
+   "lossless": true,
+   "stamp": "df785a66aef8d3ef",
+   "bytes": 736
+  },
+  "images/cell_background_hidden_4.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/cell_background_hidden_4_psd.png",
+   "width": 28,
+   "height": 28,
+   "lossless": true,
+   "stamp": "2f0f5c60169bc7f4",
+   "bytes": 754
+  },
+  "images/cell_background_hidden_hovered_1.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/cell_background_hidden_hovered_1_psd.png",
+   "width": 28,
+   "height": 28,
+   "lossless": true,
+   "stamp": "11958aa5d9598a2d",
+   "bytes": 952
+  },
+  "images/cell_background_hidden_hovered_2.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/cell_background_hidden_hovered_2_psd.png",
+   "width": 28,
+   "height": 28,
+   "lossless": true,
+   "stamp": "26b7b03be3640398",
+   "bytes": 1008
+  },
+  "images/cell_background_hidden_hovered_3.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/cell_background_hidden_hovered_3_psd.png",
+   "width": 28,
+   "height": 28,
+   "lossless": true,
+   "stamp": "e5c3d53576202625",
+   "bytes": 954
+  },
+  "images/cell_background_hidden_hovered_4.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/cell_background_hidden_hovered_4_psd.png",
+   "width": 28,
+   "height": 28,
+   "lossless": true,
+   "stamp": "4dd8ecdcf11efd7b",
+   "bytes": 976
+  },
+  "images/cell_background_mine_revealed.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/cell_background_mine_revealed_psd.png",
+   "width": 28,
+   "height": 28,
+   "lossless": true,
+   "stamp": "f8b533971a4e30da",
+   "bytes": 1030
+  },
+  "images/cell_background_revealed.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/cell_background_revealed_psd.png",
+   "width": 28,
+   "height": 28,
+   "lossless": true,
+   "stamp": "37dee518fd303f61",
+   "bytes": 28
+  },
+  "images/cellflagicon.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/cellflagicon_psd.png",
+   "width": 36,
+   "height": 36,
+   "lossless": true,
+   "stamp": "1f2b6f39092824ed",
+   "bytes": 1538
+  },
+  "images/echo_slash.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/echo_slash_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "3ee11e54d8b1171e",
+   "bytes": 15578
+  },
+  "images/flaggedicon.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/flaggedicon_psd.png",
+   "width": 72,
+   "height": 72,
+   "lossless": true,
+   "stamp": "81d1c293f813a75b",
+   "bytes": 700
+  },
+  "images/item_mana_icon.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/item_mana_icon_psd.png",
+   "width": 216,
+   "height": 36,
+   "lossless": true,
+   "stamp": "bd84ff84ad805c6e",
+   "bytes": 1148
+  },
+  "images/item_timer_icon.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/item_timer_icon_psd.png",
+   "width": 252,
+   "height": 36,
+   "lossless": true,
+   "stamp": "c2d79f8cbcacb919",
+   "bytes": 2568
+  },
+  "images/minesweeper_ui_bg_1.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/minesweeper_ui_bg_1_psd.png",
+   "width": 1920,
+   "height": 1080,
+   "quality": 88,
+   "stamp": "7c66d3578f3e2769",
+   "bytes": 96246
+  },
+  "images/ss_logo_en.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/ss_logo_en_png.png",
+   "width": 1200,
+   "height": 473,
+   "quality": 90,
+   "stamp": "67f4f7d835f6f7af",
+   "bytes": 165382
+  },
+  "images/timericon.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/timericon_psd.png",
+   "width": 72,
+   "height": 72,
+   "lossless": true,
+   "stamp": "60245b6e4ba505e4",
+   "bytes": 914
+  },
+  "sounds.json": {
+   "from": "soundevents/soundevents_minesweeper.vsndevts",
+   "bytes": 4490
+  },
+  "sounds/ambient/tree_fall.mp3": {
+   "from": "sounds/ambient/tree_fall.wav",
+   "stamp": "577047c7923c484f",
+   "bytes": 36349
+  },
+  "sounds/items/clarity_potion.mp3": {
+   "from": "sounds/items/clarity_potion.wav",
+   "stamp": "572861782d20e316",
+   "bytes": 111998
+  },
+  "sounds/items/manta.mp3": {
+   "from": "sounds/items/manta.wav",
+   "stamp": "149f553fa502e044",
+   "bytes": 39295
+  },
+  "sounds/misc/crownfall/combo_break.mp3": {
+   "from": "sounds/misc/crownfall/combo_break.wav",
+   "stamp": "6f1663f5c2ad2128",
+   "bytes": 8805
+  },
+  "sounds/misc/crownfall/music/match3_main.mp3": {
+   "from": "sounds/misc/crownfall/music/match3_main.mp3",
+   "stamp": "3addd08495bd2dfc",
+   "bytes": 712987
+  },
+  "sounds/misc/soundboard/tick-tock.mp3": {
+   "from": "sounds/misc/soundboard/tick-tock.mp3",
+   "stamp": "d83adb081a46b263",
+   "bytes": 48268
+  },
+  "sounds/music/valve_dota_001/stingers/radiant_lose.mp3": {
+   "from": "sounds/music/valve_dota_001/stingers/radiant_lose.mp3",
+   "stamp": "251c0ec44644a777",
+   "bytes": 480653
+  },
+  "sounds/music/valve_dota_001/stingers/radiant_win.mp3": {
+   "from": "sounds/music/valve_dota_001/stingers/radiant_win.mp3",
+   "stamp": "cc5e064c6e73b422",
+   "bytes": 848167
+  },
+  "sounds/physics/damage/building/damage05.mp3": {
+   "from": "sounds/physics/damage/building/damage05.wav",
+   "stamp": "409d1bf3bfe1d723",
+   "bytes": 4627
+  },
+  "sounds/ui/magic_immune.mp3": {
+   "from": "sounds/ui/magic_immune.wav",
+   "stamp": "c95e6f6f2b920780",
+   "bytes": 13746
+  },
+  "sounds/vo/techies/tech_attack_13.mp3": {
+   "from": "sounds/vo/techies/tech_attack_13.mp3",
+   "stamp": "8a278125e5c554d5",
+   "bytes": 6606
+  },
+  "sounds/vo/techies/tech_attack_14.mp3": {
+   "from": "sounds/vo/techies/tech_attack_14.mp3",
+   "stamp": "ee9abfa1b4a68fd8",
+   "bytes": 9950
+  },
+  "sounds/vo/techies/tech_attack_16.mp3": {
+   "from": "sounds/vo/techies/tech_attack_16.mp3",
+   "stamp": "19c181566e29feb9",
+   "bytes": 13502
+  },
+  "sounds/vo/techies/tech_attack_24.mp3": {
+   "from": "sounds/vo/techies/tech_attack_24.mp3",
+   "stamp": "eaee31ac669d369d",
+   "bytes": 8905
+  },
+  "sounds/vo/techies/tech_happy_31.mp3": {
+   "from": "sounds/vo/techies/tech_happy_31.mp3",
+   "stamp": "ae9435d4e7454d08",
+   "bytes": 9532
+  },
+  "sounds/vo/techies/tech_win_02.mp3": {
+   "from": "sounds/vo/techies/tech_win_02.mp3",
+   "stamp": "651e0d36d1cd5fc9",
+   "bytes": 15174
+  },
+  "sounds/weapons/hero/techies/land_mine01.mp3": {
+   "from": "sounds/weapons/hero/techies/land_mine01.wav",
+   "stamp": "54e027c2f25a2d5a",
+   "bytes": 33813
+  },
+  "sounds/weapons/hero/techies/land_mine02.mp3": {
+   "from": "sounds/weapons/hero/techies/land_mine02.wav",
+   "stamp": "1b151e9d47a99a7a",
+   "bytes": 37382
+  },
+  "sounds/weapons/hero/techies/land_mine_primed.mp3": {
+   "from": "sounds/weapons/hero/techies/land_mine_primed.wav",
+   "stamp": "0015a83b35eead32",
+   "bytes": 28643
+  },
+  "sounds/weapons/hero/techies/sign.mp3": {
+   "from": "sounds/weapons/hero/techies/sign.wav",
+   "stamp": "ae46efaa772e63b7",
+   "bytes": 4921
+  },
+  "strings.en.json": {
+   "from": "resource/localization/dota_english.txt, resource/localization/novels/crownfall_english.txt",
+   "count": 61,
+   "bytes": 5104
+  },
+  "strings.ru.json": {
+   "from": "resource/localization/dota_russian.txt, resource/localization/novels/crownfall_russian.txt",
+   "count": 61,
+   "bytes": 6760
+  }
+ },
+ "valve": {
+  "panorama/images/events/crownfall/minesweeper/board_background_psd": "images/board_background.webp",
+  "panorama/images/events/crownfall/minesweeper/cell_background_hidden_1_psd": "images/cell_background_hidden_1.webp",
+  "panorama/images/events/crownfall/minesweeper/cell_background_hidden_2_psd": "images/cell_background_hidden_2.webp",
+  "panorama/images/events/crownfall/minesweeper/cell_background_hidden_3_psd": "images/cell_background_hidden_3.webp",
+  "panorama/images/events/crownfall/minesweeper/cell_background_hidden_4_psd": "images/cell_background_hidden_4.webp",
+  "panorama/images/events/crownfall/minesweeper/cell_background_hidden_hovered_1_psd": "images/cell_background_hidden_hovered_1.webp",
+  "panorama/images/events/crownfall/minesweeper/cell_background_hidden_hovered_2_psd": "images/cell_background_hidden_hovered_2.webp",
+  "panorama/images/events/crownfall/minesweeper/cell_background_hidden_hovered_3_psd": "images/cell_background_hidden_hovered_3.webp",
+  "panorama/images/events/crownfall/minesweeper/cell_background_hidden_hovered_4_psd": "images/cell_background_hidden_hovered_4.webp",
+  "panorama/images/events/crownfall/minesweeper/cell_background_mine_revealed_psd": "images/cell_background_mine_revealed.webp",
+  "panorama/images/events/crownfall/minesweeper/cell_background_revealed_psd": "images/cell_background_revealed.webp",
+  "panorama/images/events/crownfall/minesweeper/cellflagicon_psd": "images/cellflagicon.webp",
+  "panorama/images/events/crownfall/minesweeper/echo_slash_png": "images/echo_slash.webp",
+  "panorama/images/events/crownfall/minesweeper/flaggedicon_psd": "images/flaggedicon.webp",
+  "panorama/images/events/crownfall/minesweeper/item_mana_icon_psd": "images/item_mana_icon.webp",
+  "panorama/images/events/crownfall/minesweeper/item_timer_icon_psd": "images/item_timer_icon.webp",
+  "panorama/images/events/crownfall/minesweeper/minesweeper_ui_bg_1_psd": "images/minesweeper_ui_bg_1.webp",
+  "panorama/images/events/crownfall/minesweeper/ss_logo_en_png": "images/ss_logo_en.webp",
+  "panorama/images/events/crownfall/minesweeper/timericon_psd": "images/timericon.webp",
+  "sounds/ambient/tree_fall": "sounds/ambient/tree_fall.mp3",
+  "sounds/items/clarity_potion": "sounds/items/clarity_potion.mp3",
+  "sounds/items/manta": "sounds/items/manta.mp3",
+  "sounds/misc/crownfall/combo_break": "sounds/misc/crownfall/combo_break.mp3",
+  "sounds/misc/crownfall/music/match3_main": "sounds/misc/crownfall/music/match3_main.mp3",
+  "sounds/misc/soundboard/tick-tock": "sounds/misc/soundboard/tick-tock.mp3",
+  "sounds/music/valve_dota_001/stingers/radiant_lose": "sounds/music/valve_dota_001/stingers/radiant_lose.mp3",
+  "sounds/music/valve_dota_001/stingers/radiant_win": "sounds/music/valve_dota_001/stingers/radiant_win.mp3",
+  "sounds/physics/damage/building/damage05": "sounds/physics/damage/building/damage05.mp3",
+  "sounds/ui/magic_immune": "sounds/ui/magic_immune.mp3",
+  "sounds/vo/techies/tech_attack_13": "sounds/vo/techies/tech_attack_13.mp3",
+  "sounds/vo/techies/tech_attack_14": "sounds/vo/techies/tech_attack_14.mp3",
+  "sounds/vo/techies/tech_attack_16": "sounds/vo/techies/tech_attack_16.mp3",
+  "sounds/vo/techies/tech_attack_24": "sounds/vo/techies/tech_attack_24.mp3",
+  "sounds/vo/techies/tech_happy_31": "sounds/vo/techies/tech_happy_31.mp3",
+  "sounds/vo/techies/tech_win_02": "sounds/vo/techies/tech_win_02.mp3",
+  "sounds/weapons/hero/techies/land_mine01": "sounds/weapons/hero/techies/land_mine01.mp3",
+  "sounds/weapons/hero/techies/land_mine02": "sounds/weapons/hero/techies/land_mine02.mp3",
+  "sounds/weapons/hero/techies/land_mine_primed": "sounds/weapons/hero/techies/land_mine_primed.mp3",
+  "sounds/weapons/hero/techies/sign": "sounds/weapons/hero/techies/sign.mp3"
+ }
+}

@@ -365,7 +365,7 @@ test('«Отклонить» on the card opens the reasons; a reason reaches the
   const reasons = cardReasons({ kind: 'submission', summary: JSON.stringify({ similar: [{ work: f.saved.id, title: 'x', score: 1 }] }) }, { origin: 'https://gridstudio.me' });
   assert.equal(reasons.find((r) => r.code === 'c').text, `Такая работа уже есть в мастерской — https://gridstudio.me/workshop?id=${f.saved.id}`);
   assert.equal(cardReasons({ kind: 'background', summary: JSON.stringify({ similar: [{ id: 7 }] }) }, { origin: 'https://gridstudio.me' }).find((r) => r.code === 'c').text,
-    'Такой фон уже есть в мастерской — https://gridstudio.me/background?background=7');
+    'Такой фон уже есть в мастерской — https://gridstudio.me/customize?background=7');
   // «Картинка» only for backgrounds.
   assert.equal(cardReasons({ kind: 'background', summary: '{}' }, { origin: 'https://gridstudio.me' }).find((r) => r.code === 'p').text, 'Картинки не пропускаем');
   assert.equal(cardReasons({ kind: 'submission', summary: '{}' }, { origin: 'https://gridstudio.me' }).some((r) => r.code === 'p'), false);

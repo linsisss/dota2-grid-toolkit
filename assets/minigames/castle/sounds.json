@@ -1,0 +1,401 @@
+{
+ "events": {
+  "crownfall.artillery.charge_weapon": {
+   "files": [
+    "sounds/misc/crownfall/artillery_charge.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "fadeOut": 0.5,
+   "mixgroup": "misc",
+   "duration": 2.385646
+  },
+  "crownfall.artillery.creep.death": {
+   "files": [
+    "sounds/weapons/creep/greevil/death01.mp3",
+    "sounds/weapons/creep/greevil/death02.mp3",
+    "sounds/weapons/creep/greevil/death03.mp3",
+    "sounds/weapons/creep/greevil/death04.mp3",
+    "sounds/weapons/creep/greevil/death05.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Weapons",
+   "duration": 1.461361
+  },
+  "crownfall.artillery.explosion": {
+   "files": [
+    "sounds/weapons/hero/techies/land_mine01.mp3",
+    "sounds/weapons/hero/techies/land_mine02.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "layers": [
+    "Hero_Techies.Debris"
+   ],
+   "mixgroup": "Weapons",
+   "duration": 2.480453
+  },
+  "crownfall.artillery.music.combat": {
+   "files": [
+    "sounds/misc/crownfall/music/match3_mus_norm_1.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "delay": 1,
+   "fadeIn": 3,
+   "fadeOut": 3,
+   "mixgroup": "misc",
+   "duration": 106.039726
+  },
+  "crownfall.artillery.music.level_lost": {
+   "files": [
+    "sounds/music/valve_dota_001/music/killed.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "fadeOut": 1,
+   "mixgroup": "misc",
+   "duration": 92.60408
+  },
+  "crownfall.artillery.music.level_won": {
+   "files": [
+    "sounds/music/valve_dota_001/stingers/radiant_win.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "fadeOut": 3,
+   "duration": 53.002449
+  },
+  "crownfall.artillery.music.menu": {
+   "files": [
+    "sounds/misc/crownfall/music/fighting_main.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "delay": 1,
+   "fadeIn": 2,
+   "fadeOut": 2,
+   "duration": 31.68375
+  },
+  "crownfall.artillery.ogre.death": {
+   "files": [
+    "sounds/misc/creep_deaths/death_ogre_01.mp3",
+    "sounds/misc/creep_deaths/death_ogre_02.mp3",
+    "sounds/misc/creep_deaths/death_ogre_03.mp3",
+    "sounds/misc/creep_deaths/death_ogre_04.mp3"
+   ],
+   "volume": 0.399902,
+   "pitch": 1,
+   "duration": 0.924014
+  },
+  "crownfall.artillery.shoot.default": {
+   "files": [
+    "sounds/ui/inventory/metalsmall_equip_02.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.01,
+    0.01
+   ],
+   "duration": 0.413333
+  },
+  "crownfall.artillery.shoot.grenade": {
+   "files": [
+    "sounds/weapons/hero/techies/attack.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.01,
+    0.01
+   ],
+   "duration": 1.06898
+  },
+  "crownfall.artillery.shoot.tunneler": {
+   "files": [
+    "sounds/weapons/hero/techies/attack.mp3"
+   ],
+   "volume": 0.7,
+   "pitch": 0.5,
+   "pitchRand": [
+    -0.01,
+    0.01
+   ],
+   "duration": 1.06898
+  },
+  "crownfall.artillery.skeleton.death": {
+   "files": [
+    "sounds/physics/deaths/specials/skeletonking_death.mp3"
+   ],
+   "volume": 0.599609,
+   "pitch": 1,
+   "duration": 1.578957
+  },
+  "crownfall.artillery.skywrath.death": {
+   "files": [
+    "sounds/misc/crownfall/artillery_sky_death.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.569524
+  },
+  "crownfall.artillery.snapfire.new_level": {
+   "files": [
+    "sounds/vo/snapfire/snapfire_spawn_04.mp3",
+    "sounds/vo/snapfire/snapfire_spawn_05.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "delay": 0.5,
+   "limiter": true,
+   "mixgroup": "misc",
+   "duration": 3.571125
+  },
+  "crownfall.artillery.snapfire.on_hit": {
+   "files": [
+    "sounds/vo/snapfire/snapfire_kill_01.mp3",
+    "sounds/vo/snapfire/snapfire_kill_02.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "delay": 0.7,
+   "limiter": true,
+   "mixgroup": "misc",
+   "duration": 4.866479
+  },
+  "crownfall.artillery.snapfire.out_of_ammo": {
+   "files": [
+    "sounds/vo/snapfire/snapfire_death_01.mp3",
+    "sounds/vo/snapfire/snapfire_death_02.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "delay": 0.5,
+   "limiter": true,
+   "mixgroup": "misc",
+   "duration": 3.267104
+  },
+  "crownfall.artillery.snapfire.victory": {
+   "files": [
+    "sounds/vo/snapfire/snapfire_win_01.mp3",
+    "sounds/vo/snapfire/snapfire_win_03.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "delay": 1.5,
+   "mixgroup": "misc",
+   "duration": 3.981937
+  },
+  "crownfall.artillery.swap_weapon.default": {
+   "files": [
+    "sounds/weapons/hero/snapfire/shotgun_fire.mp3"
+   ],
+   "volume": 0.2,
+   "pitch": 1,
+   "pitchRand": [
+    -0.01,
+    0.01
+   ],
+   "duration": 3.776962
+  },
+  "crownfall.artillery.swap_weapon.dropshot": {
+   "files": [
+    "sounds/ui/inventory/gun_equip.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 0.94,
+   "pitchRand": [
+    -0.01,
+    0.01
+   ],
+   "duration": 0.286984
+  },
+  "crownfall.artillery.swap_weapon.grenade": {
+   "files": [
+    "sounds/ui/inventory/metalsmall_equip_02.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 1,
+   "pitchRand": [
+    -0.01,
+    0.01
+   ],
+   "duration": 0.413333
+  },
+  "crownfall.artillery.swap_weapon.mirv": {
+   "files": [
+    "sounds/weapons/hero/snapfire/shotgun_load.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 0.7,
+   "pitchRand": [
+    -0.01,
+    0.01
+   ],
+   "duration": 0.783673
+  },
+  "crownfall.artillery.swap_weapon.tunneler": {
+   "files": [
+    "sounds/ui/inventory/staff_equip_01.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 1.05,
+   "pitchRand": [
+    -0.01,
+    0.01
+   ],
+   "duration": 0.507937
+  },
+  "crownfall.artillery.terrain_only_explosion": {
+   "files": [
+    "sounds/weapons/hero/techies/land_mine01.mp3",
+    "sounds/weapons/hero/techies/land_mine02.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1.4,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "layers": [
+    "Hero_Techies.Debris"
+   ],
+   "duration": 2.480453
+  },
+  "crownfall.artillery.zombie.death": {
+   "files": [
+    "sounds/misc/creep_deaths/death_satyr_hellcaller.mp3"
+   ],
+   "volume": 0.349854,
+   "pitch": 1,
+   "duration": 1.168005
+  }
+ },
+ "files": {
+  "sounds/misc/crownfall/artillery_charge.mp3": {
+   "duration": 2.385646
+  },
+  "sounds/misc/crownfall/artillery_sky_death.mp3": {
+   "duration": 0.569524
+  },
+  "sounds/misc/crownfall/music/fighting_main.mp3": {
+   "duration": 31.68375,
+   "loop": [
+    0,
+    31.683718820861678
+   ]
+  },
+  "sounds/misc/crownfall/music/match3_mus_norm_1.mp3": {
+   "duration": 106.039726,
+   "loop": [
+    0,
+    105.68526077097506
+   ]
+  },
+  "sounds/vo/snapfire/snapfire_death_01.mp3": {
+   "duration": 2.608934
+  },
+  "sounds/vo/snapfire/snapfire_kill_01.mp3": {
+   "duration": 2.311633
+  },
+  "sounds/vo/snapfire/snapfire_kill_02.mp3": {
+   "duration": 1.836848
+  },
+  "sounds/vo/snapfire/snapfire_spawn_04.mp3": {
+   "duration": 2.360635
+  },
+  "sounds/vo/snapfire/snapfire_win_01.mp3": {
+   "duration": 3.337029
+  },
+  "sounds/vo/snapfire/snapfire_win_03.mp3": {
+   "duration": 1.964331
+  }
+ },
+ "missing": {
+  "Hero_Techies.Debris": [
+   "sounds/weapons/hero/techies/debris01.vsnd",
+   "sounds/weapons/hero/techies/debris02.vsnd",
+   "sounds/weapons/hero/techies/debris03.vsnd"
+  ],
+  "crownfall.artillery.snapfire.new_level": [
+   "sounds/vo/snapfire/snapfire_spawn_06.vsnd",
+   "sounds/vo/snapfire/snapfire_spawn_11.vsnd",
+   "sounds/vo/snapfire/snapfire_spawn_12.vsnd",
+   "sounds/vo/snapfire/snapfire_spawn_13.vsnd",
+   "sounds/vo/snapfire/snapfire_spawn_18.vsnd",
+   "sounds/vo/snapfire/snapfire_spawn_19.vsnd",
+   "sounds/vo/snapfire/snapfire_spawn_20.vsnd",
+   "sounds/vo/snapfire/snapfire_spawn_22.vsnd",
+   "sounds/vo/snapfire/snapfire_spawn_23.vsnd",
+   "sounds/vo/snapfire/snapfire_spawn_24.vsnd"
+  ],
+  "crownfall.artillery.snapfire.on_hit": [
+   "sounds/vo/snapfire/snapfire_kill_03.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_04.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_05.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_06.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_07.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_08.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_09.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_10.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_11.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_12.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_13.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_14.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_15.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_16.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_17.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_18.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_19.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_20.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_21.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_22.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_23.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_24.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_25.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_26.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_27.vsnd",
+   "sounds/vo/snapfire/snapfire_kill_28.vsnd"
+  ],
+  "crownfall.artillery.snapfire.out_of_ammo": [
+   "sounds/vo/snapfire/snapfire_death_03.vsnd",
+   "sounds/vo/snapfire/snapfire_death_04.vsnd",
+   "sounds/vo/snapfire/snapfire_death_05.vsnd",
+   "sounds/vo/snapfire/snapfire_death_06.vsnd",
+   "sounds/vo/snapfire/snapfire_death_07.vsnd",
+   "sounds/vo/snapfire/snapfire_death_08.vsnd",
+   "sounds/vo/snapfire/snapfire_death_09.vsnd",
+   "sounds/vo/snapfire/snapfire_death_10.vsnd",
+   "sounds/vo/snapfire/snapfire_death_11.vsnd",
+   "sounds/vo/snapfire/snapfire_death_12.vsnd",
+   "sounds/vo/snapfire/snapfire_death_13.vsnd",
+   "sounds/vo/snapfire/snapfire_death_14.vsnd",
+   "sounds/vo/snapfire/snapfire_death_15.vsnd",
+   "sounds/vo/snapfire/snapfire_death_16.vsnd",
+   "sounds/vo/snapfire/snapfire_death_17.vsnd",
+   "sounds/vo/snapfire/snapfire_death_18.vsnd",
+   "sounds/vo/snapfire/snapfire_death_19.vsnd",
+   "sounds/vo/snapfire/snapfire_death_20.vsnd",
+   "sounds/vo/snapfire/snapfire_death_21.vsnd"
+  ],
+  "crownfall.artillery.snapfire.victory": [
+   "sounds/vo/snapfire/snapfire_win_04.vsnd",
+   "sounds/vo/snapfire/snapfire_win_05.vsnd",
+   "sounds/vo/snapfire/snapfire_win_06.vsnd"
+  ]
+ }
+}

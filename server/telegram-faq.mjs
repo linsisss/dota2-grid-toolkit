@@ -69,7 +69,7 @@ export const FAQ = Object.freeze([
 <li>Впишите <code>-language russian</code> и перезапустите игру.</li>
 </ol>`,
     buttons: (origin, custom) => [[InlineKeyboard.copyButton({ text: 'Скопировать параметр', copy: '-language russian' })],
-      [InlineKeyboard.urlButton({ text: 'Собрать фон заново', url: `${origin}/background`, ...button('background', custom) })]],
+      [InlineKeyboard.urlButton({ text: 'Собрать фон заново', url: `${origin}/customize`, ...button('background', custom) })]],
   },
 ]);
 

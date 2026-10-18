@@ -220,11 +220,29 @@ test('over HTTP: one’s own profile and its settings, the public page with work
 test('badges: the given ones in order, then only the highest like badge reached', async () => {
   const { profileBadges, GRANTED_BADGES, BADGES } = await import('../scripts/profile-badges.mjs');
   assert.deepEqual(GRANTED_BADGES, ['developer', 'bughunter', 'idea', 'sponsor']);
-  assert.ok(BADGES.every((badge) => badge.label && badge.hint && badge.icon));
+  assert.ok(BADGES.every((badge) => badge.label && badge.hint));
   assert.deepEqual(profileBadges(['sponsor', 'developer', 'likes500', 'other'], 0), ['developer', 'sponsor'], 'stored like badges or strangers do not count');
   assert.deepEqual(profileBadges([], 99), []);
   assert.deepEqual(profileBadges([], 100), ['likes100']);
   assert.deepEqual(profileBadges(['idea'], 1200), ['idea', 'likes500']);
+});
+
+test('badge medals: each badge its own medal, ids of its own, numbers as paths; the rare ones first', async () => {
+  const { BADGES, badgesByWeight } = await import('../scripts/profile-badges.mjs');
+  const { BADGE_MEDALS, badgeMarkInner, badgeMarkSVG } = await import('../scripts/badge-marks.mjs');
+  assert.deepEqual([...BADGE_MEDALS].sort(), BADGES.map((badge) => badge.id).sort());
+  const drawn = new Set();
+  for (const badge of BADGES) {
+    const inner = badgeMarkInner(badge, 'x1');
+    drawn.add(inner);
+    // Every gradient it uses is defined in it, under this drawing's own ids; no text, no outside fonts.
+    for (const [, id] of inner.matchAll(/url\(#([^)]+)\)/g)) assert.ok(inner.includes(`id="${id}"`), `${badge.id}: ${id}`);
+    assert.ok(!/url\(#(?!x1-)/.test(inner) && !/<text/.test(inner), badge.id);
+    assert.match(badgeMarkSVG(badge, 40), /^<svg xmlns="http:\/\/www.w3.org\/2000\/svg" width="40" height="40" viewBox="0 0 32 32"/);
+  }
+  assert.equal(drawn.size, BADGES.length, 'no two alike');
+  // Rare first, otherwise as given (the server gives them in the list's order); strangers dropped.
+  assert.deepEqual(badgesByWeight(['developer', 'moderator', 'bughunter', 'likes500', 'nope']).map((badge) => badge.id), ['developer', 'likes500', 'moderator', 'bughunter']);
 });
 
 test('the bot writes once when an admin gives a badge, not when it was taken back before', async (t) => {
@@ -279,7 +297,7 @@ test('followers hear about a new menu background too; the unsubscribe button nam
   await worker.deliverNotifications();
   assert.equal(sent.length, 1);
   assert.equal(sent[0].chat_id, fan.id);
-  assert.equal(sent[0].text, `Новый фон главного меню от <b>${author.nickname}</b>: <a href="https://gridstudio.me/background?background=${id}">«Лес»</a>`);
+  assert.equal(sent[0].text, `Новый фон главного меню от <b>${author.nickname}</b>: <a href="https://gridstudio.me/customize?background=${id}">«Лес»</a>`);
   assert.deepEqual(sent[0].reply_markup.inline_keyboard[1], [{ text: 'Отписаться от автора', callback_data: `sub:off:p:${author.profile}` }]);
   await worker.callback({ id: 'q', data: `sub:off:p:${author.profile}`, from: { id: Number(fan.id), is_bot: false },
     message: { message_id: 1, chat: { id: Number(fan.id), type: 'private' }, from: { id: 42 }, reply_markup: sent[0].reply_markup } });
@@ -299,6 +317,15 @@ test('«За неделю»: the week’s likes first, then all-time likes', asy
   assert.deepEqual(store.list({ popular: true }).items.map((w) => w.title), ['Старая', 'Новая']);
   assert.deepEqual(store.list({ popular: 'week' }).items.map((w) => w.title), ['Новая', 'Старая']);
   assert.deepEqual(store.list({}).items.map((w) => w.title), ['Новая', 'Старая']);
+  // «Скачивания» and «Категории» both ways (2026-10-16).
+  for (const who of ['b:1', 'b:2']) store.countDownload('work', fresh.id, who, null);
+  store.countDownload('work', old.id, 'b:3', null);
+  assert.deepEqual(store.list({ popular: 'downloads' }).items.map((w) => w.title), ['Новая', 'Старая']);
+  const long = grid(80); long.configs[0].categories.push({ ...long.configs[0].categories[0], x_position: 200 });
+  const wide = store.save({ title: 'Длинная', author: 'c', tags: ['Аниме'], grid: long }, identity(3));
+  store.moderate(wide.id, { action: 'approve', revision: wide.revision });
+  assert.deepEqual(store.list({ popular: 'categories' }).items.map((w) => w.title), ['Длинная', 'Новая', 'Старая']);
+  assert.deepEqual(store.list({ popular: 'categories-asc' }).items.map((w) => w.title), ['Новая', 'Старая', 'Длинная']);
 });
 
 test('before sending: the published grids and backgrounds a new one looks like, not the sender’s own', async (t) => {

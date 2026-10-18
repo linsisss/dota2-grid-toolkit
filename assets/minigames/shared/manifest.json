@@ -1,0 +1,146 @@
+{
+ "about": "Made by scripts/make-minigame-assets.mjs from Valve’s Dota 2 files; see docs/minigames.md.",
+ "files": {
+  "images/alt.svg": {
+   "from": "panorama/images/control_icons/24px/alt.svg",
+   "stamp": "9ce3c8658d6adb9d",
+   "bytes": 1574
+  },
+  "images/alt_key.webp": {
+   "from": "panorama/images/control_icons/alt_key_png.png",
+   "width": 72,
+   "height": 68,
+   "lossless": true,
+   "stamp": "e3f9e8bd29ebdce0",
+   "bytes": 4182
+  },
+  "images/arrow_down.svg": {
+   "from": "panorama/images/control_icons/24px/arrow_down.svg",
+   "stamp": "9192ccf70c107405",
+   "bytes": 339
+  },
+  "images/arrow_left.svg": {
+   "from": "panorama/images/control_icons/24px/arrow_left.svg",
+   "stamp": "926ee2097af1871f",
+   "bytes": 317
+  },
+  "images/arrow_right.svg": {
+   "from": "panorama/images/control_icons/24px/arrow_right.svg",
+   "stamp": "90006e98f55924a3",
+   "bytes": 320
+  },
+  "images/arrow_up.svg": {
+   "from": "panorama/images/control_icons/24px/arrow_up.svg",
+   "stamp": "ba99b7509d59b74c",
+   "bytes": 340
+  },
+  "images/bar_black.webp": {
+   "from": "panorama/images/hud/bar_black_psd.png",
+   "width": 181,
+   "height": 26,
+   "lossless": true,
+   "stamp": "05a01f2634cf134b",
+   "bytes": 1120
+  },
+  "images/controller.svg": {
+   "from": "panorama/images/control_icons/24px/controller.svg",
+   "stamp": "c326e5a482436f78",
+   "bytes": 1873
+  },
+  "images/mouse_leftclick.webp": {
+   "from": "panorama/images/events/crownfall/shmup/mouse_leftclick_png.png",
+   "width": 90,
+   "height": 90,
+   "lossless": true,
+   "stamp": "6eda25dbdd7d98a8",
+   "bytes": 1634
+  },
+  "images/mouse_middleclick.webp": {
+   "from": "panorama/images/events/crownfall/shmup/mouse_middleclick_png.png",
+   "width": 90,
+   "height": 90,
+   "lossless": true,
+   "stamp": "f6d5518bc5ac14b9",
+   "bytes": 1764
+  },
+  "images/mouse_rightclick.webp": {
+   "from": "panorama/images/events/crownfall/shmup/mouse_rightclick_png.png",
+   "width": 90,
+   "height": 90,
+   "lossless": true,
+   "stamp": "0c36b25335d20540",
+   "bytes": 1652
+  },
+  "images/reset.svg": {
+   "from": "panorama/images/control_icons/24px/reset.svg",
+   "stamp": "383d9ca710bdd234",
+   "bytes": 287
+  },
+  "images/space.svg": {
+   "from": "panorama/images/control_icons/24px/space.svg",
+   "stamp": "b5ff4c2ddb522d48",
+   "bytes": 205
+  },
+  "images/tab_background.webp": {
+   "from": "panorama/images/events/crownfall/buttons/tab_background_png.png",
+   "width": 441,
+   "height": 84,
+   "lossless": true,
+   "stamp": "ad5d5528d0afa966",
+   "bytes": 12512
+  },
+  "images/tabs_background.webp": {
+   "from": "panorama/images/events/crownfall/buttons/tabs_background_png.png",
+   "width": 280,
+   "height": 112,
+   "lossless": true,
+   "stamp": "9880a86fb8cf14d4",
+   "bytes": 15232
+  },
+  "images/x_close.svg": {
+   "from": "panorama/images/control_icons/24px/x_close.svg",
+   "stamp": "5c52fa2fccb443da",
+   "bytes": 316
+  },
+  "sounds.json": {
+   "from": "soundevents/game_sounds_ui_imported.vsndevts, soundevents/soundevents_crownfall.vsndevts",
+   "bytes": 2144
+  },
+  "sounds/ui/buttonclick.mp3": {
+   "from": "sounds/ui/buttonclick.wav",
+   "stamp": "03d7603ae7caac79",
+   "bytes": 3175
+  },
+  "sounds/ui/buttonrollover.mp3": {
+   "from": "sounds/ui/buttonrollover.wav",
+   "stamp": "f3cafa0693a944c2",
+   "bytes": 2549
+  },
+  "sounds/ui/ui_general_deny.mp3": {
+   "from": "sounds/ui/ui_general_deny.wav",
+   "stamp": "00ec2a4be7af7fba",
+   "bytes": 2835
+  }
+ },
+ "valve": {
+  "panorama/images/control_icons/24px/alt": "images/alt.svg",
+  "panorama/images/control_icons/24px/arrow_down": "images/arrow_down.svg",
+  "panorama/images/control_icons/24px/arrow_left": "images/arrow_left.svg",
+  "panorama/images/control_icons/24px/arrow_right": "images/arrow_right.svg",
+  "panorama/images/control_icons/24px/arrow_up": "images/arrow_up.svg",
+  "panorama/images/control_icons/24px/controller": "images/controller.svg",
+  "panorama/images/control_icons/24px/reset": "images/reset.svg",
+  "panorama/images/control_icons/24px/space": "images/space.svg",
+  "panorama/images/control_icons/24px/x_close": "images/x_close.svg",
+  "panorama/images/control_icons/alt_key_png": "images/alt_key.webp",
+  "panorama/images/events/crownfall/buttons/tab_background_png": "images/tab_background.webp",
+  "panorama/images/events/crownfall/buttons/tabs_background_png": "images/tabs_background.webp",
+  "panorama/images/events/crownfall/shmup/mouse_leftclick_png": "images/mouse_leftclick.webp",
+  "panorama/images/events/crownfall/shmup/mouse_middleclick_png": "images/mouse_middleclick.webp",
+  "panorama/images/events/crownfall/shmup/mouse_rightclick_png": "images/mouse_rightclick.webp",
+  "panorama/images/hud/bar_black_psd": "images/bar_black.webp",
+  "sounds/ui/buttonclick": "sounds/ui/buttonclick.mp3",
+  "sounds/ui/buttonrollover": "sounds/ui/buttonrollover.mp3",
+  "sounds/ui/ui_general_deny": "sounds/ui/ui_general_deny.mp3"
+ }
+}

@@ -301,6 +301,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* The layer the eraser works on (src/LayersPanel.jsx). */
+.layer-name .layer-erasing {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.layer-name .layer-erasing svg {
+  color: #c4b5ed;
+  width: 14px;
+  height: 14px;
+}
 .layer-name .item-count {
   margin-left: auto;
   font-size: 11px;
@@ -713,3 +723,67 @@ button svg,
 .rotation-angle.snapped {
   border-color: #f5c5a7;
 }
+
+/* «Режим эскиза» in the canvas settings (app.mjs sketchSection): a switch with its note, then the
+   heroes' choice as two segments. On the canvas: the empty-state text turns dark on the white field. */
+.inspector-panel .sketch-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 1px solid #ffffff14;
+  border-radius: 10px;
+  background: #ffffff06;
+  cursor: pointer;
+  transition: border-color .2s, background-color .2s;
+}
+.inspector-panel .sketch-toggle:hover { border-color: #ffffff24; }
+.inspector-panel .sketch-toggle:has(input:checked) { border-color: #c4b5ed66; background: #c4b5ed12; }
+.inspector-panel .sketch-toggle:has(input:focus-visible) { box-shadow: 0 0 0 3px #c4b5ed55; }
+.inspector-panel .sketch-toggle input { position: absolute; width: 1px; height: 1px; min-height: 0; padding: 0; opacity: 0; pointer-events: none; }
+.sketch-toggle-track {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 99px;
+  background: #3a3546;
+  box-shadow: inset 0 0 0 1px #ffffff1a;
+  transition: background-color .2s;
+}
+.sketch-toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #cfc8dc;
+  transition: translate .25s cubic-bezier(.3, 1.3, .45, 1), background-color .2s;
+}
+.sketch-toggle input:checked + .sketch-toggle-track { background: #c4b5ed; }
+.sketch-toggle input:checked + .sketch-toggle-track::after { translate: 14px 0; background: #ffffff; }
+.sketch-toggle-text { display: grid; gap: 3px; min-width: 0; }
+.sketch-toggle-text strong { color: #f0f3f8; font-size: 13px; font-weight: 600; }
+.sketch-toggle-text small { color: #aab7c8; font-size: 12px; line-height: 1.45; }
+.inspector-panel .sketch-heroes-label { display: block; }
+.sketch-heroes { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border-radius: 9px; background: #12161b; box-shadow: inset 0 0 0 1px #414955; }
+.sketch-heroes button {
+  min-height: 30px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: #aab7c8;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background-color .2s, color .2s;
+}
+.sketch-heroes button:hover { color: #f0f3f8; }
+.sketch-heroes button[aria-checked='true'] { background: #c4b5ed; color: #231b35; font-weight: 600; }
+.canvas-viewport.sketch .empty-canvas strong { color: #24212c; }
+.canvas-viewport.sketch .empty-canvas,
+.canvas-viewport.sketch .empty-canvas > span { color: #5d5868; }
+.canvas-viewport.sketch .empty-canvas svg { color: #9a94a8; }
+@media (prefers-reduced-motion: reduce) { .sketch-toggle-track::after { transition: none; } }

@@ -1,0 +1,13 @@
+<!doctype html><html><body style="margin:0;background:transparent">
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script>
+<canvas id="c" width="400" height="400" style="width:400px;height:400px"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+window.THREE = THREE;
+const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
+window.loadModel = (url) => loader.loadAsync(url);
+window.loadImage = (url) => new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = url; });
+window.ready = true;
+</script></body></html>

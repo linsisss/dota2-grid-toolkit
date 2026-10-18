@@ -52,6 +52,8 @@
 .home-dotadle > span:nth-child(2) { display:grid; flex:1; }
 .home-dotadle b { font-weight:600; }
 .home-dotadle small { color:var(--lp-muted); font-size:13px; }
+.home-minigames .home-dotadle-art { object-fit:cover; padding:0; }
+.home-dotadle + .home-dotadle { margin-top:8px; }
 .home-dotadle > svg { width:18px; height:18px; color:var(--lp-muted); }
 
 .home-footer { flex-wrap:wrap; padding-top:14px !important; }

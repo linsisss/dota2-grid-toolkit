@@ -9,7 +9,7 @@
 import { createHash, createHmac } from 'node:crypto';
 import { CatalogError } from './catalog-store.mjs';
 import { ensureGridNote } from '../scripts/grid-note.mjs';
-import { backgroundRemoveScript, backgroundScript, fontRemoveScript, fontScript, gridExpiredScript, gridRestoreScript, gridScript } from '../scripts/installer.mjs';
+import { backgroundRemoveScript, backgroundScript, customizeRemoveScript, customizeScript, fontRemoveScript, fontScript, gridExpiredScript, gridRestoreScript, gridScript } from '../scripts/installer.mjs';
 
 export const GRID_INSTALL_TTL = 7 * 86_400_000;
 // nginx takes 9 MB for /api/catalog/ (deploy/nginx*.conf); a grid file of up to 100 grids fits.
@@ -56,6 +56,11 @@ export class GridInstalls {
     const font = /^font-([0-9a-f]{64})-([1-9][0-9]{0,8})(-en)?$/.exec(id);
     if (font) return fontScript({ sha256: font[1], size: Number(font[2]), url: `${restoreAddress}file/font-${font[1]}` },
       { language: font[3] ? 'en' : 'ru', remove: `${restoreAddress}${font[3] ? 'font-remove-en' : 'font-remove'}` });
+    // The customization page's one file (all-<sha256>-<size>, all-remove; scripts/customize-pack.mjs).
+    if (id === 'all-remove' || id === 'all-remove-en') return customizeRemoveScript(id === 'all-remove-en' ? 'en' : 'ru');
+    const all = /^all-([0-9a-f]{64})-([1-9][0-9]{0,9})(-en)?$/.exec(id);
+    if (all) return customizeScript({ sha256: all[1], size: Number(all[2]), url: `${restoreAddress}file/all-${all[1]}` },
+      { language: all[3] ? 'en' : 'ru', remove: `${restoreAddress}${all[3] ? 'all-remove-en' : 'all-remove'}` });
     const row = /^[A-Za-z0-9_-]{16}$/.test(id) && this.store.get('SELECT grid, lang FROM installs WHERE id=? AND expires>=?', id, this.store.now());
     if (!row) return gridExpiredScript('ru');
     const bytes = gridBytes(row.grid);

@@ -1,0 +1,23 @@
+<!doctype html><html><body style="margin:0;background:#000">
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+window.THREE = THREE;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping;
+document.body.appendChild(renderer.domElement);
+window.renderer = renderer;
+const loader = new GLTFLoader();
+const cache = {};
+// Source units, Source axes → three: (x, y, z) → (x, z, -y)
+window.S = (x, y, z) => new THREE.Vector3(y, z, x);
+window.load = async (url) => {
+  if (!cache[url]) cache[url] = await loader.loadAsync(url);
+  const root = cache[url].scene.clone(true);
+  const wrap = new THREE.Group(); wrap.add(root); wrap.scale.setScalar(1 / 0.0254); wrap.updateMatrixWorld(true);
+  return wrap;
+};
+window.ready = true;
+</script></body></html>

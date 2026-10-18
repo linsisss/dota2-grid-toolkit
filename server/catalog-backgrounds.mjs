@@ -38,6 +38,41 @@ async function probe(path) {
   return info;
 }
 
+// A still picture made into a video (2026-10-16: «запретить в мастерскую публиковать картинки для
+// фонов»): the builder turns a picture into 10 s of one frame. Every quarter of a second is compared,
+// at 640×360 in colour, with the first frame. Measured on the gallery on 2026-10-16: a picture differs
+// from itself by 2–4 levels at most (the encoder's noise); rain, hair in the wind or one small sprite
+// change hundreds of pixels by more than 8 levels in some colour. So: fewer than 0.01% of the pixels (23) past 8
+// levels in every frame — a still. If ffmpeg fails, it is not a no.
+export const STILL = Object.freeze({ width: 640, height: 360, fps: 4, level: 8, share: 0.0001 });
+export function stillVideo(path) {
+  return new Promise((resolve) => {
+    const child = spawn('ffmpeg', ['-v', 'error', '-protocol_whitelist', 'file', '-i', path, '-an',
+      '-vf', `scale=${STILL.width}:${STILL.height},fps=${STILL.fps},format=rgb24`, '-f', 'rawvideo', '-'], { stdio: ['ignore', 'pipe', 'ignore'] });
+    try { setPriority(child.pid, 10); } catch { /* As it is. */ }
+    const pixels = STILL.width * STILL.height, size = pixels * 3, limit = Math.ceil(pixels * STILL.share);
+    let first = null, buffered = Buffer.alloc(0), moving = false;
+    child.stdout.on('data', (chunk) => {
+      if (moving) return;
+      buffered = Buffer.concat([buffered, chunk]);
+      while (buffered.length >= size && !moving) {
+        const frame = buffered.subarray(0, size);
+        if (!first) first = Buffer.from(frame);
+        else {
+          let changed = 0;
+          for (let i = 0; i < size && changed <= limit; i += 3)
+            if (Math.abs(frame[i] - first[i]) > STILL.level || Math.abs(frame[i + 1] - first[i + 1]) > STILL.level || Math.abs(frame[i + 2] - first[i + 2]) > STILL.level) changed++;
+          moving = changed > limit;
+        }
+        buffered = buffered.subarray(size);
+      }
+      if (moving) child.kill('SIGKILL');
+    });
+    const timer = setTimeout(() => child.kill('SIGKILL'), 60_000);
+    child.on('error', () => { clearTimeout(timer); resolve(false); });
+    child.on('close', (code) => { clearTimeout(timer); resolve(!moving && code === 0 && !!first); });
+  });
+}
 
 // A light copy for the workshop card's hover (asked for on 2026-10-04: the full 1080p video was
 // downloaded on every hover, 95% of the site's traffic): 640 px wide, 24 fps, its first 15 seconds,
@@ -147,6 +182,7 @@ export class CatalogBackgrounds {
       : picture.width !== width || picture.height !== height ? `Размер видео ${picture.width}×${picture.height}, а для ${meta.aspect} нужен ${width}×${height}.`
       : !(seconds > 0 && seconds <= limits.seconds) ? `Длина видео ${seconds.toFixed(1)} с, можно до ${limits.seconds - 1} с.` : '';
     if (problem) { rmSync(temp, { force: true }); fail(415, problem); }
+    if (await stillVideo(temp)) { rmSync(temp, { force: true }); fail(415, 'Картинки в мастерскую не публикуем: нужен движущийся фон — GIF или видео.'); }
     // The poster is redrawn, so only pixels are kept.
     let jpeg;
     try {
@@ -240,8 +276,12 @@ export class CatalogBackgrounds {
     const where = clauses.join(' AND ');
     const total = this.store.get(`SELECT count(*) n FROM backgrounds WHERE ${where}`, ...args).n;
     // 'week': by the likes of the last seven days first, as the grids (server/catalog-store.mjs list).
-    const week = popular === 'week' ? `(SELECT count(*) FROM background_likes WHERE background=backgrounds.id AND created>=${Math.floor(this.store.now() - 7 * 86_400_000)}) DESC, ` : '';
-    const items = this.store.all(`SELECT * FROM backgrounds WHERE ${where} ORDER BY ${week}${popular ? `${LIKES} DESC, ` : ''}updated DESC, id DESC LIMIT 24 OFFSET ?`, ...args, page * 24).map((row) => this.view(row, account));
+    // 'downloads': all-time downloads (2026-10-16). Symbols mean nothing for a background: likes.
+    const order = {
+      week: `(SELECT count(*) FROM background_likes WHERE background=backgrounds.id AND created>=${Math.floor(this.store.now() - 7 * 86_400_000)}) DESC, ${LIKES} DESC, `,
+      downloads: "(SELECT count(*) FROM downloads WHERE kind='background' AND item=CAST(backgrounds.id AS TEXT)) DESC, "
+    }[popular] ?? (popular ? `${LIKES} DESC, ` : '');
+    const items = this.store.all(`SELECT * FROM backgrounds WHERE ${where} ORDER BY ${order}updated DESC, id DESC LIMIT 24 OFFSET ?`, ...args, page * 24).map((row) => this.view(row, account));
     return { items, total, aspects };
   }
   // A creator's approved backgrounds, newest first (the profile page, server/profiles.mjs).

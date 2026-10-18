@@ -1,0 +1,1026 @@
+{
+ "events": {
+  "survivors.acquire_item": {
+   "files": [
+    "sounds/ui/buy.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 1.18068
+  },
+  "survivors.acquire_scepter": {
+   "files": [
+    "sounds/ui/hud_equip_scepter.mp3"
+   ],
+   "volume": 0.7,
+   "pitch": 1,
+   "duration": 2.179297
+  },
+  "survivors.acquire_shard": {
+   "files": [
+    "sounds/ui/hud_equip_shard.mp3"
+   ],
+   "volume": 0.7,
+   "pitch": 1,
+   "duration": 1.307642
+  },
+  "survivors.ambient.lightning": {
+   "files": [
+    "sounds/misc/crownfall/enc/lightning01.mp3",
+    "sounds/misc/crownfall/enc/lightning02.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "delay": 0.25,
+   "mixgroup": "Weapons",
+   "duration": 9.950046
+  },
+  "survivors.annihilation.cast": {
+   "files": [
+    "sounds/weapons/hero/zuus/gods_wrath_cast.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "ambient",
+   "duration": 5.025012
+  },
+  "survivors.arcane_bolt.cast": {
+   "files": [
+    "sounds/weapons/hero/skywrath/arcane_bolt_cast.mp3"
+   ],
+   "volume": 0.15,
+   "pitch": 1,
+   "pitchRand": [
+    -0.1,
+    0.1
+   ],
+   "fadeOut": 0.5,
+   "stopAt": 0.5,
+   "mixgroup": "ambient",
+   "duration": 6.642041
+  },
+  "survivors.arcane_bolt.hit": {
+   "files": [
+    "sounds/weapons/hero/skywrath/arcane_bolt_target.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "volumeRand": [
+    -0.1,
+    0.1
+   ],
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "fadeOut": 0.1,
+   "mixgroup": "Physics",
+   "duration": 2.249864
+  },
+  "survivors.chain_frost.cast": {
+   "files": [
+    "sounds/misc/crownfall/chain_frost_cast.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.1,
+    0.1
+   ],
+   "fadeOut": 0.2,
+   "mixgroup": "Weapons",
+   "duration": 3.861202
+  },
+  "survivors.chain_frost.hit": {
+   "files": [
+    "sounds/weapons/hero/lich/chain_frost_impact.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "volumeRand": [
+    -0.1,
+    0
+   ],
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "fadeOut": 1,
+   "mixgroup": "Physics",
+   "duration": 1.034014
+  },
+  "survivors.cheese_pickup": {
+   "files": [
+    "sounds/items/cheese.mp3"
+   ],
+   "volume": 0.3,
+   "pitch": 1,
+   "duration": 3.111882
+  },
+  "survivors.cookie_pickup": {
+   "files": [
+    "sounds/weapons/hero/snapfire/cookie_target.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 1.20102
+  },
+  "survivors.counter_helix.cast": {
+   "files": [
+    "sounds/weapons/hero/axe/counterhelix.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "ambient",
+   "duration": 2.00059
+  },
+  "survivors.death.absorber": {
+   "files": [
+    "sounds/ui/npe_objective_given.mp3"
+   ],
+   "volume": 0,
+   "pitch": 1,
+   "mixgroup": "Weapons",
+   "duration": 2.97966
+  },
+  "survivors.death.baby_roshan_item_holder": {
+   "files": [
+    "sounds/ui/npe_objective_given.mp3"
+   ],
+   "volume": 0,
+   "pitch": 1,
+   "mixgroup": "Weapons",
+   "duration": 2.97966
+  },
+  "survivors.death.granite_golem_large": {
+   "files": [
+    "sounds/physics/deaths/common/body_impact_heavy_01.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 0.722676
+  },
+  "survivors.death.granite_golem_medium": {
+   "files": [
+    "sounds/physics/deaths/common/body_impact_medium_01.mp3",
+    "sounds/physics/deaths/common/body_impact_medium_02.mp3",
+    "sounds/physics/deaths/common/body_impact_medium_03.mp3",
+    "sounds/physics/deaths/common/body_impact_medium_04.mp3"
+   ],
+   "volume": 0.75,
+   "pitch": 1,
+   "duration": 0.361202
+  },
+  "survivors.death.granite_golem_small": {
+   "files": [
+    "sounds/physics/deaths/common/body_impact_light_01.mp3",
+    "sounds/physics/deaths/common/body_impact_light_02.mp3",
+    "sounds/physics/deaths/common/body_impact_light_03.mp3",
+    "sounds/physics/deaths/common/body_impact_light_04.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 0.282676
+  },
+  "survivors.death.imperia": {
+   "files": [
+    "sounds/vo/vengefulspirit/imperia_death_01.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 2.533719
+  },
+  "survivors.death.resurrector": {
+   "files": [
+    "sounds/ui/npe_objective_given.mp3"
+   ],
+   "volume": 0,
+   "pitch": 1,
+   "mixgroup": "Weapons",
+   "duration": 2.97966
+  },
+  "survivors.death.skeleton_archer": {
+   "files": [
+    "sounds/misc/creep_deaths/death_skeleton_01.mp3",
+    "sounds/misc/creep_deaths/death_skeleton_02.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 0.75,
+   "mixgroup": "Weapons",
+   "duration": 0.896009
+  },
+  "survivors.death.vase": {
+   "files": [
+    "sounds/misc/crownfall/urn_break.mp3"
+   ],
+   "volume": 0.75,
+   "pitch": 1,
+   "volumeRand": [
+    -0.1,
+    0
+   ],
+   "pitchRand": [
+    -0.1,
+    0.1
+   ],
+   "mixgroup": "Physics",
+   "duration": 1.581497
+  },
+  "survivors.echo_strike.tick": {
+   "files": [
+    "sounds/weapons/hero/kez/echo_katana_cast.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 1,
+   "volumeRand": [
+    -0.1,
+    0
+   ],
+   "pitchRand": [
+    -0.1,
+    0.1
+   ],
+   "mixgroup": "Weapons",
+   "duration": 1.50449
+  },
+  "survivors.frostbite.cast": {
+   "files": [
+    "sounds/weapons/hero/crystal_maiden/frostbite.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "volumeRand": [
+    -0.1,
+    0.1
+   ],
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "fadeOut": 0.5,
+   "stopAt": 0.5,
+   "mixgroup": "ambient",
+   "duration": 4.937483
+  },
+  "survivors.game_music.active": {
+   "files": [
+    "sounds/misc/crownfall/music/survivors_main.mp3"
+   ],
+   "volume": 0.3,
+   "pitch": 1,
+   "fadeIn": 2,
+   "fadeOut": 1,
+   "mixgroup": "misc",
+   "duration": 56.05093
+  },
+  "survivors.game_music.boss": {
+   "files": [
+    "sounds/misc/crownfall/music/survivors_boss.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "fadeIn": 1,
+   "fadeOut": 3,
+   "mixgroup": "misc",
+   "duration": 51.975056
+  },
+  "survivors.game_music.loss": {
+   "files": [
+    "sounds/music/valve_dota_001/music/killed.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "fadeOut": 1,
+   "mixgroup": "misc",
+   "duration": 92.60408
+  },
+  "survivors.game_music.setup": {
+   "files": [
+    "sounds/misc/crownfall/music/survivors_boss.mp3"
+   ],
+   "volume": 0.3,
+   "pitch": 1,
+   "delay": 1.5,
+   "fadeOut": 2,
+   "mixgroup": "misc",
+   "duration": 51.975056
+  },
+  "survivors.game_music.win": {
+   "files": [
+    "sounds/music/valve_dota_001/stingers/radiant_win.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "fadeOut": 1,
+   "mixgroup": "misc",
+   "duration": 53.002449
+  },
+  "survivors.gold_pickup": {
+   "files": [
+    "sounds/ui/coins.mp3"
+   ],
+   "volume": 0.2,
+   "pitch": 1,
+   "duration": 1.589909
+  },
+  "survivors.imperia.burning_ground": {
+   "files": [
+    "sounds/vo/vengefulspirit/imperia_laugh_03.mp3",
+    "sounds/vo/vengefulspirit/imperia_laugh_07.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 3.721542
+  },
+  "survivors.imperia.burning_ground.cast": {
+   "files": [
+    "sounds/weapons/hero/invoker/meteor_cast.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "delay": 1,
+   "mixgroup": "Weapons",
+   "duration": 1.284172
+  },
+  "survivors.imperia.burning_ground.impact": {
+   "files": [
+    "sounds/weapons/hero/invoker/meteor.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1.5,
+   "volumeRand": [
+    -0.1,
+    0.1
+   ],
+   "pitchRand": [
+    -0.1,
+    0.1
+   ],
+   "fadeOut": 1,
+   "stopAt": 3,
+   "mixgroup": "ambient",
+   "duration": 4.88
+  },
+  "survivors.imperia.demon_portal.0": {
+   "files": [
+    "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_03.mp3",
+    "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_06.mp3"
+   ],
+   "volume": 0.75,
+   "pitch": 1,
+   "duration": 4.064762
+  },
+  "survivors.imperia.demon_portal.1": {
+   "files": [
+    "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_03.mp3",
+    "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_04.mp3"
+   ],
+   "volume": 0.75,
+   "pitch": 1,
+   "duration": 4.325828
+  },
+  "survivors.imperia.demon_portal.2": {
+   "files": [
+    "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_01.mp3",
+    "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_02.mp3"
+   ],
+   "volume": 0.75,
+   "pitch": 1,
+   "duration": 4.416191
+  },
+  "survivors.imperia.enrage": {
+   "files": [
+    "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_02.mp3",
+    "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_04.mp3"
+   ],
+   "volume": 0.75,
+   "pitch": 1,
+   "duration": 5.042131
+  },
+  "survivors.imperia.magic_missile": {
+   "files": [
+    "sounds/vo/vengefulspirit/imperia_laugh_03.mp3",
+    "sounds/vo/vengefulspirit/imperia_laugh_07.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 3.721542
+  },
+  "survivors.imperia.magic_missile.projectile.hit": {
+   "files": [
+    "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 0.8,
+   "volumeRand": [
+    -0.1,
+    0
+   ],
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "fadeOut": 0.2,
+   "mixgroup": "Weapons",
+   "duration": 1.835125
+  },
+  "survivors.imperia.magic_missile.projectile.shoot": {
+   "files": [
+    "sounds/weapons/hero/vengeful_spirit/magic_missile1.mp3",
+    "sounds/weapons/hero/vengeful_spirit/magic_missile2.mp3",
+    "sounds/weapons/hero/vengeful_spirit/magic_missile3.mp3",
+    "sounds/weapons/hero/vengeful_spirit/magic_missile4.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 0.8,
+   "pitchRand": [
+    -0.1,
+    0
+   ],
+   "fadeOut": 0.2,
+   "mixgroup": "Weapons",
+   "duration": 1.23102
+  },
+  "survivors.imperia.pillar.destroy": {
+   "files": [
+    "sounds/physics/damage/building/dire_tower_destruction_01.mp3",
+    "sounds/physics/damage/building/dire_tower_destruction_02.mp3",
+    "sounds/physics/damage/building/dire_tower_destruction_03.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "mixgroup": "Weapons",
+   "duration": 4.333447
+  },
+  "survivors.imperia.radiate_rays.start": {
+   "files": [
+    "sounds/weapons/hero/phoenix/sunray_beam_loop.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "fadeIn": 5,
+   "fadeOut": 5,
+   "stopAt": 10,
+   "mixgroup": "Ultimates",
+   "duration": 5.477846
+  },
+  "survivors.item.drop": {
+   "files": [
+    "sounds/ui/npe_objective_given.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 2.97966
+  },
+  "survivors.kez.innate.crit": {
+   "files": [
+    "sounds/weapons/hero/kez/sai_crit.mp3"
+   ],
+   "volume": 0.2,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Weapons",
+   "duration": 1.983946
+  },
+  "survivors.kez.innate.proc": {
+   "files": [
+    "sounds/weapons/hero/kez/vulnerable_target.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Weapons",
+   "duration": 4.505896
+  },
+  "survivors.knife_throw.cast": {
+   "files": [
+    "sounds/weapons/hero/shared/small_blade/whoosh03.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "pitchRand": [
+    -0.1,
+    0.1
+   ],
+   "mixgroup": "physics",
+   "duration": 0.188254
+  },
+  "survivors.knife_throw.hit": {
+   "files": [
+    "sounds/weapons/hero/ringmaster/impale_stab_1.mp3",
+    "sounds/weapons/hero/ringmaster/impale_stab_2.mp3",
+    "sounds/weapons/hero/ringmaster/impale_stab_3.mp3"
+   ],
+   "volume": 0.35,
+   "pitch": 1,
+   "volumeRand": [
+    -0.1,
+    0
+   ],
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Weapons",
+   "duration": 0.233311
+  },
+  "survivors.laguna_blade.cast": {
+   "files": [
+    "sounds/weapons/hero/lina/lagunablade.mp3"
+   ],
+   "volume": 0.3,
+   "pitch": 1,
+   "volumeRand": [
+    -0.15,
+    0
+   ],
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "ambient",
+   "duration": 1.984762
+  },
+  "survivors.land_mine.armed": {
+   "files": [
+    "sounds/weapons/hero/techies/land_mine_primed.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "mixgroup": "ambient",
+   "duration": 1.367982
+  },
+  "survivors.land_mine.cast": {
+   "files": [
+    "sounds/weapons/hero/techies/land_mine_plant.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "mixgroup": "ambient",
+   "duration": 1.365805
+  },
+  "survivors.land_mine.explode": {
+   "files": [
+    "sounds/weapons/hero/techies/land_mine01.mp3",
+    "sounds/weapons/hero/techies/land_mine02.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "volumeRand": [
+    -0.1,
+    0.1
+   ],
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Weapons",
+   "duration": 2.480453
+  },
+  "survivors.levelup": {
+   "files": [
+    "sounds/ui/power_up_06.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 5.620522
+  },
+  "survivors.magic_missile.cast": {
+   "files": [
+    "sounds/weapons/hero/vengeful_spirit/magic_missile1.mp3",
+    "sounds/weapons/hero/vengeful_spirit/magic_missile2.mp3",
+    "sounds/weapons/hero/vengeful_spirit/magic_missile3.mp3",
+    "sounds/weapons/hero/vengeful_spirit/magic_missile4.mp3"
+   ],
+   "volume": 0.15,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "fadeOut": 0.2,
+   "mixgroup": "Weapons",
+   "duration": 1.23102
+  },
+  "survivors.magic_missile.hit": {
+   "files": [
+    "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "volumeRand": [
+    -0.1,
+    0
+   ],
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "fadeOut": 0.2,
+   "mixgroup": "Physics",
+   "duration": 1.835125
+  },
+  "survivors.magnet_pickup": {
+   "files": [
+    "sounds/weapons/hero/magnataur/reverse_polarity.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 3.153333
+  },
+  "survivors.miniboss.arrived": {
+   "files": [
+    "sounds/music/valve_dota_001/music/ganked_sml_01.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "mixgroup": "Stingers",
+   "duration": 3.892245
+  },
+  "survivors.miniboss.incoming": {
+   "files": [
+    "sounds/misc/crownfall/boss_warn.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "stopAt": 3,
+   "duration": 0.858231
+  },
+  "survivors.miniboss.ressurect": {
+   "files": [
+    "sounds/weapons/hero/skeleton_king/reincarnate.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 6.183356
+  },
+  "survivors.mortimer_kisses.cast": {
+   "files": [
+    "sounds/weapons/hero/snapfire/lizard_blob_launch.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "volumeRand": [
+    -0.1,
+    0
+   ],
+   "pitchRand": [
+    -0.1,
+    0.1
+   ],
+   "mixgroup": "Weapons",
+   "duration": 2.112517
+  },
+  "survivors.mortimer_kisses.tick": {
+   "files": [
+    "sounds/weapons/hero/snapfire/lizard_blob_impact.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "volumeRand": [
+    -0.1,
+    0.1
+   ],
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "fadeOut": 0.1,
+   "mixgroup": "Physics",
+   "duration": 3.893333
+  },
+  "survivors.player_hit.dragonus": {
+   "files": [
+    "sounds/vo/skywrath_mage/skywrath_crown_anger_01.mp3",
+    "sounds/vo/skywrath_mage/skywrath_crown_anger_02.mp3"
+   ],
+   "volume": 0.75,
+   "pitch": 1,
+   "duration": 1.03195
+  },
+  "survivors.player_hit.kez": {
+   "files": [
+    "sounds/vo/kez/kez_pain_01.mp3",
+    "sounds/vo/kez/kez_pain_02.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 1.035964
+  },
+  "survivors.player_hit.shen": {
+   "files": [
+    "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3",
+    "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3"
+   ],
+   "volume": 0.75,
+   "pitch": 1,
+   "duration": 1.289705
+  },
+  "survivors.snotty_bat.cast": {
+   "files": [
+    "sounds/misc/crownfall/snotty_bat.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 1,
+   "volumeRand": [
+    -0.1,
+    0.1
+   ],
+   "pitchRand": [
+    -0.1,
+    0.1
+   ],
+   "mixgroup": "ambient",
+   "duration": 2.298231
+  },
+  "survivors.spirits.cast": {
+   "files": [
+    "sounds/weapons/hero/wisp/spirits_cast.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "mixgroup": "ambient",
+   "duration": 3.990567
+  },
+  "survivors.stampede.cast": {
+   "files": [
+    "sounds/weapons/hero/centaur/stampede_cast.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "ambient",
+   "duration": 3.569002
+  },
+  "survivors.swashbuckle.cast": {
+   "files": [
+    "sounds/weapons/hero/pangolier/swashbuckle_cast.mp3"
+   ],
+   "volume": 0.15,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "ambient",
+   "duration": 1.860499
+  },
+  "survivors.torrent.cast": {
+   "files": [
+    "sounds/weapons/hero/kunkka/ability_geyser.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "ambient",
+   "duration": 3.010794
+  },
+  "survivors.track.cast": {
+   "files": [
+    "sounds/weapons/hero/bounty_hunter/track.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "mixgroup": "ambient",
+   "duration": 2.467415
+  },
+  "survivors.xp_pickup": {
+   "files": [
+    "sounds/misc/crownfall/xp_pickup.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "mixgroup": "physics",
+   "duration": 0.923333
+  }
+ },
+ "files": {
+  "sounds/misc/crownfall/boss_warn.mp3": {
+   "duration": 0.858231,
+   "loop": [
+    0,
+    0.8582086167800453
+   ]
+  },
+  "sounds/misc/crownfall/chain_frost_cast.mp3": {
+   "duration": 3.861202
+  },
+  "sounds/misc/crownfall/enc/lightning01.mp3": {
+   "duration": 7.549047
+  },
+  "sounds/misc/crownfall/enc/lightning02.mp3": {
+   "duration": 9.950046
+  },
+  "sounds/misc/crownfall/music/survivors_boss.mp3": {
+   "duration": 51.975056,
+   "loop": [
+    0,
+    51.975034013605445
+   ]
+  },
+  "sounds/misc/crownfall/music/survivors_main.mp3": {
+   "duration": 56.05093,
+   "loop": [
+    0,
+    56.05090702947846
+   ]
+  },
+  "sounds/misc/crownfall/snotty_bat.mp3": {
+   "duration": 2.298231
+  },
+  "sounds/misc/crownfall/urn_break.mp3": {
+   "duration": 1.581497
+  },
+  "sounds/misc/crownfall/xp_pickup.mp3": {
+   "duration": 0.923333
+  },
+  "sounds/vo/kez/kez_pain_01.mp3": {
+   "duration": 0.679184
+  },
+  "sounds/vo/kez/kez_pain_02.mp3": {
+   "duration": 0.662245
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_01.mp3": {
+   "duration": 1.03195
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_02.mp3": {
+   "duration": 0.901746
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_02.mp3": {
+   "duration": 3.535646
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_03.mp3": {
+   "duration": 2.061746
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_04.mp3": {
+   "duration": 3.081973
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_06.mp3": {
+   "duration": 4.064762
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_01.mp3": {
+   "duration": 2.242245
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_02.mp3": {
+   "duration": 1.706372
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_03.mp3": {
+   "duration": 2.940317
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_04.mp3": {
+   "duration": 2.601905
+  },
+  "sounds/vo/vengefulspirit/imperia_death_01.mp3": {
+   "duration": 2.533719
+  },
+  "sounds/vo/vengefulspirit/imperia_laugh_03.mp3": {
+   "duration": 1.676485
+  },
+  "sounds/vo/vengefulspirit/imperia_laugh_07.mp3": {
+   "duration": 1.564354
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3": {
+   "duration": 0.731678
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3": {
+   "duration": 0.899615
+  },
+  "sounds/weapons/hero/kez/echo_katana_cast.mp3": {
+   "duration": 1.50449
+  },
+  "sounds/weapons/hero/kez/sai_crit.mp3": {
+   "duration": 1.983946
+  },
+  "sounds/weapons/hero/kez/vulnerable_target.mp3": {
+   "duration": 4.505896
+  },
+  "sounds/weapons/hero/ringmaster/impale_stab_1.mp3": {
+   "duration": 0.233311
+  },
+  "sounds/weapons/hero/ringmaster/impale_stab_2.mp3": {
+   "duration": 0.231474
+  },
+  "sounds/weapons/hero/ringmaster/impale_stab_3.mp3": {
+   "duration": 0.206644
+  }
+ },
+ "missing": {
+  "survivors.counter_helix.tick": [],
+  "survivors.echo_strike.cast": [],
+  "survivors.imperia.burning_ground": [
+   "sounds/vo/vengefulspirit/imperia_laugh_08.vsnd",
+   "sounds/vo/vengefulspirit/imperia_laugh_09.vsnd",
+   "sounds/vo/vengefulspirit/imperia_laugh_11.vsnd",
+   "sounds/vo/vengefulspirit/imperia_laugh_15.vsnd",
+   "sounds/vo/vengefulspirit/imperia_laugh_26.vsnd",
+   "sounds/vo/vengefulspirit/imperia_laugh_27.vsnd"
+  ],
+  "survivors.imperia.demon_portal.0": [
+   "sounds/vo/vengefulspirit/imperia_battlebegins_01.vsnd",
+   "sounds/vo/vengefulspirit/imperia_lasthit_06.vsnd",
+   "sounds/vo/vengefulspirit/imperia_missile_03.vsnd",
+   "sounds/vo/vengefulspirit/imperia_water_02.vsnd"
+  ],
+  "survivors.imperia.demon_portal.1": [
+   "sounds/vo/vengefulspirit/imperia_battlebegins_02.vsnd",
+   "sounds/vo/vengefulspirit/imperia_firstblood_01.vsnd",
+   "sounds/vo/vengefulspirit/imperia_attack_07.vsnd"
+  ],
+  "survivors.imperia.demon_portal.2": [
+   "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_03.vsnd",
+   "sounds/vo/vengefulspirit/imperia_wheel_deny_01.vsnd",
+   "sounds/vo/vengefulspirit/imperia_crownfall_boss_flee_05.vsnd"
+  ],
+  "survivors.imperia.demon_portal.create": [],
+  "survivors.imperia.demon_portal.remove": [],
+  "survivors.imperia.enrage": [
+   "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_05.vsnd",
+   "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_01.vsnd",
+   "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_06.vsnd",
+   "sounds/vo/vengefulspirit/imperia_wheel_all_16.vsnd",
+   "sounds/vo/vengefulspirit/imperia_wheel_all_17.vsnd",
+   "sounds/vo/vengefulspirit/imperia_kill_09.vsnd",
+   "sounds/vo/vengefulspirit/imperia_kill_10.vsnd",
+   "sounds/vo/vengefulspirit/imperia_kill_11.vsnd",
+   "sounds/vo/vengefulspirit/imperia_spawn_04.vsnd",
+   "sounds/vo/vengefulspirit/imperia_spawn_10.vsnd",
+   "sounds/vo/vengefulspirit/imperia_spawn_11.vsnd",
+   "sounds/vo/vengefulspirit/imperia_swap_10.vsnd",
+   "sounds/vo/vengefulspirit/imperia_wave_01.vsnd",
+   "sounds/vo/vengefulspirit/imperia_wave_02.vsnd",
+   "sounds/vo/vengefulspirit/imperia_wave_03.vsnd",
+   "sounds/vo/vengefulspirit/imperia_wave_04.vsnd",
+   "sounds/vo/vengefulspirit/imperia_wave_07.vsnd",
+   "sounds/vo/vengefulspirit/imperia_wave_09.vsnd"
+  ],
+  "survivors.imperia.magic_missile": [
+   "sounds/vo/vengefulspirit/imperia_laugh_08.vsnd",
+   "sounds/vo/vengefulspirit/imperia_laugh_09.vsnd",
+   "sounds/vo/vengefulspirit/imperia_laugh_11.vsnd",
+   "sounds/vo/vengefulspirit/imperia_laugh_15.vsnd",
+   "sounds/vo/vengefulspirit/imperia_laugh_26.vsnd",
+   "sounds/vo/vengefulspirit/imperia_laugh_27.vsnd"
+  ],
+  "survivors.imperia.radiate_rays.projectile.hit": [],
+  "survivors.imperia.radiate_rays.projectile.shoot": [],
+  "survivors.imperia.radiate_rays.teleport": [],
+  "survivors.kez_innate.cast": [],
+  "survivors.player_hit.dragonus": [
+   "sounds/vo/skywrath_mage/skywrath_crown_anger_03.vsnd",
+   "sounds/vo/skywrath_mage/skywrath_crown_anger_04.vsnd",
+   "sounds/vo/skywrath_mage/skywrath_crown_anger_05.vsnd"
+  ],
+  "survivors.player_hit.kez": [
+   "sounds/vo/kez/kez_pain_03.vsnd",
+   "sounds/vo/kez/kez_pain_04.vsnd",
+   "sounds/vo/kez/kez_pain_05.vsnd",
+   "sounds/vo/kez/kez_pain_06.vsnd",
+   "sounds/vo/kez/kez_pain_07.vsnd",
+   "sounds/vo/kez/kez_pain_08.vsnd",
+   "sounds/vo/kez/kez_pain_09.vsnd",
+   "sounds/vo/kez/kez_pain_10.vsnd"
+  ],
+  "survivors.player_hit.shen": [
+   "sounds/vo/vengefulspirit/venge_crown_anger_03.vsnd",
+   "sounds/vo/vengefulspirit/venge_crown_anger_04.vsnd",
+   "sounds/vo/vengefulspirit/venge_crown_anger_05.vsnd",
+   "sounds/vo/vengefulspirit/venge_crown_anger_06.vsnd",
+   "sounds/vo/vengefulspirit/venge_crown_anger_07.vsnd",
+   "sounds/vo/vengefulspirit/venge_crown_anger_08.vsnd",
+   "sounds/vo/vengefulspirit/venge_crown_anger_09.vsnd"
+  ],
+  "survivors.rot.cast": [],
+  "survivors.skywrath_mage_innate.cast": [],
+  "survivors.swashbuckle.tick": [],
+  "survivors.torrent.tick": [],
+  "survivors.vengeful_spirit_innate.cast": []
+ }
+}

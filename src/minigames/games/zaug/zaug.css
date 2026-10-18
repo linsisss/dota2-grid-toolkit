@@ -1,0 +1,263 @@
+/* «Логово Зауга»: Valve's bp_popup_crownfall_encounter_shmup.css (and the minigame popup's shared CSS) in browser
+   CSS. The popup is .DragonBoss, 1720×968, scaled by Fit; the canvas of the scene fills it under the HUD.
+   State classes (zg-*) follow Valve's: GameMainMenu, GameTutorial + TutorialStepN, GameRunning, GamePaused,
+   ShowControls, InBossFight / ShowBossHUD, BossWarning_*, MaxCharge, LivesOverflow, ShowGameOver*, Victory_*. */
+.zg-popup { --gold1: #efd4ac; --gold2: #dcb25e; --gold3: #977628; --charcoal-light: #253242; --charcoal-dark: #0b111a; --lightest-grey: #dae2e5; --lighter-grey: #b0bcc2; --light-grey: #8b989e;
+  position: relative; width: 1720px; height: 968px; overflow: hidden; font-family: 'MGRadiance', sans-serif; color: var(--lightest-grey); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.zg-state { position: absolute; inset: 0; }
+.zg-state.zg-shake { animation: zg-camerashake 0.55s; }
+@keyframes zg-camerashake {
+  0% { transform: translate(2px, 7px); } 10% { transform: translate(-2px, -7px); } 20% { transform: translate(-4px, 0); } 30% { transform: translate(4px, 7px); } 40% { transform: translate(2px, -7px); }
+  50% { transform: translate(-2px, 7px); } 60% { transform: translate(-4px, -1px); } 70% { transform: translate(4px, 7px); } 80% { transform: translate(-2px, -2px); } 90% { transform: translate(2px, 7px); } 100% { transform: translate(2px, -7px); } }
+/* .Gameplay: #202 under the scene, the gold border; game over turns it grey and dark, victory dark. */
+.zg-gameplay { position: absolute; inset: 0; background: #202; border: 1px solid; border-image: linear-gradient(var(--gold1), var(--gold2), var(--gold3)) 1; transition: filter 3s ease-out; }
+.zg-fade.zg-gameover .zg-gameplay { filter: saturate(0) brightness(0.2); transition-duration: 0.1s; }
+.zg-fade.zg-victory-active .zg-gameplay { filter: brightness(0.2); transition-duration: 0.1s; }
+.zg-pause-overlay { position: absolute; inset: 0; transition: filter 0.5s; }
+.zg-paused .zg-pause-overlay { filter: brightness(0.6) blur(6px); transition-duration: 0.05s; }
+.zg-canvas { display: block; width: 1720px; height: 968px; touch-action: none; }
+.zg-running .zg-canvas { cursor: crosshair; }
+.zg-toasts { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+
+/* .PregameUI: the logo top right and the MainMenu (830×680, ui-scale 85 %) right of centre. */
+.zg-pregame { position: absolute; inset: 0; z-index: 4; animation: zg-in 0.2s ease-in-out; }
+@keyframes zg-in { from { opacity: 0; } }
+.zg-main-menu .zg-gameplay::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11, 17, 26, 0) 30%, rgba(11, 17, 26, 0.55)); pointer-events: none; }
+.zg-logo { position: absolute; z-index: 1; right: 230px; top: 70px; width: 830px; height: 225px; transform: scale(0.8); transform-origin: top right; background: url('../../../../assets/minigames/zaug/images/shmup_logotitling_01.webp') center / 100% 100% no-repeat; filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.6)); }
+.zg-main-menu-box { position: absolute; right: 200px; top: 252px; width: 830px; height: 680px; box-sizing: border-box; display: flex; flex-direction: column; transform: scale(0.85); transform-origin: right top;
+  border: 2px solid; border-image: linear-gradient(var(--gold1), var(--gold2), var(--gold3)) 1; background: linear-gradient(var(--charcoal-light), var(--charcoal-dark)); }
+.zg-main-menu-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--gold3), var(--gold1), var(--gold3)); }
+.zg-columns { display: flex; height: 564px; padding: 28px; box-sizing: border-box; border-bottom: 1px solid; border-image: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5) 40%, rgba(255, 255, 255, 0.5) 60%, rgba(255, 255, 255, 0)) 1; }
+.zg-column1 { width: 50%; padding-right: 28px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #ffffff30 transparent; }
+.zg-column2 { width: 50%; padding-left: 28px; display: flex; flex-direction: column; }
+.zg-gold-header { display: block; margin-bottom: 4px; font: 600 22px 'MGRadiance', sans-serif; letter-spacing: 2px; text-transform: uppercase; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  background: linear-gradient(#fff2df 30%, #ebc386 48%, #ba8c47 52%, #8d6c3a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.zg-quadrant { display: flex; align-items: center; border-top: 1px solid; border-image: linear-gradient(90deg, rgba(211, 229, 255, 0.18) 90%, rgba(255, 255, 255, 0)) 1; }
+.zg-quadrant-contents { position: relative; width: 140px; height: 82px; flex: none; }
+.zg-row { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s 0.1s ease-in, transform 0.3s 0.1s ease-in; }
+.zg-alt-row { opacity: 0; transform: translateX(6px); }
+.zg-alt-controls .zg-main-row { opacity: 0; transform: translateX(-6px); }
+.zg-alt-controls .zg-alt-row { opacity: 1; transform: none; transition-duration: 0.1s; transition-delay: 0s; }
+.zg-quadrant-text { display: flex; flex-direction: column; padding: 8px 0 8px 4px; }
+.zg-quadrant-text b { font-size: 18px; font-weight: 600; color: var(--lightest-grey); }
+.zg-quadrant-text span { font-size: 16px; line-height: 1.2; color: var(--light-grey); }
+.zg-quadrant .mg-mouse { transform: scale(0.82); }
+.zg-keys { display: flex; flex-direction: column; align-items: center; }
+.zg-keys > div { display: flex; }
+.zg-key { display: inline-grid; place-items: center; min-width: 30px; height: 30px; margin: 3px; padding: 0 6px; box-sizing: border-box; border: 1px solid #000; border-radius: 3px; background: linear-gradient(#3b4651, #1d242b);
+  box-shadow: inset 0 1px 0 #ffffff30, 0 2px 0 #000; font: 600 15px 'MGRadiance', sans-serif; color: #fff; }
+.zg-key img { width: 18px; height: 18px; }
+.zg-key-space { min-width: 90px; }
+.zg-key-space img { width: 60px; }
+.zg-key-wide { min-width: 96px; }
+.zg-alt-quadrant { flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 0; }
+.zg-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; cursor: pointer; font: 15px 'MGRadiance', sans-serif; color: var(--lighter-grey); }
+.zg-toggle i { width: 16px; height: 16px; border: 1px solid #8b989e; border-radius: 2px; background: #0b111a; }
+.zg-toggle.zg-on i { background: radial-gradient(var(--gold1), var(--gold3)); }
+.zg-touch-note { margin: auto 0 0; font-size: 14px; line-height: 1.25; color: var(--light-grey); }
+.zg-scoring { margin-top: 20px; }
+.zg-scoring p { margin: 0; font-size: 18px; color: var(--lighter-grey); }
+.zg-leader-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; color: var(--lighter-grey); }
+.zg-leader-row { display: flex; justify-content: space-between; height: 26px; align-items: center; padding: 0 12px 0 4px; background: #0005; font-size: 16px; color: var(--lightest-grey); }
+.zg-encounter-desc { margin: 22px 0 0; font-size: 15px; line-height: 1.3; font-style: italic; color: var(--lighter-grey); }
+.zg-encounter-desc b { display: block; margin-bottom: 4px; font-style: normal; color: var(--gold1); }
+.zg-rewards-title { display: flex; align-items: center; gap: 8px; margin-top: 22px; cursor: help; }
+.zg-rewards { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.zg-reward-row { display: flex; align-items: center; font: 700 17px 'MGReaver', 'MGRadiance', serif; color: var(--lightest-grey); }
+.zg-reward-row span { width: 120px; }
+.zg-reward-row i { display: flex; gap: 3px; }
+.zg-reward-row em { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #6fe08a, #2b7c45 60%, #173f26); box-shadow: inset 0 0 0 2px #0b2416, 0 1px 3px #000; }
+.zg-unlocked { filter: brightness(0.35); }
+.zg-rewards-info { margin: 10px 0 0; font-size: 14px; color: var(--light-grey); }
+/* The table of records (core/leaderboard.jsx) takes the room of the rewards' note: it stays in the (i) hint. */
+.zg-board { --mg-lb-row: 22px; }
+.zg-board .mg-lb-row { font-size: 14px; }
+.zg-board .mg-lb-name img { width: 16px; height: 16px; }
+.zg-column2 .zg-rewards-info { display: none; }
+.zg-bottom-buttons { margin: 12px auto 0; display: flex; gap: 14px; transform: scale(1.18); transform-origin: top center; }
+.zg-bottom-buttons .mg-button { min-width: 260px; }
+
+/* .TutorialUI: 600×700 over a dark veil; the movie of the step slides in, the text of the step lights up. */
+.zg-tutorial-ui { position: absolute; inset: 0; z-index: 6; background: #000e; animation: zg-tut-in 0.4s; display: grid; place-items: center; }
+@keyframes zg-tut-in { from { opacity: 0; transform: translateY(-50px); } }
+.zg-logo2 { right: auto; left: 50%; top: 10px; transform: translateX(-50%) scale(0.55); transform-origin: top center; }
+.zg-tutorial-contents { position: relative; width: 600px; height: 700px; margin-top: 80px; display: flex; flex-direction: column; align-items: center; border: 1px solid; border-image: linear-gradient(var(--gold1), var(--gold2), var(--gold3)) 1;
+  background: linear-gradient(var(--charcoal-light), var(--charcoal-dark)); }
+.zg-movies { position: relative; width: 550px; height: 400px; margin-top: 25px; overflow: hidden; border: 1px solid rgba(166, 134, 62, 1); box-sizing: border-box; background: #10161f; }
+.zg-movie { position: absolute; left: 50%; top: -60px; width: 600px; height: 550px; margin-left: -300px; object-fit: cover; opacity: 0; transform: translateX(-200px); transition: opacity 0.4s, transform 0.4s; }
+.zg-movie.zg-on { opacity: 1; transform: none; }
+.zg-tutorial-text { position: relative; width: 100%; height: 150px; margin-bottom: 10px; border-bottom: 1px solid; border-image: linear-gradient(90deg, rgba(255, 255, 255, 0), #fff 40%, #fff 60%, rgba(255, 255, 255, 0)) 1; }
+.zg-tutorial-text p { position: absolute; inset: 0; margin: 0; padding: 0 25px; display: grid; place-items: center; text-align: center; font: 700 22px/1.25 'MGReaver', 'MGRadiance', serif; letter-spacing: 1px; color: var(--gold1);
+  opacity: 0; filter: brightness(0.5); transform: translateX(-100px); transition: opacity 0.2s, transform 0.2s, filter 0.2s; }
+.zg-tutorial-text p.zg-on { opacity: 1; filter: none; transform: none; }
+.zg-tutorial-text b { color: #fff; }
+.zg-tutorial-steps { display: flex; gap: 8px; margin: 4px 0 14px; }
+.zg-tutorial-steps i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--gold3); }
+.zg-tutorial-steps i.zg-on { background: var(--gold2); }
+.zg-next { min-width: 220px; }
+
+/* .InGameUI */
+.zg-ingame { position: absolute; inset: 0; z-index: 3; pointer-events: none; transition: opacity 0.5s ease-in-out; }
+.zg-victory-show .zg-ingame { opacity: 0; }
+.zg-score-title { display: block; text-align: center; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(var(--gold1), var(--gold2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.zg-scorebar { position: absolute; top: 10px; left: 50%; width: 602px; margin-left: -301px; display: flex; justify-content: space-between; }
+.zg-status-score { width: 300px; display: flex; flex-direction: column; align-items: center; transition: transform 0.5s ease-in-out; }
+.zg-in-boss .zg-status-score { transform: translateX(150px); transition-duration: 0.085s; }
+.zg-score { width: 400px; text-align: center; font: 700 42px 'MGReaver', 'MGRadiance', serif; letter-spacing: 1px; color: #fff; text-shadow: 0 0 8px #ed7bff, 0 0 8px #ed7bff80; }
+.zg-combo-score { width: 300px; display: flex; flex-direction: column; transition: opacity 0.5s ease-in-out; }
+.zg-in-boss .zg-combo-score { opacity: 0; transition-duration: 0.085s; }
+.zg-combo-value { position: relative; height: 52px; }
+.zg-combo-value b { position: absolute; left: 110px; width: 80px; text-align: center; font: 700 42px 'MGReaver', 'MGRadiance', serif; color: #fff; text-shadow: 0 0 8px #ed7bff; }
+.zg-chain { position: absolute; left: 190px; top: 50%; transform: translateY(-50%); display: flex; --pip: #cccccc; }
+.zg-chain i { width: 11px; height: 11px; margin: 2px; box-sizing: border-box; border: 1.2px solid var(--gold3); border-radius: 8px; background: transparent; box-shadow: inset 0 0 0 6px transparent; transition: background-color 0.2s; }
+.zg-chain-red { --pip: #c12817; }
+.zg-chain-blue { --pip: #51b2e5; }
+.zg-chain-1 .zg-pip1, .zg-chain-2 .zg-pip1, .zg-chain-2 .zg-pip2 { background: var(--pip); box-shadow: 0 0 4px var(--pip); transition-duration: 0s; }
+/* .StatusReserve: bottom left, Vengeful Spirit's icons; the fifth glows when there are more. */
+.zg-status-reserve { position: absolute; left: 0; bottom: 0; width: 250px; display: flex; flex-direction: column; align-items: center; }
+.zg-status-reserve .zg-score-title { margin-bottom: 8px; }
+.zg-reserve { display: flex; height: 40px; margin-bottom: 10px; }
+.zg-reserve-item { width: 32px; height: 32px; margin: 3px; border-radius: 3px; background: url('../../../../assets/minigames/zaug/images/heroes/npc_dota_hero_vengefulspirit.webp') center / cover; box-shadow: 0 0 0 1px #000, 0 2px 4px #000; }
+.zg-lives-overflow .zg-reserve5 { animation: zg-glow-reserve 1s infinite alternate; }
+@keyframes zg-glow-reserve { from { filter: brightness(1.2); transform: scale(1.1); } to { filter: brightness(2) hue-rotate(60deg); transform: scale(1.15); } }
+/* .ChargeContainer: «Заряды» (+ «Максимум» pulsing) and eight skewed pips; a blue panel at the bottom. */
+.zg-charge-container { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); transition: opacity 0.3s; padding: 6px 14px 4px; background: rgba(58, 94, 150, 0.55); box-shadow: 0 0 0 1px rgba(120, 160, 220, 0.25); }
+.zg-show-controls .zg-charge-container, .zg-paused .zg-charge-container { opacity: 0; }
+.zg-charge-text { display: flex; justify-content: center; gap: 6px; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; }
+.zg-charge-text span { background: linear-gradient(var(--gold1), var(--gold2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.zg-max-text { display: none; font-weight: 700; }
+.zg-max-charge .zg-max-text { display: inline; }
+.zg-game-running .zg-max-charge .zg-max-text, .zg-game-running .zg-max-charge .zg-charge-meter { animation: zg-charge-pulse 0.4s infinite alternate-reverse; }
+@keyframes zg-charge-pulse { from { filter: brightness(1); } to { filter: brightness(2.6); } }
+.zg-charge-meter { display: flex; padding: 8px 10px; }
+.zg-charge-pip { width: 44px; height: 16px; margin: 1.75px; border: 1px solid var(--gold3); transform: skewX(24deg); background: linear-gradient(#0c111c 50%, #293645 80%); }
+.zg-charge-pip.zg-filled { background: linear-gradient(var(--gold1) 1%, var(--gold3) 40%); }
+
+/* .BossFight: «ЗАУГ», the bar 710×24 (thin gold), «Время» and the seconds. */
+.zg-boss-fight { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.zg-boss-hud .zg-boss-fight { opacity: 1; }
+.zg-victory-show .zg-boss-fight { opacity: 0; }
+.zg-boss-title { margin-top: 120px; margin-bottom: 4px; font: 700 24px 'MGReaver', 'MGRadiance', serif; letter-spacing: 3px; text-transform: uppercase; filter: drop-shadow(1px 2px 3px #000); background: linear-gradient(var(--gold1) 70%, var(--gold2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.zg-hp-bar { width: 710px; height: 6px; margin-top: 6px; border: 1px solid var(--gold3); border-radius: 4px; background: #000; box-shadow: 1px 2px 5px 2px #000; overflow: hidden; }
+.zg-hp-left { height: 100%; width: 100%; background: linear-gradient(90deg, var(--gold1), var(--gold2)); transition: width 0.15s; }
+.zg-boss-time { margin-top: 8px; font-size: 14px; letter-spacing: 3px; text-transform: uppercase; text-shadow: 1px 2px 5px #000; color: var(--gold1); }
+.zg-boss-time-left { margin-top: 2px; font: 22px 'MGReaver', 'MGRadiance', serif; letter-spacing: 3px; color: var(--gold1); text-shadow: 1px 2px 5px #000; }
+
+/* .BossWarning: the bar with scrolling chevrons, «ОСТОРОЖНО» scrolling in with cycling colours. */
+.zg-boss-warning { position: absolute; left: 0; top: 175px; width: 1720px; height: 200px; visibility: hidden; opacity: 0; transition: opacity 0.3s ease-in-out; pointer-events: none; }
+.zg-warning-active .zg-boss-warning { visibility: visible; }
+.zg-warning-show .zg-boss-warning { opacity: 1; }
+.zg-warning-bg { position: absolute; inset: 0; background: url('../../../../assets/minigames/zaug/images/shmup_warning_bar.webp') 0 0 / 100% 100%; }
+.zg-chevrons { position: absolute; left: 0; top: 5px; width: 1720px; height: 20px; overflow: hidden; }
+.zg-chevrons-bottom { top: auto; bottom: 5px; }
+.zg-chevrons i { display: block; width: 1780px; height: 100%; opacity: 0.7; filter: brightness(1.3); background: url('../../../../assets/minigames/zaug/images/shmup-chevron-sharp-right.webp') 50% 25% / 20px 14px repeat-x; animation: zg-scroll-right 0.3s linear infinite; }
+.zg-chevrons-bottom i { background-image: url('../../../../assets/minigames/zaug/images/shmup-chevron-sharp-left.webp'); animation-name: zg-scroll-left; }
+@keyframes zg-scroll-right { from { transform: translateX(-20px); } to { transform: translateX(0); } }
+@keyframes zg-scroll-left { from { transform: translateX(0); } to { transform: translateX(-20px); } }
+.zg-warning-layout { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.zg-warning-title, .zg-warning-desc { position: relative; display: grid; }
+.zg-warning-title > span, .zg-warning-desc > span { grid-area: 1 / 1; text-align: center; }
+.zg-warning-title { margin-bottom: -10px; font: 700 52px 'MGReaver', 'MGRadiance', serif; letter-spacing: 18px; }
+.zg-warning-desc { font: 22px 'MGRadiance', sans-serif; letter-spacing: 7px; text-transform: uppercase; }
+.zg-warning-title .zg-main { opacity: 0; text-shadow: 0 0 8px #ff3700, 0 0 14px #ff3700; color: #fff; }
+.zg-warning-play .zg-warning-title .zg-main { opacity: 1; animation: zg-title-scroll 1s linear backwards, zg-title-colors 2s linear infinite both; }
+.zg-warning-desc .zg-main { opacity: 0; color: #fff; text-shadow: 0 0 3px #ffff00b0; }
+.zg-warning-subtitle .zg-warning-desc .zg-main { opacity: 1; animation: zg-title-scroll 1s linear backwards; }
+.zg-blur { color: #ff0; opacity: 0; }
+.zg-warning-play .zg-warning-title .zg-blur, .zg-warning-subtitle .zg-warning-desc .zg-blur { animation: zg-title-highlight 1s linear backwards; }
+@keyframes zg-title-scroll { from { -webkit-mask-image: linear-gradient(110deg, #000 2%, transparent 6%); mask-image: linear-gradient(110deg, #000 2%, transparent 6%); } 50% { -webkit-mask-image: linear-gradient(110deg, #000 47%, transparent 52%); mask-image: linear-gradient(110deg, #000 47%, transparent 52%); } to { -webkit-mask-image: linear-gradient(110deg, #000 92%, transparent 98%); mask-image: linear-gradient(110deg, #000 92%, transparent 98%); } }
+@keyframes zg-title-highlight { from { opacity: 1; -webkit-mask-image: linear-gradient(110deg, transparent 0%, #000 4%, transparent 10%); mask-image: linear-gradient(110deg, transparent 0%, #000 4%, transparent 10%); } to { opacity: 1; -webkit-mask-image: linear-gradient(110deg, transparent 90%, #000 94%, transparent 100%); mask-image: linear-gradient(110deg, transparent 90%, #000 94%, transparent 100%); } }
+@keyframes zg-title-colors { 0%, 100% { color: #fff; } 25%, 75% { color: #ff0; } 50% { color: orange; } }
+
+/* The combo notification (ComboNotificationAnim 1.25 s: up 80 px with a flash, then away). */
+.zg-combo { position: absolute; width: 1px; height: 1px; overflow: visible; }
+.zg-combo-body { position: absolute; left: -200px; top: -200px; width: 400px; height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; animation: zg-combo-anim 1.25s; }
+.zg-combo-broken .zg-combo-body { animation-duration: 1s; }
+@keyframes zg-combo-anim { 0% { transform: translateY(0); } 20% { transform: translateY(-80px); opacity: 1; filter: brightness(2.5); } 80% { opacity: 1; } 100% { transform: translateY(-100px); opacity: 0; filter: brightness(1); } }
+.zg-combo-count { position: relative; margin-bottom: -3px; font: 700 28px 'MGReaver', 'MGRadiance', serif; color: #fff; }
+.zg-combo-title { position: relative; font-size: 16px; letter-spacing: 1.5px; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); }
+.zg-combo-score { position: relative; padding: 0 12px; font-size: 20px; font-weight: 700; color: #fff; text-shadow: 0 0 12px rgba(119, 162, 255, 0.8); }
+.zg-score-glow { position: absolute; left: 50%; top: 50%; width: 200px; margin: 0 0 0 -100px; mix-blend-mode: screen; opacity: 0.3; filter: sepia(1) saturate(4) hue-rotate(160deg); pointer-events: none; }
+/* Valve's ScoreWing: the white wedge (score_wing / _double) washed with the tier's colour and faded by an opacity brush. */
+.zg-wing { --wing: url('../../../../assets/minigames/zaug/images/score_wing.webp'); --tint: rgb(111, 157, 255); position: absolute; top: 50%; width: 56px; height: 28px; margin-top: -22px; display: none; opacity: 0.6; background: var(--tint);
+  -webkit-mask: var(--wing) center / cover, linear-gradient(150deg, #000 15%, transparent 65%); -webkit-mask-composite: source-in; mask: var(--wing) center / cover, linear-gradient(150deg, #000 15%, transparent 65%); mask-composite: intersect; }
+.zg-wing-l { right: 50%; margin-right: 60px; animation: zg-wing-l 0.4s; }
+.zg-wing-r { left: 50%; margin-left: 60px; transform: scaleX(-1); animation: zg-wing-r 0.4s; }
+@keyframes zg-wing-l { 0%, 60% { transform: translateX(40px); opacity: 0; } }
+@keyframes zg-wing-r { 0%, 60% { transform: scaleX(-1) translateX(-40px); opacity: 0; } }
+.zg-combo-tier4 .zg-combo-count { font-size: 34px; color: rgb(140, 150, 255); }
+.zg-combo-tier4 .zg-combo-score { font-size: 26px; text-shadow: 0 0 12px rgba(171, 119, 255, 0.8); }
+.zg-combo-tier4 .zg-score-glow { opacity: 0.6; filter: sepia(1) saturate(5) hue-rotate(190deg); }
+.zg-combo-tier4 .zg-wing { display: block; opacity: 0.4; }
+.zg-combo-tier7 .zg-combo-count { font-size: 34px; color: rgb(255, 168, 69); }
+.zg-combo-tier7 .zg-combo-score { font-size: 36px; text-shadow: 0 0 12px rgb(255, 201, 119); }
+.zg-combo-tier7 .zg-score-glow { width: 260px; margin-left: -130px; opacity: 1; filter: sepia(1) saturate(5) hue-rotate(-10deg); }
+.zg-combo-tier7 .zg-wing { display: block; height: 36px; width: 72px; margin-top: -26px; opacity: 1; --wing: url('../../../../assets/minigames/zaug/images/score_wing_double.webp'); --tint: rgb(255, 185, 111); }
+.zg-combo-tier7 .zg-wing-l { margin-right: 70px; } .zg-combo-tier7 .zg-wing-r { margin-left: 70px; }
+.zg-combo-tier10 .zg-combo-count { font-size: 40px; color: rgb(255, 69, 69); text-shadow: 0 0 12px rgb(255, 72, 96); }
+.zg-combo-tier10 .zg-combo-score { font-size: 36px; text-shadow: 0 0 12px rgb(255, 72, 96); }
+.zg-combo-tier10 .zg-score-glow { width: 320px; margin-left: -160px; opacity: 1; filter: sepia(1) saturate(6) hue-rotate(-40deg); }
+.zg-combo-tier10 .zg-wing { display: block; height: 40px; width: 80px; margin-top: -28px; opacity: 1; --wing: url('../../../../assets/minigames/zaug/images/score_wing_double.webp'); --tint: rgb(255, 67, 57); }
+.zg-combo-tier10 .zg-wing-l { margin-right: 120px; } .zg-combo-tier10 .zg-wing-r { margin-left: 120px; }
+.zg-combo-broken b { font-size: 24px; font-weight: 600; line-height: 1.2; text-align: center; white-space: pre-line; color: #fff; text-shadow: 0 0 12px #ff1b1b, 0 0 4px #ff1b1b90; }
+
+/* #ControlsDisplay */
+.zg-controls-display { position: absolute; left: 50%; bottom: 0; z-index: 4; display: flex; align-items: flex-end; gap: 14px; padding: 48px 200px 18px; transform: translate(-50%, 24px); opacity: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 100%, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0) 70%); transition: transform 0.3s cubic-bezier(0, 1, 0, 1), opacity 0.3s cubic-bezier(0, 1, 0, 1); }
+.zg-show-controls .zg-controls-display, .zg-paused .zg-controls-display { opacity: 1; transform: translate(-50%, 0); transition-timing-function: cubic-bezier(1, 0, 1, 1); }
+.zg-show-controls .zg-controls-display .zg-key, .zg-paused .zg-controls-display .zg-key, .zg-show-controls .zg-controls-display .mg-mouse, .zg-paused .zg-controls-display .mg-mouse { animation: zg-pulse-key 1s infinite alternate-reverse; }
+@keyframes zg-pulse-key { to { filter: brightness(1.7); } }
+.zg-or { margin: 0 25px 18px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: whitesmoke; }
+.zg-touch .zg-controls-display { display: none; }
+
+/* .PauseUI */
+.zg-pause-ui { position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; animation: zg-in 0.2s ease-in-out; }
+.zg-menu-buttons { display: flex; gap: 14px; transform: scale(1.18); }
+
+/* .GameOverUI: «Конец игры» slides in from the left, then the buttons. */
+.zg-gameover-ui { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; opacity: 0; pointer-events: none; }
+.zg-gameover .zg-gameover-ui { opacity: 1; }
+.zg-gameover-btns .zg-gameover-ui { pointer-events: auto; }
+.zg-gameover-title { margin-top: 300px; transform: translateX(-1720px); transition: transform 0.5s ease-out; font: 700 72px 'MGReaver', 'MGRadiance', serif; letter-spacing: 10px; text-transform: uppercase; color: #fff; text-shadow: 0 0 16px #ed7bff; }
+.zg-gameover-text .zg-gameover-title { transform: none; transition-duration: 0s; }
+.zg-gameover-ui .zg-gameover-buttons { margin: 100px; display: flex; gap: 14px; opacity: 0; transition: opacity 0.2s ease-in-out; transform: scale(1.18); }
+.zg-gameover-btns .zg-gameover-ui .zg-gameover-buttons { opacity: 1; }
+.zg-gameover-note { margin-top: -60px; font-size: 18px; color: var(--lighter-grey); opacity: 0; }
+.zg-gameover-btns .zg-gameover-note { opacity: 1; }
+
+/* .VictoryUI: the elements come in one by one (VictoryElement: from 200 px right, 0.3 s), the rating stamps in. */
+.zg-victory-ui { position: absolute; inset: 0; z-index: 6; opacity: 0; pointer-events: none; }
+.zg-victory-active .zg-victory-ui { opacity: 0.0001; }
+.zg-victory-show .zg-victory-ui { opacity: 1; }
+.zg-victory-buttons .zg-victory-ui { pointer-events: auto; }
+.zg-victory-main { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; }
+.zg-v { opacity: 0.001; transform: translateX(200px); transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; text-align: center; }
+.zg-victory-title-text { margin-top: 110px; transform: none; font: 700 84px 'MGReaver', 'MGRadiance', serif; letter-spacing: 15px; text-transform: uppercase; color: #fff; text-shadow: 0 0 8px #ed7bff, 0 0 8px #ed7bff; }
+.zg-victory-title .zg-victory-title-text { opacity: 1; animation: zg-title-scroll 1s linear backwards; }
+.zg-victory-subtitle { margin-top: -12px; font-size: 24px; transform: none; }
+.zg-victory-title .zg-victory-subtitle { opacity: 1; animation: zg-title-scroll 1s 0.8s linear backwards; }
+.zg-victory-desc { margin: 35px 0 4px; font-size: 24px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold2); }
+.zg-victory-combo-t, .zg-victory-score-t, .zg-victory-rating-t { margin-top: 20px; text-transform: uppercase; color: var(--gold1); font-size: 18px; letter-spacing: 1px; }
+.zg-victory-combo-v, .zg-victory-score-v { font: 700 42px 'MGReaver', 'MGRadiance', serif; color: #fff; }
+.zg-victory-rating-v { margin-top: -15px; font: 110px 'MGReaver', 'MGRadiance', serif; color: #fff; transform: none; }
+.zg-victory-summary .zg-victory-desc, .zg-victory-score-title .zg-victory-score-t, .zg-victory-score-value .zg-victory-score-v, .zg-victory-combo-title .zg-victory-combo-t,
+.zg-victory-combo-value .zg-victory-combo-v, .zg-victory-rating-title .zg-victory-rating-t, .zg-victory-buttons .zg-victory-buttons-row, .zg-victory-buttons .zg-victory-record { opacity: 1; transform: none; }
+.zg-victory-rating-value .zg-victory-rating-v { opacity: 1; animation: zg-stamp 1s; }
+@keyframes zg-stamp { from { transform: scale(6) rotate(8deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.zg-victory-record { margin-top: 6px; font-size: 20px; color: var(--gold2); }
+.zg-victory-board { font-size: 16px; }
+.zg-victory-buttons-row { position: absolute; bottom: 125px; display: flex; gap: 14px; transform: scale(1.18); }
+.zg-victory-categories { position: absolute; right: 110px; top: 410px; width: 600px; display: flex; flex-direction: column; }
+.zg-score-item { position: relative; height: 35px; }
+.zg-score-item span { position: absolute; right: 304px; top: 50%; translate: 0 -50%; font-size: 20px; color: #ccc; opacity: 0; transform: translateX(200px); transition: transform 0.5s ease-out, opacity 1.5s ease-in-out; white-space: nowrap; }
+.zg-score-item b { position: absolute; left: 304px; top: 50%; translate: 0 -50%; font: 22px 'MGReaver', 'MGRadiance', serif; color: #fff; opacity: 0; transform: translateX(200px); transition: transform 0.5s 0.3s ease-out, opacity 1.8s 0.3s ease-in-out; }
+.zg-show-item span, .zg-show-item b { opacity: 1; transform: none; }
+
+/* Touch: two round buttons at the bottom right (swap colour, special). */
+.zg-touch-buttons { position: absolute; right: 40px; bottom: 120px; z-index: 5; display: flex; flex-direction: column; gap: 26px; }
+.zg-touch-buttons button { width: 128px; height: 128px; border-radius: 50%; border: 3px solid var(--gold2); cursor: pointer; opacity: 0.75; touch-action: none; }
+.zg-touch-swap { background: conic-gradient(#d22 0 50%, #2ab0ff 50% 100%); }
+.zg-touch-special { background: radial-gradient(#fff, var(--gold2) 45%, #6a4a14); }
+
+.zg-corner { position: absolute; right: 20px; bottom: 16px; z-index: 10; display: flex; align-items: center; gap: 14px; transform: scale(1.2); transform-origin: right bottom; }
+.zg-popup .mg-close { transform: scale(1.3); transform-origin: top right; }

@@ -194,14 +194,22 @@ export function dotaFace(font, file) {
   return writeFont(font.signature, tables);
 }
 
+// Hero-grid category names — the users' drawings — are Radiance Semibold (scripts/dota-rendering.mjs
+// DOTA, weight 600), and the drawings are laid out by its widths: in any other font they fall apart
+// (2026-10-16: «ставишь шрифт по типу майна — съезжают все рисунки на сетке героев»). Taking the
+// symbols out of a font does not help: Dota then draws them with a system fallback font, whose widths
+// differ from computer to computer. So «Рисунки в сетке не съедут» keeps this one file Valve's.
+export const GRID_FONT_FILE = 'radiance-semibold';
+
 // The pack: fonts = the chosen faces (readFont results); families = which Dota families to
 // replace. Each of Valve's files gets the face closest in weight, an italic where there is one.
-export function dotaFontPack(fonts, families = ['Radiance', 'RadianceM', 'Reaver']) {
+// `keep`: Valve's file names (without .otf) left out of the pack.
+export function dotaFontPack(fonts, families = ['Radiance', 'RadianceM', 'Reaver'], { keep = [] } = {}) {
   if (!fonts.length) throw new Error('Нет шрифта.');
   const files = [];
   for (const [file, face] of Object.entries(VALVE_FACES)) {
     const family = face[4] || face[0];
-    if (!families.includes(family)) continue;
+    if (!families.includes(family) || keep.includes(file)) continue;
     const weight = face[6], italic = /Italic/.test(face[1]);
     const pick = [...fonts].sort((a, b) => (a.italic !== italic) - (b.italic !== italic) || Math.abs(a.weight - weight) - Math.abs(b.weight - weight) || b.weight - a.weight)[0];
     files.push({ name: `${file}.otf`, data: dotaFace(pick, file) });

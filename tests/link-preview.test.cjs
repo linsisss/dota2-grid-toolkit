@@ -69,6 +69,6 @@ test('every page and tab has its own link preview picture and tags (scripts/og-p
   assert.equal(tab('customize', 'tab=font'), 'font');
   assert.equal(tab('customize', 'tab=gallery'), null);
   assert.equal(tab('guides', 'backgrounds'), null);
-  assert.equal(pageMeta('font', 'https://dev.gridstudio.me').url, 'https://dev.gridstudio.me/background?tab=font');
+  assert.equal(pageMeta('font', 'https://dev.gridstudio.me').url, 'https://dev.gridstudio.me/customize?tab=font');
   assert.equal(pageMeta('rules').image, 'https://gridstudio.me/assets/og/workshop.jpg');
 });

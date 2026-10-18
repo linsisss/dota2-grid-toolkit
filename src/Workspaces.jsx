@@ -20,6 +20,8 @@ import { BackgroundSteps } from './customize/BackgroundSteps.jsx';
 const SHOWS = [['all', 'Все'], ['grids', 'Сетки'], ['backgrounds', 'Фоны']];
 const initialShow = () => { const value = new URLSearchParams(location.search).get('show'); return SHOWS.some(([id]) => id === value) ? value : 'all'; };
 const seconds = (value) => t('{value} с', { value: (Math.round(value * 10) / 10).toLocaleString(locale) });
+// Rebuilt with no file to choose: every video in it (the menu's and the pages' own) is from the workshop.
+const fromWorkshop = (recipe) => [recipe.source, recipe.hero?.mode === 'own' && recipe.hero.source, recipe.grid?.mode === 'own' && recipe.grid.source, recipe.loading?.mode === 'own' && recipe.loading.source].filter(Boolean).every((source) => source.kind === 'workshop');
 const day = (time) => new Date(time).toLocaleDateString(locale);
 
 // A menu background in the studio (docs/customize.md «Фоны в студии»): its poster, the video
@@ -59,7 +61,7 @@ function BackgroundFile({ item, status, disabled, onDownload, onRename, onDelete
     <div className="workspace-file-info"><a href={href}><h2>{item.name}</h2></a><time dateTime={new Date(item.updated).toISOString()}>{day(item.updated)}</time></div>
     <div className="workspace-file-actions">
       {here ? <button className="catalog-icon" aria-label={t('Скачать {name}', { name: item.name })} title={t('Скачать для Dota')} disabled={disabled} onClick={onDownload}><Icon name="download"/></button>
-        : <a className="catalog-link" href={href}>{item.recipe.source.kind === 'workshop' ? t('Собрать заново') : t('Выбрать файл и собрать')}</a>}
+        : <a className="catalog-link" href={href}>{fromWorkshop(item.recipe) ? t('Собрать заново') : t('Выбрать файл и собрать')}</a>}
       <button className="catalog-icon" aria-label={t('Переименовать {name}', { name: item.name })} disabled={disabled} onClick={onRename}><Icon name="edit"/></button>
       <button className="catalog-icon" aria-label={t('Удалить {name}', { name: item.name })} disabled={disabled} onClick={onDelete}><Icon name="trash"/></button>
     </div>
@@ -201,7 +203,7 @@ export default function Workspaces({ registry, onOpen }) {
     const { downloadPack, packBackground, folderOf } = await import('./customize/background-pack.js');
     const bytes = async (blob) => (blob instanceof Blob ? new Uint8Array(await blob.arrayBuffer()) : null);
     let given;
-    try { given = await downloadPack(packBackground(await bytes(item.video), item.recipe, await bytes(item.heroVideo), await bytes(item.gridVideo)), { ...item.recipe, onProgress: setSending }); }
+    try { given = await downloadPack(packBackground(await bytes(item.video), item.recipe, await bytes(item.heroVideo), await bytes(item.gridVideo), await bytes(item.loadingVideo)), { ...item.recipe, onProgress: setSending }); }
     finally { setSending(null); }
     // The install window after every download: the command, or the steps by hand for the file.
     setHanded(given || { target: folderOf(item.recipe.folder) });

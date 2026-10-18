@@ -1,0 +1,466 @@
+{
+ "about": "Made by scripts/make-minigame-assets.mjs from Valve’s Dota 2 files; see docs/minigames.md.",
+ "files": {
+  "data.json": {
+   "from": "scripts/events/crownfall/fishing1.vdata",
+   "bytes": 3648
+  },
+  "images/catch_progress_bg.webp": {
+   "from": "panorama/images/events/crownfall/fishing/catch_progress_bg_png.png",
+   "width": 92,
+   "height": 92,
+   "lossless": true,
+   "stamp": "16d42d5a05ab9061",
+   "bytes": 1760
+  },
+  "images/divider_graphic_minigame.webp": {
+   "from": "panorama/images/events/crownfall/fishing/divider_graphic_minigame_png.png",
+   "width": 502,
+   "height": 39,
+   "lossless": true,
+   "stamp": "895942b299589cf1",
+   "bytes": 5502
+  },
+  "images/fish_bg.webp": {
+   "from": "panorama/images/events/crownfall/fishing/fish_bg_png.png",
+   "width": 192,
+   "height": 192,
+   "lossless": true,
+   "stamp": "0d95999cdb75400c",
+   "bytes": 1896
+  },
+  "images/hed_graphic_minigame.webp": {
+   "from": "panorama/images/events/crownfall/fishing/hed_graphic_minigame_png.png",
+   "width": 923,
+   "height": 294,
+   "lossless": true,
+   "stamp": "23c42fe0029e7742",
+   "bytes": 49018
+  },
+  "images/icon_bar_accelerate.webp": {
+   "from": "panorama/images/events/crownfall/fishing/icon_bar_accelerate_png.png",
+   "width": 36,
+   "height": 20,
+   "lossless": true,
+   "stamp": "35fe1e23d3b94519",
+   "bytes": 84
+  },
+  "images/icon_fishhold.webp": {
+   "from": "panorama/images/events/crownfall/fishing/icon_fishhold_png.png",
+   "width": 36,
+   "height": 56,
+   "lossless": true,
+   "stamp": "37e4f1a8f69704e1",
+   "bytes": 462
+  },
+  "images/icon_fishhook.webp": {
+   "from": "panorama/images/events/crownfall/fishing/icon_fishhook_png.png",
+   "width": 27,
+   "height": 68,
+   "lossless": true,
+   "stamp": "4709cc576beb6a19",
+   "bytes": 508
+  },
+  "images/icon_lurecount.webp": {
+   "from": "panorama/images/events/crownfall/fishing/icon_lurecount_png.png",
+   "width": 45,
+   "height": 77,
+   "lossless": true,
+   "stamp": "5a1bce137c9a5a4f",
+   "bytes": 3384
+  },
+  "images/icon_mouseclick.webp": {
+   "from": "panorama/images/events/crownfall/fishing/icon_mouseclick_png.png",
+   "width": 93,
+   "height": 137,
+   "lossless": true,
+   "stamp": "fb7467f19c89e89b",
+   "bytes": 940
+  },
+  "images/icon_mousehold.webp": {
+   "from": "panorama/images/events/crownfall/fishing/icon_mousehold_png.png",
+   "width": 75,
+   "height": 115,
+   "lossless": true,
+   "stamp": "1e65172842c6b987",
+   "bytes": 736
+  },
+  "images/icon_rodcast.webp": {
+   "from": "panorama/images/events/crownfall/fishing/icon_rodcast_png.png",
+   "width": 34,
+   "height": 68,
+   "lossless": true,
+   "stamp": "2f72d75b338575d8",
+   "bytes": 482
+  },
+  "images/lurecount_container.webp": {
+   "from": "panorama/images/events/crownfall/fishing/lurecount_container_png.png",
+   "width": 209,
+   "height": 211,
+   "lossless": true,
+   "stamp": "f2fcc1de9d457d77",
+   "bytes": 22434
+  },
+  "portraits/tidehunter_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/tidehunter_portrait_idle_png.png",
+   "width": 800,
+   "height": 900,
+   "quality": 88,
+   "stamp": "ddc8f5c35cfc6fcb",
+   "bytes": 40946
+  },
+  "sounds.json": {
+   "from": "soundevents/soundevents_crownfall.vsndevts",
+   "bytes": 9424
+  },
+  "sounds/ambient/fish/fish_flap_01.mp3": {
+   "from": "sounds/ambient/fish/fish_flap_01.wav",
+   "stamp": "c04382059afa59c2",
+   "bytes": 7269
+  },
+  "sounds/ambient/fish/fish_flap_02.mp3": {
+   "from": "sounds/ambient/fish/fish_flap_02.wav",
+   "stamp": "c5b07d220596860f",
+   "bytes": 6800
+  },
+  "sounds/ambient/fish/fish_flap_03.mp3": {
+   "from": "sounds/ambient/fish/fish_flap_03.wav",
+   "stamp": "ed6401557e14c033",
+   "bytes": 6878
+  },
+  "sounds/misc/crownfall/fish_bite.mp3": {
+   "from": "sounds/misc/crownfall/fish_bite.wav",
+   "stamp": "4bcfaa0d030b7c67",
+   "bytes": 11543
+  },
+  "sounds/misc/crownfall/fish_cast.mp3": {
+   "from": "sounds/misc/crownfall/fish_cast.wav",
+   "stamp": "e8067ca151ab48b6",
+   "bytes": 33219
+  },
+  "sounds/misc/crownfall/fish_precast.mp3": {
+   "from": "sounds/misc/crownfall/fish_precast.wav",
+   "stamp": "e0428e5b5831b79a",
+   "bytes": 22387
+  },
+  "sounds/misc/crownfall/fish_reel01.mp3": {
+   "from": "sounds/misc/crownfall/fish_reel01.wav",
+   "stamp": "70306fc1ad1ac991",
+   "bytes": 4530
+  },
+  "sounds/misc/crownfall/fish_reel02.mp3": {
+   "from": "sounds/misc/crownfall/fish_reel02.wav",
+   "stamp": "fc9ff09b2d72a652",
+   "bytes": 8206
+  },
+  "sounds/misc/crownfall/fish_reel03.mp3": {
+   "from": "sounds/misc/crownfall/fish_reel03.wav",
+   "stamp": "d4f4e9be2c8906fb",
+   "bytes": 8152
+  },
+  "sounds/physics/footsteps/common/wade5.mp3": {
+   "from": "sounds/physics/footsteps/common/wade5.wav",
+   "stamp": "4b6270530ce3b4f2",
+   "bytes": 15747
+  },
+  "sounds/physics/footsteps/common/wade6.mp3": {
+   "from": "sounds/physics/footsteps/common/wade6.wav",
+   "stamp": "60f52b7836a1b49b",
+   "bytes": 19426
+  },
+  "sounds/physics/footsteps/common/wade7.mp3": {
+   "from": "sounds/physics/footsteps/common/wade7.wav",
+   "stamp": "91a89741e9273285",
+   "bytes": 20990
+  },
+  "sounds/physics/footsteps/common/wade8.mp3": {
+   "from": "sounds/physics/footsteps/common/wade8.wav",
+   "stamp": "9b454d6211b22f11",
+   "bytes": 17859
+  },
+  "sounds/ui/buttonclick.mp3": {
+   "from": "sounds/ui/buttonclick.wav",
+   "stamp": "03d7603ae7caac79",
+   "bytes": 3175
+  },
+  "sounds/ui/buttonrollover.mp3": {
+   "from": "sounds/ui/buttonrollover.wav",
+   "stamp": "f3cafa0693a944c2",
+   "bytes": 2549
+  },
+  "sounds/ui/coins_big.mp3": {
+   "from": "sounds/ui/coins_big.wav",
+   "stamp": "c4a71d71b3beeee2",
+   "bytes": 26016
+  },
+  "sounds/ui/shard_tick.mp3": {
+   "from": "sounds/ui/shard_tick.wav",
+   "stamp": "d5e8cc3a45518910",
+   "bytes": 3384
+  },
+  "sounds/vo/tidehunter/tide_anger_02.mp3": {
+   "from": "sounds/vo/tidehunter/tide_anger_02.mp3",
+   "stamp": "c97df97e7c2966b8",
+   "bytes": 8696
+  },
+  "sounds/vo/tidehunter/tide_anger_04.mp3": {
+   "from": "sounds/vo/tidehunter/tide_anger_04.mp3",
+   "stamp": "e673ed24a515bc9b",
+   "bytes": 12457
+  },
+  "sounds/vo/tidehunter/tide_anger_05.mp3": {
+   "from": "sounds/vo/tidehunter/tide_anger_05.mp3",
+   "stamp": "77aaebdb8c9a6221",
+   "bytes": 6397
+  },
+  "sounds/vo/tidehunter/tide_lasthit_07.mp3": {
+   "from": "sounds/vo/tidehunter/tide_lasthit_07.mp3",
+   "stamp": "3170290a60b061c2",
+   "bytes": 19354
+  },
+  "sounds/vo/tidehunter/tide_level_12.mp3": {
+   "from": "sounds/vo/tidehunter/tide_level_12.mp3",
+   "stamp": "42d915a28da32a19",
+   "bytes": 39207
+  },
+  "sounds/vo/tidehunter/tide_spawn_01.mp3": {
+   "from": "sounds/vo/tidehunter/tide_spawn_01.mp3",
+   "stamp": "e020ae65a4440db5",
+   "bytes": 22070
+  },
+  "sounds/vo/tidehunter/tide_spawn_08.mp3": {
+   "from": "sounds/vo/tidehunter/tide_spawn_08.mp3",
+   "stamp": "5db57afac49900d8",
+   "bytes": 20816
+  },
+  "sounds/vo/tidehunter/tide_spawn_09.mp3": {
+   "from": "sounds/vo/tidehunter/tide_spawn_09.mp3",
+   "stamp": "4d7e04b9ef4ac9fd",
+   "bytes": 10159
+  },
+  "sounds/vo/tidehunter/tide_win_01.mp3": {
+   "from": "sounds/vo/tidehunter/tide_win_01.mp3",
+   "stamp": "69aeb13d3e26bb82",
+   "bytes": 16637
+  },
+  "sounds/vo/tidehunter/tide_win_02.mp3": {
+   "from": "sounds/vo/tidehunter/tide_win_02.mp3",
+   "stamp": "54a36b7581ead814",
+   "bytes": 12039
+  },
+  "sounds/vo/tidehunter/tide_win_03.mp3": {
+   "from": "sounds/vo/tidehunter/tide_win_03.mp3",
+   "stamp": "eb0c68e8b1cb53a2",
+   "bytes": 18518
+  },
+  "sounds/vo/tidehunter/tide_win_04.mp3": {
+   "from": "sounds/vo/tidehunter/tide_win_04.mp3",
+   "stamp": "ed6a84ab2dab7bd6",
+   "bytes": 12875
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3",
+   "stamp": "a8b8c5b15d570a9b",
+   "bytes": 18675
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3",
+   "stamp": "82caf952ad30ea97",
+   "bytes": 22849
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_03.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_03.mp3",
+   "stamp": "7412939bdc5d9255",
+   "bytes": 23057
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_04.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_04.mp3",
+   "stamp": "927f7c70dedad5ee",
+   "bytes": 19197
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_05.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_05.mp3",
+   "stamp": "c48cc772e395d06c",
+   "bytes": 31091
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_06.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_06.mp3",
+   "stamp": "890c00f647f584c0",
+   "bytes": 29944
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_07.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_07.mp3",
+   "stamp": "aea66fe1d373f79d",
+   "bytes": 24309
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_08.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_08.mp3",
+   "stamp": "6025d3aceb2f90b1",
+   "bytes": 30778
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_09.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_09.mp3",
+   "stamp": "44c598276953df3b",
+   "bytes": 31821
+  },
+  "sounds/vo/vengefulspirit/venge_crown_attack_33.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_attack_33.mp3",
+   "stamp": "ced54faf7f2fcd24",
+   "bytes": 37560
+  },
+  "sounds/vo/vengefulspirit/venge_crown_cast_05.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_cast_05.mp3",
+   "stamp": "5c9a903718aa0648",
+   "bytes": 49038
+  },
+  "sounds/vo/vengefulspirit/venge_crown_happy_01.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_happy_01.mp3",
+   "stamp": "af94cc6770f56379",
+   "bytes": 25040
+  },
+  "sounds/vo/vengefulspirit/venge_crown_happy_02.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_happy_02.mp3",
+   "stamp": "ef5605ca56241268",
+   "bytes": 26083
+  },
+  "sounds/vo/vengefulspirit/venge_crown_happy_03.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_happy_03.mp3",
+   "stamp": "28d48b3800491d80",
+   "bytes": 24935
+  },
+  "sounds/vo/vengefulspirit/venge_crown_happy_04.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_happy_04.mp3",
+   "stamp": "e4f31243bd5ea887",
+   "bytes": 26813
+  },
+  "sounds/vo/vengefulspirit/venge_crown_happy_05.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_happy_05.mp3",
+   "stamp": "ea9a9d4b427d3445",
+   "bytes": 25561
+  },
+  "sounds/vo/vengefulspirit/venge_crown_inthebag_01.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_inthebag_01.mp3",
+   "stamp": "cf59764dd19dafdd",
+   "bytes": 60308
+  },
+  "sounds/vo/vengefulspirit/venge_crown_missile_06.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_missile_06.mp3",
+   "stamp": "bcee6f2a5a7c2301",
+   "bytes": 23057
+  },
+  "sounds/vo/vengefulspirit/venge_crown_missile_09.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_missile_09.mp3",
+   "stamp": "62c0d561aeb596fe",
+   "bytes": 33909
+  },
+  "sounds/vo/vengefulspirit/venge_crown_win_04.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_win_04.mp3",
+   "stamp": "c871a879a579860a",
+   "bytes": 37038
+  },
+  "sounds/vo/vengefulspirit/venge_crown_yes_02.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_yes_02.mp3",
+   "stamp": "bf0cb3cd8c35ffb1",
+   "bytes": 15338
+  },
+  "sounds/vo/vengefulspirit/venge_crown_yes_03.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_yes_03.mp3",
+   "stamp": "83e7a1b6c1542ef7",
+   "bytes": 17945
+  },
+  "sounds/weapons/hero/kunkka/x_snapback.mp3": {
+   "from": "sounds/weapons/hero/kunkka/x_snapback.wav",
+   "stamp": "e130e01ed7e777fe",
+   "bytes": 8621
+  },
+  "sounds/weapons/hero/naga_siren/ensnare_target.mp3": {
+   "from": "sounds/weapons/hero/naga_siren/ensnare_target.wav",
+   "stamp": "fe5dfcb7e56020c7",
+   "bytes": 86000
+  },
+  "sounds/weapons/hero/slark/taunt_flip.mp3": {
+   "from": "sounds/weapons/hero/slark/taunt_flip.wav",
+   "stamp": "3c182d6d70ee3ad3",
+   "bytes": 21297
+  },
+  "strings.en.json": {
+   "from": "resource/localization/dota_english.txt, resource/localization/novels/crownfall_english.txt",
+   "count": 105,
+   "bytes": 8477
+  },
+  "strings.ru.json": {
+   "from": "resource/localization/dota_russian.txt, resource/localization/novels/crownfall_russian.txt",
+   "count": 105,
+   "bytes": 10864
+  }
+ },
+ "valve": {
+  "panorama/images/events/crownfall/fishing/catch_progress_bg_png": "images/catch_progress_bg.webp",
+  "panorama/images/events/crownfall/fishing/divider_graphic_minigame_png": "images/divider_graphic_minigame.webp",
+  "panorama/images/events/crownfall/fishing/fish_bg_png": "images/fish_bg.webp",
+  "panorama/images/events/crownfall/fishing/hed_graphic_minigame_png": "images/hed_graphic_minigame.webp",
+  "panorama/images/events/crownfall/fishing/icon_bar_accelerate_png": "images/icon_bar_accelerate.webp",
+  "panorama/images/events/crownfall/fishing/icon_fishhold_png": "images/icon_fishhold.webp",
+  "panorama/images/events/crownfall/fishing/icon_fishhook_png": "images/icon_fishhook.webp",
+  "panorama/images/events/crownfall/fishing/icon_lurecount_png": "images/icon_lurecount.webp",
+  "panorama/images/events/crownfall/fishing/icon_mouseclick_png": "images/icon_mouseclick.webp",
+  "panorama/images/events/crownfall/fishing/icon_mousehold_png": "images/icon_mousehold.webp",
+  "panorama/images/events/crownfall/fishing/icon_rodcast_png": "images/icon_rodcast.webp",
+  "panorama/images/events/crownfall/fishing/lurecount_container_png": "images/lurecount_container.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/tidehunter_portrait_idle_png": "portraits/tidehunter_portrait_idle.webp",
+  "sounds/ambient/fish/fish_flap_01": "sounds/ambient/fish/fish_flap_01.mp3",
+  "sounds/ambient/fish/fish_flap_02": "sounds/ambient/fish/fish_flap_02.mp3",
+  "sounds/ambient/fish/fish_flap_03": "sounds/ambient/fish/fish_flap_03.mp3",
+  "sounds/misc/crownfall/fish_bite": "sounds/misc/crownfall/fish_bite.mp3",
+  "sounds/misc/crownfall/fish_cast": "sounds/misc/crownfall/fish_cast.mp3",
+  "sounds/misc/crownfall/fish_precast": "sounds/misc/crownfall/fish_precast.mp3",
+  "sounds/misc/crownfall/fish_reel01": "sounds/misc/crownfall/fish_reel01.mp3",
+  "sounds/misc/crownfall/fish_reel02": "sounds/misc/crownfall/fish_reel02.mp3",
+  "sounds/misc/crownfall/fish_reel03": "sounds/misc/crownfall/fish_reel03.mp3",
+  "sounds/physics/footsteps/common/wade5": "sounds/physics/footsteps/common/wade5.mp3",
+  "sounds/physics/footsteps/common/wade6": "sounds/physics/footsteps/common/wade6.mp3",
+  "sounds/physics/footsteps/common/wade7": "sounds/physics/footsteps/common/wade7.mp3",
+  "sounds/physics/footsteps/common/wade8": "sounds/physics/footsteps/common/wade8.mp3",
+  "sounds/ui/buttonclick": "sounds/ui/buttonclick.mp3",
+  "sounds/ui/buttonrollover": "sounds/ui/buttonrollover.mp3",
+  "sounds/ui/coins_big": "sounds/ui/coins_big.mp3",
+  "sounds/ui/shard_tick": "sounds/ui/shard_tick.mp3",
+  "sounds/vo/tidehunter/tide_anger_02": "sounds/vo/tidehunter/tide_anger_02.mp3",
+  "sounds/vo/tidehunter/tide_anger_04": "sounds/vo/tidehunter/tide_anger_04.mp3",
+  "sounds/vo/tidehunter/tide_anger_05": "sounds/vo/tidehunter/tide_anger_05.mp3",
+  "sounds/vo/tidehunter/tide_lasthit_07": "sounds/vo/tidehunter/tide_lasthit_07.mp3",
+  "sounds/vo/tidehunter/tide_level_12": "sounds/vo/tidehunter/tide_level_12.mp3",
+  "sounds/vo/tidehunter/tide_spawn_01": "sounds/vo/tidehunter/tide_spawn_01.mp3",
+  "sounds/vo/tidehunter/tide_spawn_08": "sounds/vo/tidehunter/tide_spawn_08.mp3",
+  "sounds/vo/tidehunter/tide_spawn_09": "sounds/vo/tidehunter/tide_spawn_09.mp3",
+  "sounds/vo/tidehunter/tide_win_01": "sounds/vo/tidehunter/tide_win_01.mp3",
+  "sounds/vo/tidehunter/tide_win_02": "sounds/vo/tidehunter/tide_win_02.mp3",
+  "sounds/vo/tidehunter/tide_win_03": "sounds/vo/tidehunter/tide_win_03.mp3",
+  "sounds/vo/tidehunter/tide_win_04": "sounds/vo/tidehunter/tide_win_04.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_01": "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_02": "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_03": "sounds/vo/vengefulspirit/venge_crown_anger_03.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_04": "sounds/vo/vengefulspirit/venge_crown_anger_04.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_05": "sounds/vo/vengefulspirit/venge_crown_anger_05.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_06": "sounds/vo/vengefulspirit/venge_crown_anger_06.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_07": "sounds/vo/vengefulspirit/venge_crown_anger_07.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_08": "sounds/vo/vengefulspirit/venge_crown_anger_08.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_09": "sounds/vo/vengefulspirit/venge_crown_anger_09.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_attack_33": "sounds/vo/vengefulspirit/venge_crown_attack_33.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_cast_05": "sounds/vo/vengefulspirit/venge_crown_cast_05.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_happy_01": "sounds/vo/vengefulspirit/venge_crown_happy_01.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_happy_02": "sounds/vo/vengefulspirit/venge_crown_happy_02.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_happy_03": "sounds/vo/vengefulspirit/venge_crown_happy_03.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_happy_04": "sounds/vo/vengefulspirit/venge_crown_happy_04.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_happy_05": "sounds/vo/vengefulspirit/venge_crown_happy_05.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_inthebag_01": "sounds/vo/vengefulspirit/venge_crown_inthebag_01.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_missile_06": "sounds/vo/vengefulspirit/venge_crown_missile_06.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_missile_09": "sounds/vo/vengefulspirit/venge_crown_missile_09.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_win_04": "sounds/vo/vengefulspirit/venge_crown_win_04.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_yes_02": "sounds/vo/vengefulspirit/venge_crown_yes_02.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_yes_03": "sounds/vo/vengefulspirit/venge_crown_yes_03.mp3",
+  "sounds/weapons/hero/kunkka/x_snapback": "sounds/weapons/hero/kunkka/x_snapback.mp3",
+  "sounds/weapons/hero/naga_siren/ensnare_target": "sounds/weapons/hero/naga_siren/ensnare_target.mp3",
+  "sounds/weapons/hero/slark/taunt_flip": "sounds/weapons/hero/slark/taunt_flip.mp3"
+ }
+}

@@ -1,0 +1,1558 @@
+{
+ "about": "Made by scripts/make-minigame-assets.mjs from Valve’s Dota 2 files; see docs/minigames.md.",
+ "files": {
+  "data.json": {
+   "from": "scripts/events/crownfall/survivors_attributes.vdata, scripts/events/crownfall/survivors_difficulty.vdata, scripts/events/crownfall/survivors_enemies.vdata, scripts/events/crownfall/survivors_game_modes.vdata, scripts/events/crownfall/survivors_heroes.vdata, scripts/events/crownfall/survivors_levels.vdata, scripts/events/crownfall/survivors_pickups.vdata, scripts/events/crownfall/survivors_powerups.vdata, scripts/events/crownfall/survivors_spawners.vdata",
+   "bytes": 217082
+  },
+  "images/ability_bg.webp": {
+   "from": "panorama/images/events/crownfall/survivors/ability_bg_png.png",
+   "width": 1920,
+   "height": 621,
+   "quality": 84,
+   "stamp": "b3015c2d180e4a00",
+   "bytes": 9370
+  },
+  "images/echelon_badge_container.webp": {
+   "from": "panorama/images/events/crownfall/survivors/echelon_badge_container_png.png",
+   "width": 240,
+   "height": 52,
+   "lossless": true,
+   "stamp": "2a62b6790ce8a4b9",
+   "bytes": 7248
+  },
+  "images/gem.webp": {
+   "from": "panorama/images/events/crownfall/survivors/gem_png.png",
+   "width": 80,
+   "height": 80,
+   "lossless": true,
+   "stamp": "1756d02f8391416d",
+   "bytes": 4720
+  },
+  "images/gold_bag.svg": {
+   "from": "panorama/images/events/crownfall/survivors/gold_bag.svg",
+   "stamp": "e4b70291bd8beeb4",
+   "bytes": 3402
+  },
+  "images/gold_coins.svg": {
+   "from": "panorama/images/events/crownfall/survivors/gold_coins.svg",
+   "stamp": "71b20906df1fef38",
+   "bytes": 1336
+  },
+  "images/heroes/icons/npc_dota_hero_kez.webp": {
+   "from": "panorama/images/heroes/icons/npc_dota_hero_kez_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "7c4bbcf6b91ece5f",
+   "bytes": 1350
+  },
+  "images/heroes/icons/npc_dota_hero_skywrath_mage.webp": {
+   "from": "panorama/images/heroes/icons/npc_dota_hero_skywrath_mage_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "775fe0737bf68d62",
+   "bytes": 1286
+  },
+  "images/heroes/icons/npc_dota_hero_vengefulspirit.webp": {
+   "from": "panorama/images/heroes/icons/npc_dota_hero_vengefulspirit_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "157774bcfc6a4693",
+   "bytes": 1788
+  },
+  "images/heroes/icons/npc_dota_hero_vengefulspirit_alt3.webp": {
+   "from": "panorama/images/heroes/icons/npc_dota_hero_vengefulspirit_alt3_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "65c9ddec644d58a6",
+   "bytes": 1478
+  },
+  "images/heroes/selection/npc_dota_hero_kez.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_kez_png.png",
+   "width": 283,
+   "height": 375,
+   "quality": 88,
+   "stamp": "61da5f4a91970f53",
+   "bytes": 19776
+  },
+  "images/heroes/selection/npc_dota_hero_skywrath_mage.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_skywrath_mage_png.png",
+   "width": 142,
+   "height": 188,
+   "quality": 88,
+   "stamp": "0bdbb785b4560fa7",
+   "bytes": 9574
+  },
+  "images/heroes/selection/npc_dota_hero_vengefulspirit.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_vengefulspirit_png.png",
+   "width": 142,
+   "height": 188,
+   "quality": 88,
+   "stamp": "c125769c07a0dcac",
+   "bytes": 7054
+  },
+  "images/hud/aghs_off_large.webp": {
+   "from": "panorama/images/hud/reborn/aghs_off_large_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "2e87845013b7c23f",
+   "bytes": 18434
+  },
+  "images/hud/aghs_on_large.webp": {
+   "from": "panorama/images/hud/reborn/aghs_on_large_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "b4f6c115912dec10",
+   "bytes": 22008
+  },
+  "images/hud/aghs_on_scepter_large.webp": {
+   "from": "panorama/images/hud/reborn/aghs_on_scepter_large_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "b832184d9e9de319",
+   "bytes": 20956
+  },
+  "images/hud/aghs_on_shard_large.webp": {
+   "from": "panorama/images/hud/reborn/aghs_on_shard_large_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "b0dcebd98f2b1ed9",
+   "bytes": 19794
+  },
+  "images/hud/gold_large.webp": {
+   "from": "panorama/images/hud/reborn/gold_large_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "2c86dc29c55824a4",
+   "bytes": 8328
+  },
+  "images/hud/help_diamond.svg": {
+   "from": "panorama/images/control_icons/24px/help_diamond.svg",
+   "stamp": "649dd20f290882e9",
+   "bytes": 1387
+  },
+  "images/hud/innate_icon_large.webp": {
+   "from": "panorama/images/hud/facets/innate_icon_large_png.png",
+   "width": 104,
+   "height": 104,
+   "lossless": true,
+   "stamp": "8ae4d4dfe763a4e2",
+   "bytes": 6344
+  },
+  "images/inventory_bg.webp": {
+   "from": "panorama/images/events/crownfall/survivors/inventory_bg_png.png",
+   "width": 1184,
+   "height": 864,
+   "quality": 84,
+   "stamp": "b6045112ba49f327",
+   "bytes": 18050
+  },
+  "images/items/angels_demise.webp": {
+   "from": "panorama/images/items/angels_demise_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "aa6a67f5c55b70f9",
+   "bytes": 1998
+  },
+  "images/items/apex.webp": {
+   "from": "panorama/images/items/apex_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "6f3523a8beebfccf",
+   "bytes": 3244
+  },
+  "images/items/blade_mail.webp": {
+   "from": "panorama/images/items/blade_mail_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "b64ff40c26a2eaff",
+   "bytes": 2102
+  },
+  "images/items/bloodstone.webp": {
+   "from": "panorama/images/items/bloodstone_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "43f07cce467f342e",
+   "bytes": 2026
+  },
+  "images/items/demon_edge.webp": {
+   "from": "panorama/images/items/demon_edge_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "2f136db36bacb986",
+   "bytes": 2730
+  },
+  "images/items/echo_stone.webp": {
+   "from": "panorama/images/items/echo_stone_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "3c6d9157ac598a54",
+   "bytes": 2284
+  },
+  "images/items/greater_crit.webp": {
+   "from": "panorama/images/items/greater_crit_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "04d8e8666391ffab",
+   "bytes": 2228
+  },
+  "images/items/heart.webp": {
+   "from": "panorama/images/items/heart_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "a0019aa00fc51303",
+   "bytes": 2164
+  },
+  "images/items/kaya.webp": {
+   "from": "panorama/images/items/kaya_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "05930a7766c6df0d",
+   "bytes": 2658
+  },
+  "images/items/kaya_and_sange.webp": {
+   "from": "panorama/images/items/kaya_and_sange_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "a95bc198c587accc",
+   "bytes": 3380
+  },
+  "images/items/lesser_crit.webp": {
+   "from": "panorama/images/items/lesser_crit_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "06309ff6baa4a183",
+   "bytes": 2102
+  },
+  "images/items/octarine_core.webp": {
+   "from": "panorama/images/items/octarine_core_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "a7f397c0244ffad6",
+   "bytes": 2980
+  },
+  "images/items/phylactery.webp": {
+   "from": "panorama/images/items/phylactery_png.png",
+   "width": 86,
+   "height": 62,
+   "quality": 90,
+   "stamp": "88030eff757623bf",
+   "bytes": 2408
+  },
+  "images/items/reaver.webp": {
+   "from": "panorama/images/items/reaver_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "060061a10c5f3802",
+   "bytes": 2970
+  },
+  "images/items/ring_of_tarrasque.webp": {
+   "from": "panorama/images/items/ring_of_tarrasque_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "2c4183b2af12f82d",
+   "bytes": 2084
+  },
+  "images/items/sange.webp": {
+   "from": "panorama/images/items/sange_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "cce4fc9cf726ff1c",
+   "bytes": 2084
+  },
+  "images/items/sange_and_yasha.webp": {
+   "from": "panorama/images/items/sange_and_yasha_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "2a988c47e7009abb",
+   "bytes": 3186
+  },
+  "images/items/timeless_relic.webp": {
+   "from": "panorama/images/items/timeless_relic_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "164651aa6fefc7e2",
+   "bytes": 2918
+  },
+  "images/items/tome_of_knowledge.webp": {
+   "from": "panorama/images/items/tome_of_knowledge_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "23936c3d1e47fb27",
+   "bytes": 2592
+  },
+  "images/items/trident.webp": {
+   "from": "panorama/images/items/trident_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "6ef66a15e7d00190",
+   "bytes": 2728
+  },
+  "images/items/winter_coal.webp": {
+   "from": "panorama/images/items/winter_coal_png.png",
+   "width": 86,
+   "height": 62,
+   "quality": 90,
+   "stamp": "c8a8327c250267a8",
+   "bytes": 1280
+  },
+  "images/items/world_chasm_artifact.webp": {
+   "from": "panorama/images/items/world_chasm_artifact_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "e11e153de75ce8a1",
+   "bytes": 3614
+  },
+  "images/items/yasha.webp": {
+   "from": "panorama/images/items/yasha_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "57716fd2c318552b",
+   "bytes": 2328
+  },
+  "images/items/yasha_and_kaya.webp": {
+   "from": "panorama/images/items/yasha_and_kaya_png.png",
+   "width": 88,
+   "height": 64,
+   "quality": 90,
+   "stamp": "13a717a0d6c34620",
+   "bytes": 3300
+  },
+  "images/label_emblem.webp": {
+   "from": "panorama/images/events/crownfall/survivors/label_emblem_png.png",
+   "width": 368,
+   "height": 40,
+   "lossless": true,
+   "stamp": "0156614b6d6103a3",
+   "bytes": 742
+  },
+  "images/label_emblem_bottom.webp": {
+   "from": "panorama/images/events/crownfall/survivors/label_emblem_bottom_png.png",
+   "width": 194,
+   "height": 20,
+   "lossless": true,
+   "stamp": "aec0f5616e3b2f5f",
+   "bytes": 702
+  },
+  "images/locked_pattern.webp": {
+   "from": "panorama/images/events/crownfall/survivors/locked_pattern_png.png",
+   "width": 40,
+   "height": 40,
+   "lossless": true,
+   "stamp": "60c80f8136326991",
+   "bytes": 60
+  },
+  "images/logo_en.webp": {
+   "from": "panorama/images/events/crownfall/survivors/logo_en_png.png",
+   "width": 1200,
+   "height": 653,
+   "quality": 88,
+   "stamp": "606cf7ac1ae65d33",
+   "bytes": 271752
+  },
+  "images/minimap/compass_icon.webp": {
+   "from": "panorama/images/events/crownfall/survivors/minimap/compass_icon_png.png",
+   "width": 96,
+   "height": 96,
+   "lossless": true,
+   "stamp": "863b8c76327ed673",
+   "bytes": 3356
+  },
+  "images/minimap/exclaimation_point.webp": {
+   "from": "panorama/images/events/crownfall/survivors/minimap/exclaimation_point_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "bcf274857c86617d",
+   "bytes": 356
+  },
+  "images/minimap/minimap_night.webp": {
+   "from": "materials/models/events/crownfall/survivors/minimap_background_night_png_ade24d1f.png",
+   "width": 1200,
+   "height": 1200,
+   "quality": 86,
+   "stamp": "0e3d92a8372715f9",
+   "bytes": 43856
+  },
+  "images/minimap/npc_dota_survivor_defender.webp": {
+   "from": "panorama/images/events/crownfall/survivors/minimap/npc_dota_survivor_defender_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "11a66fa63d2cb34e",
+   "bytes": 992
+  },
+  "images/minimap/npc_dota_survivor_golem.webp": {
+   "from": "panorama/images/events/crownfall/survivors/minimap/npc_dota_survivor_golem_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "5d73e9242ca0d1ac",
+   "bytes": 926
+  },
+  "images/minimap/npc_dota_survivor_magnet.webp": {
+   "from": "panorama/images/events/crownfall/survivors/minimap/npc_dota_survivor_magnet_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "d09e1ce41f8a6b51",
+   "bytes": 450
+  },
+  "images/minimap/npc_dota_survivor_resurrector.webp": {
+   "from": "panorama/images/events/crownfall/survivors/minimap/npc_dota_survivor_resurrector_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "3dcca6f800539861",
+   "bytes": 716
+  },
+  "images/minimap/npc_dota_survivors_archer.webp": {
+   "from": "panorama/images/events/crownfall/survivors/minimap/npc_dota_survivors_archer_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "bdd497a0cce6f13e",
+   "bytes": 496
+  },
+  "images/minimap/pin.webp": {
+   "from": "panorama/images/events/crownfall/survivors/minimap/pin_png.png",
+   "width": 88,
+   "height": 88,
+   "lossless": true,
+   "stamp": "5479529f6cd6723f",
+   "bytes": 6114
+  },
+  "images/minimap/survivors_minimap.webp": {
+   "from": "materials/models/events/crownfall/survivors/survivors_minimap.png",
+   "width": 1200,
+   "height": 1200,
+   "quality": 86,
+   "stamp": "bdbe981db9036290",
+   "bytes": 44682
+  },
+  "images/minimap/treasure_icon.webp": {
+   "from": "panorama/images/events/crownfall/survivors/minimap/treasure_icon_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "50f003058216e9cf",
+   "bytes": 12932
+  },
+  "images/multi_dash.webp": {
+   "from": "panorama/images/events/crownfall/survivors/multi_dash_png.png",
+   "width": 100,
+   "height": 24,
+   "lossless": true,
+   "stamp": "f9d0054f4bb788ff",
+   "bytes": 528
+  },
+  "images/new_badge_container.webp": {
+   "from": "panorama/images/events/crownfall/survivors/new_badge_container_png.png",
+   "width": 228,
+   "height": 78,
+   "lossless": true,
+   "stamp": "a1b4b245d18fab49",
+   "bytes": 8800
+  },
+  "images/novel/portrait_mask.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portrait_mask_png.png",
+   "width": 320,
+   "height": 360,
+   "quality": 85,
+   "stamp": "f189e9673534fc48",
+   "bytes": 1330
+  },
+  "images/novel/shadow.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/shadow_png.png",
+   "width": 320,
+   "height": 320,
+   "quality": 85,
+   "stamp": "847836de9d0d5820",
+   "bytes": 11536
+  },
+  "images/portrait_backgrounds/faceless_void.webp": {
+   "from": "materials/portraits_card/portrait_backgrounds/faceless_void_psd.png",
+   "width": 256,
+   "height": 256,
+   "quality": 84,
+   "stamp": "dd83f82e0dd8e297",
+   "bytes": 1244
+  },
+  "images/portrait_backgrounds/lich.webp": {
+   "from": "materials/portraits_card/portrait_backgrounds/lich_psd.png",
+   "width": 256,
+   "height": 256,
+   "quality": 84,
+   "stamp": "430e9ad752693d86",
+   "bytes": 2050
+  },
+  "images/portrait_backgrounds/slardar.webp": {
+   "from": "materials/portraits_card/portrait_backgrounds/slardar_psd.png",
+   "width": 256,
+   "height": 256,
+   "quality": 84,
+   "stamp": "dc385e072e416c5c",
+   "bytes": 1748
+  },
+  "images/portraits/axe_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/axe_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "2aa435538107f8a8",
+   "bytes": 9192
+  },
+  "images/portraits/bakeet_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/bakeet_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "15e5ae0b7ea1add8",
+   "bytes": 11144
+  },
+  "images/portraits/bat_portrait_eyes.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/bat_portrait_eyes_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "31131bf01ea36f20",
+   "bytes": 8474
+  },
+  "images/portraits/bounty_hunter_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/bounty_hunter_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "cb3e3d820c28043b",
+   "bytes": 10904
+  },
+  "images/portraits/centaur_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/centaur_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "954b408059ea6731",
+   "bytes": 11628
+  },
+  "images/portraits/crownconsul_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/crownconsul_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "fcbd3286773baa76",
+   "bytes": 15230
+  },
+  "images/portraits/crystal_maiden_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/crystal_maiden_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "868deffd962d3c95",
+   "bytes": 14248
+  },
+  "images/portraits/gralla_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/gralla_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "ca32953810eadc64",
+   "bytes": 14538
+  },
+  "images/portraits/imperia_portrait_frustrated.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/imperia_portrait_frustrated_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "b9ad5aa03ce965b7",
+   "bytes": 15932
+  },
+  "images/portraits/imperia_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/imperia_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "2e99b7a28c8d3e8e",
+   "bytes": 15512
+  },
+  "images/portraits/imperia_portrait_shocked.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/imperia_portrait_shocked_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "ff48328475fdedc5",
+   "bytes": 15964
+  },
+  "images/portraits/imperia_portrait_wins.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/imperia_portrait_wins_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "0b4b550fe8b91713",
+   "bytes": 16426
+  },
+  "images/portraits/io_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/io_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "fdc87844fed900a9",
+   "bytes": 41712
+  },
+  "images/portraits/kestrel_parka_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/kestrel_parka_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "963789127aa3e263",
+   "bytes": 11888
+  },
+  "images/portraits/kez_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/kez_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "9a6a41d31ade96e1",
+   "bytes": 15698
+  },
+  "images/portraits/kunkka_portrait_amused.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/kunkka_portrait_amused_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "c9d8e6865109ff59",
+   "bytes": 13018
+  },
+  "images/portraits/lich_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/lich_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "6c122587d52fe2e5",
+   "bytes": 13764
+  },
+  "images/portraits/lina_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/lina_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "e4115ac2456374d4",
+   "bytes": 31694
+  },
+  "images/portraits/pangolier_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/pangolier_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "4b02d8f84b39aeb0",
+   "bytes": 12996
+  },
+  "images/portraits/pudge_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/pudge_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "a2d637a86dc091fc",
+   "bytes": 12522
+  },
+  "images/portraits/skreeauk_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/skreeauk_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "5deb7d73e356c9f2",
+   "bytes": 11436
+  },
+  "images/portraits/skywrath_mage_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/skywrath_mage_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "884e03f330036b3a",
+   "bytes": 19860
+  },
+  "images/portraits/snapfire_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/snapfire_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "7cf092ad01b9af8d",
+   "bytes": 16250
+  },
+  "images/portraits/squee_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/squee_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "3986ca96bcd39fc9",
+   "bytes": 20576
+  },
+  "images/portraits/vengeful_spirit_demon_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/vengeful_spirit_demon_portrait_idle_png.png",
+   "width": 384,
+   "height": 432,
+   "quality": 84,
+   "stamp": "9decf2132e77068c",
+   "bytes": 26892
+  },
+  "images/powerup_texture.webp": {
+   "from": "panorama/images/events/crownfall/survivors/powerup_texture_png.png",
+   "width": 492,
+   "height": 885,
+   "lossless": true,
+   "stamp": "488b0b45f80da90e",
+   "bytes": 123848
+  },
+  "images/score_container_background_wide.webp": {
+   "from": "panorama/images/events/crownfall/survivors/score_container_background_wide_png.png",
+   "width": 880,
+   "height": 160,
+   "lossless": true,
+   "stamp": "0dacf4527374163e",
+   "bytes": 40822
+  },
+  "images/score_container_border_wide.webp": {
+   "from": "panorama/images/events/crownfall/survivors/score_container_border_wide_png.png",
+   "width": 880,
+   "height": 160,
+   "lossless": true,
+   "stamp": "025efc8b66c7ee2f",
+   "bytes": 1004
+  },
+  "images/side_flare_tall.webp": {
+   "from": "panorama/images/events/crownfall/survivors/side_flare_tall_png.png",
+   "width": 208,
+   "height": 584,
+   "lossless": true,
+   "stamp": "c7ac753978e5b92e",
+   "bytes": 75670
+  },
+  "images/spellicons/axe_counter_helix.webp": {
+   "from": "panorama/images/spellicons/axe_counter_helix_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "912ea031d787cbaa",
+   "bytes": 5490
+  },
+  "images/spellicons/bounty_hunter_track.webp": {
+   "from": "panorama/images/spellicons/bounty_hunter_track_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "fa50e2a7abe7c010",
+   "bytes": 5456
+  },
+  "images/spellicons/bristleback_viscous_nasal_goo.webp": {
+   "from": "panorama/images/spellicons/bristleback_viscous_nasal_goo_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "9e84f246e940cdb6",
+   "bytes": 3982
+  },
+  "images/spellicons/centaur_stampede.webp": {
+   "from": "panorama/images/spellicons/centaur_stampede_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "eb65a9e02ef69ec6",
+   "bytes": 6052
+  },
+  "images/spellicons/crystal_maiden_frostbite.webp": {
+   "from": "panorama/images/spellicons/crystal_maiden_frostbite_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "5ca3d49cca65daf7",
+   "bytes": 4062
+  },
+  "images/spellicons/kez_echo_slash.webp": {
+   "from": "panorama/images/spellicons/kez_echo_slash_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "979f9564d2b0a223",
+   "bytes": 3550
+  },
+  "images/spellicons/lich_chain_frost.webp": {
+   "from": "panorama/images/spellicons/lich_chain_frost_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "b261d96407de6678",
+   "bytes": 4634
+  },
+  "images/spellicons/lina_laguna_blade.webp": {
+   "from": "panorama/images/spellicons/lina_laguna_blade_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "7400a4b382ac34e0",
+   "bytes": 4906
+  },
+  "images/spellicons/pangolier_swashbuckle.webp": {
+   "from": "panorama/images/spellicons/pangolier_swashbuckle_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "d6b0865258ff1c5a",
+   "bytes": 4930
+  },
+  "images/spellicons/pudge_rot.webp": {
+   "from": "panorama/images/spellicons/pudge_rot_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "71e60c3441be50b1",
+   "bytes": 4270
+  },
+  "images/spellicons/razor_eye_of_the_storm_alt1.webp": {
+   "from": "panorama/images/spellicons/razor_eye_of_the_storm_alt1_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "6c7095f944b29e7f",
+   "bytes": 6212
+  },
+  "images/spellicons/ringmaster_impalement.webp": {
+   "from": "panorama/images/spellicons/ringmaster_impalement_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "bce88ef1a5bf570a",
+   "bytes": 5846
+  },
+  "images/spellicons/skywrath_mage_arcane_bolt_alt2.webp": {
+   "from": "panorama/images/spellicons/skywrath_mage_arcane_bolt_alt2_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "cf3eae1bbde5bb53",
+   "bytes": 3724
+  },
+  "images/spellicons/snapfire_mortimer_kisses.webp": {
+   "from": "panorama/images/spellicons/snapfire_mortimer_kisses_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "6aa696fc7ffe6bdf",
+   "bytes": 5366
+  },
+  "images/spellicons/techies_land_mines.webp": {
+   "from": "panorama/images/spellicons/techies_land_mines_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "81ae6f7e91e3d30f",
+   "bytes": 4958
+  },
+  "images/spellicons/vengefulspirit_magic_missile_alt2.webp": {
+   "from": "panorama/images/spellicons/vengefulspirit_magic_missile_alt2_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "c9bee0022be5d395",
+   "bytes": 4390
+  },
+  "images/spellicons/wisp_spirits.webp": {
+   "from": "panorama/images/spellicons/wisp_spirits_png.png",
+   "width": 128,
+   "height": 128,
+   "quality": 90,
+   "stamp": "14a7379739811024",
+   "bytes": 4848
+  },
+  "images/survivors_keyart.webp": {
+   "from": "panorama/images/events/crownfall/survivors/survivors_keyart_psd.png",
+   "width": 1920,
+   "height": 1200,
+   "quality": 84,
+   "stamp": "130ed309288240a3",
+   "bytes": 136926
+  },
+  "images/warning_badge.webp": {
+   "from": "panorama/images/events/crownfall/survivors/warning_badge_png.png",
+   "width": 284,
+   "height": 96,
+   "lossless": true,
+   "stamp": "0a5f4a0dddb26feb",
+   "bytes": 11510
+  },
+  "sounds.json": {
+   "from": "soundevents/soundevents_survivors.vsndevts",
+   "bytes": 23633
+  },
+  "sounds/items/cheese.mp3": {
+   "from": "sounds/items/cheese.mp3",
+   "stamp": "c395aedb55bb8748",
+   "bytes": 38116
+  },
+  "sounds/misc/creep_deaths/death_skeleton_01.mp3": {
+   "from": "sounds/misc/creep_deaths/death_skeleton_01.mp3",
+   "stamp": "b88334fcff6027ee",
+   "bytes": 7902
+  },
+  "sounds/misc/creep_deaths/death_skeleton_02.mp3": {
+   "from": "sounds/misc/creep_deaths/death_skeleton_02.mp3",
+   "stamp": "0cecace596f79638",
+   "bytes": 7227
+  },
+  "sounds/misc/crownfall/boss_warn.mp3": {
+   "from": "sounds/misc/crownfall/boss_warn.mp3",
+   "stamp": "3fac39a63c6044f4",
+   "bytes": 14965
+  },
+  "sounds/misc/crownfall/chain_frost_cast.mp3": {
+   "from": "sounds/misc/crownfall/chain_frost_cast.mp3",
+   "stamp": "2e6baf992c070f34",
+   "bytes": 36375
+  },
+  "sounds/misc/crownfall/enc/lightning01.mp3": {
+   "from": "sounds/misc/crownfall/enc/lightning01.mp3",
+   "stamp": "483f8b27e5547f2b",
+   "bytes": 123338
+  },
+  "sounds/misc/crownfall/enc/lightning02.mp3": {
+   "from": "sounds/misc/crownfall/enc/lightning02.mp3",
+   "stamp": "497084daea7c5e9f",
+   "bytes": 161076
+  },
+  "sounds/misc/crownfall/music/survivors_boss.mp3": {
+   "from": "sounds/misc/crownfall/music/survivors_boss.mp3",
+   "stamp": "1eae7366cf7e5b94",
+   "bytes": 648001
+  },
+  "sounds/misc/crownfall/music/survivors_main.mp3": {
+   "from": "sounds/misc/crownfall/music/survivors_main.mp3",
+   "stamp": "ae31c43e17ea03be",
+   "bytes": 697969
+  },
+  "sounds/misc/crownfall/snotty_bat.mp3": {
+   "from": "sounds/misc/crownfall/snotty_bat.mp3",
+   "stamp": "85cf4f79fe2616cf",
+   "bytes": 21802
+  },
+  "sounds/misc/crownfall/urn_break.mp3": {
+   "from": "sounds/misc/crownfall/urn_break.mp3",
+   "stamp": "74654025ec9e618e",
+   "bytes": 22965
+  },
+  "sounds/misc/crownfall/xp_pickup.mp3": {
+   "from": "sounds/misc/crownfall/xp_pickup.mp3",
+   "stamp": "bf87c4003289e476",
+   "bytes": 10683
+  },
+  "sounds/music/valve_dota_001/music/ganked_sml_01.mp3": {
+   "from": "sounds/music/valve_dota_001/music/ganked_sml_01.mp3",
+   "stamp": "ecfabf26fda469fb",
+   "bytes": 62276
+  },
+  "sounds/music/valve_dota_001/music/killed.mp3": {
+   "from": "sounds/music/valve_dota_001/music/killed.mp3",
+   "stamp": "842e04d65e56dc6c",
+   "bytes": 384671
+  },
+  "sounds/music/valve_dota_001/stingers/radiant_win.mp3": {
+   "from": "sounds/music/valve_dota_001/stingers/radiant_win.mp3",
+   "stamp": "a15f1825b7793e55",
+   "bytes": 312887
+  },
+  "sounds/physics/damage/building/dire_tower_destruction_01.mp3": {
+   "from": "sounds/physics/damage/building/dire_tower_destruction_01.mp3",
+   "stamp": "7abaf82cb396a06f",
+   "bytes": 42883
+  },
+  "sounds/physics/damage/building/dire_tower_destruction_02.mp3": {
+   "from": "sounds/physics/damage/building/dire_tower_destruction_02.mp3",
+   "stamp": "0c66ff79f87d8dba",
+   "bytes": 41371
+  },
+  "sounds/physics/damage/building/dire_tower_destruction_03.mp3": {
+   "from": "sounds/physics/damage/building/dire_tower_destruction_03.mp3",
+   "stamp": "a937918910173f47",
+   "bytes": 47715
+  },
+  "sounds/physics/deaths/common/body_impact_heavy_01.mp3": {
+   "from": "sounds/physics/deaths/common/body_impact_heavy_01.mp3",
+   "stamp": "c2b445f58da6e8e0",
+   "bytes": 5666
+  },
+  "sounds/physics/deaths/common/body_impact_light_01.mp3": {
+   "from": "sounds/physics/deaths/common/body_impact_light_01.mp3",
+   "stamp": "ee4dbccff4c2cf44",
+   "bytes": 2832
+  },
+  "sounds/physics/deaths/common/body_impact_light_02.mp3": {
+   "from": "sounds/physics/deaths/common/body_impact_light_02.mp3",
+   "stamp": "9aabf4e44e0fd7a2",
+   "bytes": 2934
+  },
+  "sounds/physics/deaths/common/body_impact_light_03.mp3": {
+   "from": "sounds/physics/deaths/common/body_impact_light_03.mp3",
+   "stamp": "97a9d3a39758f0dd",
+   "bytes": 3170
+  },
+  "sounds/physics/deaths/common/body_impact_light_04.mp3": {
+   "from": "sounds/physics/deaths/common/body_impact_light_04.mp3",
+   "stamp": "33174d3199ace293",
+   "bytes": 2753
+  },
+  "sounds/physics/deaths/common/body_impact_medium_01.mp3": {
+   "from": "sounds/physics/deaths/common/body_impact_medium_01.mp3",
+   "stamp": "df4d1299e0f05e9d",
+   "bytes": 3612
+  },
+  "sounds/physics/deaths/common/body_impact_medium_02.mp3": {
+   "from": "sounds/physics/deaths/common/body_impact_medium_02.mp3",
+   "stamp": "7a2ab788dd4e0dcd",
+   "bytes": 3637
+  },
+  "sounds/physics/deaths/common/body_impact_medium_03.mp3": {
+   "from": "sounds/physics/deaths/common/body_impact_medium_03.mp3",
+   "stamp": "ee35af7d576fcb5e",
+   "bytes": 3793
+  },
+  "sounds/physics/deaths/common/body_impact_medium_04.mp3": {
+   "from": "sounds/physics/deaths/common/body_impact_medium_04.mp3",
+   "stamp": "5b89e1c933690a34",
+   "bytes": 3925
+  },
+  "sounds/ui/buy.mp3": {
+   "from": "sounds/ui/buy.mp3",
+   "stamp": "037540ae740611db",
+   "bytes": 11774
+  },
+  "sounds/ui/coins.mp3": {
+   "from": "sounds/ui/coins.mp3",
+   "stamp": "b4c227e5584515c7",
+   "bytes": 11810
+  },
+  "sounds/ui/hud_equip_scepter.mp3": {
+   "from": "sounds/ui/hud_equip_scepter.mp3",
+   "stamp": "a6b6ae336f943d19",
+   "bytes": 29199
+  },
+  "sounds/ui/hud_equip_shard.mp3": {
+   "from": "sounds/ui/hud_equip_shard.mp3",
+   "stamp": "a2a187ef462617a6",
+   "bytes": 18089
+  },
+  "sounds/ui/npe_objective_given.mp3": {
+   "from": "sounds/ui/npe_objective_given.mp3",
+   "stamp": "504540ce878c1404",
+   "bytes": 45882
+  },
+  "sounds/ui/power_up_06.mp3": {
+   "from": "sounds/ui/power_up_06.mp3",
+   "stamp": "89d82a2ded87ca2b",
+   "bytes": 68344
+  },
+  "sounds/vo/kez/kez_pain_01.mp3": {
+   "from": "sounds/vo/kez/kez_pain_01.mp3",
+   "stamp": "1bc8b3f4c2ba0dfb",
+   "bytes": 5718
+  },
+  "sounds/vo/kez/kez_pain_02.mp3": {
+   "from": "sounds/vo/kez/kez_pain_02.mp3",
+   "stamp": "641a89eb1c5fd2e2",
+   "bytes": 5825
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_01.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_anger_01.mp3",
+   "stamp": "590d5ea4825ab5e2",
+   "bytes": 15115
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_02.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_anger_02.mp3",
+   "stamp": "af3a4f385a165eb1",
+   "bytes": 14020
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_02.mp3": {
+   "from": "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_02.mp3",
+   "stamp": "4c5d2b785b090349",
+   "bytes": 56867
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_03.mp3": {
+   "from": "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_03.mp3",
+   "stamp": "f04af97bc20faf99",
+   "bytes": 32117
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_04.mp3": {
+   "from": "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_04.mp3",
+   "stamp": "a7e16bb4a83db19f",
+   "bytes": 53137
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_06.mp3": {
+   "from": "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_06.mp3",
+   "stamp": "53c5e9023b4f168a",
+   "bytes": 69244
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_01.mp3": {
+   "from": "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_01.mp3",
+   "stamp": "5c0170a59255b8d9",
+   "bytes": 38196
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_02.mp3": {
+   "from": "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_02.mp3",
+   "stamp": "63a1ebfe07ca6633",
+   "bytes": 29512
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_03.mp3": {
+   "from": "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_03.mp3",
+   "stamp": "d459b2551239cf94",
+   "bytes": 44943
+  },
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_04.mp3": {
+   "from": "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_04.mp3",
+   "stamp": "b0d561016c09c99e",
+   "bytes": 42024
+  },
+  "sounds/vo/vengefulspirit/imperia_death_01.mp3": {
+   "from": "sounds/vo/vengefulspirit/imperia_death_01.mp3",
+   "stamp": "10dce68f03fdc8ce",
+   "bytes": 40745
+  },
+  "sounds/vo/vengefulspirit/imperia_laugh_03.mp3": {
+   "from": "sounds/vo/vengefulspirit/imperia_laugh_03.mp3",
+   "stamp": "c2ad38b4c9314d39",
+   "bytes": 27292
+  },
+  "sounds/vo/vengefulspirit/imperia_laugh_07.mp3": {
+   "from": "sounds/vo/vengefulspirit/imperia_laugh_07.mp3",
+   "stamp": "14431870bee9ed1b",
+   "bytes": 25387
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3",
+   "stamp": "323cb853a2a19d72",
+   "bytes": 11905
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3",
+   "stamp": "8aee0efb1beac8f4",
+   "bytes": 15427
+  },
+  "sounds/weapons/hero/axe/counterhelix.mp3": {
+   "from": "sounds/weapons/hero/axe/counterhelix.mp3",
+   "stamp": "bbe80016dc9d2cdc",
+   "bytes": 21023
+  },
+  "sounds/weapons/hero/bounty_hunter/track.mp3": {
+   "from": "sounds/weapons/hero/bounty_hunter/track.mp3",
+   "stamp": "5dc6db1cdbd10e4a",
+   "bytes": 29319
+  },
+  "sounds/weapons/hero/centaur/stampede_cast.mp3": {
+   "from": "sounds/weapons/hero/centaur/stampede_cast.mp3",
+   "stamp": "398d0e7fb88aed44",
+   "bytes": 43013
+  },
+  "sounds/weapons/hero/crystal_maiden/frostbite.mp3": {
+   "from": "sounds/weapons/hero/crystal_maiden/frostbite.mp3",
+   "stamp": "03a68c8717293819",
+   "bytes": 56973
+  },
+  "sounds/weapons/hero/invoker/meteor.mp3": {
+   "from": "sounds/weapons/hero/invoker/meteor.mp3",
+   "stamp": "901ec445a99c26f6",
+   "bytes": 50187
+  },
+  "sounds/weapons/hero/invoker/meteor_cast.mp3": {
+   "from": "sounds/weapons/hero/invoker/meteor_cast.mp3",
+   "stamp": "7d8a524f4c426b41",
+   "bytes": 15825
+  },
+  "sounds/weapons/hero/kez/echo_katana_cast.mp3": {
+   "from": "sounds/weapons/hero/kez/echo_katana_cast.mp3",
+   "stamp": "95b4c9c09edb9ec1",
+   "bytes": 18377
+  },
+  "sounds/weapons/hero/kez/sai_crit.mp3": {
+   "from": "sounds/weapons/hero/kez/sai_crit.mp3",
+   "stamp": "a65b2e96bad416c3",
+   "bytes": 27215
+  },
+  "sounds/weapons/hero/kez/vulnerable_target.mp3": {
+   "from": "sounds/weapons/hero/kez/vulnerable_target.mp3",
+   "stamp": "a44987ee6b2f450a",
+   "bytes": 43846
+  },
+  "sounds/weapons/hero/kunkka/ability_geyser.mp3": {
+   "from": "sounds/weapons/hero/kunkka/ability_geyser.mp3",
+   "stamp": "e9da1876d55cb74e",
+   "bytes": 58168
+  },
+  "sounds/weapons/hero/lich/chain_frost_impact.mp3": {
+   "from": "sounds/weapons/hero/lich/chain_frost_impact.mp3",
+   "stamp": "e0e0e6ad0cbf02d9",
+   "bytes": 13106
+  },
+  "sounds/weapons/hero/lina/lagunablade.mp3": {
+   "from": "sounds/weapons/hero/lina/lagunablade.mp3",
+   "stamp": "13162c5c98e3346f",
+   "bytes": 25255
+  },
+  "sounds/weapons/hero/magnataur/reverse_polarity.mp3": {
+   "from": "sounds/weapons/hero/magnataur/reverse_polarity.mp3",
+   "stamp": "9ca503a9d2ffccbc",
+   "bytes": 38716
+  },
+  "sounds/weapons/hero/pangolier/swashbuckle_cast.mp3": {
+   "from": "sounds/weapons/hero/pangolier/swashbuckle_cast.mp3",
+   "stamp": "95e6a2bb4baa1913",
+   "bytes": 23047
+  },
+  "sounds/weapons/hero/phoenix/sunray_beam_loop.mp3": {
+   "from": "sounds/weapons/hero/phoenix/sunray_beam_loop.mp3",
+   "stamp": "7c6aa9173cf4ec17",
+   "bytes": 62294
+  },
+  "sounds/weapons/hero/ringmaster/impale_stab_1.mp3": {
+   "from": "sounds/weapons/hero/ringmaster/impale_stab_1.mp3",
+   "stamp": "10f20bc087c4dc1f",
+   "bytes": 5260
+  },
+  "sounds/weapons/hero/ringmaster/impale_stab_2.mp3": {
+   "from": "sounds/weapons/hero/ringmaster/impale_stab_2.mp3",
+   "stamp": "e76ac1e575814267",
+   "bytes": 4842
+  },
+  "sounds/weapons/hero/ringmaster/impale_stab_3.mp3": {
+   "from": "sounds/weapons/hero/ringmaster/impale_stab_3.mp3",
+   "stamp": "ae881ab6b2932619",
+   "bytes": 4686
+  },
+  "sounds/weapons/hero/shared/small_blade/whoosh03.mp3": {
+   "from": "sounds/weapons/hero/shared/small_blade/whoosh03.mp3",
+   "stamp": "c5f826ba13fc270b",
+   "bytes": 2936
+  },
+  "sounds/weapons/hero/skeleton_king/reincarnate.mp3": {
+   "from": "sounds/weapons/hero/skeleton_king/reincarnate.mp3",
+   "stamp": "32179986012fe007",
+   "bytes": 70441
+  },
+  "sounds/weapons/hero/skywrath/arcane_bolt_cast.mp3": {
+   "from": "sounds/weapons/hero/skywrath/arcane_bolt_cast.mp3",
+   "stamp": "9680801f243f1904",
+   "bytes": 52967
+  },
+  "sounds/weapons/hero/skywrath/arcane_bolt_target.mp3": {
+   "from": "sounds/weapons/hero/skywrath/arcane_bolt_target.mp3",
+   "stamp": "ae9f542cb1141042",
+   "bytes": 27036
+  },
+  "sounds/weapons/hero/snapfire/cookie_target.mp3": {
+   "from": "sounds/weapons/hero/snapfire/cookie_target.mp3",
+   "stamp": "1796eec2eda226e9",
+   "bytes": 18268
+  },
+  "sounds/weapons/hero/snapfire/lizard_blob_impact.mp3": {
+   "from": "sounds/weapons/hero/snapfire/lizard_blob_impact.mp3",
+   "stamp": "898902e99714cb82",
+   "bytes": 37756
+  },
+  "sounds/weapons/hero/snapfire/lizard_blob_launch.mp3": {
+   "from": "sounds/weapons/hero/snapfire/lizard_blob_launch.mp3",
+   "stamp": "0ba061821d49e69d",
+   "bytes": 20688
+  },
+  "sounds/weapons/hero/techies/land_mine01.mp3": {
+   "from": "sounds/weapons/hero/techies/land_mine01.mp3",
+   "stamp": "8ec204ddfcb06fd7",
+   "bytes": 24610
+  },
+  "sounds/weapons/hero/techies/land_mine02.mp3": {
+   "from": "sounds/weapons/hero/techies/land_mine02.mp3",
+   "stamp": "0e3c93a7cee29872",
+   "bytes": 27373
+  },
+  "sounds/weapons/hero/techies/land_mine_plant.mp3": {
+   "from": "sounds/weapons/hero/techies/land_mine_plant.mp3",
+   "stamp": "fa4105590f029a76",
+   "bytes": 9383
+  },
+  "sounds/weapons/hero/techies/land_mine_primed.mp3": {
+   "from": "sounds/weapons/hero/techies/land_mine_primed.mp3",
+   "stamp": "47146d60b4da1867",
+   "bytes": 21056
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile1.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile1.mp3",
+   "stamp": "20606ff6beef21a3",
+   "bytes": 14934
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile2.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile2.mp3",
+   "stamp": "b8edab8690ed2b73",
+   "bytes": 14621
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile3.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile3.mp3",
+   "stamp": "d157c5db4064f9e0",
+   "bytes": 15168
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile4.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile4.mp3",
+   "stamp": "547ca9384600824e",
+   "bytes": 15194
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.mp3",
+   "stamp": "9971bc31e19f4036",
+   "bytes": 14063
+  },
+  "sounds/weapons/hero/wisp/spirits_cast.mp3": {
+   "from": "sounds/weapons/hero/wisp/spirits_cast.mp3",
+   "stamp": "6b3299ef803d7437",
+   "bytes": 48152
+  },
+  "sounds/weapons/hero/zuus/gods_wrath_cast.mp3": {
+   "from": "sounds/weapons/hero/zuus/gods_wrath_cast.mp3",
+   "stamp": "d01e67655fb00499",
+   "bytes": 62477
+  },
+  "strings.en.json": {
+   "from": "resource/localization/dota_english.txt, resource/localization/novels/crownfall_english.txt",
+   "count": 939,
+   "bytes": 100374
+  },
+  "strings.ru.json": {
+   "from": "resource/localization/dota_russian.txt, resource/localization/novels/crownfall_russian.txt",
+   "count": 939,
+   "bytes": 126641
+  }
+ },
+ "valve": {
+  "materials/models/events/crownfall/survivors/minimap_background_night_png_ade24d1f": "images/minimap/minimap_night.webp",
+  "materials/models/events/crownfall/survivors/survivors_minimap": "images/minimap/survivors_minimap.webp",
+  "materials/portraits_card/portrait_backgrounds/faceless_void_psd": "images/portrait_backgrounds/faceless_void.webp",
+  "materials/portraits_card/portrait_backgrounds/lich_psd": "images/portrait_backgrounds/lich.webp",
+  "materials/portraits_card/portrait_backgrounds/slardar_psd": "images/portrait_backgrounds/slardar.webp",
+  "panorama/images/control_icons/24px/help_diamond": "images/hud/help_diamond.svg",
+  "panorama/images/events/crownfall/survivors/ability_bg_png": "images/ability_bg.webp",
+  "panorama/images/events/crownfall/survivors/echelon_badge_container_png": "images/echelon_badge_container.webp",
+  "panorama/images/events/crownfall/survivors/gem_png": "images/gem.webp",
+  "panorama/images/events/crownfall/survivors/gold_bag": "images/gold_bag.svg",
+  "panorama/images/events/crownfall/survivors/gold_coins": "images/gold_coins.svg",
+  "panorama/images/events/crownfall/survivors/inventory_bg_png": "images/inventory_bg.webp",
+  "panorama/images/events/crownfall/survivors/label_emblem_bottom_png": "images/label_emblem_bottom.webp",
+  "panorama/images/events/crownfall/survivors/label_emblem_png": "images/label_emblem.webp",
+  "panorama/images/events/crownfall/survivors/locked_pattern_png": "images/locked_pattern.webp",
+  "panorama/images/events/crownfall/survivors/logo_en_png": "images/logo_en.webp",
+  "panorama/images/events/crownfall/survivors/minimap/compass_icon_png": "images/minimap/compass_icon.webp",
+  "panorama/images/events/crownfall/survivors/minimap/exclaimation_point_png": "images/minimap/exclaimation_point.webp",
+  "panorama/images/events/crownfall/survivors/minimap/npc_dota_survivor_defender_png": "images/minimap/npc_dota_survivor_defender.webp",
+  "panorama/images/events/crownfall/survivors/minimap/npc_dota_survivor_golem_png": "images/minimap/npc_dota_survivor_golem.webp",
+  "panorama/images/events/crownfall/survivors/minimap/npc_dota_survivor_magnet_png": "images/minimap/npc_dota_survivor_magnet.webp",
+  "panorama/images/events/crownfall/survivors/minimap/npc_dota_survivor_resurrector_png": "images/minimap/npc_dota_survivor_resurrector.webp",
+  "panorama/images/events/crownfall/survivors/minimap/npc_dota_survivors_archer_png": "images/minimap/npc_dota_survivors_archer.webp",
+  "panorama/images/events/crownfall/survivors/minimap/pin_png": "images/minimap/pin.webp",
+  "panorama/images/events/crownfall/survivors/minimap/treasure_icon_png": "images/minimap/treasure_icon.webp",
+  "panorama/images/events/crownfall/survivors/multi_dash_png": "images/multi_dash.webp",
+  "panorama/images/events/crownfall/survivors/new_badge_container_png": "images/new_badge_container.webp",
+  "panorama/images/events/crownfall/survivors/powerup_texture_png": "images/powerup_texture.webp",
+  "panorama/images/events/crownfall/survivors/score_container_background_wide_png": "images/score_container_background_wide.webp",
+  "panorama/images/events/crownfall/survivors/score_container_border_wide_png": "images/score_container_border_wide.webp",
+  "panorama/images/events/crownfall/survivors/side_flare_tall_png": "images/side_flare_tall.webp",
+  "panorama/images/events/crownfall/survivors/survivors_keyart_psd": "images/survivors_keyart.webp",
+  "panorama/images/events/crownfall/survivors/warning_badge_png": "images/warning_badge.webp",
+  "panorama/images/events/crownfall/visual_novel/portrait_mask_png": "images/novel/portrait_mask.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/axe_portrait_idle_png": "images/portraits/axe_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/bakeet_portrait_idle_png": "images/portraits/bakeet_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/bat_portrait_eyes_png": "images/portraits/bat_portrait_eyes.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/bounty_hunter_portrait_idle_png": "images/portraits/bounty_hunter_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/centaur_portrait_idle_png": "images/portraits/centaur_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/crownconsul_portrait_idle_png": "images/portraits/crownconsul_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/crystal_maiden_portrait_idle_png": "images/portraits/crystal_maiden_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/gralla_portrait_idle_png": "images/portraits/gralla_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/imperia_portrait_frustrated_png": "images/portraits/imperia_portrait_frustrated.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/imperia_portrait_idle_png": "images/portraits/imperia_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/imperia_portrait_shocked_png": "images/portraits/imperia_portrait_shocked.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/imperia_portrait_wins_png": "images/portraits/imperia_portrait_wins.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/io_portrait_idle_png": "images/portraits/io_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/kestrel_parka_portrait_idle_png": "images/portraits/kestrel_parka_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/kez_portrait_idle_png": "images/portraits/kez_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/kunkka_portrait_amused_png": "images/portraits/kunkka_portrait_amused.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/lich_portrait_idle_png": "images/portraits/lich_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/lina_portrait_idle_png": "images/portraits/lina_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/pangolier_portrait_idle_png": "images/portraits/pangolier_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/pudge_portrait_idle_png": "images/portraits/pudge_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/skreeauk_portrait_idle_png": "images/portraits/skreeauk_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/skywrath_mage_portrait_idle_png": "images/portraits/skywrath_mage_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/snapfire_portrait_idle_png": "images/portraits/snapfire_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/squee_portrait_idle_png": "images/portraits/squee_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/vengeful_spirit_demon_portrait_idle_png": "images/portraits/vengeful_spirit_demon_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/shadow_png": "images/novel/shadow.webp",
+  "panorama/images/heroes/icons/npc_dota_hero_kez_png": "images/heroes/icons/npc_dota_hero_kez.webp",
+  "panorama/images/heroes/icons/npc_dota_hero_skywrath_mage_png": "images/heroes/icons/npc_dota_hero_skywrath_mage.webp",
+  "panorama/images/heroes/icons/npc_dota_hero_vengefulspirit_alt3_png": "images/heroes/icons/npc_dota_hero_vengefulspirit_alt3.webp",
+  "panorama/images/heroes/icons/npc_dota_hero_vengefulspirit_png": "images/heroes/icons/npc_dota_hero_vengefulspirit.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_kez_png": "images/heroes/selection/npc_dota_hero_kez.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_skywrath_mage_png": "images/heroes/selection/npc_dota_hero_skywrath_mage.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_vengefulspirit_png": "images/heroes/selection/npc_dota_hero_vengefulspirit.webp",
+  "panorama/images/hud/facets/innate_icon_large_png": "images/hud/innate_icon_large.webp",
+  "panorama/images/hud/reborn/aghs_off_large_png": "images/hud/aghs_off_large.webp",
+  "panorama/images/hud/reborn/aghs_on_large_png": "images/hud/aghs_on_large.webp",
+  "panorama/images/hud/reborn/aghs_on_scepter_large_png": "images/hud/aghs_on_scepter_large.webp",
+  "panorama/images/hud/reborn/aghs_on_shard_large_png": "images/hud/aghs_on_shard_large.webp",
+  "panorama/images/hud/reborn/gold_large_png": "images/hud/gold_large.webp",
+  "panorama/images/items/angels_demise_png": "images/items/angels_demise.webp",
+  "panorama/images/items/apex_png": "images/items/apex.webp",
+  "panorama/images/items/blade_mail_png": "images/items/blade_mail.webp",
+  "panorama/images/items/bloodstone_png": "images/items/bloodstone.webp",
+  "panorama/images/items/demon_edge_png": "images/items/demon_edge.webp",
+  "panorama/images/items/echo_stone_png": "images/items/echo_stone.webp",
+  "panorama/images/items/greater_crit_png": "images/items/greater_crit.webp",
+  "panorama/images/items/heart_png": "images/items/heart.webp",
+  "panorama/images/items/kaya_and_sange_png": "images/items/kaya_and_sange.webp",
+  "panorama/images/items/kaya_png": "images/items/kaya.webp",
+  "panorama/images/items/lesser_crit_png": "images/items/lesser_crit.webp",
+  "panorama/images/items/octarine_core_png": "images/items/octarine_core.webp",
+  "panorama/images/items/phylactery_png": "images/items/phylactery.webp",
+  "panorama/images/items/reaver_png": "images/items/reaver.webp",
+  "panorama/images/items/ring_of_tarrasque_png": "images/items/ring_of_tarrasque.webp",
+  "panorama/images/items/sange_and_yasha_png": "images/items/sange_and_yasha.webp",
+  "panorama/images/items/sange_png": "images/items/sange.webp",
+  "panorama/images/items/timeless_relic_png": "images/items/timeless_relic.webp",
+  "panorama/images/items/tome_of_knowledge_png": "images/items/tome_of_knowledge.webp",
+  "panorama/images/items/trident_png": "images/items/trident.webp",
+  "panorama/images/items/winter_coal_png": "images/items/winter_coal.webp",
+  "panorama/images/items/world_chasm_artifact_png": "images/items/world_chasm_artifact.webp",
+  "panorama/images/items/yasha_and_kaya_png": "images/items/yasha_and_kaya.webp",
+  "panorama/images/items/yasha_png": "images/items/yasha.webp",
+  "panorama/images/spellicons/axe_counter_helix_png": "images/spellicons/axe_counter_helix.webp",
+  "panorama/images/spellicons/bounty_hunter_track_png": "images/spellicons/bounty_hunter_track.webp",
+  "panorama/images/spellicons/bristleback_viscous_nasal_goo_png": "images/spellicons/bristleback_viscous_nasal_goo.webp",
+  "panorama/images/spellicons/centaur_stampede_png": "images/spellicons/centaur_stampede.webp",
+  "panorama/images/spellicons/crystal_maiden_frostbite_png": "images/spellicons/crystal_maiden_frostbite.webp",
+  "panorama/images/spellicons/kez_echo_slash_png": "images/spellicons/kez_echo_slash.webp",
+  "panorama/images/spellicons/lich_chain_frost_png": "images/spellicons/lich_chain_frost.webp",
+  "panorama/images/spellicons/lina_laguna_blade_png": "images/spellicons/lina_laguna_blade.webp",
+  "panorama/images/spellicons/pangolier_swashbuckle_png": "images/spellicons/pangolier_swashbuckle.webp",
+  "panorama/images/spellicons/pudge_rot_png": "images/spellicons/pudge_rot.webp",
+  "panorama/images/spellicons/razor_eye_of_the_storm_alt1_png": "images/spellicons/razor_eye_of_the_storm_alt1.webp",
+  "panorama/images/spellicons/ringmaster_impalement_png": "images/spellicons/ringmaster_impalement.webp",
+  "panorama/images/spellicons/skywrath_mage_arcane_bolt_alt2_png": "images/spellicons/skywrath_mage_arcane_bolt_alt2.webp",
+  "panorama/images/spellicons/snapfire_mortimer_kisses_png": "images/spellicons/snapfire_mortimer_kisses.webp",
+  "panorama/images/spellicons/techies_land_mines_png": "images/spellicons/techies_land_mines.webp",
+  "panorama/images/spellicons/vengefulspirit_magic_missile_alt2_png": "images/spellicons/vengefulspirit_magic_missile_alt2.webp",
+  "panorama/images/spellicons/wisp_spirits_png": "images/spellicons/wisp_spirits.webp",
+  "sounds/items/cheese": "sounds/items/cheese.mp3",
+  "sounds/misc/creep_deaths/death_skeleton_01": "sounds/misc/creep_deaths/death_skeleton_01.mp3",
+  "sounds/misc/creep_deaths/death_skeleton_02": "sounds/misc/creep_deaths/death_skeleton_02.mp3",
+  "sounds/misc/crownfall/boss_warn": "sounds/misc/crownfall/boss_warn.mp3",
+  "sounds/misc/crownfall/chain_frost_cast": "sounds/misc/crownfall/chain_frost_cast.mp3",
+  "sounds/misc/crownfall/enc/lightning01": "sounds/misc/crownfall/enc/lightning01.mp3",
+  "sounds/misc/crownfall/enc/lightning02": "sounds/misc/crownfall/enc/lightning02.mp3",
+  "sounds/misc/crownfall/music/survivors_boss": "sounds/misc/crownfall/music/survivors_boss.mp3",
+  "sounds/misc/crownfall/music/survivors_main": "sounds/misc/crownfall/music/survivors_main.mp3",
+  "sounds/misc/crownfall/snotty_bat": "sounds/misc/crownfall/snotty_bat.mp3",
+  "sounds/misc/crownfall/urn_break": "sounds/misc/crownfall/urn_break.mp3",
+  "sounds/misc/crownfall/xp_pickup": "sounds/misc/crownfall/xp_pickup.mp3",
+  "sounds/music/valve_dota_001/music/ganked_sml_01": "sounds/music/valve_dota_001/music/ganked_sml_01.mp3",
+  "sounds/music/valve_dota_001/music/killed": "sounds/music/valve_dota_001/music/killed.mp3",
+  "sounds/music/valve_dota_001/stingers/radiant_win": "sounds/music/valve_dota_001/stingers/radiant_win.mp3",
+  "sounds/physics/damage/building/dire_tower_destruction_01": "sounds/physics/damage/building/dire_tower_destruction_01.mp3",
+  "sounds/physics/damage/building/dire_tower_destruction_02": "sounds/physics/damage/building/dire_tower_destruction_02.mp3",
+  "sounds/physics/damage/building/dire_tower_destruction_03": "sounds/physics/damage/building/dire_tower_destruction_03.mp3",
+  "sounds/physics/deaths/common/body_impact_heavy_01": "sounds/physics/deaths/common/body_impact_heavy_01.mp3",
+  "sounds/physics/deaths/common/body_impact_light_01": "sounds/physics/deaths/common/body_impact_light_01.mp3",
+  "sounds/physics/deaths/common/body_impact_light_02": "sounds/physics/deaths/common/body_impact_light_02.mp3",
+  "sounds/physics/deaths/common/body_impact_light_03": "sounds/physics/deaths/common/body_impact_light_03.mp3",
+  "sounds/physics/deaths/common/body_impact_light_04": "sounds/physics/deaths/common/body_impact_light_04.mp3",
+  "sounds/physics/deaths/common/body_impact_medium_01": "sounds/physics/deaths/common/body_impact_medium_01.mp3",
+  "sounds/physics/deaths/common/body_impact_medium_02": "sounds/physics/deaths/common/body_impact_medium_02.mp3",
+  "sounds/physics/deaths/common/body_impact_medium_03": "sounds/physics/deaths/common/body_impact_medium_03.mp3",
+  "sounds/physics/deaths/common/body_impact_medium_04": "sounds/physics/deaths/common/body_impact_medium_04.mp3",
+  "sounds/ui/buy": "sounds/ui/buy.mp3",
+  "sounds/ui/coins": "sounds/ui/coins.mp3",
+  "sounds/ui/hud_equip_scepter": "sounds/ui/hud_equip_scepter.mp3",
+  "sounds/ui/hud_equip_shard": "sounds/ui/hud_equip_shard.mp3",
+  "sounds/ui/npe_objective_given": "sounds/ui/npe_objective_given.mp3",
+  "sounds/ui/power_up_06": "sounds/ui/power_up_06.mp3",
+  "sounds/vo/kez/kez_pain_01": "sounds/vo/kez/kez_pain_01.mp3",
+  "sounds/vo/kez/kez_pain_02": "sounds/vo/kez/kez_pain_02.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_01": "sounds/vo/skywrath_mage/skywrath_crown_anger_01.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_02": "sounds/vo/skywrath_mage/skywrath_crown_anger_02.mp3",
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_02": "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_02.mp3",
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_03": "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_03.mp3",
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_04": "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_04.mp3",
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_06": "sounds/vo/vengefulspirit/imperia_crownfall_boss_early_06.mp3",
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_01": "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_01.mp3",
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_02": "sounds/vo/vengefulspirit/imperia_crownfall_boss_late_02.mp3",
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_03": "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_03.mp3",
+  "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_04": "sounds/vo/vengefulspirit/imperia_crownfall_boss_mid_04.mp3",
+  "sounds/vo/vengefulspirit/imperia_death_01": "sounds/vo/vengefulspirit/imperia_death_01.mp3",
+  "sounds/vo/vengefulspirit/imperia_laugh_03": "sounds/vo/vengefulspirit/imperia_laugh_03.mp3",
+  "sounds/vo/vengefulspirit/imperia_laugh_07": "sounds/vo/vengefulspirit/imperia_laugh_07.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_01": "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_02": "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3",
+  "sounds/weapons/hero/axe/counterhelix": "sounds/weapons/hero/axe/counterhelix.mp3",
+  "sounds/weapons/hero/bounty_hunter/track": "sounds/weapons/hero/bounty_hunter/track.mp3",
+  "sounds/weapons/hero/centaur/stampede_cast": "sounds/weapons/hero/centaur/stampede_cast.mp3",
+  "sounds/weapons/hero/crystal_maiden/frostbite": "sounds/weapons/hero/crystal_maiden/frostbite.mp3",
+  "sounds/weapons/hero/invoker/meteor": "sounds/weapons/hero/invoker/meteor.mp3",
+  "sounds/weapons/hero/invoker/meteor_cast": "sounds/weapons/hero/invoker/meteor_cast.mp3",
+  "sounds/weapons/hero/kez/echo_katana_cast": "sounds/weapons/hero/kez/echo_katana_cast.mp3",
+  "sounds/weapons/hero/kez/sai_crit": "sounds/weapons/hero/kez/sai_crit.mp3",
+  "sounds/weapons/hero/kez/vulnerable_target": "sounds/weapons/hero/kez/vulnerable_target.mp3",
+  "sounds/weapons/hero/kunkka/ability_geyser": "sounds/weapons/hero/kunkka/ability_geyser.mp3",
+  "sounds/weapons/hero/lich/chain_frost_impact": "sounds/weapons/hero/lich/chain_frost_impact.mp3",
+  "sounds/weapons/hero/lina/lagunablade": "sounds/weapons/hero/lina/lagunablade.mp3",
+  "sounds/weapons/hero/magnataur/reverse_polarity": "sounds/weapons/hero/magnataur/reverse_polarity.mp3",
+  "sounds/weapons/hero/pangolier/swashbuckle_cast": "sounds/weapons/hero/pangolier/swashbuckle_cast.mp3",
+  "sounds/weapons/hero/phoenix/sunray_beam_loop": "sounds/weapons/hero/phoenix/sunray_beam_loop.mp3",
+  "sounds/weapons/hero/ringmaster/impale_stab_1": "sounds/weapons/hero/ringmaster/impale_stab_1.mp3",
+  "sounds/weapons/hero/ringmaster/impale_stab_2": "sounds/weapons/hero/ringmaster/impale_stab_2.mp3",
+  "sounds/weapons/hero/ringmaster/impale_stab_3": "sounds/weapons/hero/ringmaster/impale_stab_3.mp3",
+  "sounds/weapons/hero/shared/small_blade/whoosh03": "sounds/weapons/hero/shared/small_blade/whoosh03.mp3",
+  "sounds/weapons/hero/skeleton_king/reincarnate": "sounds/weapons/hero/skeleton_king/reincarnate.mp3",
+  "sounds/weapons/hero/skywrath/arcane_bolt_cast": "sounds/weapons/hero/skywrath/arcane_bolt_cast.mp3",
+  "sounds/weapons/hero/skywrath/arcane_bolt_target": "sounds/weapons/hero/skywrath/arcane_bolt_target.mp3",
+  "sounds/weapons/hero/snapfire/cookie_target": "sounds/weapons/hero/snapfire/cookie_target.mp3",
+  "sounds/weapons/hero/snapfire/lizard_blob_impact": "sounds/weapons/hero/snapfire/lizard_blob_impact.mp3",
+  "sounds/weapons/hero/snapfire/lizard_blob_launch": "sounds/weapons/hero/snapfire/lizard_blob_launch.mp3",
+  "sounds/weapons/hero/techies/land_mine01": "sounds/weapons/hero/techies/land_mine01.mp3",
+  "sounds/weapons/hero/techies/land_mine02": "sounds/weapons/hero/techies/land_mine02.mp3",
+  "sounds/weapons/hero/techies/land_mine_plant": "sounds/weapons/hero/techies/land_mine_plant.mp3",
+  "sounds/weapons/hero/techies/land_mine_primed": "sounds/weapons/hero/techies/land_mine_primed.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile1": "sounds/weapons/hero/vengeful_spirit/magic_missile1.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile2": "sounds/weapons/hero/vengeful_spirit/magic_missile2.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile3": "sounds/weapons/hero/vengeful_spirit/magic_missile3.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile4": "sounds/weapons/hero/vengeful_spirit/magic_missile4.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile_impact": "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.mp3",
+  "sounds/weapons/hero/wisp/spirits_cast": "sounds/weapons/hero/wisp/spirits_cast.mp3",
+  "sounds/weapons/hero/zuus/gods_wrath_cast": "sounds/weapons/hero/zuus/gods_wrath_cast.mp3"
+ }
+}

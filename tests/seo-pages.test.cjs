@@ -11,8 +11,8 @@ test('a search page is plain HTML with the items, never the 18+ ones', async () 
   assert.deepEqual(asked[0], ['backgrounds', 'Космос', 0]);
   assert.match(html, /<h1>Космические фоны для Dota 2<\/h1>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/gridstudio.me\/backgrounds\/space">/);
-  assert.match(html, /href="\/background\?background=1"/);
-  assert.match(html, /href="\/background\?background=3"/);
+  assert.match(html, /href="\/customize\?background=1"/);
+  assert.match(html, /href="\/customize\?background=3"/);
   assert.doesNotMatch(html, /background=2"/);
   assert.doesNotMatch(html, /Космос <script>|Автор <b>/);
   assert.match(html, /"seo:backgrounds\/space"/);

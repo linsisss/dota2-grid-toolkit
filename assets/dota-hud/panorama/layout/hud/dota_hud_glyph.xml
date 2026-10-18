@@ -1,0 +1,23 @@
+<!-- xml reconstructed by Source 2 Viewer 12.0.0.0 - https://valveresourceformat.github.io -->
+<root>
+	<styles>
+		<include src="s2r://panorama/styles/dotastyles.vcss" />
+		<include src="s2r://panorama/styles/hudstyles.vcss" />
+		<include src="s2r://panorama/styles/hud/dota_hud_glyph.vcss" />
+	</styles>
+	<DOTAGlyph>
+		<Panel id="NormalRoot" onmouseover="DOTAHUDShowGlyphTooltip()" onmouseout="DOTAHUDHideGlyphTooltip()" onactivate="DOTAHUDActivateGlyph()">
+			<Button id="GlyphButton" />
+			<Panel id="GlyphCooldown" hittest="false" />
+		</Panel>
+		<Panel id="RadiantRoot" onmouseover="DOTAHUDShowSpectatorGlyphTooltip(2)" onmouseout="DOTAHUDHideSpectatorGlyphTooltip()">
+			<Button id="RadiantGlyphButton" />
+			<Panel id="RadiantGlyphCooldown" />
+		</Panel>
+		<Panel id="DireRoot" onmouseover="DOTAHUDShowSpectatorGlyphTooltip(3)" onmouseout="DOTAHUDHideSpectatorGlyphTooltip()">
+			<Button id="DireGlyphButton" />
+			<Panel id="DireGlyphCooldown" />
+		</Panel>
+		<Panel id="SpectatorDivider" hittest="false" />
+	</DOTAGlyph>
+</root>

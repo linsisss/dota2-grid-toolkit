@@ -1,0 +1,281 @@
+{
+ "events": {
+  "Techiemen.BombDrop": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_bomb_plant.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.365805
+  },
+  "Techiemen.BombKick": {
+   "files": [
+    "sounds/weapons/hero/techies/attack.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 1.06898
+  },
+  "Techiemen.BombStop": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_wall_hit.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 2,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 0.732268
+  },
+  "Techiemen.CountIn": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_timer.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 0.088254
+  },
+  "Techiemen.CreepDeath": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_enemy_death.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.049524
+  },
+  "Techiemen.Dash": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_dash.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 0.732268
+  },
+  "Techiemen.DropperEnter": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_bomber_warn.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 0.499977
+  },
+  "Techiemen.Explosion": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_bomb_1.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 0.96898
+  },
+  "Techiemen.ExplosionRemote": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_bomb_3.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 0.896961
+  },
+  "Techiemen.ExplosionSpiky": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_bomb_2.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 1.184308
+  },
+  "Techiemen.FallIn": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_fall.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 0.7739
+  },
+  "Techiemen.LevelExit": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_exit.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 0.938322
+  },
+  "Techiemen.MusicMenu": {
+   "files": [
+    "sounds/misc/crownfall/music/fighting_main.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "delay": 1,
+   "fadeOut": 1,
+   "duration": 31.68375
+  },
+  "Techiemen.MusicPlaying": {
+   "files": [
+    "sounds/misc/crownfall/music/spoonman_main.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "fadeIn": 1,
+   "fadeOut": 2,
+   "duration": 32.499977
+  },
+  "Techiemen.PlayerDeath": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_death.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 2.589773
+  },
+  "Techiemen.PowerUp": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_powerup.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 0.344354
+  },
+  "Techiemen.Score": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_timer.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 2,
+   "duration": 0.088254
+  },
+  "Techiemen.TimerExpired": {
+   "files": [
+    "sounds/ui/ui_general_deny.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 0.1678
+  },
+  "Techiemen.TimerTick": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_timer.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 0.088254
+  },
+  "Techiemen.Unlock": {
+   "files": [
+    "sounds/misc/crownfall/combo_success.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 1.183968
+  },
+  "Techiemen.WallHit": {
+   "files": [
+    "sounds/misc/crownfall/spoonman_wall_hit.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 0.732268
+  }
+ },
+ "files": {
+  "sounds/misc/crownfall/combo_success.mp3": {
+   "duration": 1.183968
+  },
+  "sounds/misc/crownfall/music/fighting_main.mp3": {
+   "duration": 31.68375,
+   "loop": [
+    0,
+    31.683718820861678
+   ]
+  },
+  "sounds/misc/crownfall/music/spoonman_main.mp3": {
+   "duration": 32.499977,
+   "loop": [
+    0,
+    32.49995464852608
+   ]
+  },
+  "sounds/misc/crownfall/spoonman_bomb_1.mp3": {
+   "duration": 0.96898
+  },
+  "sounds/misc/crownfall/spoonman_bomb_2.mp3": {
+   "duration": 1.184308
+  },
+  "sounds/misc/crownfall/spoonman_bomb_3.mp3": {
+   "duration": 0.896961
+  },
+  "sounds/misc/crownfall/spoonman_bomb_plant.mp3": {
+   "duration": 1.365805
+  },
+  "sounds/misc/crownfall/spoonman_bomber_warn.mp3": {
+   "duration": 0.499977
+  },
+  "sounds/misc/crownfall/spoonman_dash.mp3": {
+   "duration": 0.732268
+  },
+  "sounds/misc/crownfall/spoonman_death.mp3": {
+   "duration": 2.589773
+  },
+  "sounds/misc/crownfall/spoonman_enemy_death.mp3": {
+   "duration": 1.049524
+  },
+  "sounds/misc/crownfall/spoonman_exit.mp3": {
+   "duration": 0.938322
+  },
+  "sounds/misc/crownfall/spoonman_fall.mp3": {
+   "duration": 0.7739
+  },
+  "sounds/misc/crownfall/spoonman_powerup.mp3": {
+   "duration": 0.344354
+  },
+  "sounds/misc/crownfall/spoonman_timer.mp3": {
+   "duration": 0.088254
+  },
+  "sounds/misc/crownfall/spoonman_wall_hit.mp3": {
+   "duration": 0.732268
+  }
+ },
+ "missing": {}
+}

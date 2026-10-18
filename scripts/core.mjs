@@ -21,6 +21,22 @@ const layerName = (layer) => (layers().some((base) => base.id === layer.id && ba
 function canvasSize(doc) {
   return doc?.canvas || { w: WIDTH, h: HEIGHT };
 }
+// «Режим эскиза» (asked for on 2026-10-18): how the file is shown, not what it holds — a white canvas with
+// black glyphs in the editor and in its PNG; the Dota export never reads it. Absent — off, as in every
+// older file. `heroes`: portraits drawn as light outlines or left out. Anything unreadable is dropped
+// (never a reason to refuse a project).
+const SKETCH_HEROES = Object.freeze(['outline', 'hidden']);
+function cleanSketch(value) {
+  if (value === true) return { heroes: 'outline' };
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  return { heroes: SKETCH_HEROES.includes(value.heroes) ? value.heroes : 'outline' };
+}
+// The view belongs to the file: it stays when another grid of the file is opened, added or deleted.
+function keepSketch(from, to) {
+  const sketch = cleanSketch(from?.sketch);
+  if (sketch) to.sketch = sketch; else delete to.sketch;
+  return to;
+}
 function validateCanvas(size) {
   if (
     !size ||
@@ -185,15 +201,19 @@ function importDota(data, index = 0) {
   );
   return doc;
 }
-function categoryEntries(state) {
-    const hidden = new Set(state.layers.filter((l) => !l.visible).map((l) => l.id));
+// `crop` (every export, since 2026-10-16): glyphs outside the canvas (glyphOutside) are left out, a row
+// or text partly outside becomes its glyphs inside. The document keeps them; the editor shows them dimmed.
+function categoryEntries(state, crop = false) {
+    const hidden = new Set(state.layers.filter((l) => !l.visible).map((l) => l.id)), size = canvasSize(state);
     const entries = state.entities
       .filter((e) => !hidden.has(e.layer))
-      .flatMap((item) =>
-        item.rowText && !normalizeAngle(item.rotation || 0)
+      .flatMap((item) => {
+        const inside = crop && item.type !== 'heroes' ? insideGlyphs(item, size) : null;
+        if (inside) return inside;
+        return item.rowText && !normalizeAngle(item.rotation || 0)
           ? [{ ...item, text: item.rowText }]
-          : textGlyphs(item)
-      )
+          : textGlyphs(item);
+      })
       .map((e) => ({ layer: e.layer, entityId: e.id, category: {
         ...(e.extra || {}),
         category_name: e.type === 'heroes' ? e.name : e.text,
@@ -286,13 +306,15 @@ function pickSafeCategories(categories, widths, { rows = true, singles = true } 
 // compactRows: glyphs of one line merged into rows. widths: a download for every screen
 // (pickSafeCategories); without it rows are merged for the 1080p «Герои» page only (publishing,
 // previews: the workshop makes its download safe itself, src/catalog/pick-safe.js).
-function exportDota(doc, measure = null, { compactRows = true, widths = null } = {}) {
+// crop: glyphs outside the canvas are not exported (categoryEntries). Grids of the file that were never
+// opened in the editor go out as they came.
+function exportDota(doc, measure = null, { compactRows = true, widths = null, crop = true } = {}) {
   if (!compactRows) measure = null;
   assertCategoryLimit(doc);
   const result = clone(doc.source);
   const states = { ...(doc.configDrafts || {}), [doc.configIndex]: doc };
   for (const [index, state] of Object.entries(states)) {
-    const entries = categoryEntries(state);
+    const entries = categoryEntries(state, crop);
     const categories = widths ? pickSafeCategories(entries.map((entry) => entry.category), widths, { rows: compactRows })
       : compactCategoryRows(entries, measure);
     if (categories.length > MAX_ENTITIES)
@@ -318,10 +340,14 @@ function exportDota(doc, measure = null, { compactRows = true, widths = null } =
   }
   return result;
 }
+// What the export makes of the grid: glyphs outside the canvas are cropped (categoryEntries), so a row
+// partly outside counts its glyphs inside.
 function categoryCount(state) {
-  const hidden = new Set(state.layers.filter((layer) => !layer.visible).map((layer) => layer.id));
+  const hidden = new Set(state.layers.filter((layer) => !layer.visible).map((layer) => layer.id)), size = canvasSize(state);
   return state.entities.reduce((count, item) => {
     if (hidden.has(item.layer)) return count;
+    const inside = item.type === 'heroes' ? null : insideGlyphs(item, size);
+    if (inside) return count + inside.length;
     return (
       count +
       (item.rowGlyphs
@@ -375,7 +401,7 @@ function switchConfig(doc, index) {
   if (drafts[index]) Object.assign(next, clone(drafts[index]));
   next.configDrafts = drafts;
   if (doc.fileName !== undefined) next.fileName = doc.fileName;
-  return next;
+  return keepSketch(doc, next);
 }
 function gridDraft(state) {
   return clone({
@@ -441,7 +467,7 @@ function removeConfig(doc, index) {
   if (configDrafts[active]) Object.assign(next, clone(configDrafts[active]));
   next.configDrafts = configDrafts;
   if (doc.fileName !== undefined) next.fileName = doc.fileName;
-  return next;
+  return keepSketch(doc, next);
 }
 function addConfig(doc, name = t('Новая сетка'), kind = 'blank') {
   if (doc.source.configs.length >= MAX_CONFIGS)
@@ -647,6 +673,14 @@ function importProject(data) {
           typeof e.rowText !== 'string' ||
           e.rowText.length > 5000 ||
           e.rowText.replace(/\s/gu, '') !== e.text.replace(/\s/gu, ''))) ||
+      // Text in a box (2026-10-16): its size and the text as typed.
+      (e.box !== undefined &&
+        (e.type === 'heroes' ||
+          !e.box ||
+          typeof e.box !== 'object' ||
+          !['w', 'h'].every((key) => finite(e.box[key]) && e.box[key] >= BOX_MIN[key] && e.box[key] <= 100000) ||
+          (e.box.text !== undefined && (typeof e.box.text !== 'string' || e.box.text.length > 5000)) ||
+          Object.keys(e.box).some((key) => !['w', 'h', 'text'].includes(key)))) ||
       e.w <= 0 ||
       e.h <= 0 ||
       e.w > 100000 ||
@@ -666,6 +700,7 @@ function importProject(data) {
   }
   const copy = clone(data);
   copy.source = importedSource.source;
+  keepSketch(data, copy);
   if (importedSource.importRepairs) copy.importRepairs = importedSource.importRepairs;
   if (copy.configDrafts !== undefined) {
     if (
@@ -740,6 +775,7 @@ function textGlyphs(item, force = false) {
         rotation: 0,
         rowGlyphs: undefined,
         rowText: undefined,
+        box: undefined,
         extra: glyph.extra || item.extra
       };
     });
@@ -773,7 +809,8 @@ function textGlyphs(item, force = false) {
         y: position.y - 15,
         w: 30,
         h: 30,
-        rotation: 0
+        rotation: 0,
+        box: undefined
       });
     }
     x += advances?.[index] ?? 10.8;
@@ -925,11 +962,76 @@ function outside(e, size = { w: WIDTH, h: HEIGHT }) {
   const b = bounds([e], true);
   return b.x < 0 || b.y < 0 || b.x + b.w > size.w || b.y + b.h > size.h;
 }
+// Past the frame (asked for on 2026-10-16): drawings, text and art may stand past any edge of the canvas;
+// Dota gets only what is inside. A glyph is outside when the middle of its ink is — GLYPH_CENTER, a
+// capital's middle from the category origin (the eraser aims at it too) — so a glyph whose 30-unit box
+// only pokes past the right or bottom edge, its ink still on the canvas, is kept.
+const GLYPH_CENTER = Object.freeze({ x: 9, y: 8 });
+function glyphOutside(glyph, size = { w: WIDTH, h: HEIGHT }) {
+  const x = glyph.x + GLYPH_CENTER.x, y = glyph.y + GLYPH_CENTER.y;
+  return x < 0 || y < 0 || x > size.w || y > size.h;
+}
+// The glyphs of a text or symbol that are inside, as clean single-glyph objects; null when none is outside.
+function insideGlyphs(item, size) {
+  const glyphs = textGlyphs(item, true), inside = glyphs.filter((glyph) => !glyphOutside(glyph, size));
+  if (inside.length === glyphs.length) return null;
+  return inside.map((glyph) => {
+    const clean = { ...glyph, rotation: 0 };
+    delete clean.rowGlyphs; delete clean.rowText; delete clean.textMetrics; delete clean.box;
+    return clean;
+  });
+}
+// Text in a box (asked for on 2026-10-16): the box is { w, h } from the text's origin, `text` the words as
+// typed. Words go into lines no wider than the box (a word longer than a line is broken by characters, a
+// line break always starts a line), measured as the game draws them: measure(line) is the line's width,
+// the sum of its advances (dota-rendering measureCategoryWidth), whose last letter spacing is no ink.
+// Lines step by DOTA.header as in drawCategoryLabel; those below the box are dropped and counted.
+// The result is one multi-line text, not an object per line: it moves, turns and is edited as one, and
+// every export splits its lines (pickSafeCategories one category a line; Dota draws a multi-line name
+// on the «Герои» page at the same step).
+const BOX_MIN = Object.freeze({ w: 30, h: DOTA.header });
+function wrapText(text, width, measure, maxLines = Infinity) {
+  const fits = (line) => !line || measure(line) - DOTA.letterSpacing <= width + 1e-6, out = [];
+  for (const paragraph of String(text).replace(/\r/g, '').split('\n')) {
+    let line = '';
+    for (const word of paragraph.split(/\s+/u).filter(Boolean)) {
+      const joined = line ? `${line} ${word}` : word;
+      if (fits(joined)) { line = joined; continue; }
+      if (line) out.push(line);
+      line = '';
+      let rest = Array.from(word);
+      while (rest.length) {
+        let n = 1;
+        while (n < rest.length && fits(rest.slice(0, n + 1).join(''))) n++;
+        const part = rest.slice(0, n).join('');
+        rest = rest.slice(n);
+        if (rest.length) out.push(part); else line = part;
+      }
+    }
+    out.push(line);
+  }
+  while (out.length > 1 && !out.at(-1)) out.pop();
+  const lines = out.slice(0, Math.max(1, maxLines));
+  return { lines, dropped: out.length - lines.length };
+}
+function fitTextBox(text, box, measure) {
+  const w = Math.max(BOX_MIN.w, box.w), h = Math.max(BOX_MIN.h, box.h);
+  const { lines, dropped } = wrapText(text, w - DOTA.listPadding * 2, measure, Math.floor(h / DOTA.header));
+  return { text: lines.join('\n'), lines, dropped, box: { w, h } };
+}
+// What a boxed text was typed as: box.text while the shown text is still its wrapping (the same glyphs,
+// maybe fewer when lines were dropped); after «Заменить символы» and the like, the text as it is now.
+function boxSource(e) {
+  const bare = (value) => String(value ?? '').replace(/\s+/gu, '');
+  return typeof e.box?.text === 'string' && bare(e.box.text).startsWith(bare(e.text)) ? e.box.text : e.text;
+}
 function warnings(doc, exportedCount = categoryCount(doc)) {
   const visible = doc.entities.filter((e) => doc.layers.find((l) => l.id === e.layer)?.visible);
   const issues = [];
-  const count = visible.filter((e) => outside(e, canvasSize(doc))).length;
-  if (count) issues.push(t('{count} объект(а) выходят за границы холста.', { count }));
+  const size = canvasSize(doc), count = visible.filter((e) => e.type !== 'heroes').reduce((n, e) => n + textGlyphs(e, true).filter((g) => glyphOutside(g, size)).length, 0);
+  if (count) issues.push(t('{count} символ(ов) за границами холста: в Dota их не будет, они обрезаны в файле.', { count }));
+  const heroes = visible.filter((e) => e.type === 'heroes' && outside(e, size)).length;
+  if (heroes) issues.push(t('{count} групп(ы) героев выходят за границы холста.', { count: heroes }));
   const hidden = invisibleWarning(visible.map((e) => (e.type === 'heroes' ? e.name : e.text) || '').join(''));
   if (hidden) issues.push(hidden);
   const foreign = foreignGlyphs(visible.filter((e) => e.type !== 'heroes').map((e) => e.text));
@@ -1179,6 +1281,9 @@ export default {
   MAX_CONFIGS,
   canvasSize,
   validateCanvas,
+  SKETCH_HEROES,
+  cleanSketch,
+  keepSketch,
   categoryCount,
   categoryEntries,
   clone,
@@ -1211,6 +1316,13 @@ export default {
   bounds,
   visualHeight,
   outside,
+  GLYPH_CENTER,
+  glyphOutside,
+  insideGlyphs,
+  BOX_MIN,
+  wrapText,
+  fitTextBox,
+  boxSource,
   warnings,
   History,
   sampleLine,

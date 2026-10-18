@@ -71,12 +71,27 @@ import { IMAGE_STYLES,
 import { ROW_DEFAULTS, ROW_FONT, ROW_GLYPH_SETS, rowAtlas, rowBandTop, rowDraftScale, rowGlyphs } from './ascii-rows.mjs';
 import { TRACE_DEFAULTS, TRACE_MAX_DOTS } from './dot-trace.mjs';
 import { packGlyphs, packSymbols } from './dot-packing.mjs';
-import { gridBackground, onGridBackground, setGridBackground } from './grid-background.mjs';
+import { gridBackground, gridBackgroundImage, gridScreenImage, onGridBackground, setGridBackground } from './grid-background.mjs';
+import { GAME_LOOK, PNG_SCALES, drawHeroCard, drawText, lookOf, pictureArea, pictureFileName, pictureHeroes, pictureSize, renderPicture, scaleFits, sketchLook } from './grid-picture.mjs';
 import { DOTA, TEXT_MODEL, foreignGlyphs, invisibleWarning, drawCategoryLabel, measureCategoryText, measureCategoryInk, measureCategoryWidth, glyphWidths, portraitSourceRect } from './dota-rendering.mjs';
 const ROTATE_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M8 22a10 10 0 1 1 16-9M19 7l5 6 5-5" fill="none" stroke="#10151a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 22a10 10 0 1 1 16-9M19 7l5 6 5-5" fill="none" stroke="#efeaf5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>')}") 16 16, grab`;
 // How much of the canvas stays on screen at least when it is moved away (updateZoom's room), px.
 const PAN_EDGE = 96;
+// Past the frame (asked for on 2026-10-16): the canvas element reaches BLEED workspace units past every
+// edge of the grid, where what stands outside is drawn under a veil and can be picked, dragged and drawn
+// on. The grid's own box (#stageWrap) and every overlay on it stay the workspace; pointer positions are
+// read from it, so they go negative in the margin. None in the game preview.
+const BLEED = 160;
+// The editor's marks on the canvas: on the dark field, and on the white one of «Режим эскиза», where
+// the lavender would vanish (selection, guides and boxes turn a deep violet).
+const CANVAS_UI = Object.freeze({
+  dark: { margin: null, field: '#191821', beyond: '#07060b4a', dots: '#3d4a583d', safe: '#435a633b', veil: '#0b0a108c', edge: '#8f84b0',
+    accent: '#c4b5ed', accentFill: '#c4b5ed18', slotFill: '#c4b5ed14', handle: '#211e29', stroke: '#d6c8f7', textBox: '#c4b5edb0', listBox: '#0000004d', ghost: '#c4b5ed40' },
+  sketch: { margin: '#e2e1e7', field: '#ffffff', beyond: '#00000008', dots: '#0000001f', safe: '#00000026', veil: '#ecebf0b8', edge: '#77708f',
+    accent: '#5b3fc4', accentFill: '#5b3fc414', slotFill: '#5b3fc410', handle: '#ffffff', stroke: '#6e55cf', textBox: '#5b3fc4a0', listBox: '#0000000b', ghost: '#00000033' }
+});
 const IMAGE_METHOD_KEY = 'gridstudio.image-method';
+const ERASER_LAYER_KEY = 'gridstudio.eraser-layer';
 // «Контуры и точки» is the default again (1.6); a method the user picked is remembered.
 function readImageMethod() {
   try {
@@ -136,7 +151,17 @@ export function createStudio(projectStorage, initial) {
   let doc = initial.doc || C.createDocument();
   const history = new C.History(35);
   const workspace = () => C.canvasSize(doc);
+  const bleed = () => (preview ? 0 : BLEED);
+  // «Режим эскиза» (doc.sketch, core cleanSketch): the file's view. The game preview always shows the game.
+  const editorLook = () => (preview ? GAME_LOOK : lookOf(doc));
+  const canvasUI = () => (editorLook().sketch ? CANVAS_UI.sketch : CANVAS_UI.dark);
+  // The grid on screen (the canvas element is larger by the margin, BLEED).
+  const stageRect = () => $('stageWrap').getBoundingClientRect();
+  // What the editor shows: a move keeps a selection in it (edit-operations moveItems).
+  const shownArea = () => ({ x: -bleed(), y: -bleed(), w: workspace().w + bleed() * 2, h: workspace().h + bleed() * 2 });
+  const inShownArea = (p) => { const a = shownArea(); return { ...p, x: C.clamp(p.x, a.x, a.x + a.w), y: C.clamp(p.y, a.y, a.y + a.h) }; };
   let canvasGeometryKey = '',
+    fitBleed = false,
     recentSymbols = [];
   try {
     const stored = JSON.parse(localStorage.getItem('dota-grid-studio.recent-symbols.v1') || '[]');
@@ -216,12 +241,23 @@ export function createStudio(projectStorage, initial) {
     localSaveStatus = { text: 'Изменения сохранены', warning: false },
     toastTimer,
     gesture = null,
+    // The viewport changed size under a gesture: fitted again when it ends (the resize observer).
+    zoomAfterGesture = false,
     spaceDown = false,
     lastPoint = { x: 60, y: 60 },
     drawFrame = null;
   let referenceEditing = false;
   let heroMotion = null;
   let eraserSize = readEraserSize(), eraserHover = null, eraserLabelUntil = 0, eraserLabelTimer;
+  // The one layer the eraser and «Распыление» work on (asked for on 2026-10-16), null — every layer. Kept
+  // for the browser session: the editor is made again on RU / EN and on another file.
+  let eraserLayer = (() => { try { return sessionStorage.getItem(ERASER_LAYER_KEY) || null; } catch { return null; } })();
+  const eraserTarget = () => (eraserLayer && doc.layers.some((l) => l.id === eraserLayer) ? eraserLayer : null);
+  function setEraserLayer(id) {
+    eraserLayer = id && id !== 'all' && doc.layers.some((l) => l.id === id) ? id : null;
+    try { if (eraserLayer) sessionStorage.setItem(ERASER_LAYER_KEY, eraserLayer); else sessionStorage.removeItem(ERASER_LAYER_KEY); } catch { /* Optional preference. */ }
+    publishUI();
+  }
   // «Изогнутая линия»: the line just drawn keeps a handle in its middle; dragging it bends the line
   // through that point (drawing.mjs bentLine), a step of its own in the history. The handle stays
   // while those glyphs are untouched and the line tool is on.
@@ -389,7 +425,7 @@ export function createStudio(projectStorage, initial) {
     if (!history.past.length) return;
     const previousIndex = doc.configIndex,
       previousFile = doc.fileName;
-    doc = history.undo(doc);
+    doc = C.keepSketch(doc, history.undo(doc));
     if (previousIndex !== doc.configIndex || previousFile !== doc.fileName) resetGridView();
     selected = new Set([...selected].filter((id) => doc.entities.some((e) => e.id === id)));
     save();
@@ -401,7 +437,7 @@ export function createStudio(projectStorage, initial) {
     if (!history.future.length) return;
     const previousIndex = doc.configIndex,
       previousFile = doc.fileName;
-    doc = history.redo(doc);
+    doc = C.keepSketch(doc, history.redo(doc));
     if (previousIndex !== doc.configIndex || previousFile !== doc.fileName) resetGridView();
     selected = new Set([...selected].filter((id) => doc.entities.some((e) => e.id === id)));
     save();
@@ -414,7 +450,10 @@ export function createStudio(projectStorage, initial) {
     draw();
   }
   function render() {
-    const key = `${workspace().w}:${workspace().h}`;
+    // Fitted, the view takes in the margin as well while symbols stand past the frame, so they are seen;
+    // after a drag it changes when the gesture ends (render), never under the pointer.
+    fitBleed = !preview && overflow(doc).count > 0;
+    const key = `${workspace().w}:${workspace().h}:${fitBleed}`;
     if (canvasGeometryKey !== key) {
       canvasGeometryKey = key;
       updateZoom();
@@ -477,24 +516,28 @@ export function createStudio(projectStorage, initial) {
           '--preview-' + key,
           value + (key === 'scale' ? '' : 'px')
         );
-    } else if (fit)
+    } else if (fit) {
+      const margin = fitBleed ? BLEED * 2 : 0;
       zoom = Math.min(
-        (viewport.clientWidth - 18) / workspace().w,
-        (viewport.clientHeight - 18) / workspace().h,
+        (viewport.clientWidth - 18) / (workspace().w + margin),
+        (viewport.clientHeight - 18) / (workspace().h + margin),
         1.5
       );
+    }
     if (!preview) zoom = clampZoom(zoom);
     // Rasterize at the displayed size: CSS-only down/upscaling blurs game labels.
+    const area = shownArea();
     density = Math.min(
       Math.min(window.devicePixelRatio || 1, 2) * zoom,
-      Math.sqrt(16000000 / (workspace().w * workspace().h))
+      Math.sqrt(16000000 / (area.w * area.h))
     );
-    const pixelWidth = Math.round(workspace().w * density),
-      pixelHeight = Math.round(workspace().h * density);
+    const pixelWidth = Math.round(area.w * density),
+      pixelHeight = Math.round(area.h * density);
     if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
     if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
-    canvas.style.width = workspace().w * zoom + 'px';
-    canvas.style.height = workspace().h * zoom + 'px';
+    canvas.style.width = area.w * zoom + 'px';
+    canvas.style.height = area.h * zoom + 'px';
+    canvas.style.left = canvas.style.top = -bleed() * zoom + 'px';
     $('stageWrap').style.width = workspace().w * zoom + 'px';
     $('stageWrap').style.height = workspace().h * zoom + 'px';
     // Room around the canvas to move it anywhere, as far as PAN_EDGE of it still on screen (asked for
@@ -520,7 +563,7 @@ export function createStudio(projectStorage, initial) {
     fit = false;
     zoom = clampZoom(value);
     updateZoom();
-    const rect = canvas.getBoundingClientRect();
+    const rect = stageRect();
     viewport.scrollLeft += rect.left + before.x / workspace().w * rect.width - fixed.clientX;
     viewport.scrollTop += rect.top + before.y / workspace().h * rect.height - fixed.clientY;
   }
@@ -573,14 +616,21 @@ export function createStudio(projectStorage, initial) {
       heroesMoving = advanceHeroMotion(heroMotion, performance.now(), reducedMotion.matches);
       if (!heroMotion.active && !heroesMoving) { heroMotion = null; publishUI(); }
     }
-    ctx.setTransform(canvas.width / workspace().w, 0, 0, canvas.height / workspace().h, 0, 0);
-    ctx.clearRect(0, 0, workspace().w, workspace().h);
+    const area = shownArea(), sx = canvas.width / area.w, sy = canvas.height / area.h;
+    ctx.setTransform(sx, 0, 0, sy, -area.x * sx, -area.y * sy);
+    ctx.clearRect(area.x, area.y, area.w, area.h);
+    const ui = canvasUI(), look = editorLook();
+    viewport.classList.toggle('sketch', look.sketch);
+    if (!preview && ui.margin) {
+      ctx.fillStyle = ui.margin;
+      ctx.fillRect(area.x, area.y, area.w, area.h);
+    }
     if (!preview) {
-      ctx.fillStyle = '#191821';
+      ctx.fillStyle = ui.field;
       ctx.fillRect(0, 0, workspace().w, workspace().h);
     }
     if (!preview && (workspace().w > C.WIDTH || workspace().h > C.HEIGHT)) {
-      ctx.fillStyle = '#07060b4a';
+      ctx.fillStyle = ui.beyond;
       if (workspace().w > C.WIDTH) ctx.fillRect(C.WIDTH, 0, workspace().w - C.WIDTH, workspace().h);
       if (workspace().h > C.HEIGHT)
         ctx.fillRect(0, C.HEIGHT, Math.min(C.WIDTH, workspace().w), workspace().h - C.HEIGHT);
@@ -607,31 +657,32 @@ export function createStudio(projectStorage, initial) {
       ctx.restore();
     }
     if (showGrid && !preview) {
-      ctx.fillStyle = '#3d4a583d';
+      ctx.fillStyle = ui.dots;
       for (let y = 12; y < workspace().h; y += 16)
         for (let x = 12; x < workspace().w; x += 16) ctx.fillRect(x, y, 1.2, 1.2);
     }
     if (!preview) {
-      ctx.strokeStyle = '#435a633b';
+      ctx.strokeStyle = ui.safe;
       ctx.setLineDash([5, 7]);
       ctx.strokeRect(15.5, 15.5, workspace().w - 31, workspace().h - 31);
       ctx.setLineDash([]);
     }
     for (const layer of doc.layers)
-      if (layer.visible) for (const e of doc.entities) if (e.layer === layer.id) drawEntity(e);
+      if (layer.visible) for (const e of doc.entities) if (e.layer === layer.id) drawEntity(e, look, ui);
+    if (!preview) drawBleedVeil(ui);
     if (heroMotion?.active && !preview) {
       const { layout, positions, from, ids, valid } = heroMotion, position = positions[from];
       ctx.save();
       ctx.shadowColor = '#00000090'; ctx.shadowBlur = 12 * zoom * density; ctx.shadowOffsetY = 5 * zoom * density;
       ctx.globalAlpha = valid ? 1 : 0.6;
-      drawHeroPortrait(ids[from], position.x, position.y, layout.cardW, layout.cardH);
-      ctx.shadowColor = 'transparent'; ctx.strokeStyle = valid ? '#c4b5ed' : '#df9ba9'; ctx.lineWidth = 1.5 / zoom;
+      drawHeroPortrait(ids[from], position.x, position.y, layout.cardW, layout.cardH, look.heroes === 'hidden' ? sketchLook('outline') : look);
+      ctx.shadowColor = 'transparent'; ctx.strokeStyle = valid ? ui.accent : '#df9ba9'; ctx.lineWidth = 1.5 / zoom;
       ctx.strokeRect(position.x, position.y, layout.cardW, layout.cardH);
       ctx.restore();
     }
     if (!preview && (workspace().w > C.WIDTH || workspace().h > C.HEIGHT)) {
       ctx.save();
-      ctx.strokeStyle = '#c4b5ed';
+      ctx.strokeStyle = ui.accent;
       ctx.lineWidth = 1.3 / zoom;
       ctx.setLineDash([7 / zoom, 5 / zoom]);
       ctx.strokeRect(0, 0, C.WIDTH, C.HEIGHT);
@@ -640,7 +691,7 @@ export function createStudio(projectStorage, initial) {
     if (drawFrame) {
       ctx.save();
       for (const p of drawFrame)
-        drawCategoryLabel(ctx, p.ch || brushChar(false), p.x, p.y, '#d6c8f7');
+        drawCategoryLabel(ctx, p.ch || brushChar(false), p.x, p.y, ui.stroke, !look.sketch);
       ctx.restore();
     }
     if (!preview && referenceEditing && doc.reference?.visible) drawReferenceFrame(ctx, doc.reference, 1 / zoom);
@@ -653,7 +704,7 @@ export function createStudio(projectStorage, initial) {
         ctx.translate(center.x, center.y);
         ctx.rotate(((b.rotation || 0) * Math.PI) / 180);
         ctx.translate(-center.x, -center.y);
-        ctx.strokeStyle = '#c4b5ed';
+        ctx.strokeStyle = ui.accent;
         ctx.lineWidth = 1.5 / zoom;
         // A hairline off the glyphs, so the frame never covers what it selects.
         const gap = 2 / zoom;
@@ -665,7 +716,7 @@ export function createStudio(projectStorage, initial) {
           [b.x, b.y + b.h],
           [b.x + b.w, b.y + b.h]
         ] : []) {
-          ctx.fillStyle = '#211e29';
+          ctx.fillStyle = ui.handle;
           ctx.fillRect(x - handle / 2, y - handle / 2, handle, handle);
           ctx.strokeRect(x - handle / 2, y - handle / 2, handle, handle);
         }
@@ -679,11 +730,17 @@ export function createStudio(projectStorage, initial) {
         }
         ctx.restore();
       }
+      // Boxes of selected texts in a box, and the box being drawn with the text tool.
+      for (const e of items) if (e.box) drawTextBox(e.x, e.y, e.box.w, e.box.h, e.rotation ? C.frameCenter(C.entityFrame(e)) : null, e.rotation, ui);
+      if (gesture?.type === 'textbox') {
+        const b = box(gesture.start, gesture.current);
+        drawTextBox(b.x, b.y, b.w, b.h, null, 0, ui);
+      }
       if (gesture?.type === 'marquee') {
         const b = box(gesture.start, gesture.current);
-        ctx.fillStyle = '#c4b5ed18';
+        ctx.fillStyle = ui.accentFill;
         ctx.fillRect(b.x, b.y, b.w, b.h);
-        ctx.strokeStyle = '#c4b5ed';
+        ctx.strokeStyle = ui.accent;
         ctx.lineWidth = 1 / zoom;
         ctx.strokeRect(b.x, b.y, b.w, b.h);
       }
@@ -691,9 +748,9 @@ export function createStudio(projectStorage, initial) {
         ctx.beginPath();
         gesture.path.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
         ctx.closePath();
-        ctx.fillStyle = '#c4b5ed18';
+        ctx.fillStyle = ui.accentFill;
         ctx.fill();
-        ctx.strokeStyle = '#c4b5ed';
+        ctx.strokeStyle = ui.accent;
         ctx.lineWidth = 1 / zoom;
         ctx.setLineDash([5 / zoom, 4 / zoom]);
         ctx.stroke();
@@ -701,9 +758,33 @@ export function createStudio(projectStorage, initial) {
       }
       if (BRUSH_TOOLS.has(tool) && eraserHover) drawEraserRing(eraserHover);
       if (!gesture || gesture.type === 'bend') drawBendHandle();
-      if (guideFades.size || (gesture?.type === 'move' && gesture.guides?.length)) drawGuides(gesture?.type === 'move' ? gesture.guides || [] : []);
+      if (guideFades.size || (gesture?.type === 'move' && gesture.guides?.length)) drawGuides(gesture?.type === 'move' ? gesture.guides || [] : [], ui);
     }
     if (heroesMoving) requestPaint();
+  }
+  function drawTextBox(x, y, w, h, center = null, rotation = 0, ui = canvasUI()) {
+    ctx.save();
+    if (center) { ctx.translate(center.x, center.y); ctx.rotate((rotation * Math.PI) / 180); ctx.translate(-center.x, -center.y); }
+    ctx.strokeStyle = ui.textBox;
+    ctx.lineWidth = 1 / zoom;
+    ctx.setLineDash([4 / zoom, 4 / zoom]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.restore();
+  }
+  // The margin past the canvas (BLEED): what stands there is dimmed under a veil — Dota will not show it,
+  // every export crops it — and the canvas edge is drawn over it.
+  function drawBleedVeil(ui = canvasUI()) {
+    const area = shownArea(), { w, h } = workspace();
+    ctx.save();
+    ctx.fillStyle = ui.veil;
+    ctx.fillRect(area.x, area.y, area.w, -area.y);
+    ctx.fillRect(area.x, h, area.w, area.y + area.h - h);
+    ctx.fillRect(area.x, 0, -area.x, h);
+    ctx.fillRect(w, 0, area.x + area.w - w, h);
+    ctx.strokeStyle = ui.edge;
+    ctx.lineWidth = 1 / zoom;
+    ctx.strokeRect(0, 0, w, h);
+    ctx.restore();
   }
   // The handle in the middle of the line just drawn: pull it to bend the line.
   function drawBendHandle() {
@@ -741,7 +822,7 @@ export function createStudio(projectStorage, initial) {
     }
     const heading = direction || gesture.direction, settings = scatterSettings(), steps = Math.max(1, Math.ceil(length / Math.max(2, radius / 2)));
     for (let i = 1; i <= steps; i++)
-      scatterSymbols(doc, { x: from.x + (dx * i) / steps, y: from.y + (dy * i) / steps }, radius, heading, { ...settings, seed: gesture.seed, thrown: gesture.thrown, ink });
+      scatterSymbols(doc, { x: from.x + (dx * i) / steps, y: from.y + (dy * i) / steps }, radius, heading, { ...settings, seed: gesture.seed, thrown: gesture.thrown, ink, layer: eraserTarget() });
     gesture.last = { ...p }; gesture.moved = true;
   }
   // Photoshop-style brush outline: the ring is exactly the area eraseSymbols clears (eraser-size.mjs drawBrushRing).
@@ -758,32 +839,36 @@ export function createStudio(projectStorage, initial) {
     eraserLabelTimer = setTimeout(requestPaint, 950);
     requestPaint();
   }
-  function drawHeroPortrait(id, x, y, width, height) {
+  // A hero card in the look (grid-picture.mjs): the portrait, or in the sketch its outline.
+  function drawHeroPortrait(id, x, y, width, height, look = editorLook()) {
+    if (look.heroes !== 'portraits') return drawHeroCard(ctx, x, y, width, height, look);
     const ready = (image) => image?.complete && image.naturalWidth;
     let img = loadPortrait(id);
     // Taller on the screen than the half-size portrait: the full one, the half one drawn until it loads.
     if (height * density > PORTRAIT_MD_HEIGHT) { const full = loadPortrait(id, true); if (ready(full) || !ready(img)) img = full; }
-    ctx.fillStyle = '#202831'; ctx.fillRect(x, y, width, height);
-    if (ready(img)) {
-      ctx.filter = 'saturate(0.7)';
-      ctx.drawImage(img, ...portraitSourceRect(img, width, height, heroById.get(id)?.portraitCrop), x, y, width, height);
-      ctx.filter = 'none';
-    }
+    drawHeroCard(ctx, x, y, width, height, look, ready(img) ? img : null, heroById.get(id)?.portraitCrop);
   }
-  function drawEntity(e) {
+  function drawEntity(e, look = editorLook(), ui = canvasUI()) {
     if (e.rotation) prepareTextMetrics([e]);
-    const b = C.bounds([e], true);
-    if (b.x + b.w < 0 || b.y + b.h < 0 || b.x > workspace().w || b.y > workspace().h) return;
+    const b = C.bounds([e], true), area = shownArea();
+    if (b.x + b.w < area.x || b.y + b.h < area.y || b.x > area.x + area.w || b.y > area.y + area.h) return;
     ctx.save();
     if (e.type === 'heroes') {
       // A selected group shows its list area, as in Dota's edit mode; otherwise the group
       // looks as in the game: its title and heroes only.
       if (!preview && selected.has(e.id)) {
-        ctx.fillStyle = '#0000004d';
+        ctx.fillStyle = ui.listBox;
         ctx.fillRect(e.x, e.y + DOTA.header, e.w, e.h);
       }
+      // A sketch without heroes: the group stays findable as a faint dashed box (never in the PNG).
+      if (look.heroes === 'hidden') {
+        ctx.strokeStyle = ui.ghost; ctx.lineWidth = 1 / zoom; ctx.setLineDash([4 / zoom, 4 / zoom]);
+        ctx.strokeRect(e.x, e.y, e.w, C.visualHeight(e));
+        ctx.restore();
+        return;
+      }
       // Titles may overflow their list width in Panorama. Do not squeeze them.
-      drawCategoryLabel(ctx, e.name, e.x, e.y);
+      drawText(ctx, e.name, e.x, e.y, look);
       const motion = heroMotion?.groupId === e.id ? heroMotion : null;
       const best = motion?.layout || heroLayoutFor(e);
       ctx.beginPath();
@@ -794,20 +879,20 @@ export function createStudio(projectStorage, initial) {
           if (motion?.active && i === motion.from) return;
           const x = motion ? motion.positions[i].x : e.x + best.left + (i % best.cols) * best.stepX,
             y = motion ? motion.positions[i].y : e.y + best.top + Math.floor(i / best.cols) * best.stepY;
-          drawHeroPortrait(id, x, y, best.cardW, best.cardH);
+          drawHeroPortrait(id, x, y, best.cardW, best.cardH, look);
         });
       if (motion?.active) {
         const slot = motion.slots[motion.to];
-        ctx.fillStyle = '#c4b5ed14'; ctx.fillRect(slot.x, slot.y, best.cardW, best.cardH);
-        ctx.strokeStyle = '#c4b5ed'; ctx.lineWidth = 1 / zoom; ctx.setLineDash([4 / zoom, 3 / zoom]);
+        ctx.fillStyle = ui.slotFill; ctx.fillRect(slot.x, slot.y, best.cardW, best.cardH);
+        ctx.strokeStyle = ui.accent; ctx.lineWidth = 1 / zoom; ctx.setLineDash([4 / zoom, 3 / zoom]);
         ctx.strokeRect(slot.x, slot.y, best.cardW, best.cardH); ctx.setLineDash([]);
       }
     } else {
-      for (const glyph of C.textGlyphs(e)) drawCategoryLabel(ctx, glyph.text, glyph.x, glyph.y);
+      for (const glyph of C.textGlyphs(e)) drawText(ctx, glyph.text, glyph.x, glyph.y, look);
     }
     ctx.restore();
     // A meta group's numbers under its portraits and their captions (core metaLabels).
-    if (e.meta) for (const label of C.metaLabels(e)) drawCategoryLabel(ctx, label.text, label.x, label.y);
+    if (e.meta) for (const label of C.metaLabels(e)) drawText(ctx, label.text, label.x, label.y, look);
   }
   // Figma-style: several objects align to each other, a single object to the canvas.
   function alignSection(items) {
@@ -890,7 +975,7 @@ export function createStudio(projectStorage, initial) {
   // lavender rather than a loud magenta. `current` are the guides of this frame.
   const guideFades = new Map();
   let guideClock = 0;
-  function drawGuides(current) {
+  function drawGuides(current, ui = canvasUI()) {
     // At most one frame's worth per paint: after an idle pause the fade still takes ~0.1 s.
     const now = performance.now(), step = reducedMotion.matches ? 1 : 1 - Math.exp(-Math.min(32, Math.max(0, now - (guideClock || now))) / 45);
     guideClock = now;
@@ -902,7 +987,7 @@ export function createStudio(projectStorage, initial) {
     }
     let moving = false;
     ctx.save();
-    ctx.strokeStyle = '#c4b5ed';
+    ctx.strokeStyle = ui.accent;
     ctx.lineCap = 'round';
     for (const [key, fade] of guideFades) {
       fade.alpha += (fade.target - fade.alpha) * step;
@@ -1015,6 +1100,30 @@ export function createStudio(projectStorage, initial) {
       { duration: 300, delay: i * step, easing: 'cubic-bezier(.2, .8, .2, 1)', fill: 'backwards' }
     ));
   }
+  // «Режим эскиза» in the canvas settings: a white canvas with black glyphs, for a tattoo sketch or a print.
+  // It is the file's view (doc.sketch), saved with it, never an undo step; the Dota export ignores it.
+  function sketchSection() {
+    const sketch = C.cleanSketch(doc.sketch);
+    const heroes = sketch ? `<span class="field-label sketch-heroes-label" id="sketchHeroesLabel">${t('Герои в эскизе')}</span><div class="sketch-heroes" role="radiogroup" aria-labelledby="sketchHeroesLabel">${[['outline', t('Контуром')], ['hidden', t('Скрыть')]].map(([value, label]) => `<button type="button" role="radio" data-sketch-heroes="${value}" aria-checked="${sketch.heroes === value}">${label}</button>`).join('')}</div>` : '';
+    return `<label class="field-label" for="sketchMode">${t('Вид холста')}</label><label class="sketch-toggle"><input id="sketchMode" type="checkbox" role="switch"${sketch ? ' checked' : ''}><span class="sketch-toggle-track" aria-hidden="true"></span><span class="sketch-toggle-text"><strong>${t('Режим эскиза')}</strong><small>${t('Белое поле и чёрные символы — для эскиза тату или печати. Сетку для Dota не меняет.')}</small></span></label>${heroes}`;
+  }
+  function bindSketchSection() {
+    $('sketchMode').onchange = (event) => setSketch(event.currentTarget.checked ? { heroes: C.cleanSketch(doc.sketch)?.heroes || 'outline' } : null, 'sketchMode');
+    $('inspectorContent').querySelectorAll('[data-sketch-heroes]').forEach((button) => {
+      button.onclick = () => setSketch({ heroes: button.dataset.sketchHeroes }, `[data-sketch-heroes="${button.dataset.sketchHeroes}"]`);
+    });
+  }
+  // Not a history step: undo and redo keep the view (undo, redo). Saved with the file like any change.
+  function setSketch(value, focus = '') {
+    finishLiveEdit();
+    const next = C.cleanSketch(value);
+    if (JSON.stringify(next ?? null) === JSON.stringify(C.cleanSketch(doc.sketch) ?? null)) return;
+    if (next) doc.sketch = next; else delete doc.sketch;
+    save();
+    render();
+    if (focus) $('inspectorContent').querySelector(focus.startsWith('[') ? focus : `#${focus}`)?.focus({ preventScroll: true });
+    toast(next ? t('Режим эскиза: белое поле, чёрные символы') : t('Режим эскиза выключен'));
+  }
   function renderInspector() {
     const signature = [...selected].join(',');
     const selectionChanged = signature !== inspectorSelection;
@@ -1034,7 +1143,7 @@ export function createStudio(projectStorage, initial) {
     $('selectionCount').textContent = items.length ? t('{count} выбрано', { count: items.length }) : t('Холст');
     if (!items.length) {
       $('inspectorContent').innerHTML =
-        `<h3>${t('Настройки холста')}</h3><label class="field-label">${t('Размер рабочей области')}</label><div class="field-pair"><div class="input-unit number-field"><span>W</span><input data-canvas-axis="w" type="number" min="100" max="6000" step="1" aria-label="${t('Ширина холста')}" value="${workspace().w}">${numberButtons(t('ширину холста'))}<span class="unit">px</span></div><div class="input-unit number-field"><span>H</span><input data-canvas-axis="h" type="number" min="100" max="6000" step="1" aria-label="${t('Высота холста')}" value="${workspace().h}">${numberButtons(t('высоту холста'))}<span class="unit">px</span></div></div><p id="canvasSizeError" class="canvas-size-note" role="alert" hidden></p><button id="resetCanvasSize" class="button secondary full compact">${t('Вернуть 1193 × 593')}</button><button id="loadFont" class="button secondary full compact" style="margin-top:5px">${t('Сменить шрифт холста')}</button><p class="inspector-hint">${icon('shield')}<span>${canvasFontName ? t('{name} · шрифт холста в этой вкладке.', { name: esc(canvasFontName) }) : t('Radiance SemiBold · шрифт сетки Dota 2.')}</span></p>`;
+        `<h3>${t('Настройки холста')}</h3><label class="field-label">${t('Размер рабочей области')}</label><div class="field-pair"><div class="input-unit number-field"><span>W</span><input data-canvas-axis="w" type="number" min="100" max="6000" step="1" aria-label="${t('Ширина холста')}" value="${workspace().w}">${numberButtons(t('ширину холста'))}<span class="unit">px</span></div><div class="input-unit number-field"><span>H</span><input data-canvas-axis="h" type="number" min="100" max="6000" step="1" aria-label="${t('Высота холста')}" value="${workspace().h}">${numberButtons(t('высоту холста'))}<span class="unit">px</span></div></div><p id="canvasSizeError" class="canvas-size-note" role="alert" hidden></p><button id="resetCanvasSize" class="button secondary full compact">${t('Вернуть 1193 × 593')}</button><button id="loadFont" class="button secondary full compact" style="margin-top:5px">${t('Сменить шрифт холста')}</button><p class="inspector-hint">${icon('shield')}<span>${canvasFontName ? t('{name} · шрифт холста в этой вкладке.', { name: esc(canvasFontName) }) : t('Radiance SemiBold · шрифт сетки Dota 2.')}</span></p>${sketchSection()}`;
       $('resetCanvasSize').onclick = () => resizeCanvas({ w: C.WIDTH, h: C.HEIGHT });
       $('inspectorContent')
         .querySelectorAll('[data-canvas-axis]')
@@ -1063,6 +1172,7 @@ export function createStudio(projectStorage, initial) {
           };
         });
       $('loadFont').onclick = openCanvasFont;
+      bindSketchSection();
       return;
     }
     const b = C.bounds(items),
@@ -1073,9 +1183,13 @@ export function createStudio(projectStorage, initial) {
       wholeArtwork =
         artLayer &&
         items.every((item) => item.layer === artLayer.id) &&
-        doc.entities.filter((item) => item.layer === artLayer.id).length === items.length;
+        doc.entities.filter((item) => item.layer === artLayer.id).length === items.length,
+      // A text in a box (openText): its box instead of the size; changing it wraps the text again.
+      boxed = items.length === 1 && e.type !== 'heroes' && !!e.box && !wholeArtwork,
+      boxFit = boxed ? C.fitTextBox(C.boxSource(e), e.box, lineWidth) : null,
+      boxField = (key, label, value, disabled) => `<label class="input-unit number-field"><span>${label}</span><input data-box="${key}" aria-label="${key === 'w' ? t('Ширина рамки') : t('Высота рамки')}" type="number" min="${C.BOX_MIN[key]}" max="6000" step="1" value="${Math.round(value)}" ${disabled ? 'disabled' : ''}>${numberButtons(key === 'w' ? t('Ширина рамки') : t('Высота рамки'))}</label>`;
     $('inspectorContent').innerHTML =
-      `<h3>${wholeArtwork ? (artLayer.group ? t('Группа') : t('ASCII-слой')) : items.length === 1 ? (e.type === 'heroes' ? t('Группа героев') : e.type === 'symbol' ? t('Символ') : t('Текст')) : t('Выделение объектов')}</h3>${wholeArtwork ? `<label class="field-label" for="artworkName">${t('Название слоя')}</label><input id="artworkName" value="${esc(artLayer.name)}" maxlength="200" ${locked ? 'disabled' : ''}>` : items.length === 1 ? `<label class="field-label" for="objectName">${e.type === 'heroes' ? t('Название группы') : t('Текст / символ')}</label><textarea id="objectName" rows="3" maxlength="5000" ${locked ? 'disabled' : ''}>${esc(e.type === 'heroes' ? e.name : e.text)}</textarea>` : `<p class="hint">${t('{count} объектов · перемещай и изменяй вместе', { count: items.length })}</p>`}<label class="field-label">${t('Позиция')}</label><div class="field-pair">${numericField('x', 'X', b.x, locked)}${numericField('y', 'Y', b.y, locked)}</div><label class="field-label">${t('Размер')}</label><div class="field-pair">${numericField('w', 'W', b.w, locked)}${numericField('h', 'H', b.h, locked)}</div>${rotatable ? `<label class="field-label">${t('Поворот расположения')}</label>${numericField('rotation', t('Угол, °'), C.selectionFrame(items).rotation, locked)}<p class="hint">${t('Символы остаются прямыми. Shift — шаг 15°. Быстрый поворот — правой кнопкой мыши.')}</p>` : ''}${alignSection(items)}<label class="field-label" for="objectLayer">${t('Слой')}</label><select id="objectLayer" ${locked ? 'disabled' : ''}>${doc.layers.map((l) => `<option value="${l.id}" ${l.id === e.layer ? 'selected' : ''}>${esc(C.layerName(l))}</option>`).join('')}</select><div class="selection-actions"><button class="icon-button" data-action="duplicate" title="${t('Дублировать (Ctrl+D)')}" aria-label="${t('Дублировать')}">${icon('copy')}</button><button class="icon-button" data-action="center" title="${t('По центру холста')}" aria-label="${t('По центру холста')}">${icon('align')}</button><button class="icon-button" data-action="flip" title="${t('Отразить позиции по горизонтали')}" aria-label="${t('Отразить позиции по горизонтали')}">${icon('flip')}</button><button class="icon-button" data-action="rotate" title="${rotatable ? t('Повернуть на 90°') : t('Повернуть расположение на 90°')}" aria-label="${rotatable ? t('Повернуть на 90 градусов') : t('Повернуть расположение на 90 градусов')}">${icon('rotate')}</button><button class="icon-button danger" data-action="delete" title="${t('Удалить (Delete)')}" aria-label="${t('Удалить')}">${icon('trash')}</button></div>${locked ? `<p class="hint">${t('Слой заблокирован или скрыт. Открой его в списке слоёв для редактирования.')}</p>` : ''}${items.length === 1 && e.type === 'heroes' ? `<div class="hero-chips">${e.heroIds.map((id, i) => `<span class="hero-chip" data-hero-order="${i}" tabindex="${locked ? -1 : 0}" role="group" aria-label="${esc(heroById.get(id)?.name || id)}: ${t('{n} из {total}', { n: i + 1, total: e.heroIds.length })}" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight">${heroById.has(id) ? `<img src="${heroById.get(id)?.thumbnail || `assets/heroes/${id}.webp`}" alt="">` : ''}${esc(heroById.get(id)?.name || '#' + id)}<button data-remove-hero="${i}" aria-label="${t('Убрать {hero}', { hero: esc(heroById.get(id)?.name || id) })}" ${locked ? 'disabled' : ''}>×</button></span>`).join('')}</div><button id="editGroupHeroes" class="button secondary full compact" ${locked ? 'disabled' : ''}>${t('+ Выбрать героев')}</button><button id="orderGroupMeta" class="button secondary full compact" ${locked || e.heroIds.length < 2 ? 'disabled' : ''}>${t('Упорядочить по мете')}</button><p class="hint">${t('Перетаскивай портреты, чтобы менять порядок. С клавиатуры: выбери героя в списке и нажми Alt + ← / →. Всю группу можно двигать за название или свободное место; Shift сохраняет пропорции при изменении размера.')}</p>` : ''}`;
+      `<h3>${wholeArtwork ? (artLayer.group ? t('Группа') : t('ASCII-слой')) : items.length === 1 ? (e.type === 'heroes' ? t('Группа героев') : e.type === 'symbol' ? t('Символ') : t('Текст')) : t('Выделение объектов')}</h3>${wholeArtwork ? `<label class="field-label" for="artworkName">${t('Название слоя')}</label><input id="artworkName" value="${esc(artLayer.name)}" maxlength="200" ${locked ? 'disabled' : ''}>` : items.length === 1 ? `<label class="field-label" for="objectName">${e.type === 'heroes' ? t('Название группы') : t('Текст / символ')}</label><textarea id="objectName" rows="3" maxlength="5000" ${locked ? 'disabled' : ''}>${esc(e.type === 'heroes' ? e.name : boxed ? C.boxSource(e) : e.text)}</textarea>` : `<p class="hint">${t('{count} объектов · перемещай и изменяй вместе', { count: items.length })}</p>`}<label class="field-label">${t('Позиция')}</label><div class="field-pair">${numericField('x', 'X', b.x, locked)}${numericField('y', 'Y', b.y, locked)}</div>${boxed ? `<label class="field-label">${t('Рамка текста')}</label><div class="field-pair">${boxField('w', 'W', e.box.w, locked)}${boxField('h', 'H', e.box.h, locked)}</div>${boxFit.dropped ? `<p class="hint text-box-note">${t('Не влезло: {lines}. Увеличь рамку или сократи текст.', { lines: tn(boxFit.dropped, ['строка', 'строки', 'строк'], ['line', 'lines']) })}</p>` : ''}` : `<label class="field-label">${t('Размер')}</label><div class="field-pair">${numericField('w', 'W', b.w, locked)}${numericField('h', 'H', b.h, locked)}</div>`}${rotatable ? `<label class="field-label">${t('Поворот расположения')}</label>${numericField('rotation', t('Угол, °'), C.selectionFrame(items).rotation, locked)}<p class="hint">${t('Символы остаются прямыми. Shift — шаг 15°. Быстрый поворот — правой кнопкой мыши.')}</p>` : ''}${alignSection(items)}<label class="field-label" for="objectLayer">${t('Слой')}</label><select id="objectLayer" ${locked ? 'disabled' : ''}>${doc.layers.map((l) => `<option value="${l.id}" ${l.id === e.layer ? 'selected' : ''}>${esc(C.layerName(l))}</option>`).join('')}</select><div class="selection-actions"><button class="icon-button" data-action="duplicate" title="${t('Дублировать (Ctrl+D)')}" aria-label="${t('Дублировать')}">${icon('copy')}</button><button class="icon-button" data-action="center" title="${t('По центру холста')}" aria-label="${t('По центру холста')}">${icon('align')}</button><button class="icon-button" data-action="flip" title="${t('Отразить позиции по горизонтали')}" aria-label="${t('Отразить позиции по горизонтали')}">${icon('flip')}</button><button class="icon-button" data-action="rotate" title="${rotatable ? t('Повернуть на 90°') : t('Повернуть расположение на 90°')}" aria-label="${rotatable ? t('Повернуть на 90 градусов') : t('Повернуть расположение на 90 градусов')}">${icon('rotate')}</button><button class="icon-button danger" data-action="delete" title="${t('Удалить (Delete)')}" aria-label="${t('Удалить')}">${icon('trash')}</button></div>${locked ? `<p class="hint">${t('Слой заблокирован или скрыт. Открой его в списке слоёв для редактирования.')}</p>` : ''}${items.length === 1 && e.type === 'heroes' ? `<div class="hero-chips">${e.heroIds.map((id, i) => `<span class="hero-chip" data-hero-order="${i}" tabindex="${locked ? -1 : 0}" role="group" aria-label="${esc(heroById.get(id)?.name || id)}: ${t('{n} из {total}', { n: i + 1, total: e.heroIds.length })}" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight">${heroById.has(id) ? `<img src="${heroById.get(id)?.thumbnail || `assets/heroes/${id}.webp`}" alt="">` : ''}${esc(heroById.get(id)?.name || '#' + id)}<button data-remove-hero="${i}" aria-label="${t('Убрать {hero}', { hero: esc(heroById.get(id)?.name || id) })}" ${locked ? 'disabled' : ''}>×</button></span>`).join('')}</div><button id="editGroupHeroes" class="button secondary full compact" ${locked ? 'disabled' : ''}>${t('+ Выбрать героев')}</button><button id="orderGroupMeta" class="button secondary full compact" ${locked || e.heroIds.length < 2 ? 'disabled' : ''}>${t('Упорядочить по мете')}</button><p class="hint">${t('Перетаскивай портреты, чтобы менять порядок. С клавиатуры: выбери героя в списке и нажми Alt + ← / →. Всю группу можно двигать за название или свободное место; Shift сохраняет пропорции при изменении размера.')}</p>` : ''}`;
     if (wholeArtwork && items.length === 1)
       $('artworkName').insertAdjacentHTML(
         'afterend',
@@ -1088,6 +1202,7 @@ export function createStudio(projectStorage, initial) {
     if ($('orderGroupMeta')) $('orderGroupMeta').onclick = () => openMeta(e.id);
     bindLiveText($('objectName'), (value) => {
       if (e.type === 'heroes') e.name = value;
+      else if (boxed) rewrapBox(e, value);
       else {
         e.text = value;
         e.name = value;
@@ -1153,11 +1268,28 @@ export function createStudio(projectStorage, initial) {
                   }
                   delete item.rowText;
                 }
+                if (item.box && item.type !== 'heroes') rewrapBox(item, C.boxSource(item), { w: item.w, h: item.h });
               }
             }
             moveItems(items);
           });
           if (!changed) renderInspector();
+        };
+      });
+    $('inspectorContent')
+      .querySelectorAll('[data-box]')
+      .forEach((input) => {
+        input.onkeydown = (event) => {
+          if (event.key === 'Enter') input.blur();
+        };
+        input.onchange = () => {
+          const key = input.dataset.box, value = Number(input.value);
+          if (!input.value.trim() || !Number.isFinite(value) || value < C.BOX_MIN[key] || value > 6000) {
+            toast(t('Рамка: ширина от {w} и высота от {h} px.', C.BOX_MIN), true);
+            renderInspector();
+            return;
+          }
+          if (!commit(() => rewrapBox(e, C.boxSource(e), { ...e.box, [key]: Math.round(value) }))) renderInspector();
         };
       });
     $('objectLayer').onchange = (event) => {
@@ -1296,6 +1428,8 @@ export function createStudio(projectStorage, initial) {
         });
       doc.entities.push(...ordinary);
       copies.push(...ordinary);
+      // Pasted at a point in the margin, hero groups still come inside (moveItems).
+      moveItems(copies);
       selected = new Set(copies.map((e) => e.id));
     });
   }
@@ -1368,7 +1502,7 @@ export function createStudio(projectStorage, initial) {
     if (changed && action === 'ungroup') toast(t('Группа разъединена'));
   }
   function point(event) {
-    return canvasPoint(event, canvas.getBoundingClientRect(), workspace());
+    return canvasPoint(event, stageRect(), workspace());
   }
   function snapped(p) {
     return snapPoint(p, snap);
@@ -1444,7 +1578,7 @@ export function createStudio(projectStorage, initial) {
     }
     if (event.target.closest('button,input,select,textarea') || gesture) return;
     event.preventDefault();
-    const rect = canvas.getBoundingClientRect();
+    const rect = stageRect();
     const keyboard = event.clientX === 0 && event.clientY === 0;
     const p = keyboard ? { x: workspace().w / 2, y: workspace().h / 2 } : point(event);
     const target = hit(p);
@@ -1452,7 +1586,7 @@ export function createStudio(projectStorage, initial) {
     contextMenu = {
       x: keyboard ? rect.x + rect.width / 2 : event.clientX,
       y: keyboard ? rect.y + rect.height / 2 : event.clientY,
-      point: { x: Math.max(0, p.x), y: Math.max(0, p.y) }
+      point: inShownArea(p)
     };
     publishUI();
   });
@@ -1507,7 +1641,9 @@ export function createStudio(projectStorage, initial) {
       return;
     }
     if (tool === 'text') {
-      openText(p);
+      // A click opens the text window at the point; a drag draws the box the text stays in (finishGesture).
+      gesture = { type: 'textbox', start: p, current: p, pointerId: event.pointerId };
+      canvas.setPointerCapture(event.pointerId);
       return;
     }
     if (tool === 'select') {
@@ -1607,7 +1743,7 @@ export function createStudio(projectStorage, initial) {
     if (gesture) { gesture.pointerId = event.pointerId; canvas.setPointerCapture(event.pointerId); }
   });
   function eraseAt(p) {
-    eraseSymbols(doc, p, eraserSize / 2, ink);
+    eraseSymbols(doc, p, eraserSize / 2, ink, eraserTarget());
   }
   function reorderGroupHero(groupId, from, to) {
     const group = doc.entities.find(e => e.id === groupId && e.type === 'heroes');
@@ -1694,17 +1830,18 @@ export function createStudio(projectStorage, initial) {
         dy += snapped.dy;
         gesture.guides = snapped.guides;
       }
-      for (const original of gesture.items) {
+      const moving = gesture.items.map((original) => {
         const e = doc.entities.find((e) => e.id === original.id);
-        e.x = original.x + dx;
-        e.y = original.y + dy;
-      }
-      moveItems(editableSelection());
+        e.x = original.x;
+        e.y = original.y;
+        return e;
+      });
+      moveItems(moving, dx, dy, shownArea());
     }
     if (gesture.type === 'resize') updateResize(p, event.shiftKey);
     if (gesture.type === 'rotate') updateRotation(p, event.shiftKey);
     if (gesture.type === 'draw') {
-      advanceDrawingStroke(gesture, snapped(p), event.shiftKey);
+      advanceDrawingStroke(gesture, snapped(inShownArea(p)), event.shiftKey);
       updateStroke(event.shiftKey);
     }
     if (gesture.type === 'lasso') gesture.path.push(p);
@@ -1715,8 +1852,9 @@ export function createStudio(projectStorage, initial) {
   });
   function finishGesture(event, cancel = false) {
     if (!gesture || (event && gesture.pointerId !== event.pointerId)) return;
+    let openTextAt = null;
     if (!cancel && event && gesture.type === 'draw') {
-      advanceDrawingStroke(gesture, snapped(point(event)), event.shiftKey);
+      advanceDrawingStroke(gesture, snapped(inShownArea(point(event))), event.shiftKey);
       updateStroke(event.shiftKey);
     }
     if (gesture.type === 'hero-reorder') {
@@ -1760,6 +1898,13 @@ export function createStudio(projectStorage, initial) {
           .filter((e) => editable(e) && lassoContains(e, gesture.path, ink))
           .map((e) => e.id)
       ]);
+    else if (!cancel && gesture.type === 'textbox') {
+      const b = box(gesture.start, event ? point(event) : gesture.current);
+      // A few screen pixels are still a click.
+      openTextAt = b.w * zoom >= 6 && b.h * zoom >= 6
+        ? [{ x: b.x, y: b.y }, { w: Math.max(C.BOX_MIN.w, Math.round(b.w)), h: Math.max(C.BOX_MIN.h, Math.round(b.h)) }]
+        : [gesture.start];
+    }
     else if (!cancel && gesture.type === 'marquee') {
       const b = box(gesture.start, gesture.current);
       const picked = new Set([
@@ -1795,6 +1940,11 @@ export function createStudio(projectStorage, initial) {
     drawFrame = null;
     if (canvas.hasPointerCapture(pointerId)) canvas.releasePointerCapture(pointerId);
     render();
+    if (zoomAfterGesture) {
+      zoomAfterGesture = false;
+      if (!preview) updateZoom();
+    }
+    if (openTextAt) openText(...openTextAt);
   }
   listen(canvas, 'pointerup', (event) => finishGesture(event));
   listen(canvas, 'pointercancel', (event) => finishGesture(event, true));
@@ -1905,55 +2055,106 @@ export function createStudio(projectStorage, initial) {
     $('projectNameInput').focus();
     $('projectNameInput').select();
   }
-  function openText(p = { x: 100, y: 100 }) {
+  // The width of a line as the game draws it (text in a box, core fitTextBox).
+  function lineWidth(line) {
+    return measureCategoryWidth(ctx, line).width;
+  }
+  // `frame`: the box drawn with the text tool, { w, h } from `p` (asked for on 2026-10-16). In the window
+  // it can be set, changed or cleared; with a box the text wraps by words inside it, lines below it are
+  // dropped (the note says how many), and «По строкам» makes one text that keeps its box: edited later,
+  // it wraps again in the same box. «Каждый символ отдельно» places the glyphs as wrapped.
+  function openText(p = { x: 100, y: 100 }, frame = null) {
+    const boxField = (key, label, value) => `<label class="input-unit number-field"><span>${key.toUpperCase()}</span><input id="textBox${key.toUpperCase()}" type="number" min="${C.BOX_MIN[key]}" max="6000" step="1" placeholder="—" aria-label="${label}" value="${value ?? ''}">${numberButtons(label)}</label>`;
     openModal(
       t('Добавить текст или ASCII'),
-      `<textarea id="asciiText" rows="7" placeholder="${t('Текст или ASCII-арт…')}" maxlength="30000" aria-label="${t('Текст или ASCII-арт')}"></textarea><div class="text-mode choice-cards" role="radiogroup" aria-label="${t('Как добавить')}"><label class="choice-card"><input type="radio" name="asciiMode" value="lines" checked><span class="choice-icon">${icon('text')}</span><span><strong>${t('По строкам')}</strong><small>${t('Строка — одна категория: файл легче')}</small></span></label><label class="choice-card"><input type="radio" name="asciiMode" value="symbols"><span class="choice-icon">${icon('sparkle')}</span><span><strong>${t('Каждый символ отдельно')}</strong><small>${t('Любой символ можно двигать и менять')}</small></span></label></div>`,
+      `<textarea id="asciiText" rows="7" placeholder="${t('Текст или ASCII-арт…')}" maxlength="30000" aria-label="${t('Текст или ASCII-арт')}"></textarea><div class="text-mode choice-cards" role="radiogroup" aria-label="${t('Как добавить')}"><label class="choice-card"><input type="radio" name="asciiMode" value="lines" checked><span class="choice-icon">${icon('text')}</span><span><strong>${t('По строкам')}</strong><small>${t('Строка — одна категория: файл легче')}</small></span></label><label class="choice-card"><input type="radio" name="asciiMode" value="symbols"><span class="choice-icon">${icon('sparkle')}</span><span><strong>${t('Каждый символ отдельно')}</strong><small>${t('Любой символ можно двигать и менять')}</small></span></label></div><label class="field-label">${t('Рамка текста')}</label><div class="field-pair text-box-fields">${boxField('w', t('Ширина рамки'), frame?.w)}${boxField('h', t('Высота рамки'), frame?.h)}</div><p class="hint">${t('Необязательно: текст переносится по словам и не выходит за рамку. Рамку можно нарисовать — протяни по холсту инструментом «Текст».')}</p><p id="textBoxNote" class="text-box-note" role="status" hidden></p>`,
       `<button class="button secondary" data-close>${t('Отмена')}</button><button id="confirmText" class="button primary">${t('Добавить на холст')}</button>`,
       'text', { icon: 'text', lead: t('Многострочный ASCII добавляется отдельным слоем.') }
     );
+    // The box in the fields: null while both are empty, false when it is not a valid one.
+    const readBox = () => {
+      const w = $('textBoxW').value.trim(), h = $('textBoxH').value.trim();
+      if (!w && !h) return null;
+      const box = { w: Number(w), h: Number(h) };
+      return ['w', 'h'].every((key) => Number.isFinite(box[key]) && box[key] >= C.BOX_MIN[key] && box[key] <= 6000) ? box : false;
+    };
+    const showFit = () => {
+      const box = readBox(), text = $('asciiText').value, note = $('textBoxNote');
+      const dropped = box && text.trim() ? C.fitTextBox(text, box, lineWidth).dropped : 0;
+      note.hidden = box !== false && !dropped;
+      note.textContent = box === false ? t('Рамка: ширина от {w} и высота от {h} px.', C.BOX_MIN)
+        : t('Не влезло: {lines}. Увеличь рамку или сократи текст.', { lines: tn(dropped, ['строка', 'строки', 'строк'], ['line', 'lines']) });
+    };
+    for (const id of ['asciiText', 'textBoxW', 'textBoxH']) $(id).addEventListener('input', showFit);
     $('confirmText').onclick = () => {
       const text = $('asciiText').value,
-        separate = document.querySelector('input[name="asciiMode"]:checked').value === 'symbols';
+        separate = document.querySelector('input[name="asciiMode"]:checked').value === 'symbols',
+        box = readBox();
       if (!text.trim()) return;
+      if (box === false) {
+        toast(t('Рамка: ширина от {w} и высота от {h} px.', C.BOX_MIN), true);
+        return;
+      }
       const rows = text.replace(/\r/g, '').split('\n');
       if (rows.length > 3000 || rows.some((line) => line.length > 5000)) {
         toast(t('ASCII слишком большой: максимум 3 000 строк и 5 000 символов в строке.'), true);
         return;
       }
+      if (box && text.length > 5000) {
+        toast(t('Текст в рамке — до 5 000 символов.'), true);
+        return;
+      }
       const layer = doc.layers.find((l) => l.id === $('drawLayer').value),
-        newLayer = rows.length > 1 || separate;
+        newLayer = separate || (!box && rows.length > 1);
       if (!newLayer && (layer.locked || !layer.visible)) {
         toast(t('Открой и разблокируй слой для рисования.'), true);
         return;
       }
       const applied = commit(() => {
-        const inputs = [];
-        text
-          .replace(/\r/g, '')
-          .split('\n')
-          .forEach((line, row) => {
-            const chunks = separate
-              ? Array.from(line).map((ch, i) => ({ text: ch, column: i }))
-              : [{ text: line, column: 0 }];
-            for (const chunk of chunks) {
-              if (!chunk.text.trim()) continue;
-              inputs.push({
-                type: separate ? 'symbol' : 'text',
-                name: chunk.text,
-                text: chunk.text,
-                x: p.x + chunk.column * 10.8,
-                y: p.y + row * 22,
-                w: separate ? 30 : Math.max(30, Array.from(chunk.text).length * 10.8),
-                h: 30,
-                layer: layer.id
+        let items;
+        if (box && !separate) {
+          // One text keeps its box (core fitTextBox); its size is the box.
+          const fit = C.fitTextBox(text, box, lineWidth);
+          if (!fit.text.trim()) throw new Error(t('В рамку не влезло ни одной строки.'));
+          items = [C.entity(doc, { type: Array.from(fit.text).length === 1 ? 'symbol' : 'text', name: fit.text, text: fit.text,
+            x: p.x, y: p.y, w: fit.box.w, h: fit.box.h, layer: layer.id, box: { ...fit.box, text } })];
+          doc.entities.push(...items);
+        } else {
+          const inputs = [];
+          if (box)
+            // Glyphs where the game draws the wrapped lines: its advances, a line every DOTA.header.
+            C.fitTextBox(text, box, lineWidth).lines.forEach((line, row) => {
+              const advances = measureCategoryText(ctx, line).advances;
+              let pen = 0;
+              Array.from(line).forEach((ch, k) => {
+                if (!/\s/u.test(ch)) inputs.push({ type: 'symbol', name: ch, text: ch, x: p.x + pen, y: p.y + row * DOTA.header, w: 30, h: 30, layer: layer.id });
+                pen += advances[k] ?? 10.8;
               });
-            }
-          });
-        const items = newLayer
-          ? C.addArtwork(doc, inputs).items
-          : inputs.map((input) => C.entity(doc, input));
-        if (!newLayer) doc.entities.push(...items);
+            });
+          else
+            rows.forEach((line, row) => {
+              const chunks = separate
+                ? Array.from(line).map((ch, i) => ({ text: ch, column: i }))
+                : [{ text: line, column: 0 }];
+              for (const chunk of chunks) {
+                if (!chunk.text.trim()) continue;
+                inputs.push({
+                  type: separate ? 'symbol' : 'text',
+                  name: chunk.text,
+                  text: chunk.text,
+                  x: p.x + chunk.column * 10.8,
+                  y: p.y + row * 22,
+                  w: separate ? 30 : Math.max(30, Array.from(chunk.text).length * 10.8),
+                  h: 30,
+                  layer: layer.id
+                });
+              }
+            });
+          items = newLayer
+            ? C.addArtwork(doc, inputs).items
+            : inputs.map((input) => C.entity(doc, input));
+          if (!newLayer) doc.entities.push(...items);
+        }
         selected = new Set(items.map((e) => e.id));
       });
       if (!applied) return;
@@ -1961,6 +2162,15 @@ export function createStudio(projectStorage, initial) {
       setTool('select');
     };
     $('asciiText').focus();
+  }
+  // A text in a box wraps again: after its text or its box changed (core fitTextBox, boxSource).
+  function rewrapBox(e, source = C.boxSource(e), box = e.box) {
+    const fit = C.fitTextBox(source, box, lineWidth);
+    Object.assign(e, { text: fit.text, name: fit.text, type: Array.from(fit.text).length === 1 ? 'symbol' : 'text', w: fit.box.w, h: fit.box.h, box: { ...fit.box, text: source } });
+    delete e.rowGlyphs;
+    delete e.rowText;
+    delete e.textMetrics;
+    return fit;
   }
   function resetGridView() {
     heroMotion = null;
@@ -2149,7 +2359,7 @@ export function createStudio(projectStorage, initial) {
       + `<details class="export-more"><summary>${t('Дополнительно')}</summary><label class="check-row export-row-option"><input id="compactExportRows" type="checkbox" checked>${t('Склеивать символы одной линии в строки')}</label><p class="hint">${t('Символы одной линии становятся одной категорией — файл в разы легче. Строки собраны так, что рисунок стоит на месте и на экране выбора героя, и при любом разрешении. Без склейки каждый символ — отдельная категория.')}</p>`
       + `<div class="export-project"><span><strong>${t('Файл проекта GridStudio')}</strong><small>${t('Слои, подложка и настройки — чтобы потом открыть в редакторе. Dota его не читает.')}</small></span><button id="downloadProject" class="button secondary compact">${icon('archive')}${t('Сохранить')}</button></div>`
       + `<p class="hint">${t('Отображение шрифта и портретов в игре может отличаться от превью.')}</p></details>`,
-      `<button id="shareCatalogGrid" class="button secondary">${icon('workshop')}${t('Опубликовать в мастерскую')}</button><button id="downloadDota" class="button primary"></button>`,
+      `<div class="export-footer-side"><button id="shareCatalogGrid" class="button secondary">${icon('workshop')}${t('Опубликовать в мастерскую')}</button><button id="exportPng" class="button secondary">${icon('image')}${t('Экспортировать PNG')}</button></div><button id="downloadDota" class="button primary"></button>`,
       'export', { icon: 'download', lead: grids > 1 ? t('В Dota попадут все сетки файла: {count}', { count: grids }) : t('В Dota попадёт сетка «{name}»', { name: esc(doc.name) }) }
     );
     // The steps, with the video guide above them (src/video-guide.js); both go when the window closes.
@@ -2237,12 +2447,117 @@ export function createStudio(projectStorage, initial) {
         if (text && modal.open) await copyText(text, t('Команда скопирована: вставь её в PowerShell'));
       } finally { button.disabled = false; button.removeAttribute('aria-busy'); }
     };
+    $('exportPng').onclick = openPngExport;
     $('shareCatalogGrid').onclick = () => {
       try {
         const grid = selectedCatalogGrid(doc, (text) => measureCategoryWidth(ctx, text));
         modal.close();
         window.dispatchEvent(new CustomEvent('gridstudio:share', { detail: grid }));
       } catch (error) { toast(error.message, true); }
+    };
+  }
+  // «Экспортировать PNG» (asked for on 2026-10-18): the open grid as a picture, painted by grid-picture.mjs
+  // with the editor's own layout and the canvas font. Looks: as in Dota (the hero page's backdrop), on a
+  // transparent background, or the sketch — black glyphs on white. Cropped past the frame as the Dota
+  // export is; the whole canvas or just the drawing; 1×, 2× or 4×.
+  const imageReady = (image) => new Promise((resolve) => {
+    if (!image || image.complete) return resolve();
+    image.addEventListener('load', resolve, { once: true });
+    image.addEventListener('error', resolve, { once: true });
+  });
+  async function paintPicture(options, scale = options.scale) {
+    const look = options.look === 'sketch' ? sketchLook(options.heroes) : GAME_LOOK;
+    const area = pictureArea(doc, { area: options.area, look, measure: ink });
+    const background = options.look === 'transparent' ? 'transparent' : 'dota';
+    await document.fonts?.ready;
+    const backdrop = {};
+    if (!look.sketch && background === 'dota') {
+      const beyond = area.x < 0 || area.y < 0 || area.x + area.w > C.WIDTH || area.y + area.h > C.HEIGHT;
+      [backdrop.grid, backdrop.screen] = await Promise.all([gridBackgroundImage(scale > 1), beyond ? gridScreenImage() : null]);
+    }
+    // Portraits sharp at the picture's size: the full one for cards taller than the half-size one.
+    const full = new Set();
+    for (const e of doc.entities)
+      if (e.type === 'heroes' && (C.heroLayout(e)?.cardH || 0) * scale > PORTRAIT_MD_HEIGHT) for (const id of e.heroIds) full.add(id);
+    const heroes = pictureHeroes(doc, look);
+    await Promise.all(heroes.map((id) => imageReady(loadPortrait(id, full.has(id)))));
+    const ready = (image) => (image?.complete && image.naturalWidth ? image : null);
+    const portrait = (id, height) => {
+      const image = (height > PORTRAIT_MD_HEIGHT && ready(portraits.get(`${id}:full`))) || ready(portraits.get(id)) || ready(portraits.get(`${id}:full`));
+      return image ? { image, crop: heroById.get(id)?.portraitCrop } : null;
+    };
+    const size = pictureSize(area, scale), picture = document.createElement('canvas');
+    picture.width = size.width; picture.height = size.height;
+    renderPicture(picture.getContext('2d'), doc, { area, scale, look, background, backdrop, portrait });
+    return { picture, area, size };
+  }
+  function openPngExport() {
+    finishLiveEdit();
+    prepareTextMetrics(doc.entities.filter((e) => e.rotation));
+    const sketch = C.cleanSketch(doc.sketch);
+    const options = { look: sketch ? 'sketch' : 'dota', heroes: sketch?.heroes || 'outline', scale: 2, area: 'canvas' };
+    const hasHeroes = doc.entities.some((e) => e.type === 'heroes' && doc.layers.find((l) => l.id === e.layer)?.visible);
+    const card = (value, mark, title, note) => `<label class="choice-card"><input type="radio" name="pngLook" value="${value}"${options.look === value ? ' checked' : ''}><span class="choice-icon">${icon(mark)}</span><span><strong>${title}</strong><small>${note}</small></span></label>`;
+    const chips = (name, items) => `<div class="png-chips" role="radiogroup">${items.map(([value, label]) => `<label class="png-chip"><input type="radio" name="${name}" value="${value}"${String(options[name.replace('png', '').toLowerCase()]) === String(value) ? ' checked' : ''}><span>${label}</span></label>`).join('')}</div>`;
+    openModal(
+      t('Экспортировать PNG'),
+      `<div class="png-preview" id="pngPreviewBox"><canvas id="pngPreview" aria-label="${t('Превью картинки')}"></canvas></div>`
+      + `<fieldset class="choice-cards png-looks"><legend>${t('Вид')}</legend>${card('dota', 'image', t('Как в Dota'), t('На фоне страницы «Герои»'))}${card('transparent', 'layers', t('Прозрачный фон'), t('Только символы и герои'))}${card('sketch', 'pen', t('Эскиз'), t('Белый фон, чёрные символы'))}</fieldset>`
+      + `<div class="png-options">`
+      + (hasHeroes ? `<div class="png-option" id="pngHeroesOption"><span class="field-label">${t('Герои в эскизе')}</span>${chips('pngHeroes', [['outline', t('Контуром')], ['hidden', t('Скрыть')]])}</div>` : '')
+      + `<div class="png-option"><span class="field-label">${t('Масштаб')}</span>${chips('pngScale', PNG_SCALES.map((scale) => [scale, `${scale}×`]))}</div>`
+      + `<div class="png-option"><span class="field-label">${t('Область')}</span>${chips('pngArea', [['canvas', t('Весь холст')], ['content', t('По рисунку')]])}</div></div>`
+      + `<p class="hint png-size" id="pngSize" role="status"></p>`,
+      `<button class="button secondary" data-close>${t('Отмена')}</button><button id="downloadPng" class="button primary">${icon('download')}${t('Скачать PNG')}</button>`,
+      'png', { icon: 'image', lead: t('Картинка сетки «{name}»', { name: esc(doc.name) }) }
+    );
+    const body = $('modalContent');
+    let job = 0;
+    async function update() {
+      const look = options.look === 'sketch' ? sketchLook(options.heroes) : GAME_LOOK;
+      const area = pictureArea(doc, { area: options.area, look, measure: ink });
+      // A scale the browser cannot hold is offered no more; the largest one left is taken instead.
+      body.querySelectorAll('[name="pngScale"]').forEach((input) => { input.disabled = !scaleFits(area, Number(input.value)); });
+      if (!scaleFits(area, options.scale)) {
+        options.scale = [...PNG_SCALES].reverse().find((scale) => scaleFits(area, scale)) || 1;
+        body.querySelectorAll('[name="pngScale"]').forEach((input) => { input.checked = Number(input.value) === options.scale; });
+      }
+      const option = $('pngHeroesOption');
+      if (option) option.hidden = options.look !== 'sketch';
+      const { width, height } = pictureSize(area, options.scale);
+      $('pngSize').textContent = t('{width} × {height} px · {file}', { width, height, file: pngName() });
+      $('pngPreviewBox').dataset.look = options.look;
+      const request = ++job, box = $('pngPreviewBox').getBoundingClientRect();
+      const scale = Math.min(2, Math.max(0.1, (Math.max(320, box.width) * Math.min(window.devicePixelRatio || 1, 2)) / area.w));
+      const { picture } = await paintPicture(options, scale);
+      if (request !== job || !modal.open || !$('pngPreview')) return;
+      const view = $('pngPreview');
+      view.width = picture.width; view.height = picture.height;
+      view.style.aspectRatio = `${area.w} / ${area.h}`;
+      view.getContext('2d').drawImage(picture, 0, 0);
+    }
+    const pngName = () => pictureFileName(doc.name, options.look === 'sketch' ? ` (${t('эскиз')})` : '');
+    body.querySelectorAll('[name="pngLook"], [name="pngHeroes"], [name="pngScale"], [name="pngArea"]').forEach((input) => {
+      input.onchange = () => {
+        const key = input.name.replace('png', '').toLowerCase();
+        options[key] = key === 'scale' ? Number(input.value) : input.value;
+        update();
+      };
+    });
+    update();
+    $('downloadPng').onclick = async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true; button.setAttribute('aria-busy', 'true');
+      try {
+        const { picture } = await paintPicture(options);
+        const blob = await new Promise((resolve) => picture.toBlob(resolve, 'image/png'));
+        if (!blob) throw new Error(t('Браузер не смог собрать такую большую картинку. Выбери масштаб меньше.'));
+        download(blob, pngName(), 'image/png');
+        closeModal();
+        toast(t('{file} скачан', { file: pngName() }));
+      } catch (error) {
+        toast(error.message || t('Не удалось собрать картинку.'), true, true);
+      } finally { button.disabled = false; button.removeAttribute('aria-busy'); }
     };
   }
   let importRequest = 0;
@@ -2277,7 +2592,7 @@ export function createStudio(projectStorage, initial) {
         const append = chosenMode() === 'append';
         const opened = commit(() => {
           const incoming = imported.map((file) => file.doc);
-          doc = append ? C.appendConfigs(doc, incoming) : C.appendConfigs(incoming[0], incoming.slice(1));
+          doc = append ? C.appendConfigs(doc, incoming) : C.keepSketch(doc, C.appendConfigs(incoming[0], incoming.slice(1)));
           if (!append) {
             selected.clear();
             pickerGroupId = null;
@@ -3686,7 +4001,7 @@ export function createStudio(projectStorage, initial) {
       const amount = event.shiftKey ? 10 : 1;
       const dx = event.key === 'ArrowLeft' ? -amount : event.key === 'ArrowRight' ? amount : 0;
       const dy = event.key === 'ArrowUp' ? -amount : event.key === 'ArrowDown' ? amount : 0;
-      commit(() => moveItems(editableSelection(), dx, dy));
+      commit(() => moveItems(editableSelection(), dx, dy, shownArea()));
     }
   });
   listen(document, 'keyup', (event) => {
@@ -3703,8 +4018,11 @@ export function createStudio(projectStorage, initial) {
     if (gesture) finishGesture(null, true);
   });
   // A fitted canvas fits again; a moved one keeps its place while the room around it follows.
+  // Not under a drag: the notice of symbols past the frame comes and goes as a selection crosses the edge
+  // and changes the viewport's height, and a refit then would move the canvas under the pointer.
   const resizeObserver = new ResizeObserver(() => {
-    if (!preview) updateZoom();
+    if (gesture) zoomAfterGesture = true;
+    else if (!preview) updateZoom();
   });
   resizeObserver.observe(viewport);
   const imageResizeObserver = new ResizeObserver(renderImagePreview);
@@ -3765,6 +4083,7 @@ export function createStudio(projectStorage, initial) {
       reference: doc.reference || null,
       referenceEditing,
       overflow: overflow(doc),
+      eraserLayer: eraserTarget() || 'all',
       configIndex: doc.configIndex,
       configurations: C.configurations(doc),
       layers: [...doc.layers].reverse().map((layer) => {
@@ -3774,6 +4093,7 @@ export function createStudio(projectStorage, initial) {
           ...layer,
           name: C.layerName(layer),
           expanded: !collapsed.has(layer.id),
+          erasing: BRUSH_TOOLS.has(tool) && eraserTarget() === layer.id,
           count: entities.length,
           selected: entities.length > 0 && entities.every((e) => selected.has(e.id)),
           symbolCount: symbols.length,
@@ -3833,8 +4153,11 @@ export function createStudio(projectStorage, initial) {
       minSize
     );
     const byId = new Map(doc.entities.map((item) => [item.id, item]));
-    for (const [index, original] of gesture.items.entries())
-      Object.assign(byId.get(original.id), resized[index]);
+    for (const [index, original] of gesture.items.entries()) {
+      const e = Object.assign(byId.get(original.id), resized[index]);
+      // A text in a box takes the stretched frame as its box and wraps again.
+      if (e.box && e.type !== 'heroes') rewrapBox(e, C.boxSource(e), { w: e.w, h: e.h });
+    }
     moveItems(gesture.items.map((item) => byId.get(item.id)));
     gesture.proportional = proportional;
     draw();
@@ -4083,6 +4406,7 @@ export function createStudio(projectStorage, initial) {
       select(found.map((e) => e.id));
       toast(found.length ? t('Выделено: {count}. Заменить: правая кнопка мыши → «Заменить символы…».', { count: found.length }) : t('Таких символов на холсте нет (или они на закрытых слоях).'), !found.length);
     },
+    setEraserLayer,
     selectAllHeroes: (ids) => {
       const group = doc.entities.find((e) => e.id === pickerGroupId);
       if (!group || !editable(group)) return;
@@ -4157,7 +4481,14 @@ export function createStudio(projectStorage, initial) {
       } else select([id]);
       setTool('select');
     },
+    // With the eraser or «Распыление» on, a layer picked in the list becomes theirs and the tool stays.
     selectLayer: (id, symbolsOnly = false) => {
+      if (BRUSH_TOOLS.has(tool)) {
+        setEraserLayer(id);
+        const layer = doc.layers.find((l) => l.id === id);
+        if (layer) toast(t(tool === 'scatter' ? 'Распыление — только на слое «{name}»' : 'Ластик стирает только на слое «{name}»', { name: C.layerName(layer) }));
+        return;
+      }
       select(
         doc.entities
           .filter((e) => e.layer === id && (!symbolsOnly || e.type === 'symbol'))

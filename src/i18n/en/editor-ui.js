@@ -154,7 +154,6 @@ export default {
   'Закрепить панель': 'Pin panel',
   'Закрыть панель': 'Close panel',
   'За границами {w} × {h}:': 'Outside {w} × {h}:',
-  'Удалить символы, которые выходят за границы': 'Delete the symbols outside the bounds',
   'Разблокируй слой для обрезки': 'Unlock the layer to crop',
   'Обрезать': 'Crop',
   'Категорий': 'Categories',

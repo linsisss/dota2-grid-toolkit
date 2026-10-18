@@ -1,0 +1,523 @@
+/* «Терновый трон»: Valve's bp_popup_crownfall_encounter_survivors.css (and the minigame popup's shared CSS) in
+   browser CSS. The popup is .MainContents, 1560×975, scaled by Fit; the canvas of the arena fills it under the
+   HUD. Valve's state classes drive it: GameState_Setup / _Active / _ChoosingPowerUp / _Finished /
+   _ShowingDialogue, ShowHeroScreen, ShowDifficultyScreen, ShowPowerUpChoices, IsPaused, IsInBossStage,
+   PlayerTookDamage, MiniBossWarning, MinibossArrived, ObjectivesIntro, BossFadeIn. */
+.th-popup { --gold1: #efd4ac; --gold2: #dcb25e; --gold3: #977628; --charcoal-light: #253242; --charcoal-dark: #0b111a; --lightest-grey: #dae2e5; --lighter-grey: #b0bcc2; --light-grey: #8b989e;
+  --gold-grad: linear-gradient(#FFF2DF, #ebc386 48%, #BA8C47 52%, #8d6c3a); --bright-green: #6ee26e;
+  position: relative; width: 1560px; height: 975px; overflow: hidden; font-family: 'MGRadiance', sans-serif; color: var(--lightest-grey); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  background: black; border: 1px solid; border-image: linear-gradient(var(--gold1), var(--gold2), var(--gold3)) 1; }
+.th-popup b { font-weight: 600; }
+.th-state, .th-popup .MainContents { position: absolute; inset: 0; }
+.th-popup .GoldText { background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.th-popup .GoldHeader { font: 600 20px 'MGRadiance', sans-serif; letter-spacing: 2px; text-transform: uppercase; background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 4px rgba(0,0,0,.6)); }
+.th-popup kbd, .th-popup .ControlKey { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; box-sizing: border-box; border: 1px solid #000; border-radius: 3px; background: linear-gradient(#3b4651, #1d242b); box-shadow: inset 0 1px 0 #ffffff30, 0 2px 0 #000; font: 600 12px 'MGRadiance', sans-serif; color: #fff; }
+.th-popup .ControlKey img { width: 14px; height: 14px; }
+
+/* The arena. */
+#ArenaSceneContainer { position: absolute; inset: 0; transition: filter 0.1s, opacity 0.5s; }
+.th-canvas { display: block; width: 1560px; height: 975px; touch-action: none; }
+.GameState_Setup #ArenaSceneContainer { opacity: 0; }
+.GameState_ChoosingPowerUp #ArenaSceneContainer, .GameState_Finished #ArenaSceneContainer, .IsPaused.UserPaused #ArenaSceneContainer { filter: brightness(0.25) blur(1px); transition-duration: 0.5s; }
+.GameState_ShowingDialogue #ArenaSceneContainer { filter: brightness(0.5); }
+.FadeCover { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
+.BossFadeIn .FadeCover { animation: th-bossfade 1.5s; }
+@keyframes th-bossfade { 0% { opacity: 1; } 100% { opacity: 0; } }
+.LightningCover { position: absolute; inset: 0; background: #b9a8ff; opacity: 0; pointer-events: none; mix-blend-mode: screen; }
+.Lightning .LightningCover { animation: th-lightning 0.6s; }
+@keyframes th-lightning { 0% { opacity: 0; } 10% { opacity: 0.45; } 20% { opacity: 0.05; } 30% { opacity: 0.3; } 100% { opacity: 0; } }
+
+/* .GameUI */
+.GameUI { position: absolute; inset: 0; pointer-events: none; }
+.GameUI button, .GameUI .PowerUpChoice, .GameUI .PlayerLevelUpChoiceWrapper { pointer-events: auto; }
+.PlayerDamageContainer { position: absolute; inset: 0; opacity: 0; background: linear-gradient(red, rgba(255,0,0,0) 40%, rgba(255,0,0,0) 60%, red); -webkit-mask: linear-gradient(90deg, #fff, #fff8 50%, #fff); mask: linear-gradient(90deg, #fff, #fff8 50%, #fff); }
+.PlayerTookDamage .PlayerDamageContainer { animation: th-damage 0.8s; }
+@keyframes th-damage { 0% { opacity: 0; } 20% { opacity: 0.55; } 100% { opacity: 0; } }
+.TimelineBackground { position: absolute; left: 5%; width: 90%; top: 0; height: 360px; background: radial-gradient(50% 50% at 50% 0%, rgba(0,0,0,.9), rgba(0,0,0,.75) 50%, rgba(0,0,0,0)); opacity: 0.55; }
+
+/* TimerContainer: score, gold, echelon. */
+.TimerContainer { position: absolute; left: 50%; top: -5.5px; width: 310px; height: 100px; transform: translateX(-50%); transition: transform 0.2s cubic-bezier(0,1,0,1), opacity 0.2s; }
+.GameState_ShowingDialogue .TimerContainer, .GameState_Finished .TimerContainer { opacity: 0; transform: translate(-50%, -24px); transition-duration: 0.4s; transition-delay: 0.5s; }
+.TimerContainer .ScoreBackground, .TimerContainer .ScoreBorder { position: absolute; left: 0; top: 0; width: 310px; height: 70px; transform: scaleY(-1); object-fit: fill; }
+.TimerContainer .ScoreBackground { filter: sepia(1) saturate(0.6) brightness(0.55); opacity: 0.95; }
+.TimerContainer .ScoreBorder { filter: sepia(1) saturate(1.5) brightness(1.2) hue-rotate(-5deg); }
+.TimerInfoContainer { position: relative; display: flex; justify-content: center; align-items: center; margin-top: 8px; }
+.ScoreData, .GoldData { width: 120px; display: flex; flex-direction: column; align-items: center; }
+.ScoreLabel, .GoldLabel { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.5); text-shadow: 0 2px 6px rgba(0,0,0,.6); margin-bottom: -2px; }
+.ScoreHUD { font-size: 21px; font-weight: 700; color: #fff; padding: 0 12px; text-shadow: 0 0 12px #ffd05a31; font-variant-numeric: tabular-nums; }
+.GoldDataContainer { display: flex; align-items: center; gap: 2px; }
+.GoldHUD { font-size: 21px; font-weight: 700; background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 4px rgba(0,0,0,.8)); font-variant-numeric: tabular-nums; }
+.GoldIcon { width: 22px; height: 22px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.8)); }
+.TimerContainer .Dash { width: 1px; height: 40px; background: linear-gradient(rgba(255,255,255,0), rgba(255,255,255,.1) 30%, rgba(255,255,255,.1) 70%, rgba(255,255,255,0)); }
+.DifficultyContainer { position: relative; display: flex; justify-content: center; align-items: center; height: 22px; margin-top: 8px; }
+.DifficultyContainer .EchelonBadge { position: absolute; height: 22px; filter: drop-shadow(0 2px 6px #000); }
+.DifficultyText { position: relative; font-size: 12px; color: rgba(245,245,245,.7); text-shadow: 0 2px 8px #000; padding: 0 22px; }
+.DifficultyText b { color: #fff; }
+
+/* Boss bar (the throne room) and the timeline (the first floor). */
+.BossHealthContainer { position: absolute; left: 50%; top: 64px; width: 600px; transform: translateX(-50%); opacity: 0; transition: opacity 0.6s; text-align: center; }
+.IsInBossStage .BossHealthContainer { opacity: 1; }
+.BossLabel { font: 700 22px 'MGReaver', 'MGRadiance', serif; color: #fff; text-shadow: 0 2px 16px #000; letter-spacing: 1px; text-transform: uppercase; }
+.BossHealthProgressBar { position: relative; height: 20px; margin-top: 8px; border-radius: 3px; border: 1px solid #000; background: rgba(0,0,0,.96); box-shadow: 0 0 0 1px rgba(255,255,255,.02); overflow: hidden; }
+.BossHealthProgressBar .ProgressBarLeft { height: 100%; width: 100%; background: linear-gradient(#5CA33C, #3E5F23); transition: width 0.15s; }
+.ProgressBarLabel { position: absolute; left: 0; right: 0; top: 37px; font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #fff; text-shadow: 0 2px 8px #000; }
+.TimelineContainer { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); display: flex; align-items: center; padding: 0 16px; transition: opacity 0.3s; }
+.IsInBossStage .TimelineContainer, .GameState_ShowingDialogue .TimelineContainer { opacity: 0; }
+.TimerHUD { min-width: 56px; font-size: 20px; color: whitesmoke; text-shadow: 0 2px 12px #000; font-variant-numeric: tabular-nums; }
+.Timeline { position: relative; padding: 0 8px; display: flex; align-items: center; height: 34px; }
+.TimelineBar { width: 480px; height: 6px; border-radius: 2px; border: 1px solid #000; background: linear-gradient(#242527, #3F464A); overflow: hidden; }
+.TimelineBar .ProgressBarLeft { height: 100%; width: 0; background: linear-gradient(#FFF2DF, #ebc386 48%, #BA8C47 52%, #785C32); }
+.MinibossTimelineIcon { position: absolute; top: 5px; width: 24px; height: 24px; margin-left: -4px; background: url('../../../../assets/minigames/thorns/images/hud/help_diamond.svg') center / 80% no-repeat; filter: drop-shadow(0 2px 6px #000) brightness(0.7); }
+.MinibossTimelineIcon.Revealed { filter: none; background-size: cover; }
+.MinibossTimelineIcon.Revealed.MinimapResurrectorIcon { background-image: url('../../../../assets/minigames/thorns/images/minimap/npc_dota_survivor_resurrector.webp'); }
+.MinibossTimelineIcon.Revealed.MinimapGolemIcon { background-image: url('../../../../assets/minigames/thorns/images/minimap/npc_dota_survivor_golem.webp'); }
+.MinibossTimelineIcon.Revealed.MinimapAbsorberIcon { background-image: url('../../../../assets/minigames/thorns/images/minimap/npc_dota_survivor_defender.webp'); }
+.MinibossTimelineIcon.Revealed.MinimapArcherIcon { background-image: url('../../../../assets/minigames/thorns/images/minimap/npc_dota_survivors_archer.webp'); }
+.BossTimelineIcon { position: absolute; right: -16px; top: -1px; width: 32px; height: 32px; background: url('../../../../assets/minigames/thorns/images/heroes/icons/npc_dota_hero_vengefulspirit_alt3.webp') center / cover; image-rendering: pixelated; }
+
+/* «Внимание · Прибывает мини-босс». */
+.MinibossWarningAlertContainer { position: absolute; left: 50%; top: 0; width: 1600px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; opacity: 0; transition: opacity 0.3s; }
+.MiniBossWarning .MinibossWarningAlertContainer { opacity: 1; }
+.WarningDarkness { position: absolute; left: 0; top: 0; width: 1600px; height: 360px; background: radial-gradient(50% 100% at 50% 0%, #000, rgba(0,0,0,.8) 50%, rgba(0,0,0,0)); }
+.WarningContainer { position: relative; margin-top: 72px; display: flex; align-items: center; }
+.WarningContainer .Emblem { height: 20px; filter: sepia(1) saturate(1.4) brightness(1.1); }
+.WarningContainer .Emblem.Left { transform: scaleX(-1); }
+.WarningBadge { position: relative; margin: 0 -10px; padding: 6px 40px 9px; }
+.WarningBadgeBackground { position: absolute; inset: 0; border-style: solid; border-width: 0 24px; border-image: url('../../../../assets/minigames/thorns/images/warning_badge.webp') 0 48 fill / 0 24px stretch; animation: th-pulse 0.3s infinite alternate; }
+.WarningLabel { position: relative; font: 600 18px 'MGRadiance', sans-serif; letter-spacing: 2px; text-transform: uppercase; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+.WarningRed { position: absolute; inset: -10px; border-radius: 20px; background: radial-gradient(#F81A25, #F81A2599 30%, #F81A2500 70%); mix-blend-mode: screen; animation: th-glowred 0.6s infinite alternate; }
+@keyframes th-pulse { to { transform: scale(1.04, 1.08); filter: brightness(1.6); } }
+@keyframes th-glowred { from { opacity: 0; } to { opacity: 0.8; } }
+.WarningTitleContainer { position: relative; display: flex; align-items: center; margin: 2px 0; }
+.WarningTitleContainer .MultiDash { height: 16px; filter: sepia(1) saturate(6) hue-rotate(-40deg) brightness(0.9); }
+.WarningTitleContainer .MultiDash.Left { transform: scaleX(-1); }
+.WarningTitle { margin: 0 6px; font-size: 22px; color: whitesmoke; text-shadow: 0 2px 16px #000; }
+.BottomEmblem { position: relative; height: 10px; margin-top: 8px; filter: sepia(1) saturate(1.4); }
+
+/* Objectives (Valve's ObjectivesLog: the optional minibosses), bottom left above the minimap. */
+.ObjectivesLogShadow { position: absolute; left: 0; bottom: 0; width: 400px; height: 800px; background: radial-gradient(100% 100% at 0% 100%, rgba(19,21,23,.9), rgba(19,24,19,.75) 60%, rgba(0,0,0,0)); opacity: 0; transition: opacity 0.4s; }
+.ObjectivesLogContainer { position: absolute; left: 40px; bottom: 290px; width: 210px; display: flex; flex-direction: column; opacity: 0; transition: opacity 0.4s 0.6s; }
+.GameState_Active:not(.IsInBossStage) .ObjectivesLogContainer.Revealed, .GameState_ChoosingPowerUp:not(.IsInBossStage) .ObjectivesLogContainer.Revealed { opacity: 1; }
+.GameState_Active:not(.IsInBossStage) .ObjectivesLogContainer.Revealed ~ .ObjectivesLogShadow, .GameState_Active:not(.IsInBossStage) .ObjectivesLogShadow { opacity: 0.6; }
+.ObjectivesTitleContainer { display: flex; flex-direction: column; align-items: center; padding: 0 8px; margin-bottom: 6px; text-align: center; }
+.ObjectivesHeading { font-size: 15px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.8); text-shadow: 0 2px 12px rgba(0,0,0,.8); }
+.ObjectivesDescription { font-size: 13px; color: rgba(245,245,245,.5); text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+.OptionalObjectivesContainer { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.Objective { display: flex; align-items: center; padding: 3px 4px; border-radius: 0 80px 80px 0; background: linear-gradient(90deg, rgba(11,12,15,.5), rgba(0,0,0,0)); }
+.ObjectiveImage { width: 32px; height: 32px; flex: none; border-radius: 50%; background: center / cover; box-shadow: 0 0 0 1px rgb(255,232,182), 0 2px 6px #000; }
+.Objective.MinimapArcherIcon .ObjectiveImage { background-image: url('../../../../assets/minigames/thorns/images/minimap/npc_dota_survivors_archer.webp'); }
+.Objective.MinimapResurrectorIcon .ObjectiveImage { background-image: url('../../../../assets/minigames/thorns/images/minimap/npc_dota_survivor_resurrector.webp'); }
+.Objective.MinimapGolemIcon .ObjectiveImage { background-image: url('../../../../assets/minigames/thorns/images/minimap/npc_dota_survivor_golem.webp'); }
+.Objective.MinimapAbsorberIcon .ObjectiveImage { background-image: url('../../../../assets/minigames/thorns/images/minimap/npc_dota_survivor_defender.webp'); }
+.ObjectiveTextContainer { display: flex; flex-direction: column; margin-left: 6px; flex: 1; min-width: 0; }
+.ObjectiveName { font-size: 14px; color: rgba(245,245,245,.8); text-shadow: 0 2px 6px #000; }
+.ObjectiveStatusLabel { font-size: 12px; color: rgba(245,245,245,.8); text-shadow: 0 0 12px rgba(115,180,255,.6); animation: th-activeglow 1s infinite alternate; }
+@keyframes th-activeglow { from { opacity: 0.6; } to { opacity: 1; color: #9fd0ff; } }
+.Objective.Complete .ObjectiveName { text-decoration: line-through; opacity: 0.7; }
+.ObjectiveRewardIcon { width: 32px; height: 28px; flex: none; background: url('../../../../assets/minigames/thorns/images/hud/aghs_off_large.webp') center / contain no-repeat; }
+.Objective.Complete .ObjectiveRewardIcon { background-image: url('../../../../assets/minigames/thorns/images/hud/aghs_on_scepter_large.webp'); }
+
+/* Intros: «Доживите до 12:00» → «Победите Империю»; «Прибыла …». */
+.ObjectivesIntroContainer, .MinibossIntroContainer { position: absolute; left: 50%; top: 38%; width: 1000px; transform: translate(-50%, -50%); display: grid; place-items: center; opacity: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(11,12,15,0), rgba(11,12,15,.4) 10%, rgba(11,12,15,.7) 20%, rgba(11,12,15,.9) 50%, rgba(11,12,15,.7) 80%, rgba(11,12,15,.4) 90%, rgba(11,12,15,0)); }
+.ObjectivesIntroContainer { height: 200px; }
+.ObjectivesIntroContainer > div { grid-area: 1 / 1; width: 100%; text-align: center; text-transform: uppercase; font: 600 48px 'MGRadiance', sans-serif; color: rgba(255,255,255,.85); text-shadow: 0 2px 12px rgba(0,0,0,.8); opacity: 0; }
+.ObjectivesIntroContainer .DefeatImperiaTitle { font-size: 64px; }
+.ObjectivesIntro .ObjectivesIntroContainer { animation: th-introbg 4.2s; }
+.ObjectivesIntro .SurviveTitle { animation: th-intro 2.1s; }
+.ObjectivesIntro .DefeatImperiaTitle { animation: th-intro 2.1s 2.1s; }
+.ObjectivesIntroBoss .ObjectivesIntroContainer { animation: th-introbg 2.2s; }
+.ObjectivesIntroBoss .DefeatImperiaTitle { animation: th-intro 2.2s; }
+@keyframes th-intro { 0% { opacity: 0; transform: scale(2); } 15% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(0.95); } }
+@keyframes th-introbg { 0% { opacity: 0; transform: translate(-50%, -50%) scaleY(0.2); } 8% { opacity: 1; transform: translate(-50%, -50%); } 90% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%); } }
+.MinibossIntroContainer { padding: 24px 80px; box-sizing: border-box; }
+.MinibossArrivedTitle { text-align: center; text-transform: uppercase; font: 600 44px 'MGRadiance', sans-serif; color: rgba(255,255,255,.85); text-shadow: 0 2px 12px rgba(0,0,0,.8); }
+.MinibossArrived .MinibossIntroContainer { animation: th-introbg 3s; }
+
+/* Chatter: the in-run lines, top centre under the timer. */
+#ChatterContainer { position: absolute; left: 50%; top: 116px; transform: translateX(-50%); }
+.IsInBossStage #ChatterContainer { top: 140px; }
+.th-chatter { display: flex; align-items: center; gap: 12px; min-width: 420px; max-width: 640px; padding: 6px 22px 6px 6px; border-radius: 6px;
+  background: linear-gradient(90deg, rgba(11,12,15,.92), rgba(11,12,15,.75) 70%, rgba(11,12,15,0)); border-top: 1px solid; border-image: linear-gradient(90deg, var(--gold2), rgba(0,0,0,0)) 1; animation: th-chatter-in 0.25s ease-out; }
+@keyframes th-chatter-in { from { opacity: 0; transform: translateY(-10px); } }
+.th-chatter img { width: 72px; height: 72px; object-fit: cover; object-position: 50% 12%; border-radius: 4px; background: #0b111a; box-shadow: 0 0 0 1px #ffffff20; flex: none; }
+.th-chatter-text { display: flex; flex-direction: column; gap: 3px; font-size: 16px; line-height: 1.25; color: #fff; text-shadow: 0 2px 4px #000; }
+.th-chatter-text b { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold1); }
+
+/* PlayerHudContainer: XP ring, portrait, abilities + health, items. */
+.PlayerHudContainer { position: absolute; left: 50%; bottom: 0; height: 200px; display: flex; align-items: flex-end; transform: translate(-50%, 120px); transition: transform 0.7s cubic-bezier(0,1,0,1) 0.3s; }
+.GameState_Active .PlayerHudContainer, .GameState_ChoosingPowerUp .PlayerHudContainer { transform: translate(-50%, 0); }
+.HudEndCapImage { height: 110px; filter: hue-rotate(-15deg); align-self: flex-end; }
+.HudEndCapImage.Right { transform: scaleX(-1); }
+.PlayerExp { position: relative; z-index: 1; margin-right: -34px; padding-bottom: 8px; display: flex; flex-direction: column; align-items: center; }
+.PlayerExpContainer { --xp: 0deg; position: relative; width: 80px; height: 80px; box-sizing: border-box; border-radius: 50%; padding: 2px; display: grid; place-items: center;
+  background: conic-gradient(#ffe89c 0deg, #c9a33f var(--xp), rgba(255,255,255,.04) var(--xp)), linear-gradient(#000, rgb(23,30,37)); box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+.PlayerExpContainer::before { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: linear-gradient(#000, rgb(23,30,37)); }
+.PlayerExpLevelLabelsContainer { position: relative; }
+.LevelText { font: 600 22px 'MGRadiance', sans-serif; background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.GemImage { width: 44px; height: 44px; margin-top: -26px; background: url('../../../../assets/minigames/thorns/images/gem.webp') center / cover; transform: translateY(14px); }
+.PlayerHeroPortraitContainer { width: 110px; height: 110px; overflow: hidden; background: radial-gradient(80% 80% at 50% 50%, rgb(73,69,122), rgb(6,7,30)); border-top: 1px solid rgba(255,255,255,.1); }
+.HeroPortrait { width: 100%; height: 133%; object-fit: cover; object-position: 50% 15%; margin-top: -10%; }
+.PlayerAbilitiesContainer { position: relative; padding: 0 12px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+.PlayerAbilitiesBackground { position: absolute; left: 0; right: 0; bottom: 0; height: 110px; background: rgba(38,37,49,.2) url('../../../../assets/minigames/thorns/images/ability_bg.webp') top / cover; }
+.PlayerInnatesAndActiveContainer { position: relative; display: flex; align-items: flex-end; margin-bottom: 4px; }
+.PlayerInnateContainer, .PlayerActiveContainer { display: flex; align-items: flex-end; }
+.PlayerInventorySlot { position: relative; margin-right: 8px; pointer-events: auto; }
+.PowerUpImageContainer { position: relative; width: 56px; height: 56px; box-sizing: border-box; padding: 3px; background: linear-gradient(rgba(0,0,0,.7), rgba(0,0,0,.6)); border-bottom: 1px solid rgba(255,255,255,.04); box-shadow: inset 0 1px 6px rgba(0,0,0,.6); }
+.PowerUpImage { width: 100%; height: 100%; object-fit: cover; display: block; box-shadow: 0 2px 4px rgba(0,0,0,.8); }
+.PlayerInnateContainer .PowerUpImageContainer { width: 40px; height: 41px; border-radius: 50%; margin-bottom: 8px; }
+.PlayerInnateContainer .PowerUpImage { border-radius: 50%; }
+.PowerUpCooldownContainer { position: absolute; inset: 3px; display: none; align-items: center; justify-content: center; overflow: hidden; }
+.OnCooldown .PowerUpCooldownContainer { display: flex; }
+.PowerUpCooldownProgress { position: absolute; left: 0; right: 0; top: 0; height: 100%; background: rgba(0,0,0,.75); }
+.PowerupCooldownLabel { position: relative; font-size: 20px; color: #fff; text-shadow: 0 2px 6px #000, 0 0 3px #000; }
+.PowerUpImageBorder { position: absolute; inset: 0; border: 1px solid rgba(255,255,255,.18); border-bottom-color: rgba(255,255,255,.04); pointer-events: none; }
+.AbilityActive .PowerUpImageBorder { box-shadow: 0 0 10px 2px rgba(255,220,140,.75); border-color: #ffe7b0; }
+.PowerUpLevel { position: absolute; right: -8px; bottom: -6px; min-width: 20px; height: 20px; box-sizing: border-box; padding: 0 3px; display: grid; place-items: center; border-radius: 10px; border: 1px solid #c49a55;
+  background: linear-gradient(rgb(0,0,0) 70%, rgb(32,41,48)); box-shadow: 0 2px 8px rgba(0,0,0,.6); font: 600 11px 'MGRadiance', sans-serif; color: #f3d6a0; z-index: 2; }
+.EmptySlot .PowerUpImageContainer { opacity: 0.55; }
+.ShardScepterImageContainer { position: absolute; left: 50%; top: -20px; width: 26px; height: 26px; transform: translateX(-50%); border-radius: 50%; background: linear-gradient(#293542be, #090c10db); box-shadow: 0 2px 8px -1px rgba(0,0,0,.6); }
+.AbilityShardScepterImage { position: absolute; left: -5px; top: -5px; width: 36px; height: 36px; background: url('../../../../assets/minigames/thorns/images/hud/aghs_on_scepter_large.webp') center / cover; }
+.ShardUpgrade .AbilityShardScepterImage { background-image: url('../../../../assets/minigames/thorns/images/hud/aghs_on_shard_large.webp'); }
+.ScepterUpgrade.ShardUpgrade .AbilityShardScepterImage { background-image: url('../../../../assets/minigames/thorns/images/hud/aghs_on_large.webp'); }
+.PlayerHealthContainer { position: relative; margin-bottom: 12px; width: 100%; min-width: 320px; }
+.PlayerHealthProgressBar { height: 24px; border-radius: 3px; border: 1px solid #000; background: linear-gradient(#17200d, #222e13 20%, #1e2911 50%, #17200d); box-shadow: 0 0 0 1px rgba(255,255,255,.02); overflow: hidden; }
+.PlayerHealthProgressBar .ProgressBarLeft { height: 100%; width: 100%; background: linear-gradient(#5CA33C, #3E5F23); transition: width 0.12s; }
+.PlayerHealth { position: absolute; inset: 0; display: grid; place-items: center; font-size: 15px; font-weight: 600; letter-spacing: 1px; color: #fff; text-shadow: 0 1px 6px #000, 0 0 2px #000; }
+.PlayerHealthRegen { position: absolute; right: 8px; top: 3px; font-size: 13px; font-weight: 600; color: #5cea57; text-shadow: 0 1px 6px #000; }
+.PlayerItemsContainer { position: relative; width: 200px; height: 110px; display: flex; align-items: center; justify-content: center; background: linear-gradient(rgba(22,27,37,.8), #000); }
+.PlayerItemsContainer::before { content: ''; position: absolute; inset: 0; background: url('../../../../assets/minigames/thorns/images/inventory_bg.webp') top / cover; opacity: 0.8; }
+.PlayerPassiveContainer { position: relative; display: flex; flex-wrap: wrap; justify-content: center; width: 198px; }
+.PlayerPassiveContainer .PlayerInventorySlot { width: 58px; height: 44px; margin: 3px; }
+.PlayerPassiveContainer .PowerUpImageContainer { width: 100%; height: 100%; padding: 0; border: 1px solid #000; box-shadow: inset 0 1px 0 2px rgba(0,0,0,.3); }
+.PlayerPassiveContainer .PowerUpLevel { right: -4px; bottom: -4px; min-width: 18px; height: 18px; font-size: 10px; }
+
+/* Minimap: bottom left (Valve's MinimapWrapper, 240 px, sticky around the hero). */
+.MinimapWrapper { position: absolute; left: 24px; bottom: 24px; width: 240px; height: 240px; border-radius: 50%; opacity: 0; transform: scale(0.7); transition: transform 0.7s cubic-bezier(0,1,0,1), opacity 0.7s; }
+.GameState_Active .MinimapWrapper, .GameState_ChoosingPowerUp .MinimapWrapper { opacity: 1; transform: none; }
+.Minimap { position: absolute; inset: 0; width: 240px; height: 240px; border-radius: 50%; }
+.MinimapBorderShadow, .MinimapBorder, .MinimapBorderShine { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
+.MinimapBorderShadow { box-shadow: 0 0 0 5px rgba(0,0,0,.7); }
+.MinimapBorder { border: 4px solid #33393d; }
+.MinimapBorderShine { box-shadow: inset 0 1px 2px rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
+.MinimapPlayerIcon { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 50%; box-shadow: 0 0 8px 3px rgba(110,255,120,.55); }
+
+/* PlayerAttributesGroup (pause / level-up): the stat list on the right. */
+.PlayerAttributesGroup { position: absolute; right: 0; top: 0; bottom: 0; display: flex; align-items: center; opacity: 0.9; }
+.AttributesShadow { position: absolute; right: 0; top: 0; bottom: 0; width: 400px; background: radial-gradient(100% 50% at 100% 50%, rgba(0,0,0,.9), rgba(0,0,0,.75) 60%, rgba(0,0,0,0)); }
+.PlayerAttributesContainer { position: relative; margin: 0 28px; display: flex; flex-direction: column; gap: 3px; }
+.PlayerAttribute { display: flex; height: 26px; }
+.PlayerAttribute .LeftSide { width: 200px; display: flex; align-items: center; padding: 0 6px; box-sizing: border-box; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.018)); border: 1px solid rgba(255,255,255,.04); border-right: 0; }
+.PlayerAttribute .AttributeName { flex: 1; font-size: 13px; color: rgba(255,255,255,.8); text-shadow: 0 2px 6px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.PlayerAttribute .AttributeValue { font-size: 13px; color: #fff; letter-spacing: 1px; }
+.AttributeBuffContainer { width: 64px; display: flex; align-items: center; visibility: hidden; background: linear-gradient(90deg, #6ee26e18, #6ee26e00); border: 1px solid #6ee26e44; }
+.HasBonus .AttributeBuffContainer { visibility: visible; }
+.AttributeBuffValue { margin-left: 6px; font-size: 13px; color: var(--bright-green); }
+
+/* PlayerLevelUpChoiceWrapper: the cards. */
+.PlayerLevelUpChoiceWrapper { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -54%); display: flex; flex-direction: column; align-items: center; animation: th-cards-in 0.25s cubic-bezier(0,.9,0,.9); }
+@keyframes th-cards-in { from { opacity: 0; transform: translate(-50%, -54%) scale(1.1); } }
+.LevelUpTitle { display: none; }
+.PlayerLevelUpChoiceContainer { display: flex; align-items: flex-end; padding: 0 48px; }
+.PowerUpChoice { position: relative; padding: 20px 24px 0; margin: 0 -4px; display: flex; flex-direction: column; align-items: center; cursor: pointer; outline: none; }
+.PowerUpChoiceRerolling .PowerUpChoice { animation: th-reroll 0.6s; }
+@keyframes th-reroll { 0% { transform: rotateY(0); opacity: 1; } 45% { transform: rotateY(90deg); opacity: 0.2; } 55% { transform: rotateY(-90deg); opacity: 0.2; } 100% { transform: none; opacity: 1; } }
+.HeroImageContainer { position: absolute; left: 50%; top: 0; width: 132px; height: 150px; transform: translateX(-50%); z-index: 2; transition: transform 0.1s; }
+.HeroImageContainer > * { position: absolute; left: 0; bottom: 0; width: 100%; }
+.ActorShadow { transform: translateY(15%); opacity: 0.4; }
+.ActorBackground { left: 25% !important; width: 50% !important; height: 66px; bottom: 16px !important; background: rgb(6,10,15); transform: rotate(45deg); }
+.HeroImage { height: 148px; object-fit: cover; object-position: 50% 0; -webkit-mask: url('../../../../assets/minigames/thorns/images/novel/portrait_mask.webp') bottom / 100% 100% no-repeat; mask: url('../../../../assets/minigames/thorns/images/novel/portrait_mask.webp') bottom / 100% 100% no-repeat; }
+.PowerUpChoice:hover .HeroImageContainer, .PowerUpChoice:focus-visible .HeroImageContainer { transform: translate(-50%, -3px); }
+.PowerUpContainer { position: relative; width: 250px; height: 480px; margin: 92px 0 45px; display: flex; flex-direction: column; align-items: center; overflow: hidden;
+  background: linear-gradient(#977b51, #2e261b); box-shadow: 0 8px 80px -6px rgba(0,0,0,.6); transition: background 0.2s, box-shadow 0.2s; }
+.HasHero .PowerUpContainer { height: 520px; background: linear-gradient(#2b3a4b, #0d1321); }
+.PowerUpBackground { position: absolute; inset: -10%; background: center / cover; filter: blur(12px) saturate(1.1); opacity: 0.15; }
+.PowerupLabel { position: relative; width: 100%; box-sizing: border-box; padding: 24px 8px 8px; background: rgba(0,0,0,.4); border-bottom: 1px solid rgba(0,0,0,.2); text-align: center; font-size: 17px; font-weight: 600; color: rgba(236,246,255,.8); text-shadow: 0 1px 6px #000; }
+.HasHero .PowerupLabel { padding-top: 64px; font-size: 14px; font-weight: 400; color: rgba(236,246,255,.5); }
+.ScepterLabel, .ShardLabel { position: relative; width: 100%; box-sizing: border-box; padding: 16px 8px 40px; background: rgba(0,0,0,.7); text-align: center; font: 600 12px 'MGRadiance', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: rgb(181,214,243); text-shadow: 0 1px 6px #000; }
+.PowerupTexture { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: multiply; pointer-events: none; }
+.AbilityImageContainer { position: relative; margin-top: 16px; padding: 5px; background: linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,.4)); border-bottom: 1px solid rgba(255,255,255,.02); box-shadow: inset 0 1px 6px rgba(0,0,0,.6); }
+.AbilityImage { display: block; height: 88px; width: 88px; object-fit: cover; box-shadow: 0 2px 8px -1px rgba(0,0,0,.6); }
+.PowerupExisting:not(.HasHero) .AbilityImage, .PowerupNew:not(.HasHero) .AbilityImage { width: 115px; }
+.AbilityImageShine { position: absolute; inset: 5px; border: 1px solid rgba(255,255,255,.04); background: linear-gradient(rgba(255,255,255,.01), rgba(255,255,255,0)); }
+.AbilityName { position: relative; margin: 12px 8px 10px; text-align: center; font: 600 18px 'MGRadiance', sans-serif; letter-spacing: 1px; text-transform: uppercase; line-height: 1.3; color: rgba(245,245,245,.96); text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+.AbilityCombinationItemsContainer { position: relative; display: flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(239,246,255,.6); margin-bottom: 6px; }
+.AbilityCombinationItems { display: flex; gap: 4px; }
+.AbilityCombinationItems img { width: 36px; height: 27px; object-fit: cover; box-shadow: 0 1px 4px #000; }
+.TooltipVariableLines, .AttributeDescriptionLines { position: relative; width: 100%; display: flex; flex-direction: column; border-bottom: 1px solid rgba(255,255,255,.04); }
+.TooltipVariableLine, .AttributeDescriptionLine { padding: 2px 14px 3px; border-top: 1px solid rgba(255,255,255,.04); text-align: center; }
+.TooltipVariableLine.PhysicalDamage, .AttributeDescriptionLine.PhysicalDamage { background: linear-gradient(90deg, rgba(255,255,255,0), rgba(192,23,40,.3), rgba(255,255,255,0)); }
+.TooltipVariableLine.MagicalDamage { background: linear-gradient(90deg, rgba(255,255,255,0), rgba(82,118,248,.3), rgba(255,255,255,0)); }
+.TooltipVariable, .AttributeDetails { font-size: 13.5px; line-height: 1.3; color: rgba(239,246,255,.8); text-shadow: 0 2px 6px rgba(0,0,0,.8); }
+.TooltipVariable b, .AttributeDetails b, .PowerUpDescription b { color: var(--bright-green); font-weight: 600; }
+.PowerUpDescription { position: relative; margin: 8px 0 0; padding: 0 14px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; text-align: center; font-size: 14px; line-height: 1.25; color: rgba(239,246,255,.45); text-shadow: 0 2px 6px rgba(0,0,0,.8); }
+.ScepterUpgrade .PowerUpDescription, .ShardUpgrade .PowerUpDescription { font-size: 15px; color: rgba(239,246,255,.75); }
+.NewPowerup { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); display: grid; place-items: center; z-index: 1; }
+.NewPowerupBadge { grid-area: 1 / 1; height: 34px; width: auto; filter: drop-shadow(0 2px 8px #000); }
+.NewPowerupLabel { grid-area: 1 / 1; position: relative; z-index: 1; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; color: #000; margin-bottom: 3px; text-transform: uppercase; }
+.LevelUpgradeInfo { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 12px 34px; text-align: center; font: 600 22px 'MGRadiance', sans-serif; text-shadow: 0 2px 12px #000; color: #ebc386; }
+.LevelUpgradeInfo b { color: #fff2df; }
+.PowerUpChoice .ControlKey { position: absolute; right: 8px; top: 8px; }
+.PowerUpContainerBorder { position: absolute; left: 24px; right: 24px; top: 112px; bottom: 45px; border: 1px solid #ddaf6b; box-shadow: inset 0 0 0 1px rgba(0,0,0,.4); transition: transform 0.1s, border 0.1s; pointer-events: none; }
+.HasHero .PowerUpContainerBorder { border-image: linear-gradient(#FFF2DF, #DDAF6B 48%, #674108 52%, #A27531) 1; }
+.PowerUpChoice:not(.HasHero) .PowerUpContainerBorder { border-image: linear-gradient(#FFF2DF, #DDAF6B 48%, #674108 52%, #A27531) 1; }
+.PowerUpChoice:hover .PowerUpContainerBorder, .PowerUpChoice:focus-visible .PowerUpContainerBorder { border-width: 4px; transform: scale(1.03, 1.01); }
+.PowerUpChoice:hover .PowerUpContainer { box-shadow: 0 8px 80px -6px rgba(255,220,150,.25); }
+.ScepterUpgrade .PowerUpContainer, .ShardUpgrade .PowerUpContainer { width: 220px; background: linear-gradient(#1b2230 20%, #245f9e); }
+.ScepterUpgrade .PowerUpContainerBorder, .ShardUpgrade .PowerUpContainerBorder { border-image: linear-gradient(#c2e8ff, #6ca1f5 48%, #1148a7 52%, #2e67b1) 1; }
+.PowerUpContainer .ShardScepterImageContainer { position: relative; left: auto; top: auto; transform: none; width: 72px; height: 72px; margin: -30px 0 -6px; background: radial-gradient(rgba(120,180,255,.5), rgba(0,0,0,0) 70%); }
+.PowerUpContainer .ShardScepterImageContainer .AbilityShardScepterImage { inset: 0; left: 0; top: 0; width: 72px; height: 72px; }
+.ShardUpgrade .PowerUpContainer .AbilityShardScepterImage { background-image: url('../../../../assets/minigames/thorns/images/hud/aghs_on_shard_large.webp'); }
+.ScepterUpgrade .AbilityImage, .ShardUpgrade .AbilityImage { height: 64px; width: 64px !important; }
+.PowerUpChoice .ChooseButton { position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%) scale(0.85); min-width: 0; }
+.PowerUpChoice .ChooseButton > span { padding: 9px 22px 8px; }
+.PlayerLevelUpActionsContainer { margin-top: 0; opacity: 0; }
+.HasRerollsLeft .PlayerLevelUpActionsContainer { opacity: 1; }
+.RerollButton > span { background: linear-gradient(#4b5563, #2b313b 55%, #1d2229); }
+.RerollButton kbd { margin-left: 8px; height: 18px; min-width: 18px; font-size: 11px; }
+
+/* Pause. */
+.PauseScreen { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; animation: th-pause-in 0.15s; z-index: 5; }
+@keyframes th-pause-in { from { opacity: 0; transform: translate(-50%, -50%) scale(1.3); } }
+.PauseScreenContent { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 48px 160px; background: linear-gradient(90deg, rgba(11,12,15,0), rgba(11,12,15,.4) 10%, rgba(11,12,15,.7) 20%, rgba(11,12,15,.9) 50%, rgba(11,12,15,.7) 80%, rgba(11,12,15,.4) 90%, rgba(11,12,15,0)); }
+.PauseText { font: 600 32px 'MGRadiance', sans-serif; letter-spacing: 3px; text-transform: uppercase; background: linear-gradient(#f9e7cd, var(--gold2)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 12px rgba(0,0,0,.8)); }
+.PauseScreen .ResumeButton { min-width: 320px; }
+.PauseScreen .LeaveButton { margin-top: -18px; }
+.mg-button.Secondary > span { background: linear-gradient(#4b5563, #2b313b 55%, #1d2229); }
+
+.th-corner { position: absolute; right: 18px; bottom: 14px; z-index: 30; display: flex; align-items: center; gap: 14px; }
+.PauseHint { display: flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--lighter-grey); font: 600 14px 'MGRadiance', sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+.PauseHint:hover { filter: brightness(1.6); }
+.PauseLabelContainer { display: grid; text-align: right; }
+.PauseLabel, .UnPauseLabel { grid-area: 1 / 1; transition: opacity 0.2s, transform 0.2s; }
+.UnPauseLabel { opacity: 0; transform: translateY(8px); }
+.IsPaused .PauseLabel { opacity: 0; transform: translateY(-8px); }
+.IsPaused .UnPauseLabel { opacity: 1; transform: none; }
+.GameState_ChoosingPowerUp .PlayerHudContainer { z-index: 0; }
+
+/* The setup screen (KeyArt + SetupScreenMenu on the right). */
+.KeyArtContainer { position: absolute; inset: 1px; background: linear-gradient(#2C1E5A, #060724); }
+.KeyArtImage { width: 100%; height: 100%; object-fit: cover; -webkit-mask: linear-gradient(90deg, #fff 80%, rgba(255,255,255,0)); mask: linear-gradient(90deg, #fff 80%, rgba(255,255,255,0)); transition: filter 0.4s, transform 0.4s; }
+.ShowHeroScreen .KeyArtContainer { filter: brightness(0.3); }
+.ShowHeroScreen .KeyArtImage { filter: blur(5px); transform: translateX(-24px); }
+.ShowDifficultyScreen .KeyArtImage { transform: translateX(-48px); }
+.SetupScreen { position: absolute; inset: 0; animation: th-in 0.25s; }
+@keyframes th-in { from { opacity: 0; } }
+.SetupScreenMenu { position: absolute; right: 50px; top: 50%; transform: translateY(-58%); width: 780px; display: flex; flex-direction: column; align-items: center; }
+.MinigameLogoEn { width: 560px; filter: drop-shadow(0 6px 18px rgba(0,0,0,.6)); margin-bottom: 4px; }
+.PlaySectionContent { width: 620px; display: flex; gap: 16px; padding: 22px 24px; box-sizing: border-box; background: linear-gradient(rgba(37,50,66,.86), rgba(11,17,26,.92)); border: 1px solid; border-image: linear-gradient(var(--gold1), var(--gold2), var(--gold3)) 1; box-shadow: 0 12px 60px rgba(0,0,0,.5); }
+.PlaySectionCol { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.HowToPlaySection { display: flex; flex-direction: column; gap: 8px; }
+.DescriptionContainer { display: flex; flex-direction: column; gap: 2px; }
+.DescriptionContainer .SubHeader { font-size: 17px; color: var(--lightest-grey); text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.DescriptionContainer .Details { font-size: 14px; line-height: 1.25; color: var(--light-grey); text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.th-touch-note { display: none; }
+.th-touch .th-touch-note { display: block; }
+.ControlDescriptionBlock { display: flex; align-items: center; gap: 12px; margin: 4px 0; }
+.th-mouse { width: 44px; height: 44px; object-fit: contain; }
+.OrSeparator { font-size: 15px; color: var(--light-grey); }
+.KeysColumn { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.KeysRow { display: flex; gap: 3px; }
+.KeysColumn .ControlKey { width: 28px; height: 28px; }
+.PatchNotesButton { align-self: flex-start; padding: 5px 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 2px; background: rgba(0,0,0,.35); color: var(--lighter-grey); font: 13px 'MGRadiance', sans-serif; cursor: pointer; }
+.PatchNotesButton:hover { color: #fff; border-color: rgba(255,255,255,.3); }
+.th-check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--lighter-grey); cursor: pointer; }
+.th-check input { position: absolute; opacity: 0; }
+.th-check i { display: inline-block; width: 16px; height: 16px; border: 1px solid #8b989e; border-radius: 2px; background: #0b111a; flex: none; }
+.th-check input:checked + i { background: radial-gradient(var(--gold1), var(--gold3)); }
+.th-check input:focus-visible + i { outline: 2px solid #fff; }
+.LeaderboardContainer { display: flex; flex-direction: column; gap: 4px; }
+.LeaderListHeader { display: flex; justify-content: space-between; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: rgba(241,249,255,.5); margin-bottom: 4px; }
+.LeaderboardRow { display: flex; justify-content: space-between; align-items: center; height: 26px; padding: 0 10px 0 6px; background: rgba(0,0,0,.33); font-size: 15px; }
+.LeaderListValue { font-weight: 600; color: var(--lightest-grey); }
+.th-encounter { margin: 14px 0 0; font-size: 14px; line-height: 1.3; font-style: italic; color: var(--lighter-grey); }
+.th-encounter b { display: block; font-style: normal; color: var(--gold1); margin-bottom: 3px; }
+.BottomButtons { position: absolute; right: 50px; bottom: 40px; width: 780px; display: flex; justify-content: center; gap: 14px; }
+.BottomButtons .mg-button { min-width: 300px; }
+.GlowButton { animation: th-glowbtn 1.6s infinite alternate; }
+@keyframes th-glowbtn { to { filter: brightness(1.25) drop-shadow(0 0 10px rgba(120,170,255,.5)); } }
+.PatchNotesMenu { position: absolute; left: 40px; top: 40px; bottom: 40px; width: 560px; z-index: 5; overflow-y: auto; padding: 24px; box-sizing: border-box; background: linear-gradient(rgba(37,50,66,.97), rgba(11,17,26,.98)); border: 1px solid; border-image: linear-gradient(var(--gold1), var(--gold3)) 1; cursor: pointer; scrollbar-width: thin; }
+.PatchNotesMenu .LabelLarge { font-size: 22px; margin: 6px 0; color: #fff; }
+.PatchNotesMenu .LabelMedium { font-size: 16px; margin: 14px 0 6px; color: var(--gold1); text-transform: uppercase; letter-spacing: 1px; }
+.PatchNotesMenu p { margin: 0 0 6px; font-size: 14px; line-height: 1.3; color: var(--lighter-grey); }
+.PatchNotesMenu p b { color: #fff; }
+
+/* Hero select. */
+.HeroSelectScreen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; animation: th-slide 0.3s cubic-bezier(0,1,0,1); }
+@keyframes th-slide { from { opacity: 0; transform: translateX(60px); } }
+.ChooseHeroTitle { margin-top: 56px; font: 600 44px 'MGRadiance', sans-serif; color: #f2f4f5; text-shadow: 0 4px 16px rgba(0,0,0,.4); }
+.HeroSelect { display: flex; padding: 26px 48px; }
+.ChooseHeroButton { position: relative; width: 280px; height: 600px; margin: 12px 16px; padding: 0; border: 0; overflow: hidden; cursor: pointer; background: none; color: inherit; font: inherit; box-shadow: 0 12px 120px -6px rgba(0,0,0,.7); transform: scale(0.96); transition: transform 0.15s cubic-bezier(0,.9,0,.9), filter 0.05s; }
+.ChooseHeroButton > * { position: absolute; }
+.ChooseHeroBackground { inset: 0; background: linear-gradient(#0d1321, #2b3a4b); transition: background 0.2s; }
+.ChooseHeroCustomBackground { inset: -5%; background: center / cover; opacity: 0.4; }
+.SurvivorsHero_3 .ChooseHeroCustomBackground { filter: hue-rotate(-20deg); }
+.ChooseHeroTexture { inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: multiply; }
+.HeroModel { left: 50%; top: 20px; width: 315px; height: 420px; transform: translateX(-50%); -webkit-mask: linear-gradient(#fff 72%, rgba(255,255,255,0) 96%); mask: linear-gradient(#fff 72%, rgba(255,255,255,0) 96%); opacity: 0.85; }
+.ChooseHeroButton.selected .HeroModel { opacity: 1; }
+.HeroDetails { left: 0; right: 0; bottom: 0; padding: 16px 16px 26px; display: flex; flex-direction: column; align-items: center; background: linear-gradient(rgba(0,0,0,0), rgba(5,8,14,.85) 30%); }
+.HeroDetails .HeroName { width: 100%; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid; border-image: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.4), rgba(255,255,255,0)) 1; text-align: center; font: 600 28px 'MGRadiance', sans-serif; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.8); }
+.StartingAbilityLabel { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.6); margin-bottom: 8px; }
+.LeftRightFlow { display: flex; align-items: center; justify-content: center; }
+.InnateImageContainer { width: 56px; height: 56px; margin-right: 10px; padding: 6px; box-sizing: border-box; border-radius: 50%; background: linear-gradient(rgba(0,0,0,.7), rgba(0,0,0,.5)); }
+.InnateImageContainer img { width: 100%; height: 100%; border-radius: 50%; }
+.HeroDetails .AbilityImageContainer { margin: 0; padding: 4px; }
+.HeroDetails .AbilityImageContainer img { display: block; width: 64px; height: 64px; box-shadow: 0 2px 12px rgba(0,0,0,.8); }
+.th-hero-innate { margin-top: 10px; font-size: 12.5px; line-height: 1.25; text-align: center; color: rgba(239,246,255,.55); }
+.th-hero-innate b { display: block; font-size: 13px; color: var(--gold1); font-weight: 600; }
+.ChooseHeroBorder { inset: 0; border: 1px solid; border-image: linear-gradient(#FFF2DF, #ebc386 48%, #BA8C47 52%, #8d6c3a) 1; pointer-events: none; }
+.ChooseHeroButton:hover .ChooseHeroBackground { background: linear-gradient(#32436b, #2b3a4b); }
+.ChooseHeroButton:active { transform: scale(0.94); filter: brightness(0.5); }
+.ChooseHeroButton.selected { transform: none; z-index: 1; }
+.ChooseHeroButton.selected .ChooseHeroBorder { border-width: 6px; }
+.ChooseHeroButton:focus-visible { outline: 2px solid #fff; }
+.HeroSelectActions { position: absolute; left: 50%; bottom: 36px; width: 520px; transform: translateX(-50%); display: flex; justify-content: center; align-items: center; }
+.HeroSelectActions .mg-button { min-width: 300px; }
+.BackArrowButton { position: absolute; left: 0; width: 56px; height: 56px; padding: 0; display: grid; place-items: center; border: 1px solid var(--gold2); border-radius: 50%; background: linear-gradient(#30385a, #111422); box-shadow: 0 6px 24px rgba(0,0,0,.4); cursor: pointer; transition: transform 0.1s; }
+.BackArrowButton:hover { transform: scale(1.08); background: linear-gradient(#3e4871, #1a1e33); }
+.BackArrowButton img { width: 22px; height: 22px; filter: drop-shadow(0 2px 6px #000); }
+
+/* Upgrades and echelons. */
+.DifficultySelectScreen { position: absolute; inset: 0; animation: th-slide 0.3s cubic-bezier(0,1,0,1); }
+.DifficultySelectScreen .Container { position: absolute; left: 60px; right: 60px; top: 40px; height: 78%; display: flex; gap: 24px; }
+.MetaProgressionSelection, .DifficultySelectionContainer { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.UpgradesTitle, .DifficultyTitle { text-align: center; font: 600 34px 'MGRadiance', sans-serif; color: whitesmoke; text-shadow: 0 4px 24px rgba(0,0,0,.6); }
+.DifficultyIntroDescription { text-align: center; font-size: 15px; color: var(--lighter-grey); margin: 0 0 12px; text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+.DifficultyIntroDescription b { color: #fff; }
+.UpgradesSection, .ParentDifficultyLevelsContainer { flex: 1; min-height: 0; display: flex; flex-direction: column; background: linear-gradient(var(--charcoal-light), var(--charcoal-dark)); border-block: 2px solid; border-image: linear-gradient(90deg, rgba(220,178,94,0), var(--gold2), rgba(220,178,94,0)) 1; }
+.MetaUpgradesContainer { flex: 1; overflow-y: auto; padding: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; scrollbar-width: thin; scrollbar-color: #ffffff30 transparent; align-content: start; }
+.MetaUpgradeAttribute { position: relative; min-height: 172px; background: linear-gradient(rgb(61,73,90), rgb(38,50,67)); border: 1px solid rgba(194,224,255,.06); }
+.MetaUpgradeAttribute.CantAffordUpgrade, .MetaUpgradeAttribute.MaxLevel { background: linear-gradient(rgb(41,48,59), rgb(21,28,37)); }
+.MetaUpgradeAttributeContainer { height: 100%; box-sizing: border-box; padding: 8px; display: flex; flex-direction: column; align-items: center; }
+.MetaUpgradeAttribute .AttributeName { min-height: 34px; text-align: center; font: 600 13px 'MGRadiance', sans-serif; line-height: 1.25; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; }
+.UpgradePipsContainer { display: flex; gap: 4px; width: 62%; margin-top: 3px; }
+.UpgradePipOuter { flex: 1; }
+.UpgradePip { height: 6px; background: linear-gradient(var(--charcoal-light), var(--charcoal-dark)); border: 1px solid rgba(255,255,255,.08); }
+.UpgradePipOuter.Upgraded .UpgradePip { background: var(--gold-grad); }
+.MetaUpgradeAttribute .AttributeValue { margin-top: 7px; min-height: 30px; text-align: center; font-size: 12.5px; line-height: 1.2; color: var(--lighter-grey); }
+.MetaUpgradeAttribute .AttributeValue b { color: var(--bright-green); }
+.CostLabelContainer { display: flex; align-items: center; gap: 4px; width: 100%; margin-top: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--light-grey); }
+.CostLabelContainer .LineBreak { flex: 1; border-top: 1px solid rgba(212,229,255,.12); }
+.CostContainer { display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.CurrencyCost { font: 600 18px 'MGRadiance', sans-serif; }
+.MaxLevel .CostContainer .CurrencyCost { font-size: 22px; color: var(--gold1); margin-top: 18px; }
+.CostContainer .GoldIcon { width: 18px; height: 18px; }
+.UpgradeButton { margin-top: auto; width: 100%; padding: 6px 0; border: 1px solid #000; background: linear-gradient(#3d7fe0, #1f56b8 55%, #173f8c); color: #fff; font: 600 13px 'MGRadiance', sans-serif; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+.UpgradeButton:disabled { filter: grayscale(1) brightness(0.55); cursor: default; }
+.UpgradeButton:not(:disabled):hover { filter: brightness(1.2); }
+.MetaUpgradeAttribute .SelectedDifficultyBorder { position: absolute; inset: 0; border: 2px solid var(--gold2); opacity: 0; pointer-events: none; }
+.MetaUpgradeAttribute.UpgradesAvailable .SelectedDifficultyBorder { opacity: 0.8; }
+.ResourceContainer { display: flex; justify-content: center; padding: 10px 0 12px; border-top: 1px solid rgba(194,224,255,.08); }
+.TotalGoldContainer { display: flex; flex-direction: column; align-items: center; }
+.TotalGoldLabel { font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
+.TotalGoldValue { font: 600 32px 'MGRadiance', sans-serif; }
+.TotalGoldContainer .GoldIcon { width: 30px; height: 30px; margin-left: 6px; }
+.DifficultyLevelsContainer { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 6px; scrollbar-width: thin; scrollbar-color: #ffffff30 transparent; }
+.DifficultyLevelItem { position: relative; flex: none; min-height: 70px; padding: 0; border: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; background: linear-gradient(rgb(61,73,90), rgb(38,50,67) 140%); }
+.DifficultyLevelItem:not(:disabled):hover { filter: brightness(1.3); }
+.DifficultyLevelItemContent { display: flex; align-items: stretch; min-height: 70px; padding-left: 4px; }
+.EchelonContainer { position: relative; width: 110px; flex: none; display: grid; place-items: center; }
+.EchelonBadge { position: absolute; width: 56px; height: 56px; background: url('../../../../assets/minigames/thorns/images/echelon_badge_container.webp') center / contain no-repeat; opacity: 0.6; }
+.EchelonContent { position: relative; display: flex; flex-direction: column; align-items: center; }
+.RankLabel { font-size: 11px; font-weight: 600; color: whitesmoke; letter-spacing: 1px; text-transform: uppercase; }
+.RankValue { font: 600 26px 'MGReaver', 'MGRadiance', serif; color: whitesmoke; line-height: 1; }
+.VerticalDivider { width: 1px; background: linear-gradient(rgba(255,255,255,0), rgba(255,255,255,.2) 40%, rgba(255,255,255,.2) 60%, rgba(255,255,255,0)); }
+.DifficultyDescriptionContainer { padding: 10px 16px; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.DifficultyName { font: 600 17px 'MGRadiance', sans-serif; color: #fff; }
+.DifficultyDescription { font-size: 13.5px; line-height: 1.25; color: var(--lighter-grey); white-space: pre-line; }
+.DifficultyDescription b { color: #ffcf7a; font-weight: 600; }
+.LockedPattern { position: absolute; inset: 0; background: url('../../../../assets/minigames/thorns/images/locked_pattern.webp') center / 64px; opacity: 0; pointer-events: none; }
+.DifficultyLevelItem.Locked { cursor: default; filter: grayscale(0.7) brightness(0.6); }
+.DifficultyLevelItem.Locked .LockedPattern { opacity: 0.25; }
+.DifficultyBorder { position: absolute; inset: 0; border: 1px solid rgba(194,224,255,.06); pointer-events: none; }
+.DifficultyLevelItem .SelectedDifficultyBorder { position: absolute; inset: 0; border: 3px solid; border-image: linear-gradient(90deg, var(--gold2), var(--gold1), var(--gold2)) 1; opacity: 0; pointer-events: none; }
+.DifficultyLevelItem.Selected .SelectedDifficultyBorder { opacity: 1; }
+
+/* The results (FinishedScreen). */
+.FinishedScreen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 50px; animation: th-in 0.5s; z-index: 4; }
+.FinishedScreen .FinalScreenBackground { position: absolute; left: 0; right: 0; top: 130px; bottom: 0; opacity: 0.85; border-top: 1px solid; border-image: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.3) 30%, rgba(255,255,255,.3) 70%, rgba(255,255,255,0)) 1;
+  background: radial-gradient(70% 70% at 50% 0%, rgba(30,36,52,.85), rgba(6,8,14,.92)); }
+.FinishedScreen .Title { position: relative; font: 700 40px 'MGRadiance', sans-serif; letter-spacing: 2px; text-transform: uppercase; color: #fff; text-shadow: 0 4px 16px rgba(0,0,0,.8); }
+.FinalMainContainer { position: relative; width: 92%; display: flex; justify-content: space-between; align-items: flex-start; margin-top: 18px; }
+.FinalAbilitiesContainer, .FinalItemsContainer { width: 470px; display: flex; flex-direction: column; margin-top: 70px; }
+.AbilitiesStatsHeading, .ItemsStatsHeading { display: flex; justify-content: flex-end; padding: 0 6px 8px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.55); }
+.ItemsStatsHeading { justify-content: flex-start; }
+.HeaderLabel.AbilityLevel, .HeaderLabel.AbilityTimeHeld, .HeaderLabel.AbilityDPS { width: 80px; text-align: center; }
+.HeaderLabel.AbilityDamage { width: 120px; text-align: center; }
+.HeaderLabel.ItemName { flex: 1; padding-left: 60px; }
+.HeaderLabel.ItemLevel, .HeaderLabel.ItemTimeHeld { width: 92px; text-align: center; }
+.AbilityStats, .ItemStats { display: flex; align-items: center; padding: 2px 6px; margin-bottom: 3px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.018) 40%, rgba(255,255,255,.04)); }
+.AbilityStats .AbilityImageContainer { margin: 0; padding: 3px; }
+.AbilityStats .AbilityImage { width: 40px; height: 40px; }
+.FillWidth { flex: 1; }
+.AbilityStats .AbilityShardScepterImage { position: relative; inset: auto; left: auto; top: auto; width: 36px; height: 36px; flex: none; background: url('../../../../assets/minigames/thorns/images/hud/aghs_off_large.webp') center / cover; }
+.AbilityStats .AbilityShardScepterImage.Scepter { background-image: url('../../../../assets/minigames/thorns/images/hud/aghs_on_scepter_large.webp'); }
+.AbilityStats .AbilityShardScepterImage.Shard { background-image: url('../../../../assets/minigames/thorns/images/hud/aghs_on_shard_large.webp'); }
+.AbilityStats .AbilityShardScepterImage.ShardScepter { background-image: url('../../../../assets/minigames/thorns/images/hud/aghs_on_large.webp'); }
+.AbilityLevelContainer { width: 28px; height: 28px; flex: none; margin: 0 26px; display: grid; place-items: center; border-radius: 50%; border: 2px solid #c49a55; background: linear-gradient(#000 70%, rgb(32,41,48)); }
+.AbilityLevelContainer span { font-size: 13px; font-weight: 600; color: #f3d6a0; }
+.AbilityStatLabel, .ItemStats .ItemTimeHeld { font-size: 18px; color: whitesmoke; text-shadow: 0 4px 12px rgba(0,0,0,.8); text-align: center; }
+.AbilityStatLabel.AbilityDamage { width: 120px; } .AbilityStatLabel.AbilityTimeHeld, .AbilityStatLabel.AbilityDPS { width: 80px; }
+.AbilityStats.EmptySlot, .ItemStats.EmptySlot { opacity: 0.5; min-height: 46px; }
+.AbilityStats.EmptySlot .AbilityImage, .ItemStats.EmptySlot .ItemImage { display: block; background: #000; box-shadow: inset 0 0 0 1px rgba(255,255,255,.03); }
+.ItemStats .ItemImage { width: 52px; height: 38px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.ItemStats .ItemName { flex: 1; margin-left: 8px; font-size: 15px; color: rgba(245,245,245,.65); }
+.ItemStats .AbilityLevelContainer { margin: 0 32px; }
+.ItemStats .ItemTimeHeld { width: 92px; }
+.FinalHeroContainer { position: relative; width: 300px; height: 300px; margin-top: -8px; flex: none; }
+.FinalHeroBackground { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(rgb(21,48,81), rgb(6,8,14)); }
+.FinalHeroBorder { position: absolute; inset: 0; border-radius: 50%; border: 8px solid #c69a57; box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000; }
+.FinalHeroBorder.Over { -webkit-mask: linear-gradient(rgba(255,255,255,0) 80%, #fff 80%); mask: linear-gradient(rgba(255,255,255,0) 80%, #fff 80%); }
+.FinalHeroModel { position: absolute; left: 50%; bottom: 0; width: 270px; height: 360px; transform: translateX(-50%); -webkit-mask: radial-gradient(150px 200px at 50% 58%, #fff 98%, rgba(255,255,255,0)); mask: radial-gradient(150px 200px at 50% 58%, #fff 98%, rgba(255,255,255,0)); }
+.FinalEnemyStatsContainer { position: relative; margin: 4px 0 2px; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.55); }
+.FinalStatsContainer { position: relative; width: 80%; display: flex; flex-direction: column; align-items: center; margin-top: 4px; }
+.DashDotDivider { display: flex; align-items: center; width: 100%; }
+.DashDotDivider .Dash { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.25)); }
+.DashDotDivider .Dash.Right { transform: scaleX(-1); }
+.FinalScoreLabel { margin: 0 12px; font: 600 18px 'MGRadiance', sans-serif; letter-spacing: 2px; text-transform: uppercase; color: whitesmoke; }
+.FinalStats { display: flex; align-items: stretch; margin: 4px 0; }
+.FinalStatBlock { width: 170px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.FinalStatLabel { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.55); }
+.FinalStatValue { font: 600 24px 'MGRadiance', sans-serif; color: whitesmoke; text-shadow: 0 4px 12px rgba(0,0,0,.8); }
+.FinalStatGold { background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.FinalScoreBlock .FinalStatValue { font-size: 36px; }
+.th-record { font-size: 13px; color: var(--gold1); }
+.th-record.th-dim { color: var(--light-grey); }
+.VerticalDash { width: 1px; background: rgba(255,255,255,.07); margin: 2px 0; }
+.FinishedScreen .DifficultyContainer { margin: 0 -3px; height: 26px; }
+.FinishedScreen .DifficultyContainer .EchelonBadge { height: 26px; }
+.PostGameDifficultyContainer { position: relative; display: flex; gap: 40px; margin-top: 4px; padding: 6px 120px; background: radial-gradient(50% 100% at 50% 0%, rgba(255,234,195,.08), rgba(255,234,195,0)); font: 600 16px 'MGRadiance', sans-serif; color: var(--bright-green); text-shadow: 0 0 12px rgba(110,226,110,.4); animation: th-activeglow 1s infinite alternate; }
+.PostGameButtonsContainer { position: relative; display: flex; gap: 16px; margin-top: 12px; }
+.PostGameButtonsContainer .mg-button { min-width: 280px; }
+.PlayButtonContainer { position: relative; margin-top: 10px; }
+.PlayAgainButton { min-width: 340px; }
+
+/* The visual novel (the run's opening). */
+.VisualNovelOuterContainer { position: absolute; inset: 0; z-index: 20; cursor: pointer; }
+.VisualNovelBackground { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,0) 40%, rgba(0,0,0,.75)); }
+.th-novel { position: absolute; left: 140px; right: 140px; bottom: 60px; display: flex; align-items: flex-end; gap: 0; animation: th-novel-in 0.3s; }
+@keyframes th-novel-in { from { opacity: 0; transform: translateY(20px); } }
+.th-novel-actor { position: relative; width: 240px; height: 270px; flex: none; margin-right: -30px; z-index: 1; }
+.th-novel-actor > img { position: absolute; left: 0; bottom: 0; width: 100%; }
+.th-novel-portrait { height: 268px; object-fit: cover; object-position: 50% 0; -webkit-mask: url('../../../../assets/minigames/thorns/images/novel/portrait_mask.webp') bottom / 100% 100% no-repeat; mask: url('../../../../assets/minigames/thorns/images/novel/portrait_mask.webp') bottom / 100% 100% no-repeat; }
+.th-novel-box { position: relative; flex: 1; min-height: 150px; padding: 22px 60px 40px 54px; box-sizing: border-box; background: linear-gradient(90deg, rgba(11,17,26,.96), rgba(22,30,44,.94)); border: 1px solid; border-image: linear-gradient(var(--gold1), var(--gold3)) 1; box-shadow: 0 10px 60px rgba(0,0,0,.6); }
+.th-novel-popup .th-novel-box { text-align: center; padding: 30px; }
+.th-novel-popup .th-novel-text { font: 700 44px 'MGReaver', 'MGRadiance', serif; letter-spacing: 3px; color: #ffd2f4; }
+.th-novel-name { position: absolute; left: 40px; top: -18px; padding: 4px 22px; background: linear-gradient(#3a2c1b, #1d150c); border: 1px solid var(--gold3); font: 600 15px 'MGRadiance', sans-serif; letter-spacing: 2px; text-transform: uppercase; color: var(--gold1); }
+.th-novel-text { font-size: 22px; line-height: 1.35; color: #fff; text-shadow: 0 2px 4px #000; }
+.th-novel-next { position: absolute; right: 22px; bottom: 12px; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--lighter-grey); animation: th-activeglow 0.8s infinite alternate; }
+.th-novel-skip { position: absolute; right: 22px; top: 70px; padding: 6px 12px; border: 1px solid rgba(255,255,255,.2); background: rgba(0,0,0,.5); color: var(--lighter-grey); font: 13px 'MGRadiance', sans-serif; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.th-novel-skip:hover { color: #fff; }
+
+/* Touch: the stick under the thumb, dash and pause buttons. */
+.th-stick { position: absolute; width: 130px; height: 130px; margin: -65px 0 0 -65px; border-radius: 50%; border: 2px solid rgba(255,255,255,.25); background: rgba(0,0,0,.2); display: grid; place-items: center; opacity: 0; pointer-events: none; z-index: 25; }
+.th-stick.Active { opacity: 1; }
+.th-stick i { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,.35); box-shadow: 0 0 12px rgba(0,0,0,.5); }
+.th-dash { position: absolute; right: 60px; bottom: 230px; width: 120px; height: 120px; border-radius: 50%; border: 2px solid rgba(159,227,255,.7); background: radial-gradient(rgba(70,150,220,.55), rgba(20,40,70,.6)); z-index: 25; cursor: pointer; }
+.th-dash::after { content: '»'; color: #fff; font: 700 54px/1 'MGRadiance', sans-serif; }
+.th-pause-touch { position: absolute; right: 70px; top: 120px; width: 70px; height: 70px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); background: rgba(0,0,0,.45); color: #fff; font: 700 22px 'MGRadiance', sans-serif; z-index: 25; }
+
+@media (prefers-reduced-motion: reduce) { .GlowButton, .WarningBadgeBackground, .WarningRed, .ObjectiveStatusLabel, .th-novel-next { animation: none; } }
+/* The state classes of the run (IsInBossStage, IsNight) sit on .th-state, inside the GameState_* root. */
+.IsInBossStage .ObjectivesLogContainer, .IsInBossStage .ObjectivesLogShadow, .IsInBossStage .MinimapWrapper { opacity: 0 !important; }
+.GameState_Finished .TimelineContainer, .GameState_Finished .BossHealthContainer, .GameState_Finished .TimelineBackground, .GameState_Finished #ChatterContainer { opacity: 0; }

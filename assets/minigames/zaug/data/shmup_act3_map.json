@@ -1,0 +1,2478 @@
+{
+ "source": "maps/scenes/crownfall/shmup_act3.vpk (default_ents)",
+ "entities": [
+  {
+   "dac_dof_tilt_to_ground": 0.75,
+   "dac_dof_far_blurry": 1600.0,
+   "dac_dof_far_crisp": 1200.0,
+   "dof_near_crisp": 550.0,
+   "dof_near_blurry": 250.0,
+   "dof_enabled": false,
+   "override_shadow_farz": 0.0,
+   "hltvusable": false,
+   "rendercolor": [
+    128,
+    128,
+    128
+   ],
+   "fogmaxdensity": 1.0,
+   "fogend": 4096.0,
+   "fogstart": 2048.0,
+   "fogcolor": [
+    0,
+    0,
+    0
+   ],
+   "fogenable": false,
+   "aspectratio": 1.777,
+   "usescreenaspectratio": false,
+   "zfar": 45000.011719,
+   "znear": 4.0,
+   "fov": 30.0,
+   "spawnflags": 0.0,
+   "clientsideentity": 0.0,
+   "uselocaloffset": false,
+   "parentname": "[PR#]intro_camera_driver",
+   "targetname": "attract_camera",
+   "classname": "point_camera",
+   "origin": [
+    -204.321335,
+    165.787994,
+    528.666443
+   ],
+   "angles": [
+    -5.80298,
+    133.985001,
+    0.041358
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": 2.0
+  },
+  {
+   "dac_dof_tilt_to_ground": 0.75,
+   "dac_dof_far_blurry": 1600.0,
+   "dac_dof_far_crisp": 1200.0,
+   "dof_near_crisp": 550.0,
+   "dof_near_blurry": 250.0,
+   "dof_enabled": false,
+   "override_shadow_farz": 0.0,
+   "hltvusable": false,
+   "rendercolor": [
+    128,
+    128,
+    128
+   ],
+   "fogmaxdensity": 1.0,
+   "fogend": 4096.0,
+   "fogstart": 2048.0,
+   "fogcolor": [
+    0,
+    0,
+    0
+   ],
+   "fogenable": false,
+   "aspectratio": 1.777,
+   "usescreenaspectratio": false,
+   "zfar": 40000.0,
+   "znear": 400.0,
+   "fov": 45.0,
+   "spawnflags": 0.0,
+   "clientsideentity": 0.0,
+   "uselocaloffset": false,
+   "targetname": "side_camera",
+   "classname": "point_camera",
+   "origin": [
+    64.0,
+    -2758.040283,
+    320.0
+   ],
+   "angles": [
+    0.0,
+    90.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": 5.0
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "hero_unit",
+   "rendercolor": [
+    255,
+    255,
+    255
+   ],
+   "mapunitname": "npc_dota_hero_vengefulspirit",
+   "m_iteamnum": 2.0,
+   "enableautostyles": false,
+   "uselocaloffset": false,
+   "startdisabled": false,
+   "modelscale": 1.0,
+   "suppress_intro_effects": true,
+   "spawn_background_models": false,
+   "rare_loadout_anim_chance": -1.0,
+   "suppress_anim_event_sounds": false,
+   "skip_pet_spawn": false,
+   "flying_courier": false,
+   "spawn_wearable_item_defs": true,
+   "activity": "ACT_DOTA_IDLE",
+   "activity_modifier": "shooting",
+   "item_def0": 22718.0,
+   "style_index0": 1.0,
+   "item_def1": 22720.0,
+   "style_index1": 0.0,
+   "item_def2": 22721.0,
+   "style_index2": 0.0,
+   "item_def3": 29675.0,
+   "style_index3": 0.0,
+   "item_def4": 0.0,
+   "style_index4": 0.0,
+   "item_def5": 0.0,
+   "style_index5": 0.0,
+   "item_def6": 0.0,
+   "style_index6": 0.0,
+   "item_def7": 0.0,
+   "style_index7": 0.0,
+   "skip_background_entities": true,
+   "classname": "portrait_world_unit",
+   "origin": [
+    -379.519287,
+    256.0,
+    319.999939
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:7"
+  },
+  {
+   "visoccluder": 0.0,
+   "uselocaloffset": false,
+   "targetname": "side_camera",
+   "clientsideentity": 0.0,
+   "spawnflags": 0.0,
+   "fov": 90.0,
+   "znear": 4.0,
+   "zfar": 10000.0,
+   "usescreenaspectratio": false,
+   "aspectratio": 1.777,
+   "fogenable": false,
+   "fogcolor": [
+    0,
+    0,
+    0
+   ],
+   "fogstart": 2048.0,
+   "fogend": 4096.0,
+   "fogmaxdensity": 1.0,
+   "rendercolor": [
+    128,
+    128,
+    128
+   ],
+   "hltvusable": false,
+   "override_shadow_farz": 0.0,
+   "dof_enabled": false,
+   "dof_near_blurry": 250.0,
+   "dof_near_crisp": 550.0,
+   "dac_dof_far_crisp": 1200.0,
+   "dac_dof_far_blurry": 1600.0,
+   "dac_dof_tilt_to_ground": 0.75,
+   "classname": "point_camera",
+   "origin": [
+    64.0,
+    -993.581604,
+    319.999908
+   ],
+   "angles": [
+    0.0,
+    90.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:10"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_gentle_curve",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -448.0,
+     0.0,
+     -224.0
+    ],
+    [
+     -1344.0,
+     0.0,
+     -672.0,
+     500.879242,
+     0.0,
+     0.0,
+     -668.009338,
+     0.0,
+     0.0
+    ],
+    [
+     -3232.0,
+     0.0,
+     0.0,
+     629.333313,
+     0.0,
+     -224.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1472.0,
+    256.0,
+    1088.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:205"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_linear_ram",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -63.999996,
+     127.999992,
+     -224.0
+    ],
+    [
+     -192.0,
+     384.0,
+     -672.0,
+     255.434021,
+     -36.490574,
+     63.858505,
+     -832.0,
+     0.0,
+     0.0
+    ],
+    [
+     -2688.0,
+     384.0,
+     -672.0,
+     832.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1216.0,
+    -128.0,
+    1024.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:201"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_boss",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -213.333344,
+     0.0,
+     128.0
+    ],
+    [
+     -640.0,
+     0.0,
+     384.0,
+     236.020325,
+     0.0,
+     -78.673439,
+     -223.542389,
+     0.0,
+     74.514122
+    ],
+    [
+     -1344.0,
+     0.0,
+     448.0,
+     235.035553,
+     0.0,
+     16.788254,
+     -76.722954,
+     0.0,
+     -5.480211
+    ],
+    [
+     -1536.0,
+     0.0,
+     320.0,
+     48.596962,
+     0.0,
+     59.621975,
+     -22.651741,
+     0.0,
+     -27.790659
+    ],
+    [
+     -1536.0,
+     0.0,
+     212.44165,
+     -8.695578,
+     0.0,
+     34.78231,
+     13.068679,
+     0.0,
+     -52.274715
+    ],
+    [
+     -1472.0,
+     0.0,
+     64.0,
+     9.955241,
+     0.0,
+     52.955917,
+     -14.211046,
+     0.0,
+     -75.594254
+    ],
+    [
+     -1600.0,
+     0.0,
+     -128.0,
+     71.416969,
+     0.0,
+     28.566786,
+     -62.636829,
+     0.0,
+     -25.054731
+    ],
+    [
+     -1792.0,
+     0.0,
+     -64.0,
+     19.385042,
+     0.0,
+     -64.616814,
+     -55.170792,
+     0.0,
+     183.902649
+    ],
+    [
+     -1792.0,
+     0.0,
+     512.0,
+     64.576584,
+     0.0,
+     -180.814438,
+     -50.73616,
+     0.0,
+     142.061249
+    ],
+    [
+     -2112.0,
+     0.0,
+     832.0,
+     85.182259,
+     0.0,
+     -124.497147,
+     -194.245438,
+     0.0,
+     283.897186
+    ],
+    [
+     -2624.0,
+     0.0,
+     1728.0,
+     170.666672,
+     0.0,
+     -298.666656,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    2304.0,
+    256.0,
+    -64.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:186"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_line",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -1173.333374,
+     0.0,
+     -0.734334
+    ],
+    [
+     -3520.0,
+     0.0,
+     -2.203003,
+     1173.333374,
+     0.0,
+     0.734334,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1792.0,
+    256.0,
+    352.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:150"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_swoop",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -324.794678,
+     0.0,
+     -298.666687
+    ],
+    [
+     -974.383972,
+     0.0,
+     -896.0,
+     425.693024,
+     0.0,
+     116.098106,
+     -593.670227,
+     0.0,
+     -161.91008
+    ],
+    [
+     -2816.0,
+     0.0,
+     -768.0,
+     613.872009,
+     0.0,
+     -42.666668,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1344.0,
+    256.0,
+    1472.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:142"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_zig_zag",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -236.782089,
+     0.0,
+     -1.071655
+    ],
+    [
+     -710.346252,
+     0.0,
+     -3.214966,
+     236.074646,
+     0.0,
+     18.321112,
+     -49.434235,
+     0.0,
+     -3.836457
+    ],
+    [
+     -845.377136,
+     0.0,
+     -65.607422,
+     5.531393,
+     0.0,
+     49.27338,
+     -40.279938,
+     0.0,
+     -358.811737
+    ],
+    [
+     -838.947083,
+     0.0,
+     -1148.784912,
+     39.708973,
+     0.0,
+     358.875366,
+     -4.661421,
+     0.0,
+     -42.128239
+    ],
+    [
+     -965.94043,
+     0.0,
+     -1155.214966,
+     42.35321,
+     0.0,
+     1.650118,
+     -40.171532,
+     0.0,
+     -1.565118
+    ],
+    [
+     -1086.503662,
+     0.0,
+     -1158.429932,
+     40.195118,
+     0.0,
+     -0.74437,
+     -46.686726,
+     0.0,
+     0.864587
+    ],
+    [
+     -1226.356934,
+     0.0,
+     -1150.392334,
+     5.345918,
+     0.0,
+     -46.387699,
+     -41.217419,
+     0.0,
+     357.652527
+    ],
+    [
+     -1211.889404,
+     0.0,
+     -70.429932,
+     37.670742,
+     0.0,
+     -358.043488,
+     -4.488544,
+     0.0,
+     42.661591
+    ],
+    [
+     -1340.490234,
+     0.0,
+     -65.607422,
+     42.897064,
+     0.0,
+     0.0,
+     -45.574478,
+     0.0,
+     0.0
+    ],
+    [
+     -1477.12854,
+     0.0,
+     -70.429932,
+     45.573647,
+     0.0,
+     0.274546,
+     -43.415199,
+     0.0,
+     -0.261543
+    ],
+    [
+     -1607.336914,
+     0.0,
+     -67.214966,
+     4.633261,
+     0.0,
+     43.16806,
+     -38.477707,
+     0.0,
+     -358.496521
+    ],
+    [
+     -1592.869263,
+     0.0,
+     -1148.784912,
+     37.529186,
+     0.0,
+     358.597076,
+     -5.283978,
+     0.0,
+     -50.489208
+    ],
+    [
+     -1727.900146,
+     0.0,
+     -1219.214966,
+     50.711346,
+     0.0,
+     2.332361,
+     -511.49707,
+     0.0,
+     -23.525221
+    ],
+    [
+     -3264.0,
+     0.0,
+     -1225.64502,
+     512.033325,
+     0.0,
+     2.143351,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1664.0,
+    256.0,
+    963.214966
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:119"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_loop_behind",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -704.0,
+     0.0,
+     -42.666668
+    ],
+    [
+     -2112.0,
+     0.0,
+     -128.0,
+     693.85144,
+     0.0,
+     126.517471,
+     -148.179581,
+     0.0,
+     -27.019194
+    ],
+    [
+     -2435.0,
+     0.0,
+     -444.0,
+     0.0,
+     0.0,
+     150.622787,
+     0.0,
+     0.0,
+     -175.557846
+    ],
+    [
+     -2112.0,
+     0.0,
+     -860.0,
+     -171.801071,
+     0.0,
+     36.124084,
+     689.646423,
+     0.0,
+     -145.009842
+    ],
+    [
+     0.0,
+     0.0,
+     -956.0,
+     -704.000061,
+     0.0,
+     32.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1408.0,
+    256.0,
+    796.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:233"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_sin_wave",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -100.000008,
+     0.0,
+     66.666664
+    ],
+    [
+     -300.0,
+     0.0,
+     200.0,
+     120.185043,
+     0.0,
+     0.0,
+     -120.185043,
+     0.0,
+     0.0
+    ],
+    [
+     -600.0,
+     0.0,
+     0.0,
+     100.000008,
+     0.0,
+     66.666664,
+     -100.000008,
+     0.0,
+     -66.666664
+    ],
+    [
+     -900.0,
+     0.0,
+     -200.0,
+     120.185043,
+     0.0,
+     0.0,
+     -120.185043,
+     0.0,
+     0.0
+    ],
+    [
+     -1200.0,
+     0.0,
+     0.0,
+     100.000008,
+     0.0,
+     -66.666664,
+     -100.000008,
+     0.0,
+     66.666664
+    ],
+    [
+     -1500.0,
+     0.0,
+     200.0,
+     120.185043,
+     0.0,
+     0.0,
+     -120.185043,
+     0.0,
+     0.0
+    ],
+    [
+     -1800.0,
+     0.0,
+     0.0,
+     100.000008,
+     0.0,
+     66.666664,
+     -100.000008,
+     0.0,
+     -66.666664
+    ],
+    [
+     -2100.0,
+     0.0,
+     -200.0,
+     120.185043,
+     0.0,
+     0.0,
+     -120.185043,
+     0.0,
+     0.0
+    ],
+    [
+     -2400.0,
+     0.0,
+     0.0,
+     100.000008,
+     0.0,
+     -66.666664,
+     -100.000008,
+     0.0,
+     66.666664
+    ],
+    [
+     -2700.0,
+     0.0,
+     200.0,
+     120.185043,
+     0.0,
+     0.0,
+     -120.185043,
+     0.0,
+     0.0
+    ],
+    [
+     -3000.0,
+     0.0,
+     0.0,
+     100.000008,
+     0.0,
+     66.666664,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1408.0,
+    256.0,
+    352.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:239"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_vertical_pass",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -85.333336,
+     0.0,
+     -298.666656
+    ],
+    [
+     -256.0,
+     0.0,
+     -896.0,
+     0.0,
+     0.0,
+     310.618042,
+     0.0,
+     0.0,
+     -310.618042
+    ],
+    [
+     0.0,
+     0.0,
+     -1792.0,
+     -85.333336,
+     0.0,
+     298.666656,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1248.0,
+    256.0,
+    1248.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:254"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_peel_away",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -533.333374,
+     0.0,
+     21.333334
+    ],
+    [
+     -1600.0,
+     0.0,
+     64.0,
+     522.259766,
+     0.0,
+     -110.201599,
+     -653.616699,
+     0.0,
+     137.919128
+    ],
+    [
+     -3488.0,
+     0.0,
+     736.0,
+     629.333313,
+     0.0,
+     -224.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1472.0,
+    256.0,
+    352.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:258"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_in_and_out",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -32.000004,
+     0.0,
+     -288.000031
+    ],
+    [
+     -96.0,
+     0.0,
+     -864.0,
+     118.912323,
+     0.0,
+     264.249634,
+     -86.885399,
+     0.0,
+     -193.078674
+    ],
+    [
+     -576.0,
+     0.0,
+     -1280.0,
+     211.401321,
+     0.0,
+     -11.744518,
+     -152.488297,
+     0.0,
+     8.471573
+    ],
+    [
+     -672.0,
+     0.0,
+     -832.0,
+     -14.479571,
+     0.0,
+     -152.035507,
+     29.187796,
+     0.0,
+     306.471863
+    ],
+    [
+     -448.0,
+     0.0,
+     64.0,
+     -74.666672,
+     0.0,
+     -298.666687,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1280.0,
+    256.0,
+    1216.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:262"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_double_circle",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -95.163986,
+     0.0,
+     -29.599997
+    ],
+    [
+     -285.491943,
+     0.0,
+     -88.799988,
+     84.248558,
+     0.0,
+     53.240257,
+     -48.696541,
+     0.0,
+     -30.77342
+    ],
+    [
+     -374.717529,
+     0.0,
+     -236.799988,
+     45.630764,
+     0.0,
+     35.159489,
+     -62.016628,
+     0.0,
+     -47.785152
+    ],
+    [
+     -592.314453,
+     0.0,
+     -325.213348,
+     78.044991,
+     0.0,
+     -6.201732,
+     -101.992538,
+     0.0,
+     8.104689
+    ],
+    [
+     -871.349976,
+     0.0,
+     -197.335815,
+     53.210701,
+     0.0,
+     -87.388695,
+     -54.756981,
+     0.0,
+     89.928177
+    ],
+    [
+     -862.429199,
+     0.0,
+     118.399963,
+     -56.927402,
+     0.0,
+     -88.570175,
+     53.153927,
+     0.0,
+     82.699234
+    ],
+    [
+     -592.314453,
+     0.0,
+     236.799988,
+     -98.147766,
+     0.0,
+     -5.614307,
+     87.457756,
+     0.0,
+     5.00281
+    ],
+    [
+     -344.969482,
+     0.0,
+     148.0,
+     -68.284286,
+     0.0,
+     54.87389,
+     58.274586,
+     0.0,
+     -46.830002
+    ],
+    [
+     -237.114502,
+     0.0,
+     -48.642029,
+     -16.125505,
+     0.0,
+     72.999619,
+     11.53064,
+     0.0,
+     -52.198818
+    ],
+    [
+     -266.714355,
+     0.0,
+     -206.258331,
+     23.241297,
+     0.0,
+     48.140568,
+     -27.574041,
+     0.0,
+     -57.115147
+    ],
+    [
+     -385.114502,
+     0.0,
+     -355.199982,
+     55.963123,
+     0.0,
+     29.842871,
+     -80.083366,
+     0.0,
+     -42.705219
+    ],
+    [
+     -651.514404,
+     0.0,
+     -411.456635,
+     90.479248,
+     0.0,
+     -7.112365,
+     -94.342896,
+     0.0,
+     7.416077
+    ],
+    [
+     -917.914429,
+     0.0,
+     -313.31781,
+     61.4333,
+     0.0,
+     -71.982849,
+     -69.200241,
+     0.0,
+     81.083557
+    ],
+    [
+     -999.227539,
+     0.0,
+     -4.032959,
+     -10.464778,
+     0.0,
+     -106.083473,
+     8.511648,
+     0.0,
+     86.284218
+    ],
+    [
+     -865.402222,
+     0.0,
+     219.008545,
+     -62.987022,
+     0.0,
+     -59.582298,
+     52.209064,
+     0.0,
+     49.386936
+    ],
+    [
+     -669.126465,
+     0.0,
+     308.224731,
+     -70.155602,
+     0.0,
+     -15.589936,
+     66.771927,
+     0.0,
+     14.838019
+    ],
+    [
+     -463.924316,
+     0.0,
+     308.224731,
+     -64.560585,
+     0.0,
+     22.596199,
+     61.814754,
+     0.0,
+     -21.635159
+    ],
+    [
+     -312.261475,
+     0.0,
+     183.322021,
+     -42.620529,
+     0.0,
+     49.725601,
+     59.580845,
+     0.0,
+     -69.51329
+    ],
+    [
+     -160.598389,
+     0.0,
+     -45.667236,
+     -83.000626,
+     0.0,
+     38.637684,
+     110.601372,
+     0.0,
+     -51.48613
+    ],
+    [
+     205.201904,
+     0.0,
+     -57.562744,
+     -121.933441,
+     0.0,
+     3.965169,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1424.170044,
+    256.0,
+    384.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:295"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_circle",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -175.1073,
+     0.0,
+     -13.599997
+    ],
+    [
+     -525.321899,
+     0.0,
+     -40.799988,
+     167.890259,
+     0.0,
+     51.578892,
+     -55.065151,
+     0.0,
+     -16.917002
+    ],
+    [
+     -614.547485,
+     0.0,
+     -188.799988,
+     45.630764,
+     0.0,
+     35.159489,
+     -62.016628,
+     0.0,
+     -47.785152
+    ],
+    [
+     -832.144409,
+     0.0,
+     -277.213348,
+     78.044991,
+     0.0,
+     -6.201732,
+     -101.992538,
+     0.0,
+     8.104689
+    ],
+    [
+     -1111.179932,
+     0.0,
+     -149.335815,
+     53.210701,
+     0.0,
+     -87.388695,
+     -54.756981,
+     0.0,
+     89.928177
+    ],
+    [
+     -1102.259155,
+     0.0,
+     166.399963,
+     -56.927402,
+     0.0,
+     -88.570175,
+     53.153927,
+     0.0,
+     82.699234
+    ],
+    [
+     -832.144409,
+     0.0,
+     284.799988,
+     -98.147766,
+     0.0,
+     -5.614307,
+     87.457756,
+     0.0,
+     5.00281
+    ],
+    [
+     -584.799438,
+     0.0,
+     196.0,
+     -68.284286,
+     0.0,
+     54.87389,
+     58.274586,
+     0.0,
+     -46.830002
+    ],
+    [
+     -476.944458,
+     0.0,
+     -0.642029,
+     -56.431149,
+     0.0,
+     49.035713,
+     45.116909,
+     0.0,
+     -39.204231
+    ],
+    [
+     -304.0,
+     0.0,
+     -48.0,
+     -58.903858,
+     0.0,
+     10.141115,
+     95.190338,
+     0.0,
+     -16.388334
+    ],
+    [
+     -16.0,
+     0.0,
+     -80.0,
+     -96.000008,
+     0.0,
+     10.666667,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1664.0,
+    256.0,
+    336.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:319"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "path_vertical_pass_alt",
+   "classname": "path_simple",
+   "pathnodes": [
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     -85.333336,
+     0.0,
+     -365.333344
+    ],
+    [
+     -256.0,
+     0.0,
+     -1096.0,
+     0.0,
+     0.0,
+     375.166931,
+     0.0,
+     0.0,
+     -440.347351
+    ],
+    [
+     0.0,
+     0.0,
+     -2392.0,
+     -85.333344,
+     0.0,
+     432.000031,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "pathnoderadiusscales": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pathnodepinsenabled": [
+    false,
+    false,
+    false
+   ],
+   "closed_loop": 0.0,
+   "origin": [
+    1248.0,
+    256.0,
+    1448.0
+   ],
+   "angles": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:342"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "enemy_boss",
+   "rendercolor": [
+    255,
+    255,
+    255
+   ],
+   "mapunitname": "npc_dota_hero_winter_wyvern",
+   "m_iteamnum": 4.0,
+   "enableautostyles": false,
+   "uselocaloffset": false,
+   "startdisabled": true,
+   "modelscale": 7.0,
+   "suppress_intro_effects": true,
+   "spawn_background_models": false,
+   "rare_loadout_anim_chance": -1.0,
+   "suppress_anim_event_sounds": true,
+   "skip_pet_spawn": false,
+   "flying_courier": false,
+   "spawn_wearable_item_defs": true,
+   "item_def0": 13438.0,
+   "style_index0": 0.0,
+   "item_def1": 13451.0,
+   "style_index1": 0.0,
+   "item_def2": 0.0,
+   "style_index2": 0.0,
+   "item_def3": 0.0,
+   "style_index3": 0.0,
+   "item_def4": 0.0,
+   "style_index4": 0.0,
+   "item_def5": 0.0,
+   "style_index5": 0.0,
+   "item_def6": 0.0,
+   "style_index6": 0.0,
+   "item_def7": 0.0,
+   "style_index7": 0.0,
+   "skip_background_entities": true,
+   "classname": "crownfall_shmup_enemy",
+   "origin": [
+    5440.0,
+    -64.0,
+    0.0
+   ],
+   "angles": [
+    0.0,
+    180.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:49"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "enemy_dragon",
+   "rendercolor": [
+    255,
+    255,
+    255
+   ],
+   "mapunitname": "npc_dota_shmup_dragon",
+   "m_iteamnum": 4.0,
+   "enableautostyles": false,
+   "uselocaloffset": false,
+   "startdisabled": true,
+   "modelscale": 1.0,
+   "suppress_intro_effects": true,
+   "spawn_background_models": false,
+   "rare_loadout_anim_chance": -1.0,
+   "suppress_anim_event_sounds": true,
+   "skip_pet_spawn": false,
+   "flying_courier": false,
+   "spawn_wearable_item_defs": true,
+   "item_def0": 0.0,
+   "style_index0": 0.0,
+   "item_def1": 0.0,
+   "style_index1": 0.0,
+   "item_def2": 0.0,
+   "style_index2": 0.0,
+   "item_def3": 0.0,
+   "style_index3": 0.0,
+   "item_def4": 0.0,
+   "style_index4": 0.0,
+   "item_def5": 0.0,
+   "style_index5": 0.0,
+   "item_def6": 0.0,
+   "style_index6": 0.0,
+   "item_def7": 0.0,
+   "style_index7": 0.0,
+   "skip_background_entities": true,
+   "classname": "crownfall_shmup_enemy",
+   "origin": [
+    5440.0,
+    -353.582001,
+    0.0
+   ],
+   "angles": [
+    0.0,
+    180.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:50"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "enemy_familiar",
+   "rendercolor": [
+    255,
+    255,
+    255
+   ],
+   "mapunitname": "npc_dota_shmup_familiar",
+   "m_iteamnum": 4.0,
+   "enableautostyles": false,
+   "uselocaloffset": false,
+   "startdisabled": true,
+   "modelscale": 1.0,
+   "suppress_intro_effects": true,
+   "spawn_background_models": false,
+   "rare_loadout_anim_chance": -1.0,
+   "suppress_anim_event_sounds": true,
+   "skip_pet_spawn": false,
+   "flying_courier": false,
+   "spawn_wearable_item_defs": true,
+   "item_def0": 12865.0,
+   "style_index0": 0.0,
+   "item_def1": 0.0,
+   "style_index1": 0.0,
+   "item_def2": 0.0,
+   "style_index2": 0.0,
+   "item_def3": 0.0,
+   "style_index3": 0.0,
+   "item_def4": 0.0,
+   "style_index4": 0.0,
+   "item_def5": 0.0,
+   "style_index5": 0.0,
+   "item_def6": 0.0,
+   "style_index6": 0.0,
+   "item_def7": 0.0,
+   "style_index7": 0.0,
+   "skip_background_entities": true,
+   "classname": "crownfall_shmup_enemy",
+   "origin": [
+    5440.0,
+    -576.0,
+    0.0
+   ],
+   "angles": [
+    0.0,
+    180.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:51"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "enemy_pterodactyl",
+   "rendercolor": [
+    255,
+    255,
+    255
+   ],
+   "mapunitname": "npc_dota_shmup_pterodactyl",
+   "m_iteamnum": 4.0,
+   "enableautostyles": false,
+   "uselocaloffset": false,
+   "startdisabled": true,
+   "modelscale": 1.0,
+   "suppress_intro_effects": true,
+   "spawn_background_models": false,
+   "skip_background_entities": true,
+   "rare_loadout_anim_chance": -1.0,
+   "suppress_anim_event_sounds": true,
+   "skip_pet_spawn": false,
+   "flying_courier": false,
+   "spawn_wearable_item_defs": true,
+   "item_def0": 12865.0,
+   "style_index0": 0.0,
+   "item_def1": 0.0,
+   "style_index1": 0.0,
+   "item_def2": 0.0,
+   "style_index2": 0.0,
+   "item_def3": 0.0,
+   "style_index3": 0.0,
+   "item_def4": 0.0,
+   "style_index4": 0.0,
+   "item_def5": 0.0,
+   "style_index5": 0.0,
+   "item_def6": 0.0,
+   "style_index6": 0.0,
+   "item_def7": 0.0,
+   "style_index7": 0.0,
+   "classname": "crownfall_shmup_enemy",
+   "origin": [
+    5440.0,
+    -1824.0,
+    -64.0
+   ],
+   "angles": [
+    0.0,
+    180.000015,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:213"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "enemy_harpy",
+   "rendercolor": [
+    255,
+    255,
+    255
+   ],
+   "mapunitname": "npc_dota_shmup_harpy",
+   "m_iteamnum": 4.0,
+   "enableautostyles": false,
+   "uselocaloffset": false,
+   "startdisabled": true,
+   "modelscale": 0.5,
+   "suppress_intro_effects": true,
+   "spawn_background_models": false,
+   "skip_background_entities": true,
+   "rare_loadout_anim_chance": -1.0,
+   "suppress_anim_event_sounds": true,
+   "skip_pet_spawn": false,
+   "flying_courier": false,
+   "spawn_wearable_item_defs": true,
+   "item_def0": 12865.0,
+   "style_index0": 0.0,
+   "item_def1": 0.0,
+   "style_index1": 0.0,
+   "item_def2": 0.0,
+   "style_index2": 0.0,
+   "item_def3": 0.0,
+   "style_index3": 0.0,
+   "item_def4": 0.0,
+   "style_index4": 0.0,
+   "item_def5": 0.0,
+   "style_index5": 0.0,
+   "item_def6": 0.0,
+   "style_index6": 0.0,
+   "item_def7": 0.0,
+   "style_index7": 0.0,
+   "classname": "crownfall_shmup_enemy",
+   "origin": [
+    5440.0,
+    -1600.0,
+    -64.0
+   ],
+   "angles": [
+    0.0,
+    180.000015,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:212"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "enemy_wisp",
+   "rendercolor": [
+    255,
+    255,
+    255
+   ],
+   "mapunitname": "npc_dota_shmup_wisp",
+   "m_iteamnum": 4.0,
+   "enableautostyles": false,
+   "uselocaloffset": false,
+   "startdisabled": true,
+   "modelscale": 1.0,
+   "suppress_intro_effects": true,
+   "spawn_background_models": false,
+   "skip_background_entities": true,
+   "rare_loadout_anim_chance": -1.0,
+   "suppress_anim_event_sounds": true,
+   "skip_pet_spawn": false,
+   "flying_courier": false,
+   "spawn_wearable_item_defs": true,
+   "item_def0": 12865.0,
+   "style_index0": 0.0,
+   "item_def1": 0.0,
+   "style_index1": 0.0,
+   "item_def2": 0.0,
+   "style_index2": 0.0,
+   "item_def3": 0.0,
+   "style_index3": 0.0,
+   "item_def4": 0.0,
+   "style_index4": 0.0,
+   "item_def5": 0.0,
+   "style_index5": 0.0,
+   "item_def6": 0.0,
+   "style_index6": 0.0,
+   "item_def7": 0.0,
+   "style_index7": 0.0,
+   "classname": "crownfall_shmup_enemy",
+   "origin": [
+    5440.0,
+    -1408.0,
+    -64.0
+   ],
+   "angles": [
+    0.0,
+    180.000015,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:211"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "enemy_fei_lian",
+   "rendercolor": [
+    255,
+    255,
+    255
+   ],
+   "mapunitname": "npc_dota_shmup_fei_lian",
+   "m_iteamnum": 4.0,
+   "enableautostyles": false,
+   "uselocaloffset": false,
+   "startdisabled": true,
+   "modelscale": 2.0,
+   "suppress_intro_effects": true,
+   "spawn_background_models": false,
+   "skip_background_entities": true,
+   "rare_loadout_anim_chance": -1.0,
+   "suppress_anim_event_sounds": true,
+   "skip_pet_spawn": false,
+   "flying_courier": false,
+   "spawn_wearable_item_defs": true,
+   "item_def0": 12865.0,
+   "style_index0": 0.0,
+   "item_def1": 0.0,
+   "style_index1": 0.0,
+   "item_def2": 0.0,
+   "style_index2": 0.0,
+   "item_def3": 0.0,
+   "style_index3": 0.0,
+   "item_def4": 0.0,
+   "style_index4": 0.0,
+   "item_def5": 0.0,
+   "style_index5": 0.0,
+   "item_def6": 0.0,
+   "style_index6": 0.0,
+   "item_def7": 0.0,
+   "style_index7": 0.0,
+   "classname": "crownfall_shmup_enemy",
+   "origin": [
+    5440.0,
+    -1216.0,
+    -64.0
+   ],
+   "angles": [
+    0.0,
+    180.000015,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:210"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "enemy_basic",
+   "rendercolor": [
+    255,
+    255,
+    255
+   ],
+   "mapunitname": "npc_dota_shmup_basic",
+   "m_iteamnum": 4.0,
+   "enableautostyles": false,
+   "uselocaloffset": false,
+   "startdisabled": true,
+   "modelscale": 1.0,
+   "suppress_intro_effects": true,
+   "spawn_background_models": false,
+   "skip_background_entities": true,
+   "rare_loadout_anim_chance": -1.0,
+   "suppress_anim_event_sounds": true,
+   "skip_pet_spawn": false,
+   "flying_courier": false,
+   "spawn_wearable_item_defs": true,
+   "item_def0": 12865.0,
+   "style_index0": 0.0,
+   "item_def1": 0.0,
+   "style_index1": 0.0,
+   "item_def2": 0.0,
+   "style_index2": 0.0,
+   "item_def3": 0.0,
+   "style_index3": 0.0,
+   "item_def4": 0.0,
+   "style_index4": 0.0,
+   "item_def5": 0.0,
+   "style_index5": 0.0,
+   "item_def6": 0.0,
+   "style_index6": 0.0,
+   "item_def7": 0.0,
+   "style_index7": 0.0,
+   "classname": "crownfall_shmup_enemy",
+   "origin": [
+    5440.0,
+    -1024.0,
+    -64.0
+   ],
+   "angles": [
+    0.0,
+    180.000015,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:209"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "enemy_bird",
+   "rendercolor": [
+    255,
+    255,
+    255
+   ],
+   "mapunitname": "npc_dota_shmup_bird",
+   "m_iteamnum": 4.0,
+   "enableautostyles": false,
+   "uselocaloffset": false,
+   "startdisabled": true,
+   "modelscale": 0.66,
+   "suppress_intro_effects": true,
+   "spawn_background_models": false,
+   "skip_background_entities": true,
+   "rare_loadout_anim_chance": -1.0,
+   "suppress_anim_event_sounds": true,
+   "skip_pet_spawn": false,
+   "flying_courier": false,
+   "spawn_wearable_item_defs": true,
+   "item_def0": 12865.0,
+   "style_index0": 0.0,
+   "item_def1": 0.0,
+   "style_index1": 0.0,
+   "item_def2": 0.0,
+   "style_index2": 0.0,
+   "item_def3": 0.0,
+   "style_index3": 0.0,
+   "item_def4": 0.0,
+   "style_index4": 0.0,
+   "item_def5": 0.0,
+   "style_index5": 0.0,
+   "item_def6": 0.0,
+   "style_index6": 0.0,
+   "item_def7": 0.0,
+   "style_index7": 0.0,
+   "classname": "crownfall_shmup_enemy",
+   "origin": [
+    5440.0,
+    -768.0,
+    -64.0
+   ],
+   "angles": [
+    0.0,
+    180.000015,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:200"
+  },
+  {
+   "visoccluder": 0.0,
+   "targetname": "enemy_splinter_blast",
+   "rendercolor": [
+    255,
+    255,
+    255
+   ],
+   "mapunitname": "npc_dota_shmup_splinter_blast",
+   "m_iteamnum": 4.0,
+   "enableautostyles": false,
+   "uselocaloffset": false,
+   "startdisabled": true,
+   "modelscale": 1.0,
+   "suppress_intro_effects": true,
+   "spawn_background_models": false,
+   "skip_background_entities": true,
+   "rare_loadout_anim_chance": -1.0,
+   "suppress_anim_event_sounds": true,
+   "skip_pet_spawn": false,
+   "flying_courier": false,
+   "spawn_wearable_item_defs": true,
+   "item_def0": 0.0,
+   "style_index0": 0.0,
+   "item_def1": 0.0,
+   "style_index1": 0.0,
+   "item_def2": 0.0,
+   "style_index2": 0.0,
+   "item_def3": 0.0,
+   "style_index3": 0.0,
+   "item_def4": 0.0,
+   "style_index4": 0.0,
+   "item_def5": 0.0,
+   "style_index5": 0.0,
+   "item_def6": 0.0,
+   "style_index6": 0.0,
+   "item_def7": 0.0,
+   "style_index7": 0.0,
+   "classname": "crownfall_shmup_enemy",
+   "origin": [
+    5824.0,
+    -1824.0,
+    -64.0
+   ],
+   "angles": [
+    0.0,
+    180.000015,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "3:273"
+  },
+  {
+   "targetname": "_side_camera_ref",
+   "uselocaloffset": false,
+   "clientsideentity": 0.0,
+   "spawnflags": 0.0,
+   "fov": 45.0,
+   "znear": 400.0,
+   "zfar": 40000.0,
+   "usescreenaspectratio": false,
+   "aspectratio": 1.777,
+   "fogenable": false,
+   "fogcolor": [
+    0,
+    0,
+    0
+   ],
+   "fogstart": 2048.0,
+   "fogend": 4096.0,
+   "fogmaxdensity": 1.0,
+   "rendercolor": [
+    128,
+    128,
+    128
+   ],
+   "hltvusable": false,
+   "override_shadow_farz": 0.0,
+   "dof_enabled": false,
+   "dof_near_blurry": 250.0,
+   "dof_near_crisp": 550.0,
+   "dac_dof_far_crisp": 1200.0,
+   "dac_dof_far_blurry": 1600.0,
+   "dac_dof_tilt_to_ground": 0.75,
+   "classname": "point_camera",
+   "origin": [
+    64.0,
+    -2758.040283,
+    320.0
+   ],
+   "angles": [
+    0.0,
+    90.0,
+    0.0
+   ],
+   "scales": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "hammeruniqueid": "4:104"
+  }
+ ]
+}

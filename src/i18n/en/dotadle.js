@@ -58,7 +58,7 @@ export default {
   'Роли жёлтые — часть совпала: у загаданного тоже есть выделенные «Инициатор» и «Танк».': 'Roles are yellow — some match: the hidden hero also has the highlighted «Initiator» and «Durable».',
   'Роли жёлтые: у загаданного тоже есть {roles}, но набор не тот же.': 'Roles are yellow: the hidden hero also has {roles}, but not the same set.',
   'До значка «{label}» осталось побед подряд: {left}': 'Wins in a row left to the «{label}» badge: {left}',
-  '7 дней в Dotadle': '7 days in Dotadle', '21 день в Dotadle': '21 days in Dotadle',
+  '7 дней подряд в Dotadle': '7-day Dotadle streak', '21 день подряд в Dotadle': '21-day Dotadle streak',
   'Такого героя не нашли — попробуй английское имя или как его зовут в пабах.': 'No such hero — try the English name or what people call it in pubs.',
   'Этого героя ты уже называл.': 'You already named this hero.',
   'Может, ты имел в виду:': 'Did you mean:',

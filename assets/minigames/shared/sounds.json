@@ -1,0 +1,84 @@
+{
+ "events": {
+  "General.ButtonClick": {
+   "files": [
+    "sounds/ui/buttonclick.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 0.078549
+  },
+  "General.Buttonrollover": {
+   "files": [
+    "sounds/ui/buttonrollover.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 0.052789
+  },
+  "General.Cancel": {
+   "files": [
+    "sounds/ui/ui_general_deny.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 0.1678
+  }
+ },
+ "files": {},
+ "missing": {
+  "General.Coins": [
+   "sounds/ui/coins.vsnd"
+  ],
+  "crownfall.intro.howtoplay": [
+   "sounds/misc/crownfall/music/startscreen_stinger.vsnd"
+  ],
+  "crownfall.speech.headshake": [
+   "sounds/misc/crownfall/speech_ui/headshake.vsnd"
+  ],
+  "crownfall.speech.headshake2": [
+   "sounds/misc/soundboard/headshake.vsnd"
+  ],
+  "crownfall.speech.test": [
+   "sounds/ui/tutorial_ui_click_01.vsnd"
+  ],
+  "crownfall.speech.text_click_1": [
+   "sounds/misc/crownfall/speech_ui/text_click_1.vsnd"
+  ],
+  "crownfall.speech.text_click_2": [
+   "sounds/misc/crownfall/speech_ui/text_click_1.vsnd"
+  ],
+  "crownfall.speech.text_click_3": [
+   "sounds/misc/crownfall/speech_ui/text_click_1.vsnd"
+  ],
+  "crownfall.speech.text_click_deep1": [
+   "sounds/misc/crownfall/speech_ui/text_click_1.vsnd"
+  ],
+  "crownfall.speech.text_click_deep2": [
+   "sounds/misc/crownfall/speech_ui/text_click_1.vsnd"
+  ],
+  "crownfall.speech.text_click_deep3": [
+   "sounds/misc/crownfall/speech_ui/text_click_1.vsnd"
+  ],
+  "crownfall.speech.text_click_demon": [
+   "sounds/misc/crownfall/speech_ui/text_click_1.vsnd"
+  ],
+  "crownfall.speech.text_click_high1": [
+   "sounds/misc/crownfall/speech_ui/text_click_1.vsnd"
+  ],
+  "crownfall.speech.text_click_high2": [
+   "sounds/misc/crownfall/speech_ui/text_click_1.vsnd"
+  ],
+  "crownfall.speech.text_click_mid1": [
+   "sounds/misc/crownfall/speech_ui/text_click_1.vsnd"
+  ],
+  "crownfall.speech.text_click_mid2": [
+   "sounds/misc/crownfall/speech_ui/text_click_1.vsnd"
+  ],
+  "crownfall.speech.text_click_mid3": [
+   "sounds/misc/crownfall/speech_ui/text_click_1.vsnd"
+  ],
+  "crownfall.speech.underscore_1": [],
+  "crownfall.speech.underscore_2": []
+ }
+}

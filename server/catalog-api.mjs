@@ -13,6 +13,7 @@ import { SteamProfiles } from './steam-profile.mjs';
 import { CatalogArts } from './catalog-arts.mjs';
 import { ART_CATEGORIES, ART_LIMITS, artSubmission } from '../scripts/art-document.mjs';
 import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
+import { DOTA_TEXTS_LANGUAGES, DotaTexts } from './dota-texts.mjs';
 import { StudioBackgrounds } from './studio-backgrounds.mjs';
 import { pickSafeGrid, renderSpaceThumbnail } from './catalog-preview.mjs';
 import { pageMeta, tabOf } from '../scripts/og-pages.mjs';
@@ -37,13 +38,16 @@ import { pcPage } from '../scripts/pc-link.mjs';
 import { robotsText, seoPage, sitemapXML } from './seo-pages.mjs';
 import { seoGuide, seoGuidePaths } from './seo-guides.mjs';
 import { Dotadle } from './dotadle.mjs';
+import { MinigameBoards } from './minigames.mjs';
 
 const cookies = (request) => Object.fromEntries((request.headers.cookie || '').split(';').map(pair => {
   const at = pair.indexOf('='); return at < 0 ? ['', ''] : [pair.slice(0, at).trim(), pair.slice(at + 1)];
 }));
 const local = (host) => ['localhost', '127.0.0.1', '[::1]'].includes(host);
-// ?sort=popular → all-time likes, ?sort=week → the week's likes first, anything else → newest.
-const sortOf = (url) => ({ popular: true, week: 'week' }[url.searchParams.get('sort')] || false);
+// ?sort=popular → all-time likes, ?sort=week → the week's likes first, ?sort=downloads → all-time
+// downloads, ?sort=categories / categories-asc → the most / fewest categories (grids only), anything else → newest.
+const SORTS = { popular: true, week: 'week', downloads: 'downloads', categories: 'categories', 'categories-asc': 'categories-asc' };
+const sortOf = (url) => SORTS[url.searchParams.get('sort')] || false;
 // The authors credited on the home page (src/landing/LandingGallery.jsx Authors), by Telegram username.
 const TEAM = ['linsissya', 'dissonance'];
 export function catalogConfig(env = process.env) {
@@ -127,11 +131,14 @@ const BACKGROUND_FILE = /^\/backgrounds\/([1-9]\d{0,12})\/(poster\.jpg|video\.we
 // The landing's picture sizes (server/editor-showcase.mjs SHOWCASE_WIDTHS), kept here so the API
 // module does not load the canvas renderer until a picture is asked for.
 const LANDING_WIDTHS = [1440, 2160, 2880];
-export function createCatalogAPI(config, { store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null, heroMeta = new HeroMeta({ token: config.stratzToken }), dotadle = new Dotadle({ secret: config.salt, store }) } = {}) {
-  const accounts = new Accounts(store), arts = new CatalogArts(store), stats = new SiteStats(store), moderators = new Moderators(store), spot = new SiteSpot(store), packs = new InstallPacks(store, { dir: config.packs || join(tmpdir(), 'gridstudio-install-packs') });
+export function createCatalogAPI(config, { dotaTexts = null, store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null, heroMeta = new HeroMeta({ token: config.stratzToken }), dotadle = new Dotadle({ secret: config.salt, store }) } = {}) {
+  const accounts = new Accounts(store), boards = new MinigameBoards(store), arts = new CatalogArts(store), stats = new SiteStats(store), moderators = new Moderators(store), spot = new SiteSpot(store), packs = new InstallPacks(store, { dir: config.packs || join(tmpdir(), 'gridstudio-install-packs') });
   // Shared menu backgrounds keep files next to the database (config.media).
   let galleries = backgrounds;
   const gallery = () => (galleries ||= new CatalogBackgrounds(store, { dir: config.media || mkdtempSync(join(tmpdir(), 'gridstudio-backgrounds-')) }));
+  // Dota's texts for the interface builder's «Тексты» (server/dota-texts.mjs), beside the backgrounds.
+  const texts = { ...(dotaTexts ? { russian: dotaTexts } : {}) }, textsDir = () => join(dirname(config.media || mkdtempSync(join(tmpdir(), 'gridstudio-texts-'))), 'dota-texts');
+  const dotaText = (language = 'russian') => (texts[language] ||= new DotaTexts({ dir: textsDir(), language }));
   store.unlimited = config.unlimited || new Set();
   // «Гайды» (server/guides.mjs): uploads next to the database (config.guides); unused ones are swept hourly.
   let guideStore = null;
@@ -167,7 +174,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
     const works = store.all(`SELECT w.id, r.created updated FROM works w JOIN revisions r ON r.id=w.public_revision WHERE w.state='active' AND ${adult('r.tags')} ORDER BY r.created DESC`)
       .map((row) => ({ path: `/workshop?id=${row.id}`, updated: row.updated }));
     const backgrounds = has('backgrounds') ? store.all(`SELECT id, updated FROM backgrounds WHERE status='approved' AND ${adult('tags')} ORDER BY updated DESC`)
-      .map((row) => ({ path: `/background?background=${row.id}`, updated: row.updated })) : [];
+      .map((row) => ({ path: `/customize?background=${row.id}`, updated: row.updated })) : [];
     const guides = has('guides') ? store.all("SELECT id, updated FROM guides WHERE status='approved' AND public_revision IS NOT NULL ORDER BY updated DESC")
       .map((row) => ({ path: `/guides?id=${row.id}`, updated: row.updated })) : [];
     return [...backgrounds, ...works, ...guides];
@@ -246,7 +253,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         if (agent && !STAT_ROBOT.test(agent)) {
           const who = /^[A-Za-z0-9_-]{22}$/.test(String(body.visitor || '')) ? store.identity('visitor', body.visitor) : identity.browser;
           if (body.page) stats.visit(String(body.page), who, { account: user?.id || null, referrer: body.referrer, mobile: body.mobile === true, lang: body.lang, ping: body.ping === true });
-          if (['grid-export', 'background-pack', 'font-pack'].includes(body.event)) stats.event(body.event, who);
+          if (['grid-export', 'background-pack', 'font-pack', 'interface-pack', 'customize-pack'].includes(body.event)) stats.event(body.event, who, body.parts);
         }
         response.writeHead(204); return response.end();
       }
@@ -256,7 +263,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         const body = await readJSON(request);
         return send(200, packs.start(body.kind, body.sha256, Number(body.size), ipHash));
       }
-      const packPart = /^\/install\/packs\/((?:bg|font)-[0-9a-f]{64})$/.exec(path);
+      const packPart = /^\/install\/packs\/((?:bg|font|all)-[0-9a-f]{64})$/.exec(path);
       if (packPart && method === 'PUT') return send(200, packs.write(packPart[1], Number(url.searchParams.get('offset')), await readBytes(request, PACK_LIMITS.part)));
       // The grid's hero_grid_config.json for its command's script (server/grid-installs.mjs), as bytes.
       const gridFile = /^\/install\/file\/grid-([A-Za-z0-9_-]{16})$/.exec(path);
@@ -266,7 +273,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         response.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': bytes.length, 'Cache-Control': 'private, no-store' });
         return response.end(method === 'HEAD' ? undefined : bytes);
       }
-      const packFile = /^\/install\/file\/((?:bg|font)-[0-9a-f]{64})$/.exec(path);
+      const packFile = /^\/install\/file\/((?:bg|font|all)-[0-9a-f]{64})$/.exec(path);
       if (packFile && ['GET', 'HEAD'].includes(method)) {
         const file = packs.ready(packFile[1]);
         if (!file) fail(404, 'Файл устарел или не найден.');
@@ -449,11 +456,38 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
         if (result.error) fail(400, result.error);
         return send(200, result);
       }
+      // «Мини-игры»: global tables of records (server/minigames.mjs). Anyone reads a table; a signed-in
+      // account starts a run (a single-use token) and sends its result at the end.
+      const boardMatch = /^\/minigames\/boards\/([a-z]{2,16})$/.exec(path);
+      if (boardMatch && method === 'GET') return send(200, { ...boards.top(boardMatch[1], url.searchParams.get('board') || '', url.searchParams.get('period') || 'all', user?.id ?? null), login: !user });
+      if (path === '/minigames/ranks' && method === 'GET') return send(200, { ranks: user ? boards.ranks(user.id) : {} });
+      if (path === '/minigames/runs' && method === 'POST') {
+        const member = requireUser(); store.rate(`minigame-run:${member.id}`, 240, 600_000);
+        const body = await readJSON(request, 500);
+        return send(200, boards.start(member.id, String(body.game || ''), String(body.board || '')));
+      }
+      if (path === '/minigames/submit' && method === 'POST') {
+        const member = requireUser(); store.rate(`minigame-submit:${member.id}`, 120, 600_000, { message: 'Слишком много результатов подряд. Подожди немного.' });
+        return send(200, boards.submit(member.id, await readJSON(request, 2_000)));
+      }
       // «Прислать на ПК» (scripts/pc-link.mjs): to the bot with the page's code; the bot sends the link.
       const toPC = /^\/pc\/([\w-]{1,64})$/.exec(path);
       if (toPC && method === 'GET') {
         if (!pcPage(toPC[1])) fail(404, 'Не найдено.');
         response.writeHead(302, { Location: `https://t.me/${config.botUsername}?start=pc_${toPC[1]}` }); return response.end();
+      }
+      // Valve's dota_russian.txt, fresh (server/dota-texts.mjs); the first request waits for the download.
+      const textsPath = /^\/dota-texts\/([a-z]+)$/.exec(path);
+      if (textsPath && method === 'GET' && DOTA_TEXTS_LANGUAGES.includes(textsPath[1])) {
+        const source = dotaText(textsPath[1]);
+        if (!source.current()) await source.refresh().catch(() => {});
+        else source.refresh().catch(() => {});
+        const copy = source.current();
+        if (!copy) fail(503, 'Тексты Dota пока не загрузились. Попробуй через минуту.');
+        // nginx's gzip makes the ETag weak (W/"…"); the browser sends it back so.
+        if (String(request.headers['if-none-match'] || '').replace(/^W\//, '') === copy.tag) { response.writeHead(304, { ETag: copy.tag }); return response.end(); }
+        response.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', ETag: copy.tag, 'Cache-Control': 'public, max-age=600' });
+        return response.end(copy.body);
       }
       if (path === '/config' && method === 'GET') return send(200, { captcha: captcha.kind, ...(captcha.endpoint ? { captchaEndpoint: captcha.endpoint } : {}), development: config.development, paused: store.paused(), tags: CATALOG_TAGS, limits: CATALOG_LIMITS,
         artCategories: ART_CATEGORIES, artLimits: ART_LIMITS, backgroundTags: BACKGROUND_TAGS, backgroundLimits: BACKGROUND_LIMITS, moderationUrl: config.moderationUrl });
@@ -592,7 +626,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
           const backgroundId = url.searchParams.get('background') || '';
           if (page[1] === 'customize' && /^[1-9]\d{0,12}$/.test(backgroundId)) {
             const row = gallery().get(Number(backgroundId));
-            if (row?.status === 'approved') meta = { title: previewTitle(row, backgroundAuthor(row)), description: PREVIEW_TEXT.background, url: `${config.origin}/background?background=${row.id}`,
+            if (row?.status === 'approved') meta = { title: previewTitle(row, backgroundAuthor(row)), description: PREVIEW_TEXT.background, url: `${config.origin}/customize?background=${row.id}`,
               image: `${config.origin}/api/catalog/preview/background/${row.id}.jpg?updated=${row.updated}`, alt: `Фон «${row.title}»` };
           }
         } catch (error) { if (!(error instanceof CatalogError)) throw error; }
@@ -769,6 +803,16 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
           if (changed) store.audit(`profile:${badgeMatch[1]}`, `badge-${body.on ? 'on' : 'off'}:${body.badge}`, actor);
           return send(200, { badges: store.profiles.badges(account, creatorStats(account).likes) });
         }
+        // A row of a minigame's table that cannot be real: the account goes off the game's tables (all
+        // boards and periods), with `ban` it stays off (server/minigames.mjs remove); recorded in «Журнал».
+        const minigameMatch = /^\/admin\/minigames\/([a-z]{2,16})\/([A-Za-z0-9_-]{12})$/.exec(path);
+        if (minigameMatch && method === 'DELETE') {
+          const profile = store.profiles.byKey(minigameMatch[2]);
+          if (!profile) fail(404, 'Профиль не найден.');
+          const ban = url.searchParams.get('ban') === '1', result = boards.remove(minigameMatch[1], profile.account, { ban });
+          store.audit(`profile:${minigameMatch[2]}`, `minigame-${ban ? 'ban' : 'remove'}:${minigameMatch[1]}`, actor);
+          return send(200, result);
+        }
         // «Реклама» (server/site-spot.mjs): admins only — a moderator's requests stop at moderatorAllows.
         if (path === '/admin/spot' && method === 'GET') return send(200, spot.admin());
         if (path === '/admin/spot' && method === 'PATCH') return send(200, spot.update(await readJSON(request), actor));
@@ -832,7 +876,7 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
     const counts = [[stats.likes, ['лайк', 'лайка', 'лайков']], [stats.grids, ['сетка', 'сетки', 'сеток']], [stats.backgrounds, ['фон', 'фона', 'фонов']], [stats.guides, ['гайд', 'гайда', 'гайдов']]]
       .filter(([n], i) => i === 0 || n > 0).map(([n, forms]) => `${n} ${forms[n % 10 === 1 && n % 100 !== 11 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2]}`).join(' · ');
     const badges = store.profiles.badges(row.account, stats.likes).map(badgeOf).filter(Boolean);
-    const version = createHmac('sha256', 'profile-preview').update(JSON.stringify([card.nickname, card.avatar, badges.map((b) => b.id), counts])).digest('hex').slice(0, 12);
+    const version = createHmac('sha256', 'profile-preview').update(JSON.stringify(['medals', card.nickname, card.avatar, badges.map((b) => b.id), counts])).digest('hex').slice(0, 12);
     return { key, nickname: card.nickname, bio: card.bio.replace(/\s+/g, ' ').slice(0, 200), stats: counts, version, badges, avatar: store.profiles.avatar(key).body };
   }
   function creatorPage(key, viewer) {
@@ -843,19 +887,24 @@ export function createCatalogAPI(config, { store = new CatalogStore(config.datab
     return { ...store.profiles.card(row), badges: store.profiles.badges(account, stats.likes), mine: viewer === account, stats, grids, backgrounds, guides: guideCards,
       followable: viewer !== account, subscribed: !!(viewer && store.get('SELECT 1 x FROM subscriptions WHERE account=? AND author=?', viewer, account)),
       // Dotadle (asked for on 2026-10-06): the streak and the wins, once the account has played.
-      dotadle: (({ played, won, streak, best }) => played ? { played, won, streak, best } : null)(dotadle.stats(account)) };
+      dotadle: (({ played, won, streak, best }) => played ? { played, won, streak, best } : null)(dotadle.stats(account)),
+      // «Мини-игры» (2026-10-18): the best places in the tables of records (server/minigames.mjs).
+      minigames: boards.placements(account) };
   }
   const server = createServer(handler); server.requestTimeout = 15000; server.headersTimeout = 10000;
-  return { server, store, accounts, handler, gallery };
+  return { server, dotaText, store, accounts, handler, gallery };
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const config = catalogConfig();
-  const { server, store, gallery } = createCatalogAPI(config);
+  const { server, store, gallery, dotaText } = createCatalogAPI(config);
   const port = Number(process.env.CATALOG_PORT || 4174);
   server.listen(port, '127.0.0.1', () => console.log(`Catalog API: http://127.0.0.1:${port} (${config.development ? 'local testing; ALTCHA enabled' : 'production'})`));
   // Backgrounds sent before fingerprints get theirs in the background (server/similarity.mjs).
   setTimeout(() => gallery().fingerprintMissing().then((n) => n && console.log(`Отпечатки фонов: ${n}`), () => {}), 10_000).unref();
   // The hover copies of the backgrounds sent before them (server/catalog-backgrounds.mjs PREVIEW), after the fingerprints.
   setTimeout(() => gallery().previewMissing().then((n) => n && console.log(`Превью фонов: ${n}`), () => {}), 30_000).unref();
+  // Dota's texts for «Тексты»: the first copy soon after the start, then every six hours (server/dota-texts.mjs).
+  const texts = () => { for (const language of DOTA_TEXTS_LANGUAGES) dotaText(language).refresh().then((changed) => changed && console.log(`Тексты Dota (${language}) обновлены`), (problem) => console.error(`Тексты Dota: ${problem.message}`)); };
+  setTimeout(texts, 20_000).unref(); setInterval(texts, 3_600_000).unref();
   for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => server.close(() => { store.close(); process.exit(0); }));
 }

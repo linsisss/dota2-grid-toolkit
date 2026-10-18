@@ -1,0 +1,667 @@
+{
+ "events": {
+  "Hero_Bristleback.Attack": {
+   "files": [
+    "sounds/weapons/hero/spirit_breaker/attack01.mp3",
+    "sounds/weapons/hero/spirit_breaker/attack02.mp3",
+    "sounds/weapons/hero/spirit_breaker/attack03.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.888163
+  },
+  "Hero_Bristleback.PreAttack": {
+   "files": [
+    "sounds/weapons/hero/shared/large_blade/whoosh01.mp3",
+    "sounds/weapons/hero/shared/large_blade/whoosh02.mp3",
+    "sounds/weapons/hero/shared/large_blade/whoosh03.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.783673
+  },
+  "Hero_Bristleback.QuillSpray.Cast": {
+   "files": [
+    "sounds/weapons/hero/bristlebog/quill_cast.mp3"
+   ],
+   "volume": 0.649902,
+   "pitch": 1,
+   "volumeRand": [
+    -0.149902,
+    0.149902
+   ],
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Weapons",
+   "duration": 0.653061
+  },
+  "Hero_Bristleback.QuillSpray.Target": {
+   "files": [
+    "sounds/weapons/hero/bristlebog/quill_target01.mp3",
+    "sounds/weapons/hero/bristlebog/quill_target02.mp3",
+    "sounds/weapons/hero/bristlebog/quill_target03.mp3",
+    "sounds/weapons/hero/bristlebog/quill_target04.mp3"
+   ],
+   "volume": 0.599976,
+   "pitch": 1,
+   "volumeRand": [
+    -0.099976,
+    0.099976
+   ],
+   "pitchRand": [
+    -0.1,
+    0.1
+   ],
+   "layers": [
+    "Damage_Melee.Gore"
+   ],
+   "duration": 0.522449
+  },
+  "Hero_Bristleback.ViscousGoo.Cast": {
+   "files": [
+    "sounds/weapons/hero/bristlebog/goo_cast.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Weapons",
+   "duration": 1.541224
+  },
+  "Hero_Bristleback.ViscousGoo.Target": {
+   "files": [
+    "sounds/weapons/hero/bristlebog/goo_target.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "mixgroup": "Weapons",
+   "duration": 5.041633
+  },
+  "Hero_Dawnbreaker.Attack": {
+   "files": [
+    "sounds/weapons/hero/dawnbreaker/attack01.mp3",
+    "sounds/weapons/hero/dawnbreaker/attack02.mp3",
+    "sounds/weapons/hero/dawnbreaker/attack03.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.966531
+  },
+  "Hero_Dawnbreaker.Fire_Wreath.Smash": {
+   "files": [
+    "sounds/weapons/hero/dawnbreaker/fire_wreath_smash.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Weapons",
+   "duration": 2.011429
+  },
+  "Hero_Dawnbreaker.Fire_Wreath.Sweep": {
+   "files": [
+    "sounds/weapons/hero/dawnbreaker/fire_wreath_sweep.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.2,
+    0
+   ],
+   "layers": [
+    "Hero_Dawnbreaker.Fire_Wreath.Layer"
+   ],
+   "mixgroup": "Weapons",
+   "duration": 1.358367
+  },
+  "Hero_Dawnbreaker.PreAttack": {
+   "files": [
+    "sounds/weapons/hero/axe/preattack01.mp3",
+    "sounds/weapons/hero/axe/preattack02.mp3",
+    "sounds/weapons/hero/axe/preattack03.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 1.123265
+  },
+  "Hero_Dawnbreaker.Solar_Guardian.Stun": {
+   "files": [
+    "sounds/weapons/hero/dawnbreaker/elated_stun.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Ultimates",
+   "duration": 1.854694
+  },
+  "Hero_Marci.Attack": {
+   "files": [
+    "sounds/weapons/hero/marci/attack01.mp3",
+    "sounds/weapons/hero/marci/attack02.mp3",
+    "sounds/weapons/hero/marci/attack03.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.444082
+  },
+  "Hero_Marci.PreAttack": {
+   "files": [
+    "sounds/weapons/hero/marci/preattack01.mp3",
+    "sounds/weapons/hero/marci/preattack02.mp3",
+    "sounds/weapons/hero/marci/preattack03.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.470204
+  },
+  "Hero_Marci.Rebound.Cast": {
+   "files": [
+    "sounds/weapons/hero/marci/rebound_cast.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.1,
+    0.1
+   ],
+   "mixgroup": "Weapons",
+   "duration": 1.436735
+  },
+  "Hero_Marci.Unleash.Cast": {
+   "files": [
+    "sounds/weapons/hero/marci/unleash_cast.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "mixgroup": "Ultimates",
+   "duration": 3.030204
+  },
+  "Hero_Marci.Unleash.Charged": {
+   "files": [
+    "sounds/weapons/hero/marci/unleash_charged_3d.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "mixgroup": "Weapons",
+   "duration": 1.436735
+  },
+  "Hero_Marci.Unleash.Pulse": {
+   "files": [
+    "sounds/weapons/hero/marci/unleash_pulse.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 2.925714
+  },
+  "Hero_Shen.Attack": {
+   "files": [
+    "sounds/weapons/hero/shared/small_blade/attack_long01.mp3",
+    "sounds/weapons/hero/shared/small_blade/attack_long02.mp3",
+    "sounds/weapons/hero/shared/small_blade/attack_long03.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.365714
+  },
+  "Hero_Shen.PreAttack": {
+   "files": [
+    "sounds/weapons/hero/phantom_assassin/phantom_assassin_swing1.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1.1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.626939
+  },
+  "Hero_Tusk.Attack": {
+   "files": [
+    "sounds/weapons/hero/beastmaster/attack01.mp3",
+    "sounds/weapons/hero/beastmaster/attack02.mp3",
+    "sounds/weapons/hero/beastmaster/attack03.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.339592
+  },
+  "Hero_Tusk.IceShards.Penguin": {
+   "files": [
+    "sounds/weapons/hero/tusk/penguin01.mp3",
+    "sounds/weapons/hero/tusk/penguin02.mp3",
+    "sounds/weapons/hero/tusk/penguin03.mp3"
+   ],
+   "volume": 0.699707,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Weapons",
+   "duration": 0.992653
+  },
+  "Hero_Tusk.PreAttack": {
+   "files": [
+    "sounds/weapons/hero/axe/preattack01.mp3",
+    "sounds/weapons/hero/axe/preattack02.mp3",
+    "sounds/weapons/hero/axe/preattack03.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 1.123265
+  },
+  "Hero_Tusk.Snowball.Stun.Small": {
+   "files": [
+    "sounds/weapons/hero/tusk/snowball_stun01.mp3",
+    "sounds/weapons/hero/tusk/snowball_stun02.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1.15,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 1.149388
+  },
+  "Hero_Tusk.WalrusKick.Target": {
+   "files": [
+    "sounds/weapons/hero/tusk/punch_target.mp3"
+   ],
+   "volume": 1,
+   "pitch": 0.85,
+   "mixgroup": "Weapons",
+   "duration": 1.959184
+  },
+  "Hero_Tusk.WalrusPunch.Target": {
+   "files": [
+    "sounds/weapons/hero/tusk/punch_target.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Ultimates",
+   "duration": 1.959184
+  },
+  "Hero_VengefulSpirit.MagicMissile": {
+   "files": [
+    "sounds/weapons/hero/vengeful_spirit/magic_missile1.mp3",
+    "sounds/weapons/hero/vengeful_spirit/magic_missile2.mp3",
+    "sounds/weapons/hero/vengeful_spirit/magic_missile3.mp3",
+    "sounds/weapons/hero/vengeful_spirit/magic_missile4.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Weapons",
+   "duration": 1.28
+  },
+  "Hero_VengefulSpirit.MagicMissileImpact": {
+   "files": [
+    "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 1.880816
+  },
+  "Hero_VengefulSpirit.NetherSwap": {
+   "files": [
+    "sounds/weapons/hero/vengeful_spirit/nether_swap.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "mixgroup": "Ultimates",
+   "duration": 2.194286
+  },
+  "announcer_dota_fighter_dota_fighter_challenger_01": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_challenger_01.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 2.612245
+  },
+  "announcer_dota_fighter_dota_fighter_fight_01": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_fight_01.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 0.862041
+  },
+  "announcer_dota_fighter_dota_fighter_hero_013_bristleback": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_hero_013_bristleback.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 1.253878
+  },
+  "announcer_dota_fighter_dota_fighter_hero_023_dawnbreaker": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_hero_023_dawnbreaker.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 1.593469
+  },
+  "announcer_dota_fighter_dota_fighter_hero_057_marci": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_hero_057_marci.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 1.48898
+  },
+  "announcer_dota_fighter_dota_fighter_hero_110_tusk": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_hero_110_tusk.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 0.966531
+  },
+  "announcer_dota_fighter_dota_fighter_hero_114_vengeful_spirit": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_hero_114_vengeful_spirit.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 1.959184
+  },
+  "announcer_dota_fighter_dota_fighter_ko_01": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_ko_01.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 1.332245
+  },
+  "announcer_dota_fighter_dota_fighter_lose_01": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_lose_01.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 1.567347
+  },
+  "announcer_dota_fighter_dota_fighter_round_01": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_round_01.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 1.332245
+  },
+  "announcer_dota_fighter_dota_fighter_round_02": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_round_02.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 1.48898
+  },
+  "announcer_dota_fighter_dota_fighter_round_03": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_round_03.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 1.697959
+  },
+  "announcer_dota_fighter_dota_fighter_round_final": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_round_final.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 2.063673
+  },
+  "announcer_dota_fighter_dota_fighter_versus": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_versus.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 0.940408
+  },
+  "announcer_dota_fighter_dota_fighter_victory_01": {
+   "files": [
+    "sounds/vo/announcer_dota_fighter/dota_fighter_victory_01.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 1.332245
+  },
+  "fighting_game.fight": {
+   "files": [
+    "sounds/weapons/hero/techies/suicide.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 4.04898
+  },
+  "fighting_game.ko": {
+   "files": [
+    "sounds/misc/spectator/crowd_client01.mp3",
+    "sounds/misc/spectator/crowd_client02.mp3",
+    "sounds/misc/spectator/crowd_client03.mp3",
+    "sounds/misc/spectator/crowd_client04.mp3",
+    "sounds/misc/spectator/crowd_client05.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 6.817959
+  },
+  "fighting_game.match_intro": {
+   "files": [
+    "sounds/music/valve_dota_001/music/countdown.mp3"
+   ],
+   "volume": 0.2,
+   "pitch": 1,
+   "fadeOut": 5,
+   "mixgroup": "misc",
+   "duration": 30.040816
+  },
+  "fighting_game.match_music": {
+   "files": [
+    "sounds/misc/crownfall/music/fighting_main.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "delay": 5,
+   "fadeIn": 1,
+   "fadeOut": 4,
+   "duration": 31.712653
+  },
+  "fighting_game.menu_music": {
+   "files": [
+    "sounds/misc/crownfall/music/fighting_menu.mp3"
+   ],
+   "volume": 0.7,
+   "pitch": 1,
+   "fadeOut": 3,
+   "duration": 116.349388
+  },
+  "fighting_game.plane": {
+   "files": [
+    "sounds/misc/crownfall/plane.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 2.795102
+  },
+  "fighting_game.timeout": {
+   "files": [
+    "sounds/ui/treasure_01.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 3.422041
+  },
+  "fighting_game.victory_music": {
+   "files": [
+    "sounds/music/valve_dota_001/stingers/radiant_win.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "fadeOut": 1,
+   "duration": 20.035918
+  }
+ },
+ "files": {
+  "sounds/misc/crownfall/music/fighting_main.mp3": {
+   "duration": 31.712653,
+   "loop": [
+    0,
+    31.683718820861678
+   ]
+  },
+  "sounds/misc/crownfall/music/fighting_menu.mp3": {
+   "duration": 116.349388,
+   "loop": [
+    95.1677097505669,
+    116.3165306122449
+   ]
+  },
+  "sounds/misc/crownfall/plane.mp3": {
+   "duration": 2.795102
+  },
+  "sounds/misc/spectator/crowd_client01.mp3": {
+   "duration": 6.817959
+  },
+  "sounds/misc/spectator/crowd_client02.mp3": {
+   "duration": 6.112653
+  },
+  "sounds/misc/spectator/crowd_client03.mp3": {
+   "duration": 6.112653
+  },
+  "sounds/misc/spectator/crowd_client04.mp3": {
+   "duration": 6.556735
+  },
+  "sounds/misc/spectator/crowd_client05.mp3": {
+   "duration": 6.060408
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_challenger_01.mp3": {
+   "duration": 2.612245
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_fight_01.mp3": {
+   "duration": 0.862041
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_013_bristleback.mp3": {
+   "duration": 1.253878
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_023_dawnbreaker.mp3": {
+   "duration": 1.593469
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_057_marci.mp3": {
+   "duration": 1.48898
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_110_tusk.mp3": {
+   "duration": 0.966531
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_114_vengeful_spirit.mp3": {
+   "duration": 1.959184
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_ko_01.mp3": {
+   "duration": 1.332245
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_lose_01.mp3": {
+   "duration": 1.567347
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_round_01.mp3": {
+   "duration": 1.332245
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_round_02.mp3": {
+   "duration": 1.48898
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_round_03.mp3": {
+   "duration": 1.697959
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_round_final.mp3": {
+   "duration": 2.063673
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_versus.mp3": {
+   "duration": 0.940408
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_victory_01.mp3": {
+   "duration": 1.332245
+  }
+ },
+ "missing": {
+  "Damage_Melee.Gore": [],
+  "Hero_Dawnbreaker.Fire_Wreath.Layer": [
+   "sounds/weapons/hero/dawnbreaker/fire_wreath_layer.vsnd"
+  ],
+  "fighting_game.game_sound": [],
+  "fighting_game.match_outro": []
+ }
+}

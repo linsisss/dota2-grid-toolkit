@@ -18,14 +18,16 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
 const SOURCE = 'https://raw.githubusercontent.com/spirit-bear-productions/dota_vpk_updates/main/panorama/layout/';
-const FILES = ['dashboard.xml', 'dashboard_page_home.xml', 'dashboard_page_hero_new_v2.xml', 'showcase/dashboard_page_showcase.xml', 'dashboard_page_heroes.xml'];
+const FILES = ['dashboard.xml', 'dashboard_page_home.xml', 'dashboard_page_hero_new_v2.xml', 'showcase/dashboard_page_showcase.xml', 'dashboard_page_heroes.xml', 'loading_screen_background_image.xml',
+  // Not a layout: the interface builder's HUD hook (scripts/interface-modules.mjs), given back with our rules.
+  '../styles/custom_ui.css'];
 const local = (file) => file.split('/').pop();  // our copies lie flat in assets/dota-menu/
 const assets = new URL('../assets/dota-menu/', import.meta.url);
 const args = process.argv.slice(2), flag = (name) => args.includes(name), option = (name) => args[args.indexOf(name) + 1];
-// Our copies drop Source 2 Viewer's first comment line; the override is ours to set. Source 2 Viewer
+// Our copies drop Source 2 Viewer's first comment line (<!-- --> in layouts, /* */ in styles); the override is ours to set. Source 2 Viewer
 // 12 (2026-10-07) writes the compiled resources' references without «_c» (`dotastyles.vcss`): ours,
 // like the compiled files, keep «_c», so both read the same.
-const normalize = (text) => text.replace(/^<!--[^\n]*-->\r?\n/, '').replace(/\r\n/g, '\n')
+const normalize = (text) => text.replace(/^(?:<!--[^\n]*-->|\/\*[^\n]*\*\/)\r?\n/, '').replace(/\r\n/g, '\n')
   .replace(/(s2r:\/\/[^"')\s]+\.(?:vcss|vxml|vjs|vtex|vsvg|vpcf|vmdl|vsnd|vmat))(?!_c)/g, '$1_c').trim();
 const withoutOverride = (text) => text.replace(/(<DOTADashboardBackgroundManager\b[^>]*\boverride-background=")[^"]*"/, '$1"');
 
@@ -38,7 +40,7 @@ async function fetchText(url) {
 const report = { status: 'same', files: {} };
 const fresh = {};
 for (const file of FILES) {
-  fresh[file] = normalize(await fetchText(SOURCE + file));
+  fresh[file] = normalize(await fetchText(new URL(file, SOURCE).href));
   const ours = normalize(readFileSync(new URL(local(file), assets), 'utf8'));
   let status = fresh[file] === ours ? 'same' : withoutOverride(fresh[file]) === withoutOverride(ours) ? 'override-only' : 'changed';
   if (file === 'dashboard.xml' && !/<DOTADashboardBackgroundManager\b[^>]*\boverride-background="/.test(fresh[file])) status = 'changed';

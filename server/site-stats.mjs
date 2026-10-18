@@ -11,11 +11,12 @@
 // came from (`signup`, asked for on 2026-10-03: «откуда зарегался юзер, что его привело») is kept once,
 // when it first signs in: the other site of its first visit, the address' utm_* marks, its first page
 // and the page it signed in on.
+import { CUSTOMIZE_PARTS } from '../scripts/customize-pack.mjs';
 export const DAY = 86_400_000;
 const MSK = 3 * 3_600_000, KEEP_DAYS = 400;
 export const mskDay = (ms) => Math.floor((ms + MSK) / DAY);
 export const STAT_PAGE = /^(?:home|editor|workshop|workshop:backgrounds|rules|background|font|guides|work:[0-9a-f-]{36}|guide:[A-Za-z0-9_-]{12}|profile:[A-Za-z0-9_-]{12}|dotadle|seo:(?:backgrounds|grids)(?:\/[a-z0-9-]{1,40})?|seo:guide\/[a-z0-9-]{1,60})$/;
-export const STAT_EVENTS = Object.freeze(['grid-export', 'background-pack', 'font-pack', 'login', 'studio-save', 'send-pc', 'dotadle-done']);
+export const STAT_EVENTS = Object.freeze(['grid-export', 'background-pack', 'font-pack', 'interface-pack', 'customize-pack', 'login', 'studio-save', 'send-pc', 'dotadle-done']);
 export const STAT_PERIODS = Object.freeze([7, 30, 90, 365]);
 // User-Agents of robots, crawlers, link previews, monitors and scripts: their hits are not counted.
 export const STAT_ROBOT = /bot\b|bot\/|crawl|spider|slurp|headless|lighthouse|phantom|puppeteer|playwright|selenium|python|curl|wget|httpclient|java\/|go-http|okhttp|axios|libwww|preview|scanner|monitor|uptime|facebookexternalhit|telegrambot|whatsapp|discordbot/i;
@@ -46,6 +47,7 @@ export class SiteStats {
       CREATE INDEX IF NOT EXISTS visits_visitor ON visits(visitor, day);
       CREATE INDEX IF NOT EXISTS visits_account ON visits(account, last) WHERE account IS NOT NULL;
       CREATE TABLE IF NOT EXISTS stat_events(day INTEGER NOT NULL, name TEXT NOT NULL, visitor TEXT NOT NULL, count INTEGER NOT NULL DEFAULT 1, PRIMARY KEY(day, name, visitor));
+      CREATE TABLE IF NOT EXISTS stat_event_parts(day INTEGER NOT NULL, name TEXT NOT NULL, part TEXT NOT NULL, count INTEGER NOT NULL DEFAULT 1, PRIMARY KEY(day, name, part));
       CREATE TABLE IF NOT EXISTS signup_sources(account TEXT PRIMARY KEY, source TEXT NOT NULL, referrer TEXT NOT NULL DEFAULT '', landing TEXT NOT NULL DEFAULT '',
         signup TEXT NOT NULL DEFAULT '', utm TEXT NOT NULL DEFAULT '', first_seen INTEGER, created INTEGER NOT NULL);`);
     this.pruned = 0; this.minutes = [];
@@ -98,7 +100,7 @@ export class SiteStats {
       visitors: store.get('SELECT count(DISTINCT visitor) n FROM visits WHERE day>=? AND day<?', start, end).n,
       views: store.get('SELECT coalesce(sum(views),0) n FROM visits WHERE day>=? AND day<?', start, end).n,
       registrations: count('profiles', 'created'),
-      downloads: (this.has('downloads') ? store.get('SELECT count(*) n FROM downloads WHERE day>=? AND day<?', start, end).n : 0) + events('grid-export') + events('background-pack') + events('font-pack'),
+      downloads: (this.has('downloads') ? store.get('SELECT count(*) n FROM downloads WHERE day>=? AND day<?', start, end).n : 0) + events('grid-export') + events('background-pack') + events('font-pack') + events('interface-pack') + events('customize-pack'),
       installs: count('installs', 'created'),
       works: count('revisions', 'created') + count('backgrounds', 'created') + count('arts', 'created') + count('guides', 'published'),
       likes: count('likes', 'created') + count('background_likes', 'created') + count('guide_likes', 'created'),
@@ -135,10 +137,20 @@ export class SiteStats {
   }
   // An action: a grid saved from the editor, a background pack built, a font downloaded, a sign-in,
   // a «Студия» save. `who`: the browser's id, or the account for the server's own.
-  event(name, who) {
+  // `parts`: what the customization page's one file had (scripts/customize-pack.mjs CUSTOMIZE_PARTS), each
+  // counted per day without the visitor.
+  event(name, who, parts = null) {
     if (!STAT_EVENTS.includes(name) || !who) return false;
-    this.store.run('INSERT INTO stat_events(day,name,visitor) VALUES(?,?,?) ON CONFLICT(day,name,visitor) DO UPDATE SET count=count+1', mskDay(this.store.now()), name, String(who));
+    const day = mskDay(this.store.now());
+    this.store.run('INSERT INTO stat_events(day,name,visitor) VALUES(?,?,?) ON CONFLICT(day,name,visitor) DO UPDATE SET count=count+1', day, name, String(who));
+    if (name === 'customize-pack' && Array.isArray(parts))
+      for (const part of new Set(parts.filter((part) => CUSTOMIZE_PARTS.includes(part))))
+        this.store.run('INSERT INTO stat_event_parts(day,name,part) VALUES(?,?,?) ON CONFLICT(day,name,part) DO UPDATE SET count=count+1', day, name, part);
     return true;
+  }
+  // How often each part went into the customization's file over [start, end) days.
+  eventParts(name, start, end) {
+    return Object.fromEntries(this.store.all('SELECT part, sum(count) n FROM stat_event_parts WHERE name=? AND day>=? AND day<? GROUP BY part', name, start, end).map((row) => [row.part, row.n]));
   }
   prune(now) {
     if (now - this.pruned < DAY) return;

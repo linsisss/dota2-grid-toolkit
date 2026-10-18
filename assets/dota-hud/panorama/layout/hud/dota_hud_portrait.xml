@@ -1,0 +1,13 @@
+<!-- xml reconstructed by Source 2 Viewer 12.0.0.0 - https://valveresourceformat.github.io -->
+<root>
+	<styles>
+		<include src="s2r://panorama/styles/dotastyles.vcss" />
+		<include src="s2r://panorama/styles/hudstyles.vcss" />
+		<include src="s2r://panorama/styles/hud/dota_hud_portrait.vcss" />
+	</styles>
+	<DOTAPortrait>
+		<Panel id="LowerOverlay" />
+		<Panel id="InspectButton" onactivate="DOTAHUDInspect();" />
+		<Button id="ReportUserButton" class="PortraitButton" onactivate="DOTAHUDShowReportUserPopup();" always-cache-composition-layer="true" />
+	</DOTAPortrait>
+</root>

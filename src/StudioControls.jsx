@@ -244,6 +244,25 @@ function RotationControl({ editor, state }) {
   );
 }
 
+// The layer the eraser and «Распыление» work on (asked for on 2026-10-16): every layer, or one; picking a
+// layer in the layers list while they are on chooses it too (app.mjs selectLayer).
+function EraserLayer({ editor, state }) {
+  const chosen = state.layers.find((layer) => layer.id === state.eraserLayer);
+  return (
+    <>
+      <label className="field-label" htmlFor="eraserLayer">{t('Слой')}</label>
+      <select id="eraserLayer" value={state.eraserLayer} onChange={(event) => editor.setEraserLayer(event.currentTarget.value)}>
+        <option value="all">{t('Все слои')}</option>
+        {state.layers.map((layer) => (
+          <option key={layer.id} value={layer.id}>{layer.name}</option>
+        ))}
+      </select>
+      {chosen && (!chosen.visible || chosen.locked) ? (
+        <p className="hint">{t('Слой скрыт или заблокирован: его символы не стираются.')}</p>
+      ) : null}
+    </>
+  );
+}
 function HeroPicker({ editor, group }) {
   const dialog = useRef(null),
     search = useRef(null),
@@ -611,6 +630,9 @@ export function StudioControls({ editor, panel: openPanel = null }) {
       <StudioPortal targetId="projectPanel">
         <ProjectPanel editor={editor} state={state} />
       </StudioPortal>
+      <StudioPortal targetId="eraserLayerField">
+        <EraserLayer editor={editor} state={state} />
+      </StudioPortal>
       <StudioPortal targetId="referencePanel">
         <ReferencePanel
           key={`${state.fileName}:${state.configIndex}`}
@@ -623,18 +645,21 @@ export function StudioControls({ editor, panel: openPanel = null }) {
         />
       </StudioPortal>
       <StudioPortal targetId="canvasNotices">
+        {/* Past the frame (2026-10-16): what is outside stays in the project, dimmed on the canvas, and every
+            download or publication crops it by itself; «Обрезать» deletes it from the project as well. */}
         {state.overflow.count > 0 ? (
           <div className="canvas-warning" role="status">
             <span>
               {t('За границами {w} × {h}:', { w: state.canvas.w, h: state.canvas.h })}{' '}
-              <strong>{tn(state.overflow.count, ['символ', 'символа', 'символов'], ['symbol', 'symbols'])}</strong>
+              <strong>{tn(state.overflow.count, ['символ', 'символа', 'символов'], ['symbol', 'symbols'])}</strong>{' '}
+              {t('— в Dota их не видно, при скачивании они обрезаются сами.')}
             </span>
             <button
               onClick={editor.cropOverflow}
               disabled={!state.overflow.editable}
               title={
                 state.overflow.editable
-                  ? t('Удалить символы, которые выходят за границы')
+                  ? t('Удалить их и из проекта')
                   : t('Разблокируй слой для обрезки')
               }
             >

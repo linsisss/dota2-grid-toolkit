@@ -31,11 +31,16 @@ export function onGridBackground(callback) {
 // 2386×1186 for large previews, 1193×593 for cards.
 const URLS = {
   large: new URL('../assets/backgrounds/dota-grid.webp', import.meta.url).href,
-  small: new URL('../assets/backgrounds/dota-grid-1x.webp', import.meta.url).href
+  small: new URL('../assets/backgrounds/dota-grid-1x.webp', import.meta.url).href,
+  // The whole 1080p screen, for the PNG of a canvas larger than the grid (grid-picture.mjs).
+  screen: new URL('../assets/backgrounds/dota-screen.webp', import.meta.url).href
 };
 const images = new Map();
+export const gridScreenImage = () => loadBackground(URLS.screen);
 export function gridBackgroundImage(large = false) {
-  const url = large ? URLS.large : URLS.small;
+  return loadBackground(large ? URLS.large : URLS.small);
+}
+function loadBackground(url) {
   if (!images.has(url)) images.set(url, new Promise((resolve) => {
     const image = new Image();
     image.onload = () => resolve(image); image.onerror = () => resolve(null); image.src = url;

@@ -19,6 +19,7 @@ import { useLanguage } from '../useLanguage.js';
 // used — Dotadle, and the stage with a random workshop grid and the banner on the right. The authors,
 // support, the chat and «Реклама» moved to the footer. The old one stays in /landing.html («Сцена»).
 const DOTADLE_PATH = './dotadle';
+const MINIGAMES_PATH = './minigames';
 const SUPPORT_URL = 'https://www.donationalerts.com/r/linsiss';
 // Dotadle's number today (Moscow day; #1 = 2026-10-06, server/dotadle.mjs).
 const dotadleNumber = () => Math.floor((Date.now() + 3 * 3_600_000) / 86_400_000) - Date.UTC(2026, 9, 6) / 86_400_000 + 1;
@@ -103,12 +104,14 @@ function HomePage() {
         <h1>{t('Настрой Dota 2\nпод себя.').split('\n').map((line, i) => i ? <span key={i}><br /><span className="heading-line">{line}</span></span> : line)}</h1>
         <p className="landing-description">{t('Фоны главного меню, сетки героев и шрифты — бесплатно, прямо в браузере.')}</p>
         <div className="home-cards">
-          <Card thumb={<BackgroundThumb />} title={t('Фон меню')} text={t('Живой фон из видео, GIF или картинки.')} action={t('Сделать фон')} href={CUSTOMIZE_PATH} more={t('Готовые')} moreHref={`${CATALOG_PATH}?backgrounds`} />
+          <Card thumb={<BackgroundThumb />} title={t('Фон и интерфейс')} text={t('Живой фон меню, HUD, курсор и тексты — одним файлом.')} action={t('Настроить')} href={CUSTOMIZE_PATH} more={t('Готовые')} moreHref={`${CATALOG_PATH}?backgrounds`} />
           <Card thumb={<GridThumb />} title={t('Сетка героев')} text={t('Герои, рисунки и ASCII-арты из символов.')} action={t('Создать сетку')} href={STUDIO_PATH} more={t('Готовые')} moreHref={CATALOG_PATH} />
           <Card thumb={<FontThumb />} title={t('Шрифт')} text={t('Любой шрифт с кириллицей в чате и меню.')} action={t('Выбрать шрифт')} href={FONT_PATH} />
         </div>
         <a className="home-dotadle" href={DOTADLE_PATH}><span className="home-dotadle-art" aria-hidden="true">{'.:+\n=#@\n-*%'}</span>
           <span><b>{t('Dotadle #{number}', { number: dotadleNumber() })}</b><small>{t('Угадай героя дня по портрету из символов')}</small></span><Icon name="arrow" /></a>
+        <a className="home-dotadle home-minigames" href={MINIGAMES_PATH}><img className="home-dotadle-art" src="./assets/minigames/hub/race-480.webp" alt="" aria-hidden="true" loading="lazy" decoding="async" />
+          <span><b>{t('Мини-игры')}</b><small>{t('Девять игр Crownfall из Dota 2 прямо в браузере')}</small></span><Icon name="arrow" /></a>
       </div>
       <div className={`landing-visual${spotShown ? ' has-spot' : ''}`}><StageArtwork image={editorImage} /><Spot place="landing" className="is-landing" /></div>
     </main>

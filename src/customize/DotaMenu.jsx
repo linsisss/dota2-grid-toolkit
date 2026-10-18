@@ -29,8 +29,31 @@ import eventScreen from '../../assets/dota-menu/ui/event-screen.webp';
 // has no event; false keeps the button mounted but away, so turning it on and off both animate.
 // news: { carnival, season } — which cards of the news column show (2026-10-08); hiding Dark Carnival
 // moves the Quartero card up to the column's top, like the column's flow in the game.
-export default function DotaMenu({ news = { carnival: true, season: true }, event = null }) {
+// hide: top bar buttons the pack hides (MENU_HIDE in scripts/menu-background.mjs, 2026-10-16). The bar
+// is one picture, so it is cut at the middle of the slanted separators (y 30) into BAR_LEFT and BAR_RIGHT
+// pieces; a hidden one drops out and the rest close up, as Dota's tabs flow left and the right-hand
+// buttons right. The plain bar fills what is left.
+const BAR_LEFT = [['', 0, 550], ['collection', 550, 715], ['watch', 715, 879], ['learn', 879, 1046], ['mods', 1046, 1210], ['', 1210, 1490]];
+const BAR_RIGHT = [['', 1851, 1920], ['plus', 1778, 1851], ['armory', 1704, 1778], ['', 1629, 1704], ['shards', 1488, 1629]];
+function TopBar({ hide }) {
+  if (!hide.length) return <>
+    <div className="dm-bar-left" style={{ backgroundImage: `url(${bar})` }}/>
+    <div className="dm-bar-mid" style={{ backgroundImage: `url(${barMid})` }}/>
+    <div className="dm-bar-right" style={{ backgroundImage: `url(${bar})` }}/>
+  </>;
+  const piece = (x0, x1, side, at, height) => <div key={`${side}${x0}`} className="dm-bar-piece" style={{ [side]: at, width: x1 - x0, height, backgroundImage: `url(${bar})`, backgroundPosition: `-${x0}px 0` }}/>;
+  let left = 0, right = 0;
+  return <>
+    <div className="dm-bar-mid is-whole" style={{ backgroundImage: `url(${barMid})` }}/>
+    {BAR_LEFT.filter(([key]) => !hide.includes(key)).map(([, x0, x1]) => { const at = left; left += x1 - x0; return piece(x0, x1, 'left', at, 73); })}
+    {BAR_RIGHT.filter(([key]) => !hide.includes(key)).map(([, x0, x1]) => { const at = right; right += x1 - x0; return piece(x0, x1, 'right', at, 61); })}
+  </>;
+}
+
+export default function DotaMenu({ news = { carnival: true, season: true }, event = null, hide = [] }) {
   const clean = !news.carnival;
+  // The envelope moves right by the right-hand buttons hidden after it.
+  const shift = BAR_RIGHT.filter(([key, x0]) => key && x0 > 1704 && hide.includes(key)).reduce((sum, [, x0, x1]) => sum + x1 - x0, 0);
   const frame = useRef(null), layer = useRef(null), mail = useRef(null), [open, setOpen] = useState(false);
   const [season, setSeason] = useState(false), [warm, setWarm] = useState(false), [loaded, setLoaded] = useState(false);
   useEffect(() => { if (!event) setSeason(false); }, [event]);
@@ -58,9 +81,7 @@ export default function DotaMenu({ news = { carnival: true, season: true }, even
   return <div className="dota-menu" ref={frame} aria-hidden="true"><div className={`dm-layer${season ? ' is-event' : ''}`} ref={layer}>
     {/* The screen comes in once its picture is there, so a slow load does not pop it in halfway. */}
     {warm && <div className={`dm-event${loaded ? ' is-loaded' : ''}`} style={{ '--event': `url(${eventScreen})` }}><img src={eventScreen} alt="" onLoad={() => setLoaded(true)}/></div>}
-    <div className="dm-bar-left" style={{ backgroundImage: `url(${bar})` }}/>
-    <div className="dm-bar-mid" style={{ backgroundImage: `url(${barMid})` }}/>
-    <div className="dm-bar-right" style={{ backgroundImage: `url(${bar})` }}/>
+    <TopBar hide={hide}/>
     <div className="dm-rail"><img src={rail} alt=""/></div>
     <div className="dm-party"><img src={railParty} alt=""/><img className="dm-party-me" src={avatar} alt=""/></div>
     {/* Stays mounted, so hiding and showing the news both animate. Under the event card, since Dota's
@@ -73,7 +94,7 @@ export default function DotaMenu({ news = { carnival: true, season: true }, even
       <img className="dm-event-logo" src={eventLogo} alt=""/><img className="dm-event-title" src={eventTitle} alt=""/><img className="dm-event-title is-back" src={eventBackTitle} alt=""/></button>}
     <img className="dm-chat" src={chat} alt=""/>
     <img className="dm-play" src={play} alt=""/>
-    <button ref={mail} type="button" tabIndex={-1} className={`dm-mail${open ? ' is-open' : ''}`} onClick={() => setOpen((value) => !value)}><img src={mailOn} alt=""/></button>
-    <img className={`dm-notice${open ? ' is-open' : ''}`} src={notice} alt=""/>
+    <button ref={mail} type="button" tabIndex={-1} className={`dm-mail${open ? ' is-open' : ''}`} style={shift ? { right: 218 - shift } : undefined} onClick={() => setOpen((value) => !value)}><img src={mailOn} alt=""/></button>
+    <img className={`dm-notice${open ? ' is-open' : ''}`} src={notice} alt="" style={shift ? { right: 84 - shift } : undefined}/>
   </div></div>;
 }

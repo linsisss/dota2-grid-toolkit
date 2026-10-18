@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { createCanvas, GlobalFonts, loadImage } from '@napi-rs/canvas';
 import { renderCatalogPreview } from './catalog-preview.mjs';
 import { OG_SIZE, ogTags } from '../scripts/og-pages.mjs';
+import { badgeMarkSVG } from '../scripts/badge-marks.mjs';
+import { badgesByWeight } from '../scripts/profile-badges.mjs';
 
 // Link previews (Open Graph) for a work shared from the workshop: a grid (/workshop?id=…) or a menu
 // background (/background?background=…). Messengers do not run the page's script, so nginx hands
@@ -161,9 +163,12 @@ export async function guidePreviewImage({ title, section, author, cover: coverFi
 
 
 // A creator's profile (server/profiles.mjs, asked for on 2026-10-03): the avatar in a ring, the nickname,
-// the badges as pills, and the counts; the site's lilac glow behind. `avatar`: the picture's bytes.
+// the badges as their medals with names (scripts/badge-marks.mjs, the rare ones first), and the counts; the
+// site's lilac glow behind. `avatar`: the picture's bytes.
 export async function profilePreviewImage({ nickname, avatar, badges, stats }) {
   const picture = avatar ? await loadImage(Buffer.from(avatar)).catch(() => null) : null;
+  const shown = badgesByWeight(badges.map((badge) => badge.id));
+  const medals = await Promise.all(shown.map((badge) => loadImage(Buffer.from(badgeMarkSVG(badge, 96))).catch(() => null)));
   return jpeg((context, width, height) => {
     const glow = context.createRadialGradient(width * 0.2, height * 0.1, 0, width * 0.2, height * 0.1, width);
     glow.addColorStop(0, '#c4b5ed40'); glow.addColorStop(1, '#0f0e1300');
@@ -180,17 +185,16 @@ export async function profilePreviewImage({ nickname, avatar, badges, stats }) {
     context.font = `${nameSize}px PreviewMontserrat`;
     while (context.measureText(nickname).width > room && nameSize > 40) context.font = `${(nameSize -= 4)}px PreviewMontserrat`;
     context.fillStyle = '#f4f1fa'; context.fillText(nickname, left, y + 92);
-    // Badges as pills, as many as fit on one line.
-    let pillX = left;
+    // Badges: a medal and its name each, as many as fit on one line; the rest as medals alone.
+    let at = left;
     context.font = '24px PreviewMontserrat';
-    for (const badge of badges) {
-      const w = context.measureText(badge.label).width + 36;
-      if (pillX + w > width - 72) break;
-      context.fillStyle = `${badge.color}26`; context.strokeStyle = `${badge.color}99`; context.lineWidth = 2;
-      context.beginPath(); context.roundRect(pillX, y + 122, w, 44, 22); context.fill(); context.stroke();
-      context.fillStyle = badge.color; context.fillText(badge.label, pillX + 18, y + 152);
-      pillX += w + 12;
-    }
+    shown.forEach((badge, i) => {
+      const label = context.measureText(badge.label).width, named = at + 48 + label <= width - 72 && (i < 2 || shown.length <= 3);
+      if (at + 44 > width - 72) return;
+      if (medals[i]) context.drawImage(medals[i], at, y + 122, 44, 44);
+      at += 52;
+      if (named) { context.fillStyle = badge.rare ? '#efeaf5' : '#c9c1d6'; context.fillText(badge.label, at, y + 152); at += label + 24; }
+    });
     context.fillStyle = '#afa7bf'; context.font = '30px PreviewMontserrat';
     context.fillText(stats, left, y + (badges.length ? 222 : 160));
     context.fillStyle = '#c4b5ed'; context.font = '26px PreviewMontserrat';

@@ -1,0 +1,967 @@
+{
+ "about": "Made by scripts/make-minigame-assets.mjs from Valve’s Dota 2 files; see docs/minigames.md.",
+ "files": {
+  "data.json": {
+   "from": "scripts/events/crownfall/match3_abilities.vdata, scripts/events/crownfall/match3_game_modes.vdata, scripts/events/crownfall/match3_heroes.vdata, scripts/events/crownfall/match3_opponent_actions.vdata, scripts/events/crownfall/match3_opponents.vdata",
+   "bytes": 48740
+  },
+  "images/buff_outline.webp": {
+   "from": "panorama/images/hud/reborn/buff_outline_psd.png",
+   "width": 64,
+   "height": 64,
+   "lossless": true,
+   "stamp": "8e892f6bfb0229eb",
+   "bytes": 2304
+  },
+  "images/crit_damage.webp": {
+   "from": "panorama/images/control_icons/crit_damage_png.png",
+   "width": 64,
+   "height": 64,
+   "lossless": true,
+   "stamp": "c0074d668968fabf",
+   "bytes": 358
+  },
+  "images/hed_graphic_minigame.webp": {
+   "from": "panorama/images/events/crownfall/fishing/hed_graphic_minigame_png.png",
+   "width": 923,
+   "height": 294,
+   "lossless": true,
+   "stamp": "84a841665f59139a",
+   "bytes": 49018
+  },
+  "images/heroes/selection/npc_dota_hero_broodmother.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_broodmother_png.png",
+   "width": 142,
+   "height": 188,
+   "quality": 88,
+   "stamp": "10eca1030b4d4715",
+   "bytes": 6710
+  },
+  "images/heroes/selection/npc_dota_hero_crystal_maiden.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_crystal_maiden_png.png",
+   "width": 142,
+   "height": 188,
+   "quality": 88,
+   "stamp": "3253f3ce1acde3e6",
+   "bytes": 7726
+  },
+  "images/heroes/selection/npc_dota_hero_lich.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_lich_png.png",
+   "width": 142,
+   "height": 188,
+   "quality": 88,
+   "stamp": "2e8deeca6516f3c8",
+   "bytes": 6596
+  },
+  "images/heroes/selection/npc_dota_hero_lina.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_lina_png.png",
+   "width": 142,
+   "height": 188,
+   "quality": 88,
+   "stamp": "cf03feb0baf0ef4a",
+   "bytes": 5664
+  },
+  "images/heroes/selection/npc_dota_hero_vengefulspirit.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_vengefulspirit_png.png",
+   "width": 142,
+   "height": 188,
+   "quality": 88,
+   "stamp": "3ac08fce596f9518",
+   "bytes": 7054
+  },
+  "images/heroes/selection/npc_dota_hero_winter_wyvern.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_winter_wyvern_png.png",
+   "width": 142,
+   "height": 188,
+   "quality": 88,
+   "stamp": "88e9a2c6d8367a3a",
+   "bytes": 5660
+  },
+  "images/items/black_king_bar.webp": {
+   "from": "panorama/images/items/black_king_bar_png.png",
+   "width": 88,
+   "height": 64,
+   "lossless": true,
+   "stamp": "1b645097e0c7c03e",
+   "bytes": 7916
+  },
+  "images/items/flask.webp": {
+   "from": "panorama/images/items/flask_png.png",
+   "width": 87,
+   "height": 64,
+   "lossless": true,
+   "stamp": "43f961a4db21c73a",
+   "bytes": 4986
+  },
+  "images/magic_damage.webp": {
+   "from": "panorama/images/control_icons/magic_damage_png.png",
+   "width": 64,
+   "height": 64,
+   "lossless": true,
+   "stamp": "a581a4ed0f903809",
+   "bytes": 482
+  },
+  "images/match3_background_icewrack.webp": {
+   "from": "panorama/images/events/crownfall/match3/match3_background_icewrack_png.png",
+   "width": 1920,
+   "height": 1080,
+   "quality": 86,
+   "stamp": "03e9cbac449a2346",
+   "bytes": 48300
+  },
+  "images/novel/wyvern_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/wyvern_portrait_idle_png.png",
+   "width": 900,
+   "height": 1013,
+   "quality": 88,
+   "stamp": "51d8761c08bfb7b4",
+   "bytes": 68870
+  },
+  "images/score_container_background.webp": {
+   "from": "panorama/images/events/crownfall/match3/score_container_background_png.png",
+   "width": 521,
+   "height": 160,
+   "lossless": true,
+   "stamp": "a7fd1f71ea7b8e53",
+   "bytes": 23486
+  },
+  "images/score_container_border.webp": {
+   "from": "panorama/images/events/crownfall/match3/score_container_border_png.png",
+   "width": 522,
+   "height": 160,
+   "lossless": true,
+   "stamp": "30ef02ed649934f9",
+   "bytes": 980
+  },
+  "images/spellicons/action_attack.webp": {
+   "from": "panorama/images/spellicons/action_attack_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "9e41098760029d80",
+   "bytes": 7618
+  },
+  "images/spellicons/alpha_wolf_critical_strike.webp": {
+   "from": "panorama/images/spellicons/alpha_wolf_critical_strike_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "88a262ff5e0bd94b",
+   "bytes": 7688
+  },
+  "images/spellicons/ancient_apparition_cold_feet.webp": {
+   "from": "panorama/images/spellicons/ancient_apparition_cold_feet_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "89773ab9bfc06e68",
+   "bytes": 18544
+  },
+  "images/spellicons/ancient_apparition_ice_blast.webp": {
+   "from": "panorama/images/spellicons/ancient_apparition_ice_blast_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "d7d99aca4af21989",
+   "bytes": 24022
+  },
+  "images/spellicons/broodmother_insatiable_hunger.webp": {
+   "from": "panorama/images/spellicons/broodmother_insatiable_hunger_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "82d9bdd6efeecee2",
+   "bytes": 23312
+  },
+  "images/spellicons/broodmother_spawn_spiderlings.webp": {
+   "from": "panorama/images/spellicons/broodmother_spawn_spiderlings_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "196823bf2db90e14",
+   "bytes": 18440
+  },
+  "images/spellicons/broodmother_spin_web.webp": {
+   "from": "panorama/images/spellicons/broodmother_spin_web_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "19f18013132f93c2",
+   "bytes": 20504
+  },
+  "images/spellicons/chaos_knight_chaos_bolt.webp": {
+   "from": "panorama/images/spellicons/chaos_knight_chaos_bolt_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "72c139372713948d",
+   "bytes": 17108
+  },
+  "images/spellicons/chaos_knight_chaos_strike.webp": {
+   "from": "panorama/images/spellicons/chaos_knight_chaos_strike_png.png",
+   "width": 126,
+   "height": 125,
+   "lossless": true,
+   "stamp": "f8d0a42ff3c2574f",
+   "bytes": 18082
+  },
+  "images/spellicons/crystal_maiden_crystal_nova.webp": {
+   "from": "panorama/images/spellicons/crystal_maiden_crystal_nova_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "7f1004d16276bc07",
+   "bytes": 17202
+  },
+  "images/spellicons/crystal_maiden_freezing_field.webp": {
+   "from": "panorama/images/spellicons/crystal_maiden_freezing_field_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "9ba7263485acd972",
+   "bytes": 16786
+  },
+  "images/spellicons/drow_ranger_glacier.webp": {
+   "from": "panorama/images/spellicons/drow_ranger_glacier_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "6d744845a7f68585",
+   "bytes": 19154
+  },
+  "images/spellicons/drow_ranger_wave_of_silence.webp": {
+   "from": "panorama/images/spellicons/drow_ranger_wave_of_silence_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "b3daa1c6db31aeb7",
+   "bytes": 18152
+  },
+  "images/spellicons/ghost_frost_attack.webp": {
+   "from": "panorama/images/spellicons/ghost_frost_attack_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "25f6cbc981fb9e8a",
+   "bytes": 15076
+  },
+  "images/spellicons/ice_shaman_incendiary_bomb.webp": {
+   "from": "panorama/images/spellicons/ice_shaman_incendiary_bomb_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "28c22a1ed2dd827a",
+   "bytes": 19072
+  },
+  "images/spellicons/lich_chain_frost.webp": {
+   "from": "panorama/images/spellicons/lich_chain_frost_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "48c3628263aebf52",
+   "bytes": 19790
+  },
+  "images/spellicons/lich_frost_nova.webp": {
+   "from": "panorama/images/spellicons/lich_frost_nova_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "dfb4e949ea5f96c8",
+   "bytes": 18832
+  },
+  "images/spellicons/lina_dragon_slave.webp": {
+   "from": "panorama/images/spellicons/lina_dragon_slave_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "4bbd9a849557b550",
+   "bytes": 22174
+  },
+  "images/spellicons/lina_light_strike_array.webp": {
+   "from": "panorama/images/spellicons/lina_light_strike_array_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "e0b034f6fb39543e",
+   "bytes": 19456
+  },
+  "images/spellicons/ogre_bruiser_ogre_smash.webp": {
+   "from": "panorama/images/spellicons/ogre_bruiser_ogre_smash_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "42dc7be416616469",
+   "bytes": 17686
+  },
+  "images/spellicons/vengefulspirit_magic_missile.webp": {
+   "from": "panorama/images/spellicons/vengefulspirit_magic_missile_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "72e49febc4768437",
+   "bytes": 14570
+  },
+  "images/spellicons/vengefulspirit_nether_swap.webp": {
+   "from": "panorama/images/spellicons/vengefulspirit_nether_swap_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "e4f926bf48e1c898",
+   "bytes": 16756
+  },
+  "images/spellicons/winter_wyvern_cold_embrace.webp": {
+   "from": "panorama/images/spellicons/winter_wyvern_cold_embrace_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "e90f1501d2333241",
+   "bytes": 19092
+  },
+  "images/spellicons/winter_wyvern_splinter_blast.webp": {
+   "from": "panorama/images/spellicons/winter_wyvern_splinter_blast_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "aa4760c2d6dc445e",
+   "bytes": 18452
+  },
+  "sounds.json": {
+   "from": "soundevents/soundevents_match3.vsndevts",
+   "bytes": 15183
+  },
+  "sounds/ambient/horn_dire.mp3": {
+   "from": "sounds/ambient/horn_dire.wav",
+   "stamp": "0eac27dda9525bf4",
+   "bytes": 137813
+  },
+  "sounds/items/black_king_bar.mp3": {
+   "from": "sounds/items/black_king_bar.wav",
+   "stamp": "324ac90752b744f0",
+   "bytes": 66715
+  },
+  "sounds/items/healing_salve.mp3": {
+   "from": "sounds/items/healing_salve.wav",
+   "stamp": "18ab7de6ac77c3cf",
+   "bytes": 43339
+  },
+  "sounds/items/rune_arcane.mp3": {
+   "from": "sounds/items/rune_arcane.wav",
+   "stamp": "d07bada51f2412f7",
+   "bytes": 47556
+  },
+  "sounds/items/rune_dd.mp3": {
+   "from": "sounds/items/rune_dd.wav",
+   "stamp": "630320a9afa942ec",
+   "bytes": 50184
+  },
+  "sounds/items/rune_haste.mp3": {
+   "from": "sounds/items/rune_haste.wav",
+   "stamp": "15d9f090ac9c2284",
+   "bytes": 31976
+  },
+  "sounds/items/rune_illusion.mp3": {
+   "from": "sounds/items/rune_illusion.wav",
+   "stamp": "33f78f8a9c8f011c",
+   "bytes": 46966
+  },
+  "sounds/items/rune_invis.mp3": {
+   "from": "sounds/items/rune_invis.wav",
+   "stamp": "52ad03c9984c37fc",
+   "bytes": 41727
+  },
+  "sounds/items/rune_regen.mp3": {
+   "from": "sounds/items/rune_regen.wav",
+   "stamp": "b1ba5d5557483e3f",
+   "bytes": 63386
+  },
+  "sounds/items/rune_shield.mp3": {
+   "from": "sounds/items/rune_shield.wav",
+   "stamp": "5d3f8ae684e39fa3",
+   "bytes": 104610
+  },
+  "sounds/misc/crownfall/matched_layer.mp3": {
+   "from": "sounds/misc/crownfall/matched_layer.wav",
+   "stamp": "7bc180eb4ce147b3",
+   "bytes": 23206
+  },
+  "sounds/misc/crownfall/music/match3_main.mp3": {
+   "from": "sounds/misc/crownfall/music/match3_main.mp3",
+   "stamp": "13ad001fa7522d0d",
+   "bytes": 355727
+  },
+  "sounds/misc/crownfall/music/match3_mus_hard_1.mp3": {
+   "from": "sounds/misc/crownfall/music/match3_mus_hard_1.mp3",
+   "stamp": "4a1b6ed144d7971d",
+   "bytes": 498251
+  },
+  "sounds/misc/crownfall/music/match3_mus_hard_2.mp3": {
+   "from": "sounds/misc/crownfall/music/match3_mus_hard_2.mp3",
+   "stamp": "795537b3d7ac2efb",
+   "bytes": 570976
+  },
+  "sounds/misc/crownfall/music/match3_mus_norm_1.mp3": {
+   "from": "sounds/misc/crownfall/music/match3_mus_norm_1.mp3",
+   "stamp": "a6234f6ffe29e102",
+   "bytes": 848919
+  },
+  "sounds/misc/crownfall/music/match3_mus_norm_2.mp3": {
+   "from": "sounds/misc/crownfall/music/match3_mus_norm_2.mp3",
+   "stamp": "24ca23b22dc25eaa",
+   "bytes": 555093
+  },
+  "sounds/misc/ogre_smash_01.mp3": {
+   "from": "sounds/misc/ogre_smash_01.wav",
+   "stamp": "4508c05eb013c244",
+   "bytes": 24505
+  },
+  "sounds/misc/ogre_smash_02.mp3": {
+   "from": "sounds/misc/ogre_smash_02.wav",
+   "stamp": "bb7135bfb96222c5",
+   "bytes": 28267
+  },
+  "sounds/music/valve_dota_001/music/killed.mp3": {
+   "from": "sounds/music/valve_dota_001/music/killed.mp3",
+   "stamp": "e1c47c67b19d7516",
+   "bytes": 360533
+  },
+  "sounds/music/valve_dota_001/stingers/radiant_win.mp3": {
+   "from": "sounds/music/valve_dota_001/stingers/radiant_win.mp3",
+   "stamp": "7150c7bed9d92d35",
+   "bytes": 360533
+  },
+  "sounds/physics/damage/player/melee01.mp3": {
+   "from": "sounds/physics/damage/player/melee01.wav",
+   "stamp": "748923787461adf4",
+   "bytes": 3663
+  },
+  "sounds/physics/damage/player/melee02.mp3": {
+   "from": "sounds/physics/damage/player/melee02.wav",
+   "stamp": "36967b1ca928c9c9",
+   "bytes": 5697
+  },
+  "sounds/physics/damage/player/melee03.mp3": {
+   "from": "sounds/physics/damage/player/melee03.wav",
+   "stamp": "0a805e1e757fb425",
+   "bytes": 3220
+  },
+  "sounds/physics/damage/player/melee04.mp3": {
+   "from": "sounds/physics/damage/player/melee04.wav",
+   "stamp": "0948d1f292da200d",
+   "bytes": 5696
+  },
+  "sounds/physics/damage/player/projectile01.mp3": {
+   "from": "sounds/physics/damage/player/projectile01.wav",
+   "stamp": "72610120837e8a64",
+   "bytes": 4677
+  },
+  "sounds/physics/damage/player/projectile02.mp3": {
+   "from": "sounds/physics/damage/player/projectile02.wav",
+   "stamp": "c9813111f37b9088",
+   "bytes": 4259
+  },
+  "sounds/physics/damage/player/projectile03.mp3": {
+   "from": "sounds/physics/damage/player/projectile03.wav",
+   "stamp": "c9813111f37b9088",
+   "bytes": 4259
+  },
+  "sounds/physics/damage/player/projectile04.mp3": {
+   "from": "sounds/physics/damage/player/projectile04.wav",
+   "stamp": "c9813111f37b9088",
+   "bytes": 4233
+  },
+  "sounds/ui/buttonclick.mp3": {
+   "from": "sounds/ui/buttonclick.wav",
+   "stamp": "caaab3d8dffaf39c",
+   "bytes": 3175
+  },
+  "sounds/ui/crafting/gem_create.mp3": {
+   "from": "sounds/ui/crafting/gem_create.wav",
+   "stamp": "7aaf3de50ab04404",
+   "bytes": 15352
+  },
+  "sounds/ui/item_drop_gem_shop.mp3": {
+   "from": "sounds/ui/item_drop_gem_shop.wav",
+   "stamp": "6cddf951dbbcbb3a",
+   "bytes": 14066
+  },
+  "sounds/ui/stacked.mp3": {
+   "from": "sounds/ui/stacked.wav",
+   "stamp": "729415d1a8123d39",
+   "bytes": 72885
+  },
+  "sounds/ui/treasure_01.mp3": {
+   "from": "sounds/ui/treasure_01.wav",
+   "stamp": "add314baceb2172e",
+   "bytes": 61760
+  },
+  "sounds/ui/ui_general_deny.mp3": {
+   "from": "sounds/ui/ui_general_deny.wav",
+   "stamp": "3700995b45e8cf94",
+   "bytes": 2835
+  },
+  "sounds/weapons/creep/shared/whoosh01.mp3": {
+   "from": "sounds/weapons/creep/shared/whoosh01.wav",
+   "stamp": "52c6d59ef812b07b",
+   "bytes": 3877
+  },
+  "sounds/weapons/creep/shared/whoosh02.mp3": {
+   "from": "sounds/weapons/creep/shared/whoosh02.wav",
+   "stamp": "07708ea6877af569",
+   "bytes": 3461
+  },
+  "sounds/weapons/creep/shared/whoosh03.mp3": {
+   "from": "sounds/weapons/creep/shared/whoosh03.wav",
+   "stamp": "b89d86dd876f28d0",
+   "bytes": 4373
+  },
+  "sounds/weapons/hero/alchemist/acid_spray_damage01.mp3": {
+   "from": "sounds/weapons/hero/alchemist/acid_spray_damage01.wav",
+   "stamp": "b08fa16f5d7b0153",
+   "bytes": 9839
+  },
+  "sounds/weapons/hero/alchemist/acid_spray_damage02.mp3": {
+   "from": "sounds/weapons/hero/alchemist/acid_spray_damage02.wav",
+   "stamp": "61172fd0266e424e",
+   "bytes": 10910
+  },
+  "sounds/weapons/hero/alchemist/acid_spray_damage03.mp3": {
+   "from": "sounds/weapons/hero/alchemist/acid_spray_damage03.wav",
+   "stamp": "50da85369208ccdb",
+   "bytes": 10729
+  },
+  "sounds/weapons/hero/alchemist/acid_spray_damage04.mp3": {
+   "from": "sounds/weapons/hero/alchemist/acid_spray_damage04.wav",
+   "stamp": "a467b5cc1c534595",
+   "bytes": 7438
+  },
+  "sounds/weapons/hero/alchemist/acid_spray_damage05.mp3": {
+   "from": "sounds/weapons/hero/alchemist/acid_spray_damage05.wav",
+   "stamp": "6690e4015b8b0d96",
+   "bytes": 8508
+  },
+  "sounds/weapons/hero/alchemist/acid_spray_damage06.mp3": {
+   "from": "sounds/weapons/hero/alchemist/acid_spray_damage06.wav",
+   "stamp": "c54806f6d9f6b712",
+   "bytes": 10312
+  },
+  "sounds/weapons/hero/alchemist/acid_spray_damage07.mp3": {
+   "from": "sounds/weapons/hero/alchemist/acid_spray_damage07.wav",
+   "stamp": "525ef0d9a4e22694",
+   "bytes": 8880
+  },
+  "sounds/weapons/hero/ancient_apparition/attack1.mp3": {
+   "from": "sounds/weapons/hero/ancient_apparition/attack1.wav",
+   "stamp": "ea7fab83897c5566",
+   "bytes": 10556
+  },
+  "sounds/weapons/hero/ancient_apparition/attack2.mp3": {
+   "from": "sounds/weapons/hero/ancient_apparition/attack2.wav",
+   "stamp": "787920186bcc5bec",
+   "bytes": 10477
+  },
+  "sounds/weapons/hero/ancient_apparition/attack3.mp3": {
+   "from": "sounds/weapons/hero/ancient_apparition/attack3.wav",
+   "stamp": "3b7367d20a2d9df8",
+   "bytes": 10478
+  },
+  "sounds/weapons/hero/ancient_apparition/attack4.mp3": {
+   "from": "sounds/weapons/hero/ancient_apparition/attack4.wav",
+   "stamp": "03c68cb256ea4929",
+   "bytes": 10869
+  },
+  "sounds/weapons/hero/ancient_apparition/cold_feet.mp3": {
+   "from": "sounds/weapons/hero/ancient_apparition/cold_feet.wav",
+   "stamp": "2d9d7d382f29c922",
+   "bytes": 36613
+  },
+  "sounds/weapons/hero/ancient_apparition/cold_feet_tick.mp3": {
+   "from": "sounds/weapons/hero/ancient_apparition/cold_feet_tick.wav",
+   "stamp": "e2c2bb8eb51a18c8",
+   "bytes": 28790
+  },
+  "sounds/weapons/hero/ancient_apparition/cold_feet_tick2.mp3": {
+   "from": "sounds/weapons/hero/ancient_apparition/cold_feet_tick2.wav",
+   "stamp": "a4b04cbe14e1a080",
+   "bytes": 28791
+  },
+  "sounds/weapons/hero/ancient_apparition/cold_feet_tick3.mp3": {
+   "from": "sounds/weapons/hero/ancient_apparition/cold_feet_tick3.wav",
+   "stamp": "e2c2bb8eb51a18c8",
+   "bytes": 28791
+  },
+  "sounds/weapons/hero/ancient_apparition/iceblast_explode.mp3": {
+   "from": "sounds/weapons/hero/ancient_apparition/iceblast_explode.wav",
+   "stamp": "56b18807f2031292",
+   "bytes": 44856
+  },
+  "sounds/weapons/hero/ancient_apparition/iceblast_tick01.mp3": {
+   "from": "sounds/weapons/hero/ancient_apparition/iceblast_tick01.wav",
+   "stamp": "d5a0d322edd8b555",
+   "bytes": 6669
+  },
+  "sounds/weapons/hero/ancient_apparition/iceblast_tick02.mp3": {
+   "from": "sounds/weapons/hero/ancient_apparition/iceblast_tick02.wav",
+   "stamp": "7415a27c29359f81",
+   "bytes": 10320
+  },
+  "sounds/weapons/hero/ancient_apparition/iceblast_tick03.mp3": {
+   "from": "sounds/weapons/hero/ancient_apparition/iceblast_tick03.wav",
+   "stamp": "3b8b03c5d066fcc6",
+   "bytes": 16036
+  },
+  "sounds/weapons/hero/broodmother/insatiable_hunger.mp3": {
+   "from": "sounds/weapons/hero/broodmother/insatiable_hunger.wav",
+   "stamp": "cc11935fa0e83238",
+   "bytes": 105166
+  },
+  "sounds/weapons/hero/broodmother/spiderling_cast.mp3": {
+   "from": "sounds/weapons/hero/broodmother/spiderling_cast.wav",
+   "stamp": "b2dba3524b93d070",
+   "bytes": 14696
+  },
+  "sounds/weapons/hero/broodmother/spiderling_impact.mp3": {
+   "from": "sounds/weapons/hero/broodmother/spiderling_impact.wav",
+   "stamp": "dd61704a85340d3f",
+   "bytes": 12040
+  },
+  "sounds/weapons/hero/broodmother/web_cast.mp3": {
+   "from": "sounds/weapons/hero/broodmother/web_cast.wav",
+   "stamp": "e9d306fe6b96beca",
+   "bytes": 23151
+  },
+  "sounds/weapons/hero/chaos_knight/chaos_bolt_cast.mp3": {
+   "from": "sounds/weapons/hero/chaos_knight/chaos_bolt_cast.wav",
+   "stamp": "c9ed7501c6c818b7",
+   "bytes": 25679
+  },
+  "sounds/weapons/hero/chaos_knight/chaos_bolt_target.mp3": {
+   "from": "sounds/weapons/hero/chaos_knight/chaos_bolt_target.wav",
+   "stamp": "b3f1d8cf72579cf0",
+   "bytes": 23306
+  },
+  "sounds/weapons/hero/chaos_knight/chaos_strike.mp3": {
+   "from": "sounds/weapons/hero/chaos_knight/chaos_strike.wav",
+   "stamp": "b21acb517fddb284",
+   "bytes": 29820
+  },
+  "sounds/weapons/hero/crystal_maiden/crystal_nova.mp3": {
+   "from": "sounds/weapons/hero/crystal_maiden/crystal_nova.wav",
+   "stamp": "c28938910e148569",
+   "bytes": 22676
+  },
+  "sounds/weapons/hero/crystal_maiden/freeze_explosion01.mp3": {
+   "from": "sounds/weapons/hero/crystal_maiden/freeze_explosion01.wav",
+   "stamp": "375746225372095e",
+   "bytes": 8267
+  },
+  "sounds/weapons/hero/crystal_maiden/freeze_explosion02.mp3": {
+   "from": "sounds/weapons/hero/crystal_maiden/freeze_explosion02.wav",
+   "stamp": "dbd78dbf883ba264",
+   "bytes": 8864
+  },
+  "sounds/weapons/hero/crystal_maiden/freeze_explosion03.mp3": {
+   "from": "sounds/weapons/hero/crystal_maiden/freeze_explosion03.wav",
+   "stamp": "a1b32a2602ee1c71",
+   "bytes": 6886
+  },
+  "sounds/weapons/hero/crystal_maiden/freezing_field.mp3": {
+   "from": "sounds/weapons/hero/crystal_maiden/freezing_field.mp3",
+   "stamp": "a918127ffa69e3db",
+   "bytes": 200883
+  },
+  "sounds/weapons/hero/dragon_knight/dragonknight_elderdragon_shoot3.mp3": {
+   "from": "sounds/weapons/hero/dragon_knight/dragonknight_elderdragon_shoot3.wav",
+   "stamp": "35e8fe3cc55f87cf",
+   "bytes": 16641
+  },
+  "sounds/weapons/hero/drow_ranger/arrow_1.mp3": {
+   "from": "sounds/weapons/hero/drow_ranger/arrow_1.wav",
+   "stamp": "0ef31fa45deabe12",
+   "bytes": 9484
+  },
+  "sounds/weapons/hero/drow_ranger/arrow_2.mp3": {
+   "from": "sounds/weapons/hero/drow_ranger/arrow_2.wav",
+   "stamp": "30d379ef7149dde2",
+   "bytes": 9564
+  },
+  "sounds/weapons/hero/drow_ranger/arrow_3.mp3": {
+   "from": "sounds/weapons/hero/drow_ranger/arrow_3.wav",
+   "stamp": "3daa09333979ea8a",
+   "bytes": 6955
+  },
+  "sounds/weapons/hero/drow_ranger/arrow_4.mp3": {
+   "from": "sounds/weapons/hero/drow_ranger/arrow_4.wav",
+   "stamp": "cfd873d34a402e40",
+   "bytes": 7320
+  },
+  "sounds/weapons/hero/drow_ranger/silence.mp3": {
+   "from": "sounds/weapons/hero/drow_ranger/silence.wav",
+   "stamp": "d0d6ea3e668ec194",
+   "bytes": 32065
+  },
+  "sounds/weapons/hero/lich/chain_frost_cast.mp3": {
+   "from": "sounds/weapons/hero/lich/chain_frost_cast.wav",
+   "stamp": "23b5792b000e8fde",
+   "bytes": 53821
+  },
+  "sounds/weapons/hero/lich/chain_frost_impact.mp3": {
+   "from": "sounds/weapons/hero/lich/chain_frost_impact.wav",
+   "stamp": "d30b465ac101fafc",
+   "bytes": 16629
+  },
+  "sounds/weapons/hero/lich/chain_frost_impact_hero01.mp3": {
+   "from": "sounds/weapons/hero/lich/chain_frost_impact_hero01.wav",
+   "stamp": "8a8a362dae3971ab",
+   "bytes": 25651
+  },
+  "sounds/weapons/hero/lich/chain_frost_impact_hero02.mp3": {
+   "from": "sounds/weapons/hero/lich/chain_frost_impact_hero02.wav",
+   "stamp": "6f504549d5da9a15",
+   "bytes": 24374
+  },
+  "sounds/weapons/hero/lich/chain_frost_impact_hero03.mp3": {
+   "from": "sounds/weapons/hero/lich/chain_frost_impact_hero03.wav",
+   "stamp": "133b9a79f63dcc43",
+   "bytes": 25964
+  },
+  "sounds/weapons/hero/lich/frost_nova.mp3": {
+   "from": "sounds/weapons/hero/lich/frost_nova.wav",
+   "stamp": "a5b1644476e6dfa9",
+   "bytes": 54090
+  },
+  "sounds/weapons/hero/lina/dragonslave01.mp3": {
+   "from": "sounds/weapons/hero/lina/dragonslave01.wav",
+   "stamp": "45ee07db5df18fb5",
+   "bytes": 38608
+  },
+  "sounds/weapons/hero/lina/dragonslave02.mp3": {
+   "from": "sounds/weapons/hero/lina/dragonslave02.wav",
+   "stamp": "a0e8ce53aee33c6d",
+   "bytes": 33891
+  },
+  "sounds/weapons/hero/lina/lightstrikearray.mp3": {
+   "from": "sounds/weapons/hero/lina/lightstrikearray.wav",
+   "stamp": "e8ba73251e220e0f",
+   "bytes": 36415
+  },
+  "sounds/weapons/hero/shared/large_blade/thump01.mp3": {
+   "from": "sounds/weapons/hero/shared/large_blade/thump01.wav",
+   "stamp": "e74f826679736549",
+   "bytes": 2439
+  },
+  "sounds/weapons/hero/shared/large_blade/thump02.mp3": {
+   "from": "sounds/weapons/hero/shared/large_blade/thump02.wav",
+   "stamp": "9492f75d4a429295",
+   "bytes": 2569
+  },
+  "sounds/weapons/hero/shared/large_blade/thump03.mp3": {
+   "from": "sounds/weapons/hero/shared/large_blade/thump03.wav",
+   "stamp": "62184fe522dead39",
+   "bytes": 2517
+  },
+  "sounds/weapons/hero/tusk/punch_target.mp3": {
+   "from": "sounds/weapons/hero/tusk/punch_target.wav",
+   "stamp": "5579148363f2e105",
+   "bytes": 34208
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile1.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile1.wav",
+   "stamp": "d500e6c098b1a067",
+   "bytes": 20806
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile2.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile2.wav",
+   "stamp": "456d84628af8fa73",
+   "bytes": 22318
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile3.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile3.wav",
+   "stamp": "b2d7028fc0997408",
+   "bytes": 21353
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile4.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile4.wav",
+   "stamp": "3ed93ef26affaba4",
+   "bytes": 22161
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.wav",
+   "stamp": "b828588947b39b4d",
+   "bytes": 18064
+  },
+  "sounds/weapons/hero/vengeful_spirit/nether_swap.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/nether_swap.wav",
+   "stamp": "428b154ee62e8f63",
+   "bytes": 24100
+  },
+  "sounds/weapons/hero/winter_wyvern/cold_embrace.mp3": {
+   "from": "sounds/weapons/hero/winter_wyvern/cold_embrace.wav",
+   "stamp": "24331983ccf6af06",
+   "bytes": 111628
+  },
+  "sounds/weapons/hero/winter_wyvern/splinter01.mp3": {
+   "from": "sounds/weapons/hero/winter_wyvern/splinter01.wav",
+   "stamp": "68eebdee3c2e5c3b",
+   "bytes": 34659
+  },
+  "sounds/weapons/hero/winter_wyvern/splinter02.mp3": {
+   "from": "sounds/weapons/hero/winter_wyvern/splinter02.wav",
+   "stamp": "0bd37930f4211dfb",
+   "bytes": 29130
+  },
+  "sounds/weapons/hero/winter_wyvern/splinter_blast_target.mp3": {
+   "from": "sounds/weapons/hero/winter_wyvern/splinter_blast_target.wav",
+   "stamp": "0a4e8c60f05dbeca",
+   "bytes": 28531
+  },
+  "strings.en.json": {
+   "from": "resource/localization/dota_english.txt, resource/localization/novels/crownfall_english.txt",
+   "count": 151,
+   "bytes": 11776
+  },
+  "strings.ru.json": {
+   "from": "resource/localization/dota_russian.txt, resource/localization/novels/crownfall_russian.txt",
+   "count": 151,
+   "bytes": 16054
+  }
+ },
+ "valve": {
+  "panorama/images/control_icons/crit_damage_png": "images/crit_damage.webp",
+  "panorama/images/control_icons/magic_damage_png": "images/magic_damage.webp",
+  "panorama/images/events/crownfall/fishing/hed_graphic_minigame_png": "images/hed_graphic_minigame.webp",
+  "panorama/images/events/crownfall/match3/match3_background_icewrack_png": "images/match3_background_icewrack.webp",
+  "panorama/images/events/crownfall/match3/score_container_background_png": "images/score_container_background.webp",
+  "panorama/images/events/crownfall/match3/score_container_border_png": "images/score_container_border.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/wyvern_portrait_idle_png": "images/novel/wyvern_portrait_idle.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_broodmother_png": "images/heroes/selection/npc_dota_hero_broodmother.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_crystal_maiden_png": "images/heroes/selection/npc_dota_hero_crystal_maiden.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_lich_png": "images/heroes/selection/npc_dota_hero_lich.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_lina_png": "images/heroes/selection/npc_dota_hero_lina.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_vengefulspirit_png": "images/heroes/selection/npc_dota_hero_vengefulspirit.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_winter_wyvern_png": "images/heroes/selection/npc_dota_hero_winter_wyvern.webp",
+  "panorama/images/hud/reborn/buff_outline_psd": "images/buff_outline.webp",
+  "panorama/images/items/black_king_bar_png": "images/items/black_king_bar.webp",
+  "panorama/images/items/flask_png": "images/items/flask.webp",
+  "panorama/images/spellicons/action_attack_png": "images/spellicons/action_attack.webp",
+  "panorama/images/spellicons/alpha_wolf_critical_strike_png": "images/spellicons/alpha_wolf_critical_strike.webp",
+  "panorama/images/spellicons/ancient_apparition_cold_feet_png": "images/spellicons/ancient_apparition_cold_feet.webp",
+  "panorama/images/spellicons/ancient_apparition_ice_blast_png": "images/spellicons/ancient_apparition_ice_blast.webp",
+  "panorama/images/spellicons/broodmother_insatiable_hunger_png": "images/spellicons/broodmother_insatiable_hunger.webp",
+  "panorama/images/spellicons/broodmother_spawn_spiderlings_png": "images/spellicons/broodmother_spawn_spiderlings.webp",
+  "panorama/images/spellicons/broodmother_spin_web_png": "images/spellicons/broodmother_spin_web.webp",
+  "panorama/images/spellicons/chaos_knight_chaos_bolt_png": "images/spellicons/chaos_knight_chaos_bolt.webp",
+  "panorama/images/spellicons/chaos_knight_chaos_strike_png": "images/spellicons/chaos_knight_chaos_strike.webp",
+  "panorama/images/spellicons/crystal_maiden_crystal_nova_png": "images/spellicons/crystal_maiden_crystal_nova.webp",
+  "panorama/images/spellicons/crystal_maiden_freezing_field_png": "images/spellicons/crystal_maiden_freezing_field.webp",
+  "panorama/images/spellicons/drow_ranger_glacier_png": "images/spellicons/drow_ranger_glacier.webp",
+  "panorama/images/spellicons/drow_ranger_wave_of_silence_png": "images/spellicons/drow_ranger_wave_of_silence.webp",
+  "panorama/images/spellicons/ghost_frost_attack_png": "images/spellicons/ghost_frost_attack.webp",
+  "panorama/images/spellicons/ice_shaman_incendiary_bomb_png": "images/spellicons/ice_shaman_incendiary_bomb.webp",
+  "panorama/images/spellicons/lich_chain_frost_png": "images/spellicons/lich_chain_frost.webp",
+  "panorama/images/spellicons/lich_frost_nova_png": "images/spellicons/lich_frost_nova.webp",
+  "panorama/images/spellicons/lina_dragon_slave_png": "images/spellicons/lina_dragon_slave.webp",
+  "panorama/images/spellicons/lina_light_strike_array_png": "images/spellicons/lina_light_strike_array.webp",
+  "panorama/images/spellicons/ogre_bruiser_ogre_smash_png": "images/spellicons/ogre_bruiser_ogre_smash.webp",
+  "panorama/images/spellicons/vengefulspirit_magic_missile_png": "images/spellicons/vengefulspirit_magic_missile.webp",
+  "panorama/images/spellicons/vengefulspirit_nether_swap_png": "images/spellicons/vengefulspirit_nether_swap.webp",
+  "panorama/images/spellicons/winter_wyvern_cold_embrace_png": "images/spellicons/winter_wyvern_cold_embrace.webp",
+  "panorama/images/spellicons/winter_wyvern_splinter_blast_png": "images/spellicons/winter_wyvern_splinter_blast.webp",
+  "sounds/ambient/horn_dire": "sounds/ambient/horn_dire.mp3",
+  "sounds/items/black_king_bar": "sounds/items/black_king_bar.mp3",
+  "sounds/items/healing_salve": "sounds/items/healing_salve.mp3",
+  "sounds/items/rune_arcane": "sounds/items/rune_arcane.mp3",
+  "sounds/items/rune_dd": "sounds/items/rune_dd.mp3",
+  "sounds/items/rune_haste": "sounds/items/rune_haste.mp3",
+  "sounds/items/rune_illusion": "sounds/items/rune_illusion.mp3",
+  "sounds/items/rune_invis": "sounds/items/rune_invis.mp3",
+  "sounds/items/rune_regen": "sounds/items/rune_regen.mp3",
+  "sounds/items/rune_shield": "sounds/items/rune_shield.mp3",
+  "sounds/misc/crownfall/matched_layer": "sounds/misc/crownfall/matched_layer.mp3",
+  "sounds/misc/crownfall/music/match3_main": "sounds/misc/crownfall/music/match3_main.mp3",
+  "sounds/misc/crownfall/music/match3_mus_hard_1": "sounds/misc/crownfall/music/match3_mus_hard_1.mp3",
+  "sounds/misc/crownfall/music/match3_mus_hard_2": "sounds/misc/crownfall/music/match3_mus_hard_2.mp3",
+  "sounds/misc/crownfall/music/match3_mus_norm_1": "sounds/misc/crownfall/music/match3_mus_norm_1.mp3",
+  "sounds/misc/crownfall/music/match3_mus_norm_2": "sounds/misc/crownfall/music/match3_mus_norm_2.mp3",
+  "sounds/misc/ogre_smash_01": "sounds/misc/ogre_smash_01.mp3",
+  "sounds/misc/ogre_smash_02": "sounds/misc/ogre_smash_02.mp3",
+  "sounds/music/valve_dota_001/music/killed": "sounds/music/valve_dota_001/music/killed.mp3",
+  "sounds/music/valve_dota_001/stingers/radiant_win": "sounds/music/valve_dota_001/stingers/radiant_win.mp3",
+  "sounds/physics/damage/player/melee01": "sounds/physics/damage/player/melee01.mp3",
+  "sounds/physics/damage/player/melee02": "sounds/physics/damage/player/melee02.mp3",
+  "sounds/physics/damage/player/melee03": "sounds/physics/damage/player/melee03.mp3",
+  "sounds/physics/damage/player/melee04": "sounds/physics/damage/player/melee04.mp3",
+  "sounds/physics/damage/player/projectile01": "sounds/physics/damage/player/projectile01.mp3",
+  "sounds/physics/damage/player/projectile02": "sounds/physics/damage/player/projectile02.mp3",
+  "sounds/physics/damage/player/projectile03": "sounds/physics/damage/player/projectile03.mp3",
+  "sounds/physics/damage/player/projectile04": "sounds/physics/damage/player/projectile04.mp3",
+  "sounds/ui/buttonclick": "sounds/ui/buttonclick.mp3",
+  "sounds/ui/crafting/gem_create": "sounds/ui/crafting/gem_create.mp3",
+  "sounds/ui/item_drop_gem_shop": "sounds/ui/item_drop_gem_shop.mp3",
+  "sounds/ui/stacked": "sounds/ui/stacked.mp3",
+  "sounds/ui/treasure_01": "sounds/ui/treasure_01.mp3",
+  "sounds/ui/ui_general_deny": "sounds/ui/ui_general_deny.mp3",
+  "sounds/weapons/creep/shared/whoosh01": "sounds/weapons/creep/shared/whoosh01.mp3",
+  "sounds/weapons/creep/shared/whoosh02": "sounds/weapons/creep/shared/whoosh02.mp3",
+  "sounds/weapons/creep/shared/whoosh03": "sounds/weapons/creep/shared/whoosh03.mp3",
+  "sounds/weapons/hero/alchemist/acid_spray_damage01": "sounds/weapons/hero/alchemist/acid_spray_damage01.mp3",
+  "sounds/weapons/hero/alchemist/acid_spray_damage02": "sounds/weapons/hero/alchemist/acid_spray_damage02.mp3",
+  "sounds/weapons/hero/alchemist/acid_spray_damage03": "sounds/weapons/hero/alchemist/acid_spray_damage03.mp3",
+  "sounds/weapons/hero/alchemist/acid_spray_damage04": "sounds/weapons/hero/alchemist/acid_spray_damage04.mp3",
+  "sounds/weapons/hero/alchemist/acid_spray_damage05": "sounds/weapons/hero/alchemist/acid_spray_damage05.mp3",
+  "sounds/weapons/hero/alchemist/acid_spray_damage06": "sounds/weapons/hero/alchemist/acid_spray_damage06.mp3",
+  "sounds/weapons/hero/alchemist/acid_spray_damage07": "sounds/weapons/hero/alchemist/acid_spray_damage07.mp3",
+  "sounds/weapons/hero/ancient_apparition/attack1": "sounds/weapons/hero/ancient_apparition/attack1.mp3",
+  "sounds/weapons/hero/ancient_apparition/attack2": "sounds/weapons/hero/ancient_apparition/attack2.mp3",
+  "sounds/weapons/hero/ancient_apparition/attack3": "sounds/weapons/hero/ancient_apparition/attack3.mp3",
+  "sounds/weapons/hero/ancient_apparition/attack4": "sounds/weapons/hero/ancient_apparition/attack4.mp3",
+  "sounds/weapons/hero/ancient_apparition/cold_feet": "sounds/weapons/hero/ancient_apparition/cold_feet.mp3",
+  "sounds/weapons/hero/ancient_apparition/cold_feet_tick": "sounds/weapons/hero/ancient_apparition/cold_feet_tick.mp3",
+  "sounds/weapons/hero/ancient_apparition/cold_feet_tick2": "sounds/weapons/hero/ancient_apparition/cold_feet_tick2.mp3",
+  "sounds/weapons/hero/ancient_apparition/cold_feet_tick3": "sounds/weapons/hero/ancient_apparition/cold_feet_tick3.mp3",
+  "sounds/weapons/hero/ancient_apparition/iceblast_explode": "sounds/weapons/hero/ancient_apparition/iceblast_explode.mp3",
+  "sounds/weapons/hero/ancient_apparition/iceblast_tick01": "sounds/weapons/hero/ancient_apparition/iceblast_tick01.mp3",
+  "sounds/weapons/hero/ancient_apparition/iceblast_tick02": "sounds/weapons/hero/ancient_apparition/iceblast_tick02.mp3",
+  "sounds/weapons/hero/ancient_apparition/iceblast_tick03": "sounds/weapons/hero/ancient_apparition/iceblast_tick03.mp3",
+  "sounds/weapons/hero/broodmother/insatiable_hunger": "sounds/weapons/hero/broodmother/insatiable_hunger.mp3",
+  "sounds/weapons/hero/broodmother/spiderling_cast": "sounds/weapons/hero/broodmother/spiderling_cast.mp3",
+  "sounds/weapons/hero/broodmother/spiderling_impact": "sounds/weapons/hero/broodmother/spiderling_impact.mp3",
+  "sounds/weapons/hero/broodmother/web_cast": "sounds/weapons/hero/broodmother/web_cast.mp3",
+  "sounds/weapons/hero/chaos_knight/chaos_bolt_cast": "sounds/weapons/hero/chaos_knight/chaos_bolt_cast.mp3",
+  "sounds/weapons/hero/chaos_knight/chaos_bolt_target": "sounds/weapons/hero/chaos_knight/chaos_bolt_target.mp3",
+  "sounds/weapons/hero/chaos_knight/chaos_strike": "sounds/weapons/hero/chaos_knight/chaos_strike.mp3",
+  "sounds/weapons/hero/crystal_maiden/crystal_nova": "sounds/weapons/hero/crystal_maiden/crystal_nova.mp3",
+  "sounds/weapons/hero/crystal_maiden/freeze_explosion01": "sounds/weapons/hero/crystal_maiden/freeze_explosion01.mp3",
+  "sounds/weapons/hero/crystal_maiden/freeze_explosion02": "sounds/weapons/hero/crystal_maiden/freeze_explosion02.mp3",
+  "sounds/weapons/hero/crystal_maiden/freeze_explosion03": "sounds/weapons/hero/crystal_maiden/freeze_explosion03.mp3",
+  "sounds/weapons/hero/crystal_maiden/freezing_field": "sounds/weapons/hero/crystal_maiden/freezing_field.mp3",
+  "sounds/weapons/hero/dragon_knight/dragonknight_elderdragon_shoot3": "sounds/weapons/hero/dragon_knight/dragonknight_elderdragon_shoot3.mp3",
+  "sounds/weapons/hero/drow_ranger/arrow_1": "sounds/weapons/hero/drow_ranger/arrow_1.mp3",
+  "sounds/weapons/hero/drow_ranger/arrow_2": "sounds/weapons/hero/drow_ranger/arrow_2.mp3",
+  "sounds/weapons/hero/drow_ranger/arrow_3": "sounds/weapons/hero/drow_ranger/arrow_3.mp3",
+  "sounds/weapons/hero/drow_ranger/arrow_4": "sounds/weapons/hero/drow_ranger/arrow_4.mp3",
+  "sounds/weapons/hero/drow_ranger/silence": "sounds/weapons/hero/drow_ranger/silence.mp3",
+  "sounds/weapons/hero/lich/chain_frost_cast": "sounds/weapons/hero/lich/chain_frost_cast.mp3",
+  "sounds/weapons/hero/lich/chain_frost_impact": "sounds/weapons/hero/lich/chain_frost_impact.mp3",
+  "sounds/weapons/hero/lich/chain_frost_impact_hero01": "sounds/weapons/hero/lich/chain_frost_impact_hero01.mp3",
+  "sounds/weapons/hero/lich/chain_frost_impact_hero02": "sounds/weapons/hero/lich/chain_frost_impact_hero02.mp3",
+  "sounds/weapons/hero/lich/chain_frost_impact_hero03": "sounds/weapons/hero/lich/chain_frost_impact_hero03.mp3",
+  "sounds/weapons/hero/lich/frost_nova": "sounds/weapons/hero/lich/frost_nova.mp3",
+  "sounds/weapons/hero/lina/dragonslave01": "sounds/weapons/hero/lina/dragonslave01.mp3",
+  "sounds/weapons/hero/lina/dragonslave02": "sounds/weapons/hero/lina/dragonslave02.mp3",
+  "sounds/weapons/hero/lina/lightstrikearray": "sounds/weapons/hero/lina/lightstrikearray.mp3",
+  "sounds/weapons/hero/shared/large_blade/thump01": "sounds/weapons/hero/shared/large_blade/thump01.mp3",
+  "sounds/weapons/hero/shared/large_blade/thump02": "sounds/weapons/hero/shared/large_blade/thump02.mp3",
+  "sounds/weapons/hero/shared/large_blade/thump03": "sounds/weapons/hero/shared/large_blade/thump03.mp3",
+  "sounds/weapons/hero/tusk/punch_target": "sounds/weapons/hero/tusk/punch_target.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile1": "sounds/weapons/hero/vengeful_spirit/magic_missile1.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile2": "sounds/weapons/hero/vengeful_spirit/magic_missile2.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile3": "sounds/weapons/hero/vengeful_spirit/magic_missile3.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile4": "sounds/weapons/hero/vengeful_spirit/magic_missile4.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile_impact": "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.mp3",
+  "sounds/weapons/hero/vengeful_spirit/nether_swap": "sounds/weapons/hero/vengeful_spirit/nether_swap.mp3",
+  "sounds/weapons/hero/winter_wyvern/cold_embrace": "sounds/weapons/hero/winter_wyvern/cold_embrace.mp3",
+  "sounds/weapons/hero/winter_wyvern/splinter01": "sounds/weapons/hero/winter_wyvern/splinter01.mp3",
+  "sounds/weapons/hero/winter_wyvern/splinter02": "sounds/weapons/hero/winter_wyvern/splinter02.mp3",
+  "sounds/weapons/hero/winter_wyvern/splinter_blast_target": "sounds/weapons/hero/winter_wyvern/splinter_blast_target.mp3"
+ }
+}

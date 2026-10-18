@@ -1,0 +1,275 @@
+/* GridStudio HUD capture F-chat (not for play). */
+
+DOTAHud #HUDElements #ContextualTips,
+DOTAHud #HUDElements #FightRecap,
+DOTAHud #HUDElements #combat_log,
+DOTAHud #HUDElements #KillCam,
+DOTAHud #HUDElements #shop,
+DOTAHud #HUDElements #neutral_item_picker,
+DOTAHud #HUDElements #inspect,
+DOTAHud #HUDElements #CursorCooldown,
+DOTAHud #HUDElements #GiveItemIndicator,
+DOTAHud #HUDElements #DeityBlessingPicker,
+DOTAHud #HUDElements #AghanimUpgradePicker,
+DOTAHud #HUDElements #ImbueAbilityPicker,
+DOTAHud #HUDElements #overlaymap_container,
+DOTAHud #HUDElements #NetGraph,
+DOTAHud #HUDElements #NetDisconnect,
+DOTAHud #HUDElements #QueryUnit,
+DOTAHud #HUDElements #scoreboard,
+DOTAHud #HUDElements #GG,
+DOTAHud #predictions_button,
+DOTAHud #BigHealthBar,
+DOTAHud #OrdersContainer,
+DOTAHud #spectator_game_stats,
+DOTAHud #SpectatorGraph,
+DOTAHud #CoachingControls,
+DOTAHud #spectator_quickstats,
+DOTAHud #HeroIndicators,
+DOTAHud #PreGame,
+DOTAHud #CustomUIRoot,
+DOTAHud #VoiceChat,
+DOTAHud #KillGraph,
+DOTAHud #player_performance_container,
+DOTAHud #WKArcana,
+DOTAHud #ErrorMessages,
+DOTAHud #ChatWheel,
+DOTAHud #PingWheel,
+DOTAHud #SpectatorItems,
+DOTAHud #PausedInfo,
+DOTAHud #GuideBrowser,
+DOTAHud #Charms,
+DOTAHud #Cameraman,
+DOTAHud #BotDebug,
+DOTAHud #BroadcasterSelection,
+DOTAHud #spectator_options,
+DOTAHud #spectator_overwatch,
+DOTAHud #ProjectionDebug,
+DOTAHud #LargoUltimateRhythmOverhead,
+DOTAHud #GameEndContainer,
+DOTAHud #MonsterHunterInvestigationsContainer,
+DOTAHud #HelpTipsManager,
+DOTAHud #SpectatorToastManager,
+DOTAHud #Tooltips,
+DOTAHud #IngamePredictionsContainer,
+DOTAHud #PredictionToastManager,
+DOTAHud #BroadcastToastManager,
+DOTAHud #BroadcastToastManagerAlpha,
+DOTAHud #BountyToastManager
+{
+	opacity: 0;
+}
+
+DOTAHud #HUDElements #LevelUpGlow
+{
+	animation-name: none;
+	opacity: 1;
+}
+
+DOTAHud #HUDElements #levelup #LevelUpButton
+{
+	animation-name: none;
+	box-shadow: #9f9037ff 0px 0px 10px 0px;
+}
+
+DOTAHud #HUDElements #RecommendedUpgradeOverlay .BorderEdge
+{
+	animation-name: none;
+	box-shadow: fill #e38f12 0px 0px 1px 0px;
+}
+
+DOTAHud #HUDElements .ConsumeItemPropmt .ConsumeItemPropmtGlow,
+DOTAHud #HUDElements #inventory_neutral_level_up .NeutralLevelUpAvailableGlow,
+DOTAHud #HUDElements .StashItemAvailable #inventory_neutral_slot,
+DOTAHud #HUDElements #SilenceIcon,
+DOTAHud #HUDElements #MutedIcon,
+DOTAHud #HUDElements .PlayerHoldingAegis #PlayerModifierItemImage,
+DOTAHud #HUDElements #Spinner
+{
+	animation-name: none;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine.Expired
+{
+	opacity: 1;
+	transition-duration: 0s;
+}
+
+DOTAHud #HUDElements #lower_hud,
+DOTAHud #HUDElements #minimap_container,
+DOTAHud #HUDElements #topbar,
+DOTAHud #HUDElements #HeroRelicProgress,
+DOTAHud #HUDElements #combat_events,
+DOTAHud #HUDElements #spectator_item,
+DOTAHud #HUDElements #spectator_talents,
+DOTAHud #HUDElements #river_vial,
+DOTAHud #HUDElements #NeutralCampPullTimes,
+DOTAHud #HUDElements #TeleportChannelTime,
+DOTAHud #HUDElements #RuneSpawnTimes,
+DOTAHud #HUDElements #NeutralCreepGoldBounty,
+DOTAHud #HUDElements #LaneCreepGoldBounty,
+DOTAHud #HUDElements #AbilityHeroIcons,
+DOTAHud #HUDElements #splash_screen,
+DOTAHud #HUDElements #stackable_side_panels,
+DOTAHud #HUDElements #mutations,
+DOTAHud #HUDElements #Wagering,
+DOTAHud #HUDElements #MenuButtons
+{
+	opacity: 0;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat,
+DOTAHud #HUDElements DOTAChat#HudChat.Channeling
+{
+	horizontal-align: left;
+	margin-left: 40px;
+	y: -20px;
+	height: 940px;
+	width: 800px;
+	transition-duration: 0s;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat #ChatLinesContainer
+{
+	height: 640px;
+	transition-duration: 0s;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(1)
+{
+	font-size: 14px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(2)
+{
+	font-size: 14px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(3)
+{
+	font-size: 14px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(4)
+{
+	font-size: 16px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(5)
+{
+	font-size: 16px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(6)
+{
+	font-size: 16px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(7)
+{
+	font-size: 20px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(8)
+{
+	font-size: 20px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(9)
+{
+	font-size: 20px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(10)
+{
+	font-size: 22px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(11)
+{
+	font-size: 22px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(12)
+{
+	font-size: 22px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(13)
+{
+	font-size: 24px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(14)
+{
+	font-size: 24px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(15)
+{
+	font-size: 24px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(16)
+{
+	font-size: 26px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(17)
+{
+	font-size: 26px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(18)
+{
+	font-size: 26px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(19)
+{
+	font-size: 26px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(20)
+{
+	font-size: 26px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(21)
+{
+	font-size: 26px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(22)
+{
+	font-size: 26px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(23)
+{
+	font-size: 26px;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat .ChatLine:nth-child(24)
+{
+	font-size: 26px;
+}
+
+DOTAHud #HUDElements
+{
+	background-color: #000000ff;
+	animation-name: GSGlobal;
+	animation-duration: 4.5s;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+}
+
+@keyframes 'GSGlobal'
+{
+	0% { background-color: #000000ff; }
+	33.1111% { background-color: #000000ff; }
+	33.3333% { background-color: #ffffffff; }
+	66.4444% { background-color: #ffffffff; }
+	66.6667% { background-color: #00000000; }
+	100% { background-color: #00000000; }
+}

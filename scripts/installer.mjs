@@ -5,6 +5,7 @@
 // fails they ask for the folder. Nothing is downloaded or run besides copying; whatever they replace is
 // kept for the remove command. The messages follow the page's language (scripts/i18n.mjs).
 import { lang } from './i18n.mjs';
+import { CUSTOMIZE_LIST } from './customize-pack.mjs';
 
 const quote = (value) => `'${String(value).replace(/'/g, "''")}'`;
 
@@ -51,6 +52,17 @@ const TEXTS = {
       downloading: 'Скачиваю шрифт с GridStudio…', expired: 'Команда устарела: она работает 7 дней. Скачай шрифт на сайте ещё раз и скопируй новую команду.',
       offline: 'Не получилось скачать шрифт. Проверь интернет и вставь команду ещё раз.', broken: 'Шрифт скачался с ошибкой. Вставь команду ещё раз.', empty: 'В архиве нет шрифтов.',
       after: 'Запусти Dota 2.', back: 'Вернуть шрифты Dota — вставь в PowerShell: '
+    },
+    all: {
+      title: 'фон, интерфейс и шрифт Dota 2',
+      downloading: 'Скачиваю сборку с GridStudio…', expired: 'Команда устарела: она работает 7 дней. Собери файл на сайте ещё раз и скопируй новую команду.',
+      offline: 'Не получилось скачать сборку. Проверь интернет и вставь команду ещё раз.', broken: 'Сборка скачалась с ошибкой. Вставь команду ещё раз.',
+      audio: 'Язык озвучки Dota теперь русский: Dota читает моды только из папки dota_russian. Интерфейс не меняется; если русской озвучки нет, герои говорят по-английски.',
+      audioBack: 'Вернул прежний язык озвучки Dota.',
+      gone: 'Убрал то, чего больше нет в сборке: ', fonts: 'Шрифты Dota сохранены в panorama\\fonts\\gridstudio-backup.', fontsBack: 'Вернул шрифты Dota.',
+      done: 'Готово. Файлов поставлено: ', launch: 'Если в Steam в параметрах запуска Dota 2 есть -language (кроме -language russian), убери его: с ним Dota не читает dota_russian.',
+      restart: 'Перезапусти Dota 2.', back: 'Вернуть всё как было — вставь в PowerShell: ',
+      removed: 'Всё от GridStudio убрано, файлы Dota на месте. Перезапусти Dota 2.', nothing: 'Нечего убирать: сборка GridStudio не ставилась этой командой.'
     }
   },
   en: {
@@ -93,6 +105,17 @@ const TEXTS = {
       downloading: 'Downloading the font from GridStudio...', expired: 'This command is out of date: it works for 7 days. Download the font on the site again and copy the new command.',
       offline: 'Could not download the font. Check the internet connection and paste the command again.', broken: 'The font arrived damaged. Paste the command again.', empty: 'There are no fonts in the archive.',
       after: 'Start Dota 2.', back: 'To get the Dota fonts back, paste into PowerShell: '
+    },
+    all: {
+      title: 'Dota 2 background, interface and font',
+      downloading: 'Downloading the build from GridStudio...', expired: 'This command is out of date: it works for 7 days. Make the file on the site again and copy the new command.',
+      offline: 'Could not download the build. Check the internet connection and paste the command again.', broken: 'The build arrived damaged. Paste the command again.',
+      audio: 'Dota audio language is now Russian: Dota reads mods only from the dota_russian folder. The interface stays as it was; without the Russian voice pack, heroes keep speaking English.',
+      audioBack: 'Put back the Dota audio language from before.',
+      gone: 'Took away what is no longer in the build: ', fonts: 'Dota fonts are saved in panorama\\fonts\\gridstudio-backup.', fontsBack: 'Dota fonts are back.',
+      done: 'Done. Files installed: ', launch: 'If Dota 2 has -language in its Steam launch options (other than -language russian), remove it: with it, Dota does not read dota_russian.',
+      restart: 'Restart Dota 2.', back: 'To put everything back, paste into PowerShell: ',
+      removed: 'Everything from GridStudio is gone, the Dota files are back. Restart Dota 2.', nothing: 'Nothing to take away: no GridStudio build was installed by this command.'
     }
   }
 };
@@ -434,6 +457,121 @@ try {
   Remove-Item -LiteralPath $backup -Recurse -Force
 ${FONT_CACHE}
   Write-Host ${quote(f.restored)} -ForegroundColor Green
+} catch {
+  Write-Host ''
+  Write-Host (${quote(m.error)} + $_.Exception.Message) -ForegroundColor Red
+}`);
+}
+
+// The one file of the customization page (scripts/customize-pack.mjs, /background «Командой PowerShell»):
+// the zip the page uploaded, by its SHA-256 and size (DOWNLOAD), installed in one go. Files for
+// game/dota_russian (pak02, pak03, pak04 of the d2pfx mods, the cursor's) go there — a file one replaces is kept once beside it as
+// .gridstudio-backup, as the background's script does — and their list is kept in CUSTOMIZE_LIST: the next
+// install takes away the files of the last one it does not have (and puts back what they replaced), so
+// what the page shows «как в Dota» is Dota's again. The fonts go over Valve's in game/dota/panorama/fonts,
+// each original kept once in gridstudio-backup; Valve's come back for the ones no longer chosen. Russian
+// becomes the audio language while anything lies in dota_russian (AUDIO).
+const RUSSIAN_PATTERN = "'^(pak0[234]_dir\\.vpk|resource/cursor/[a-z0-9_]+\\.(bmp|res))$'";
+const CUSTOMIZE_COMMON = (a) => String.raw`
+  $russian = Join-Path $dota 'game\dota_russian'
+  $fonts = Join-Path $dota 'game\dota\panorama\fonts'
+  $fontBackup = Join-Path $fonts 'gridstudio-backup'
+  $list = Join-Path $russian '${CUSTOMIZE_LIST}'
+  $pattern = ${RUSSIAN_PATTERN}
+  $lines = @()
+  if (Test-Path -LiteralPath $list) { $lines = @([IO.File]::ReadAllLines($list)) }
+  $before = @($lines | Where-Object { $_ -match $pattern })
+  $hadFonts = $lines -contains '#fonts'
+  function Remove-Ours([string]$rel) {
+    $dest = Join-Path $russian ($rel -replace '/', '\')
+    if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest -Force }
+    $backup = $dest + '.gridstudio-backup'
+    if (Test-Path -LiteralPath $backup) { Move-Item -LiteralPath $backup -Destination $dest -Force }
+  }
+  function Restore-Fonts([string[]]$keep) {
+    if (-not (Test-Path -LiteralPath $fontBackup)) { return }
+    Get-ChildItem -LiteralPath $fontBackup -File | Where-Object { $keep -notcontains $_.Name } | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $fonts $_.Name) -Force }
+    if ($env:TEMP) { $cache = Join-Path $env:TEMP 'fontconfig'; if (Test-Path -LiteralPath $cache) { Remove-Item -LiteralPath $cache -Recurse -Force -ErrorAction SilentlyContinue } }
+  }`;
+export function customizeScript({ sha256, size, url }, { remove = '', language = lang } = {}) {
+  if (!validDownload(sha256, size, url)) throw new Error('Unknown customization file.');
+  const m = texts(language), a = m.all;
+  return gridFrame(a, String.raw`$ProgressPreference = 'SilentlyContinue'
+${FIND_DOTA(m)}
+${DOWNLOAD({ sha256, size, url, ext: 'zip' }, a)}
+$pack = $null
+try {
+  $pack = Get-Pack
+  $dota = Find-Dota
+  Write-Host ('Dota 2: ' + $dota)
+  Wait-DotaClosed
+${AUDIO(a)}
+${CUSTOMIZE_COMMON(a)}
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $archive = [IO.Compression.ZipFile]::OpenRead($pack)
+  try {
+    $mine = @($archive.Entries | Where-Object { $_.FullName.StartsWith('game/dota_russian/') -and $_.FullName.Substring(18) -match $pattern })
+    $ourFonts = @($archive.Entries | Where-Object { $_.FullName -match '^game/dota/panorama/fonts/[a-z0-9._-]+\.otf$' })
+    $now = @($mine | ForEach-Object { $_.FullName.Substring(18) })
+    $gone = @($before | Where-Object { $now -notcontains $_ })
+    foreach ($rel in $gone) { Remove-Ours $rel }
+    if ($gone.Count -gt 0) { Write-Host (${quote(a.gone)} + ($gone -join ', ')) }
+    foreach ($entry in $mine) {
+      $rel = $entry.FullName.Substring(18)
+      $dest = Join-Path $russian ($rel -replace '/', '\')
+      $backup = $dest + '.gridstudio-backup'
+      New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dest) | Out-Null
+      if ((Test-Path -LiteralPath $dest) -and ($before -notcontains $rel) -and -not (Test-Path -LiteralPath $backup)) { Copy-Item -LiteralPath $dest -Destination $backup -Force }
+      [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $dest, $true)
+      Write-Host ('  dota_russian\' + ($rel -replace '/', '\'))
+    }
+    $fontNames = @($ourFonts | ForEach-Object { $_.Name })
+    if ($ourFonts.Count -gt 0 -or $hadFonts) { Restore-Fonts $fontNames }
+    if ($ourFonts.Count -gt 0) {
+      New-Item -ItemType Directory -Force -Path $fontBackup | Out-Null
+      foreach ($entry in $ourFonts) {
+        $original = Join-Path $fonts $entry.Name
+        $kept = Join-Path $fontBackup $entry.Name
+        if ((Test-Path -LiteralPath $original) -and -not (Test-Path -LiteralPath $kept)) { Copy-Item -LiteralPath $original -Destination $kept -Force }
+      }
+      foreach ($entry in $ourFonts) { [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, (Join-Path $fonts $entry.Name), $true) }
+      Write-Host ${quote(a.fonts)}
+    } elseif ($hadFonts) {
+      Remove-Item -LiteralPath $fontBackup -Recurse -Force -ErrorAction SilentlyContinue
+      Write-Host ${quote(a.fontsBack)}
+    }
+  } finally { $archive.Dispose() }
+  $kept = @($now)
+  if ($ourFonts.Count -gt 0) { $kept += '#fonts' }
+  if ($kept.Count -gt 0) { New-Item -ItemType Directory -Force -Path $russian | Out-Null; [IO.File]::WriteAllLines($list, [string[]]$kept) }
+  elseif (Test-Path -LiteralPath $list) { Remove-Item -LiteralPath $list -Force }
+  if ($now.Count -gt 0) { Set-RussianAudio } elseif ($before.Count -gt 0) { Restore-Audio }
+  Write-Host (${quote(a.done)} + ($now.Count + $ourFonts.Count)) -ForegroundColor Green
+  Write-Host ''
+  if ($now.Count -gt 0) { Write-Host ${quote(a.launch)} }
+  Write-Host ${quote(a.restart)}
+${remove ? `  Write-Host (${quote(a.back)} + ${quote(installCommand(remove))})\n` : ''}} catch {
+  Write-Host ''
+  Write-Host (${quote(m.error)} + $_.Exception.Message) -ForegroundColor Red
+} finally { if ($pack) { Remove-Item -LiteralPath $pack -Force -ErrorAction SilentlyContinue } }`);
+}
+// Takes the whole build away: the files of the list go (what they replaced comes back), Valve's fonts and
+// the audio language come back.
+export function customizeRemoveScript(language = lang) {
+  const m = texts(language), a = m.all;
+  return gridFrame(a, String.raw`${FIND_DOTA(m)}
+try {
+  $dota = Find-Dota
+  Write-Host ('Dota 2: ' + $dota)
+  Wait-DotaClosed
+${AUDIO(a)}
+${CUSTOMIZE_COMMON(a)}
+  if (-not (Test-Path -LiteralPath $list)) { Write-Host ${quote(a.nothing)}; return }
+  foreach ($rel in $before) { Remove-Ours $rel }
+  if ($hadFonts) { Restore-Fonts @(); Remove-Item -LiteralPath $fontBackup -Recurse -Force -ErrorAction SilentlyContinue }
+  Remove-Item -LiteralPath $list -Force
+  Restore-Audio
+  Write-Host ${quote(a.removed)} -ForegroundColor Green
 } catch {
   Write-Host ''
   Write-Host (${quote(m.error)} + $_.Exception.Message) -ForegroundColor Red

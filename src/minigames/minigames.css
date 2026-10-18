@@ -1,0 +1,136 @@
+/* «Мини-игры» (src/minigames/): Valve's games popup (popup_dashboard_games.css, «Как в Dota» on the hub) and
+   the shell pieces every game shares (src/minigames/core/ui.jsx). Panorama colours: gold1–3, charcoal, greys.
+   The hub itself: hub.css. */
+@font-face { font-family: 'MGRadiance'; src: url('../../assets/fonts/radiance-regular.otf') format('opentype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'MGRadiance'; src: url('../../assets/fonts/radiance-light.otf') format('opentype'); font-weight: 300; font-display: swap; }
+@font-face { font-family: 'MGRadiance'; src: url('../../assets/fonts/radiance-semibold.otf') format('opentype'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'MGRadiance'; src: url('../../assets/fonts/radiance-bold.otf') format('opentype'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'MGReaver'; src: url('../../assets/fonts/reaver-bold.otf') format('opentype'); font-weight: 700; font-display: swap; }
+
+.mg-page { --gold1: #efd4ac; --gold2: #dcb25e; --gold3: #977628; --charcoal-light: #253242; --charcoal-dark: #0b111a;
+  --lightest-grey: #dae2e5; --lighter-grey: #b0bcc2; --light-grey: #8b989e; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* Fit (core/ui.jsx): the child keeps its design size and is scaled down to the box. */
+.mg-fit { position: relative; flex: 1; width: 100%; min-height: 0; overflow: hidden; }
+.mg-fit-inner { position: absolute; left: 50%; top: 50%; width: max-content; transform-origin: center; }
+.mg-fit.mg-fit-scroll { flex: none; margin: auto 0; }
+.mg-fit-scroll .mg-fit-inner { top: 0; transform-origin: top center; }
+.mg-loading { margin: auto; color: var(--lighter-grey, #b0bcc2); font: 16px 'MGRadiance', sans-serif; }
+
+/* The «Мини-игры для досуга во время поиска» popup. */
+.mg-picker { position: relative; width: 570px; height: 620px; box-sizing: border-box; font-family: 'MGRadiance', sans-serif; color: var(--lighter-grey);
+  border: 2px solid; border-image: linear-gradient(var(--gold1), var(--gold2), var(--gold3)) 1;
+  background: linear-gradient(var(--charcoal-light), var(--charcoal-dark)); box-shadow: 0 12px 80px -4px rgba(0, 0, 0, 0.6); }
+.mg-picker h1 { margin: 40px 16px 0; text-align: center; font: 700 22px 'MGReaver', 'MGRadiance', serif; color: whitesmoke; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); letter-spacing: 0.5px; }
+.mg-picker-grid { position: absolute; left: 50%; top: calc(50% + 30px); transform: translate(-50%, -50%); display: flex; flex-direction: column; }
+.mg-picker-row { display: flex; justify-content: center; margin-top: -8px; }
+.mg-game { position: relative; width: 170px; height: 184px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+.mg-game:focus-visible { outline: 2px solid var(--gold2); outline-offset: -4px; border-radius: 8px; }
+.mg-node { position: relative; width: 132px; height: 160px; transition: transform 0.1s, filter 0.2s; }
+.mg-node > * { position: absolute; left: 50%; top: calc(50% - 6px); transform: translate(-50%, -50%); }
+.mg-node-bg { width: 132px; height: 132px; background: url('../../assets/minigames/picker/images/node_background_encounter.webp') center / contain no-repeat; }
+.mg-node-inner { width: 132px; height: 132px; background: #32404f; -webkit-mask: url('../../assets/minigames/picker/images/node_background_encounter_inner.webp') center / contain no-repeat; mask: url('../../assets/minigames/picker/images/node_background_encounter_inner.webp') center / contain no-repeat; }
+.mg-node-icon { width: var(--size); height: var(--size); margin: var(--dy, 0) 0 0 var(--dx, 0); background: linear-gradient(var(--gold1), var(--gold3));
+  -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
+.mg-node-icon.mg-shadow { background: #000; margin-top: calc(var(--dy, 0px) + 3px); }
+.mg-game:hover .mg-node { transform: scale(1.1); filter: brightness(1.5); }
+.mg-game:active .mg-node { transform: scale(1.05); filter: brightness(0.5); }
+.mg-game-label { position: absolute; bottom: 4px; width: 100%; text-align: center; font-size: 16px; line-height: 1.15; color: var(--lighter-grey); text-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
+
+/* The game layer: Valve's dim popup background over the page. */
+.mg-layer { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; overflow-y: auto; padding: 12px; background: rgba(4, 7, 12, 0.88); animation: mg-fade 0.2s ease-out; }
+@keyframes mg-fade { from { opacity: 0; } }
+body.mg-locked { overflow: hidden; }
+
+/* DOTACrownfallButton. */
+.mg-button { --hex: polygon(16px 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 16px 100%, 0 50%); position: relative; min-width: 132px; padding: 2px; border: 0; cursor: pointer;
+  background: linear-gradient(#fff2df, #ebc386 48%, #ba8c47 52%, #8d6c3a); clip-path: var(--hex); transition: filter 0.15s, transform 0.1s; font: inherit; }
+.mg-button > span { display: block; padding: 9px 30px 8px; clip-path: var(--hex); background: linear-gradient(#3d7fe0, #1f56b8 55%, #173f8c); color: #fff;
+  font: 600 15px 'MGRadiance', sans-serif; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); white-space: nowrap; }
+.mg-button:hover { filter: brightness(1.2); }
+.mg-button:active { transform: scale(0.97); filter: brightness(0.9); }
+.mg-button:disabled { filter: grayscale(1) brightness(0.6); cursor: default; }
+.mg-button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.mg-close { position: absolute; top: 2px; right: 2px; z-index: 30; width: 48px; height: 48px; padding: 12px; border: 0; background: none; cursor: pointer; opacity: 0.6; transition: opacity 0.1s; }
+.mg-close img { width: 24px; height: 24px; filter: drop-shadow(0 1px 8px #000); }
+.mg-close:hover { opacity: 1; }
+.mg-keyhint { display: flex; align-items: center; gap: 8px; padding: 2px 0; border: 0; background: none; cursor: pointer; color: var(--lighter-grey); font: 600 14px 'MGRadiance', sans-serif; letter-spacing: 1px; text-transform: uppercase; opacity: 0.8; }
+.mg-keyhint:hover { opacity: 1; color: #fff; }
+.mg-keyhint kbd, .mg-page kbd.mg-key { min-width: 20px; padding: 1px 4px 2px; border: 1px solid #000; border-radius: 2px; background: #2127268a; box-shadow: 1px 0 1px 1px #000000bb; font: 600 12px 'MGRadiance', sans-serif; color: #fff; text-align: center; }
+.mg-sound { display: inline-flex; align-items: center; gap: 6px; }
+.mg-volume { width: 84px; height: 16px; margin: 0; appearance: none; background: transparent; cursor: pointer; opacity: 0.75; }
+.mg-volume:hover { opacity: 1; }
+.mg-volume::-webkit-slider-runnable-track { height: 3px; border-radius: 2px; background: linear-gradient(90deg, #d6c08a var(--fill), #ffffff33 var(--fill)); }
+.mg-volume::-moz-range-track { height: 3px; border-radius: 2px; background: #ffffff33; }
+.mg-volume::-moz-range-progress { height: 3px; border-radius: 2px; background: #d6c08a; }
+.mg-volume::-webkit-slider-thumb { appearance: none; width: 11px; height: 11px; margin-top: -4px; border-radius: 50%; background: #f1e3bd; }
+.mg-volume::-moz-range-thumb { width: 11px; height: 11px; border: 0; border-radius: 50%; background: #f1e3bd; }
+.mg-mute { width: 30px; height: 30px; padding: 4px; border: 0; background: none; cursor: pointer; opacity: 0.7; }
+.mg-mute:hover { opacity: 1; }
+.mg-mute svg { width: 22px; height: 22px; fill: none; stroke: var(--lighter-grey); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* «Как играть» rows (Valve's .Quadrant). */
+.mg-howto-row { display: flex; align-items: center; border-top: 1px solid; border-image: linear-gradient(90deg, rgba(211, 229, 255, 0.1) 90%, transparent) 1; padding: 10px 0; }
+.mg-howto-picture { flex: 0 0 auto; width: 84px; display: flex; justify-content: center; align-items: center; }
+.mg-howto-text { display: flex; flex-direction: column; padding-left: 6px; font-size: 14px; line-height: 1.25; color: var(--light-grey); }
+.mg-howto-text > b { font-weight: 400; font-size: 17px; color: var(--lightest-grey); display: flex; align-items: center; gap: 6px; }
+.mg-info { display: inline-grid; place-items: center; width: 14px; height: 14px; border-radius: 50%; background: #ffffff30; color: var(--lightest-grey); font: 700 10px/1 'MGRadiance', sans-serif; cursor: help; }
+.mg-mouse { width: 45px; height: 45px; object-fit: contain; }
+
+/* Valve's CenterHUD: a dark band with white lines above and below. */
+.mg-band { display: flex; flex-direction: column; align-items: center; }
+.mg-band-body { min-width: 400px; padding: 32px 200px 48px; display: flex; flex-direction: column; align-items: center;
+  background: linear-gradient(90deg, #0c111c00, #151d2efa 25%, #0c111cfa 50%, #151d2efa 75%, #0c111c00);
+  border-block: 1px solid; border-image: linear-gradient(90deg, #ffffff00, #a9b5cffa 25%, #fff 50%, #a9b5cffa 75%, #ffffff00) 1; }
+.mg-band-message { margin: 8px 0; min-width: 360px; text-align: center; color: #fff; font: 700 48px 'MGRadiance', sans-serif; letter-spacing: 1px; text-shadow: 2px 2px 4px #000; }
+.mg-band-lines { width: 460px; margin: 12px; display: flex; flex-direction: column; }
+.mg-band-line { display: flex; justify-content: space-between; gap: 24px; color: #fff; font-size: 16px; text-shadow: 0 1px 4px #000; }
+.mg-band-total { margin-top: 32px; align-items: baseline; }
+.mg-band-total span:first-child { font-size: 20px; text-transform: uppercase; }
+.mg-band-total span:last-child { font-size: 24px; }
+.mg-band-record { margin-top: 10px; text-align: right; color: var(--gold1); font-size: 14px; }
+.mg-band-actions { margin-top: -22px; display: flex; gap: 12px; }
+
+/* Tables of records (core/leaderboard.jsx): where Valve's popups had the friends' leaderboard — its header
+   (grey capitals: the table, «Счёт»), dark rows of 26 px with the name and the score. A game adds its own
+   classes of that list (headClass / rowClass); these are the defaults. */
+.mg-lb { --mg-lb-row: 26px; display: flex; flex-direction: column; gap: 2px; min-width: 0; color: var(--lightest-grey, #dae2e5); }
+.mg-lb button { font: inherit; color: inherit; }
+.mg-lb-boards { display: flex; gap: 2px; margin-bottom: 6px; }
+.mg-lb-boards button { flex: 1; padding: 4px 8px; border: 1px solid #ffffff1a; background: #0006; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--light-grey, #8b989e); cursor: pointer; }
+.mg-lb-boards button[aria-pressed="true"] { border-color: #d6c08a99; color: var(--gold1, #efd4ac); background: #1b2433; }
+.mg-lb-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: rgba(241, 249, 255, 0.5); }
+.mg-lb-periods { display: inline-flex; gap: 12px; }
+.mg-lb-periods button { padding: 0 0 2px; border: 0; border-bottom: 1px solid transparent; background: none; letter-spacing: inherit; text-transform: inherit; color: rgba(241, 249, 255, 0.5); cursor: pointer; }
+.mg-lb-periods button:hover { color: var(--lightest-grey, #dae2e5); }
+.mg-lb-periods button[aria-pressed="true"] { color: var(--lightest-grey, #dae2e5); border-bottom-color: var(--gold2, #dcb25e); }
+.mg-lb-list { margin: 0; padding: 0; list-style: none; max-height: calc(var(--mg-lb-rows) * (var(--mg-lb-row) + 2px)); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #ffffff33 transparent; display: flex; flex-direction: column; gap: 2px; }
+.mg-lb .mg-lb-row { display: flex; align-items: center; gap: 8px; height: var(--mg-lb-row); min-height: var(--mg-lb-row); padding: 0 10px 0 4px; background: #0005; font-size: 15px; box-sizing: border-box; }
+.mg-lb-list .mg-lb-row:nth-child(even) { background: #00000033; }
+.mg-lb .mg-lb-row.is-mine { background: linear-gradient(90deg, #d6c08a33, #0005 70%); box-shadow: inset 2px 0 var(--gold2, #dcb25e); }
+.mg-lb-rank { flex: none; width: 26px; text-align: right; font-variant-numeric: tabular-nums; color: var(--light-grey, #8b989e); }
+.mg-lb-row.is-top-1 .mg-lb-rank { color: #f3cf6b; } .mg-lb-row.is-top-2 .mg-lb-rank { color: #d3dde4; } .mg-lb-row.is-top-3 .mg-lb-rank { color: #d99a62; }
+.mg-lb-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
+a.mg-lb-name:hover span, a.mg-lb-name:focus-visible span { text-decoration: underline; color: #fff; }
+.mg-lb-name img { flex: none; width: 20px; height: 20px; border-radius: 3px; object-fit: cover; background: #0008; }
+.mg-lb-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mg-lb-detail { flex: none; font-size: 12px; color: var(--light-grey, #8b989e); }
+.mg-lb-value { flex: none; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--lightest-grey, #dae2e5); }
+.mg-lb-remove { flex: none; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: #c0323255; color: #fff !important; cursor: pointer; line-height: 1; }
+.mg-lb-me { margin-top: 4px; }
+.mg-lb .mg-lb-note { display: flex; align-items: center; min-height: var(--mg-lb-row); padding: 0 8px; background: #0003; font-size: 14px; color: var(--light-grey, #8b989e); }
+.mg-lb-note.mg-lb-hint { margin-top: 4px; background: none; padding: 0; font-size: 13px; }
+.mg-lb-login, .mg-lb-outcome { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; font-size: 14px; color: var(--lighter-grey, #b0bcc2); }
+.mg-lb-login-button { flex: none; padding: 3px 14px; border: 1px solid #d6c08a99; border-radius: 2px; background: linear-gradient(#2c3a52, #1a2333); color: var(--gold1, #efd4ac) !important; font-size: 13px !important; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+.mg-lb-login-button:hover { border-color: var(--gold1, #efd4ac); color: #fff !important; }
+.mg-lb-local { display: flex; justify-content: space-between; margin-top: 6px; font-size: 13px; color: var(--light-grey, #8b989e); }
+.mg-lb-local b { font-weight: 600; color: var(--lighter-grey, #b0bcc2); }
+/* On the results band: centred, gold for a new best. */
+.mg-lb-outcome { justify-content: center; margin-top: 10px; text-shadow: 0 1px 4px #000; }
+.mg-lb-outcome.is-record b { color: var(--gold1, #efd4ac); font-size: 17px; }
+.mg-lb-outcome.is-record span { color: var(--lightest-grey, #dae2e5); }
+.mg-lb-outcome.is-error { color: #e9a199; }
+
+@media (prefers-reduced-motion: reduce) { .mg-layer { animation: none; } .mg-node { transition: none; } }
+@media (max-width: 640px) { .mg-stagearea { min-height: 70vh; margin-inline: -8px; border-radius: 0; } }

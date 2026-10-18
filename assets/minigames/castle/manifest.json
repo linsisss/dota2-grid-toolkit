@@ -1,0 +1,691 @@
+{
+ "about": "Made by scripts/make-minigame-assets.mjs from Valve’s Dota 2 files; see docs/minigames.md.",
+ "files": {
+  "data.json": {
+   "from": "scripts/events/crownfall/artillery_constants.vdata, scripts/events/crownfall/artillery_gamemodes.vdata, scripts/events/crownfall/artillery_gameobjects.vdata, scripts/events/crownfall/artillery_graphics.vdata, scripts/events/crownfall/artillery_levels.vdata, scripts/events/crownfall/artillery_weapons.vdata",
+   "bytes": 89112
+  },
+  "images/artillery_logo.webp": {
+   "from": "panorama/images/events/crownfall/artillery/artillery_logo_png.png",
+   "width": 809,
+   "height": 1000,
+   "quality": 90,
+   "stamp": "e3a31d0874e07bed",
+   "bytes": 128242
+  },
+  "images/artillery_splash.webp": {
+   "from": "panorama/images/events/crownfall/artillery/artillery_splash_psd.png",
+   "width": 1920,
+   "height": 937,
+   "quality": 86,
+   "stamp": "c5d81426645a2289",
+   "bytes": 51552
+  },
+  "images/background.webp": {
+   "from": "panorama/images/events/crownfall/artillery/background_psd.png",
+   "width": 1280,
+   "height": 900,
+   "quality": 86,
+   "stamp": "8735a0a83ac0afa1",
+   "bytes": 10934
+  },
+  "images/directional_track.webp": {
+   "from": "panorama/images/events/crownfall/artillery/directional_track_png.png",
+   "width": 80,
+   "height": 160,
+   "lossless": true,
+   "stamp": "14a6ff89bfd87f44",
+   "bytes": 154
+  },
+  "images/hero_mask.webp": {
+   "from": "panorama/images/events/crownfall/artillery/hero_mask_png.png",
+   "width": 284,
+   "height": 160,
+   "lossless": true,
+   "stamp": "17e90a708eeda1f4",
+   "bytes": 8312
+  },
+  "images/hud_container_background_wide.webp": {
+   "from": "panorama/images/events/crownfall/artillery/hud_container_background_wide_png.png",
+   "width": 880,
+   "height": 160,
+   "lossless": true,
+   "stamp": "e959e63d726aed90",
+   "bytes": 43716
+  },
+  "images/hud_container_border_wide.webp": {
+   "from": "panorama/images/events/crownfall/artillery/hud_container_border_wide_png.png",
+   "width": 880,
+   "height": 160,
+   "lossless": true,
+   "stamp": "e14eb76020eb01f8",
+   "bytes": 2240
+  },
+  "images/levels/background_extended.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/background_extended_png.png",
+   "width": 2500,
+   "height": 1264,
+   "quality": 84,
+   "stamp": "bce40880003bfe4e",
+   "bytes": 353208
+  },
+  "images/levels/bastion/foreground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/bastion/foreground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "475f8cd5e3a55e8a",
+   "bytes": 15280
+  },
+  "images/levels/bastion/level.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/bastion/level_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "6fc60fbdb118c9d7",
+   "bytes": 15392
+  },
+  "images/levels/bastion/midground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/bastion/midground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "0384c99539c1d9e6",
+   "bytes": 25746
+  },
+  "images/levels/bridges/foreground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/bridges/foreground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "97dd69ef6c83eb07",
+   "bytes": 10526
+  },
+  "images/levels/bridges/level.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/bridges/level_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "f4980e66dd7fee1d",
+   "bytes": 18410
+  },
+  "images/levels/bridges/midground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/bridges/midground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "d97456c89bf5bd8c",
+   "bytes": 33806
+  },
+  "images/levels/bunker/foreground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/bunker/foreground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "f32848a2b9168aca",
+   "bytes": 16606
+  },
+  "images/levels/bunker/level.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/bunker/level_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "adfd8a2026add803",
+   "bytes": 15832
+  },
+  "images/levels/bunker/midground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/bunker/midground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "307132760a3e6415",
+   "bytes": 30446
+  },
+  "images/levels/compound/foreground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/compound/foreground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "593f30b85a6b32b2",
+   "bytes": 26260
+  },
+  "images/levels/compound/level.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/compound/level_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "1a7ce1d335b2de81",
+   "bytes": 25454
+  },
+  "images/levels/compound/midground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/compound/midground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "1ffaec7e95003a9d",
+   "bytes": 39208
+  },
+  "images/levels/gatehouse/foreground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/gatehouse/foreground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "2bfdbea8d502016f",
+   "bytes": 16538
+  },
+  "images/levels/gatehouse/level.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/gatehouse/level_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "3c847543c5f8d7fc",
+   "bytes": 17032
+  },
+  "images/levels/gatehouse/midground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/gatehouse/midground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "52b66eff30beb589",
+   "bytes": 28986
+  },
+  "images/levels/guardhouse/foreground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/guardhouse/foreground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "d08d5ffb040dafee",
+   "bytes": 8938
+  },
+  "images/levels/guardhouse/level.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/guardhouse/level_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "6554adc3d7a3f1e9",
+   "bytes": 19426
+  },
+  "images/levels/guardhouse/midground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/guardhouse/midground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "1275cc30d413729c",
+   "bytes": 40116
+  },
+  "images/levels/supper_time/foreground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/supper_time/foreground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "a08b5172d342dcc4",
+   "bytes": 17882
+  },
+  "images/levels/supper_time/h_level.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/supper_time/h_level_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "96ecbf954292eca7",
+   "bytes": 17212
+  },
+  "images/levels/supper_time/h_midground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/supper_time/h_midground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "2d29686dda8c83d9",
+   "bytes": 27376
+  },
+  "images/levels/supper_time/level.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/supper_time/level_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "5b484815fcfad075",
+   "bytes": 17158
+  },
+  "images/levels/supper_time/midground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/supper_time/midground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "1fb8871992790373",
+   "bytes": 27684
+  },
+  "images/levels/three_towers/foreground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/three_towers/foreground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "c6246c31a11f180c",
+   "bytes": 30654
+  },
+  "images/levels/three_towers/level.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/three_towers/level_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "3f491272ff9e7e80",
+   "bytes": 18372
+  },
+  "images/levels/three_towers/midground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/three_towers/midground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "7c2301c8b918114a",
+   "bytes": 33676
+  },
+  "images/levels/two_towers/foreground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/two_towers/foreground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "1b8b9540c6de70a6",
+   "bytes": 9764
+  },
+  "images/levels/two_towers/level.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/two_towers/level_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "9a0852ecc8dba765",
+   "bytes": 19372
+  },
+  "images/levels/two_towers/midground.webp": {
+   "from": "panorama/images/events/crownfall/artillery/levels/two_towers/midground_png.png",
+   "width": 1640,
+   "height": 800,
+   "quality": 88,
+   "stamp": "aafd525df71f7b66",
+   "bytes": 37442
+  },
+  "images/locked_pattern.webp": {
+   "from": "panorama/images/events/crownfall/survivors/locked_pattern_png.png",
+   "width": 40,
+   "height": 40,
+   "lossless": true,
+   "stamp": "e999bb8a2b88ba94",
+   "bytes": 60
+  },
+  "images/npc_dota_hero_snapfire.webp": {
+   "from": "panorama/images/heroes/icons/npc_dota_hero_snapfire_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "e04ea2b859425c53",
+   "bytes": 1222
+  },
+  "images/playerarrow.webp": {
+   "from": "panorama/images/events/crownfall/artillery/playerarrow_psd.png",
+   "width": 96,
+   "height": 8,
+   "lossless": true,
+   "stamp": "5410f1efaa313eba",
+   "bytes": 120
+  },
+  "images/power_bar_opacity_mask.webp": {
+   "from": "panorama/images/events/crownfall/artillery/power_bar_opacity_mask_psd.png",
+   "width": 200,
+   "height": 200,
+   "lossless": true,
+   "stamp": "e97c3a95c109a516",
+   "bytes": 2338
+  },
+  "images/score_container_background.webp": {
+   "from": "panorama/images/events/crownfall/match3/score_container_background_png.png",
+   "width": 521,
+   "height": 160,
+   "lossless": true,
+   "stamp": "a593b9645273288a",
+   "bytes": 23486
+  },
+  "images/score_container_border.webp": {
+   "from": "panorama/images/events/crownfall/match3/score_container_border_png.png",
+   "width": 522,
+   "height": 160,
+   "lossless": true,
+   "stamp": "638214be0dc71369",
+   "bytes": 980
+  },
+  "images/spellicons/meepo_petrify.webp": {
+   "from": "panorama/images/spellicons/meepo_petrify_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "0570401ea2255d16",
+   "bytes": 16562
+  },
+  "images/spellicons/snapfire_mortimer_kisses.webp": {
+   "from": "panorama/images/spellicons/snapfire_mortimer_kisses_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "5a8f4444e3610d3a",
+   "bytes": 21188
+  },
+  "images/spellicons/sniper_concussive_grenade.webp": {
+   "from": "panorama/images/spellicons/sniper_concussive_grenade_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "c444d5643e0be22b",
+   "bytes": 18168
+  },
+  "images/spellicons/sniper_shrapnel_muh_keen_gun.webp": {
+   "from": "panorama/images/spellicons/sniper_shrapnel_muh_keen_gun_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "418fa7f32c11b785",
+   "bytes": 19952
+  },
+  "images/spellicons/techies_land_mines.webp": {
+   "from": "panorama/images/spellicons/techies_land_mines_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "59001568b0631c5b",
+   "bytes": 18150
+  },
+  "images/spellicons/tinker_heat_seeking_missile.webp": {
+   "from": "panorama/images/spellicons/tinker_heat_seeking_missile_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "9d2b5c9c30423fb6",
+   "bytes": 14368
+  },
+  "images/spellicons/tinker_laser.webp": {
+   "from": "panorama/images/spellicons/tinker_laser_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "65f6fddb0dbb4403",
+   "bytes": 15088
+  },
+  "images/star_empty.webp": {
+   "from": "panorama/images/events/crownfall/artillery/star_empty_png.png",
+   "width": 240,
+   "height": 240,
+   "lossless": true,
+   "stamp": "ec060b40342dbbab",
+   "bytes": 4768
+  },
+  "images/star_filled.webp": {
+   "from": "panorama/images/events/crownfall/artillery/star_filled_png.png",
+   "width": 240,
+   "height": 240,
+   "lossless": true,
+   "stamp": "972f882cdf4ff0f7",
+   "bytes": 25860
+  },
+  "sounds.json": {
+   "from": "soundevents/soundevents_crownfall.vsndevts",
+   "bytes": 10033
+  },
+  "sounds/misc/creep_deaths/death_ogre_01.mp3": {
+   "from": "sounds/misc/creep_deaths/death_ogre_01.wav",
+   "stamp": "cf0623fc059fa491",
+   "bytes": 9047
+  },
+  "sounds/misc/creep_deaths/death_ogre_02.mp3": {
+   "from": "sounds/misc/creep_deaths/death_ogre_02.wav",
+   "stamp": "7698a9797e0be31d",
+   "bytes": 11130
+  },
+  "sounds/misc/creep_deaths/death_ogre_03.mp3": {
+   "from": "sounds/misc/creep_deaths/death_ogre_03.wav",
+   "stamp": "6c901a827a3f596a",
+   "bytes": 11078
+  },
+  "sounds/misc/creep_deaths/death_ogre_04.mp3": {
+   "from": "sounds/misc/creep_deaths/death_ogre_04.wav",
+   "stamp": "46968854fae1d756",
+   "bytes": 9984
+  },
+  "sounds/misc/creep_deaths/death_satyr_hellcaller.mp3": {
+   "from": "sounds/misc/creep_deaths/death_satyr_hellcaller.wav",
+   "stamp": "fe7a2092bfa41fd8",
+   "bytes": 12620
+  },
+  "sounds/misc/crownfall/artillery_charge.mp3": {
+   "from": "sounds/misc/crownfall/artillery_charge.wav",
+   "stamp": "4f67b371906baebe",
+   "bytes": 24737
+  },
+  "sounds/misc/crownfall/artillery_sky_death.mp3": {
+   "from": "sounds/misc/crownfall/artillery_sky_death.wav",
+   "stamp": "be51b66728eed32e",
+   "bytes": 6954
+  },
+  "sounds/misc/crownfall/music/fighting_main.mp3": {
+   "from": "sounds/misc/crownfall/music/fighting_main.mp3",
+   "stamp": "2486034391772a67",
+   "bytes": 558467
+  },
+  "sounds/misc/crownfall/music/match3_mus_norm_1.mp3": {
+   "from": "sounds/misc/crownfall/music/match3_mus_norm_1.mp3",
+   "stamp": "05f8ce06e86e05a5",
+   "bytes": 1468447
+  },
+  "sounds/music/valve_dota_001/music/killed.mp3": {
+   "from": "sounds/music/valve_dota_001/music/killed.mp3",
+   "stamp": "4620dd355034e89b",
+   "bytes": 1080655
+  },
+  "sounds/music/valve_dota_001/stingers/radiant_win.mp3": {
+   "from": "sounds/music/valve_dota_001/stingers/radiant_win.mp3",
+   "stamp": "b61cdb34728556ab",
+   "bytes": 553812
+  },
+  "sounds/physics/deaths/specials/skeletonking_death.mp3": {
+   "from": "sounds/physics/deaths/specials/skeletonking_death.wav",
+   "stamp": "0436c8c71b241efe",
+   "bytes": 19838
+  },
+  "sounds/ui/inventory/gun_equip.mp3": {
+   "from": "sounds/ui/inventory/gun_equip.wav",
+   "stamp": "57e145dd117be28a",
+   "bytes": 5209
+  },
+  "sounds/ui/inventory/metalsmall_equip_02.mp3": {
+   "from": "sounds/ui/inventory/metalsmall_equip_02.wav",
+   "stamp": "ec94c5d1d2b5aab7",
+   "bytes": 5599
+  },
+  "sounds/ui/inventory/staff_equip_01.mp3": {
+   "from": "sounds/ui/inventory/staff_equip_01.wav",
+   "stamp": "4eacb88a250e2444",
+   "bytes": 5597
+  },
+  "sounds/vo/snapfire/snapfire_death_01.mp3": {
+   "from": "sounds/vo/snapfire/snapfire_death_01.mp3",
+   "stamp": "a305207955473e1a",
+   "bytes": 42744
+  },
+  "sounds/vo/snapfire/snapfire_death_02.mp3": {
+   "from": "sounds/vo/snapfire/snapfire_death_02.mp3",
+   "stamp": "5a182afab00bf33a",
+   "bytes": 36672
+  },
+  "sounds/vo/snapfire/snapfire_kill_01.mp3": {
+   "from": "sounds/vo/snapfire/snapfire_kill_01.mp3",
+   "stamp": "520155859729f179",
+   "bytes": 38262
+  },
+  "sounds/vo/snapfire/snapfire_kill_02.mp3": {
+   "from": "sounds/vo/snapfire/snapfire_kill_02.mp3",
+   "stamp": "5ccf05d172215217",
+   "bytes": 30338
+  },
+  "sounds/vo/snapfire/snapfire_spawn_04.mp3": {
+   "from": "sounds/vo/snapfire/snapfire_spawn_04.mp3",
+   "stamp": "6ac4a105a1da5134",
+   "bytes": 38888
+  },
+  "sounds/vo/snapfire/snapfire_spawn_05.mp3": {
+   "from": "sounds/vo/snapfire/snapfire_spawn_05.mp3",
+   "stamp": "0e46e7ab05d73c42",
+   "bytes": 20448
+  },
+  "sounds/vo/snapfire/snapfire_win_01.mp3": {
+   "from": "sounds/vo/snapfire/snapfire_win_01.mp3",
+   "stamp": "b832ed49b7c5947d",
+   "bytes": 54420
+  },
+  "sounds/vo/snapfire/snapfire_win_03.mp3": {
+   "from": "sounds/vo/snapfire/snapfire_win_03.mp3",
+   "stamp": "1d4aa79ea922f70f",
+   "bytes": 32318
+  },
+  "sounds/weapons/creep/greevil/death01.mp3": {
+   "from": "sounds/weapons/creep/greevil/death01.wav",
+   "stamp": "d5e118f2d6433d77",
+   "bytes": 16573
+  },
+  "sounds/weapons/creep/greevil/death02.mp3": {
+   "from": "sounds/weapons/creep/greevil/death02.wav",
+   "stamp": "b6df599dc6316233",
+   "bytes": 14975
+  },
+  "sounds/weapons/creep/greevil/death03.mp3": {
+   "from": "sounds/weapons/creep/greevil/death03.wav",
+   "stamp": "6a1a431adbb9fa23",
+   "bytes": 10239
+  },
+  "sounds/weapons/creep/greevil/death04.mp3": {
+   "from": "sounds/weapons/creep/greevil/death04.wav",
+   "stamp": "cf863d05a70c34ad",
+   "bytes": 11783
+  },
+  "sounds/weapons/creep/greevil/death05.mp3": {
+   "from": "sounds/weapons/creep/greevil/death05.wav",
+   "stamp": "e6374a53865d324b",
+   "bytes": 8993
+  },
+  "sounds/weapons/hero/snapfire/shotgun_fire.mp3": {
+   "from": "sounds/weapons/hero/snapfire/shotgun_fire.wav",
+   "stamp": "f1ca48fffd3c25b1",
+   "bytes": 65028
+  },
+  "sounds/weapons/hero/snapfire/shotgun_load.mp3": {
+   "from": "sounds/weapons/hero/snapfire/shotgun_load.wav",
+   "stamp": "a712e233d8c88866",
+   "bytes": 9869
+  },
+  "sounds/weapons/hero/techies/attack.mp3": {
+   "from": "sounds/weapons/hero/techies/attack.wav",
+   "stamp": "3fa51457a91f6af8",
+   "bytes": 10730
+  },
+  "sounds/weapons/hero/techies/land_mine01.mp3": {
+   "from": "sounds/weapons/hero/techies/land_mine01.wav",
+   "stamp": "3a9199aa2b842c6a",
+   "bytes": 33813
+  },
+  "sounds/weapons/hero/techies/land_mine02.mp3": {
+   "from": "sounds/weapons/hero/techies/land_mine02.wav",
+   "stamp": "fb7458c433e36e22",
+   "bytes": 37382
+  },
+  "strings.en.json": {
+   "from": "resource/localization/dota_english.txt, resource/localization/novels/crownfall_english.txt",
+   "count": 80,
+   "bytes": 5552
+  },
+  "strings.ru.json": {
+   "from": "resource/localization/dota_russian.txt, resource/localization/novels/crownfall_russian.txt",
+   "count": 80,
+   "bytes": 7013
+  }
+ },
+ "valve": {
+  "panorama/images/events/crownfall/artillery/artillery_logo_png": "images/artillery_logo.webp",
+  "panorama/images/events/crownfall/artillery/artillery_splash_psd": "images/artillery_splash.webp",
+  "panorama/images/events/crownfall/artillery/background_psd": "images/background.webp",
+  "panorama/images/events/crownfall/artillery/directional_track_png": "images/directional_track.webp",
+  "panorama/images/events/crownfall/artillery/hero_mask_png": "images/hero_mask.webp",
+  "panorama/images/events/crownfall/artillery/hud_container_background_wide_png": "images/hud_container_background_wide.webp",
+  "panorama/images/events/crownfall/artillery/hud_container_border_wide_png": "images/hud_container_border_wide.webp",
+  "panorama/images/events/crownfall/artillery/levels/background_extended_png": "images/levels/background_extended.webp",
+  "panorama/images/events/crownfall/artillery/levels/bastion/foreground_png": "images/levels/bastion/foreground.webp",
+  "panorama/images/events/crownfall/artillery/levels/bastion/level_png": "images/levels/bastion/level.webp",
+  "panorama/images/events/crownfall/artillery/levels/bastion/midground_png": "images/levels/bastion/midground.webp",
+  "panorama/images/events/crownfall/artillery/levels/bridges/foreground_png": "images/levels/bridges/foreground.webp",
+  "panorama/images/events/crownfall/artillery/levels/bridges/level_png": "images/levels/bridges/level.webp",
+  "panorama/images/events/crownfall/artillery/levels/bridges/midground_png": "images/levels/bridges/midground.webp",
+  "panorama/images/events/crownfall/artillery/levels/bunker/foreground_png": "images/levels/bunker/foreground.webp",
+  "panorama/images/events/crownfall/artillery/levels/bunker/level_png": "images/levels/bunker/level.webp",
+  "panorama/images/events/crownfall/artillery/levels/bunker/midground_png": "images/levels/bunker/midground.webp",
+  "panorama/images/events/crownfall/artillery/levels/compound/foreground_png": "images/levels/compound/foreground.webp",
+  "panorama/images/events/crownfall/artillery/levels/compound/level_png": "images/levels/compound/level.webp",
+  "panorama/images/events/crownfall/artillery/levels/compound/midground_png": "images/levels/compound/midground.webp",
+  "panorama/images/events/crownfall/artillery/levels/gatehouse/foreground_png": "images/levels/gatehouse/foreground.webp",
+  "panorama/images/events/crownfall/artillery/levels/gatehouse/level_png": "images/levels/gatehouse/level.webp",
+  "panorama/images/events/crownfall/artillery/levels/gatehouse/midground_png": "images/levels/gatehouse/midground.webp",
+  "panorama/images/events/crownfall/artillery/levels/guardhouse/foreground_png": "images/levels/guardhouse/foreground.webp",
+  "panorama/images/events/crownfall/artillery/levels/guardhouse/level_png": "images/levels/guardhouse/level.webp",
+  "panorama/images/events/crownfall/artillery/levels/guardhouse/midground_png": "images/levels/guardhouse/midground.webp",
+  "panorama/images/events/crownfall/artillery/levels/supper_time/foreground_png": "images/levels/supper_time/foreground.webp",
+  "panorama/images/events/crownfall/artillery/levels/supper_time/h_level_png": "images/levels/supper_time/h_level.webp",
+  "panorama/images/events/crownfall/artillery/levels/supper_time/h_midground_png": "images/levels/supper_time/h_midground.webp",
+  "panorama/images/events/crownfall/artillery/levels/supper_time/level_png": "images/levels/supper_time/level.webp",
+  "panorama/images/events/crownfall/artillery/levels/supper_time/midground_png": "images/levels/supper_time/midground.webp",
+  "panorama/images/events/crownfall/artillery/levels/three_towers/foreground_png": "images/levels/three_towers/foreground.webp",
+  "panorama/images/events/crownfall/artillery/levels/three_towers/level_png": "images/levels/three_towers/level.webp",
+  "panorama/images/events/crownfall/artillery/levels/three_towers/midground_png": "images/levels/three_towers/midground.webp",
+  "panorama/images/events/crownfall/artillery/levels/two_towers/foreground_png": "images/levels/two_towers/foreground.webp",
+  "panorama/images/events/crownfall/artillery/levels/two_towers/level_png": "images/levels/two_towers/level.webp",
+  "panorama/images/events/crownfall/artillery/levels/two_towers/midground_png": "images/levels/two_towers/midground.webp",
+  "panorama/images/events/crownfall/artillery/playerarrow_psd": "images/playerarrow.webp",
+  "panorama/images/events/crownfall/artillery/power_bar_opacity_mask_psd": "images/power_bar_opacity_mask.webp",
+  "panorama/images/events/crownfall/artillery/star_empty_png": "images/star_empty.webp",
+  "panorama/images/events/crownfall/artillery/star_filled_png": "images/star_filled.webp",
+  "panorama/images/events/crownfall/match3/score_container_background_png": "images/score_container_background.webp",
+  "panorama/images/events/crownfall/match3/score_container_border_png": "images/score_container_border.webp",
+  "panorama/images/events/crownfall/survivors/locked_pattern_png": "images/locked_pattern.webp",
+  "panorama/images/heroes/icons/npc_dota_hero_snapfire_png": "images/npc_dota_hero_snapfire.webp",
+  "panorama/images/spellicons/meepo_petrify_png": "images/spellicons/meepo_petrify.webp",
+  "panorama/images/spellicons/snapfire_mortimer_kisses_png": "images/spellicons/snapfire_mortimer_kisses.webp",
+  "panorama/images/spellicons/sniper_concussive_grenade_png": "images/spellicons/sniper_concussive_grenade.webp",
+  "panorama/images/spellicons/sniper_shrapnel_muh_keen_gun_png": "images/spellicons/sniper_shrapnel_muh_keen_gun.webp",
+  "panorama/images/spellicons/techies_land_mines_png": "images/spellicons/techies_land_mines.webp",
+  "panorama/images/spellicons/tinker_heat_seeking_missile_png": "images/spellicons/tinker_heat_seeking_missile.webp",
+  "panorama/images/spellicons/tinker_laser_png": "images/spellicons/tinker_laser.webp",
+  "sounds/misc/creep_deaths/death_ogre_01": "sounds/misc/creep_deaths/death_ogre_01.mp3",
+  "sounds/misc/creep_deaths/death_ogre_02": "sounds/misc/creep_deaths/death_ogre_02.mp3",
+  "sounds/misc/creep_deaths/death_ogre_03": "sounds/misc/creep_deaths/death_ogre_03.mp3",
+  "sounds/misc/creep_deaths/death_ogre_04": "sounds/misc/creep_deaths/death_ogre_04.mp3",
+  "sounds/misc/creep_deaths/death_satyr_hellcaller": "sounds/misc/creep_deaths/death_satyr_hellcaller.mp3",
+  "sounds/misc/crownfall/artillery_charge": "sounds/misc/crownfall/artillery_charge.mp3",
+  "sounds/misc/crownfall/artillery_sky_death": "sounds/misc/crownfall/artillery_sky_death.mp3",
+  "sounds/misc/crownfall/music/fighting_main": "sounds/misc/crownfall/music/fighting_main.mp3",
+  "sounds/misc/crownfall/music/match3_mus_norm_1": "sounds/misc/crownfall/music/match3_mus_norm_1.mp3",
+  "sounds/music/valve_dota_001/music/killed": "sounds/music/valve_dota_001/music/killed.mp3",
+  "sounds/music/valve_dota_001/stingers/radiant_win": "sounds/music/valve_dota_001/stingers/radiant_win.mp3",
+  "sounds/physics/deaths/specials/skeletonking_death": "sounds/physics/deaths/specials/skeletonking_death.mp3",
+  "sounds/ui/inventory/gun_equip": "sounds/ui/inventory/gun_equip.mp3",
+  "sounds/ui/inventory/metalsmall_equip_02": "sounds/ui/inventory/metalsmall_equip_02.mp3",
+  "sounds/ui/inventory/staff_equip_01": "sounds/ui/inventory/staff_equip_01.mp3",
+  "sounds/vo/snapfire/snapfire_death_01": "sounds/vo/snapfire/snapfire_death_01.mp3",
+  "sounds/vo/snapfire/snapfire_death_02": "sounds/vo/snapfire/snapfire_death_02.mp3",
+  "sounds/vo/snapfire/snapfire_kill_01": "sounds/vo/snapfire/snapfire_kill_01.mp3",
+  "sounds/vo/snapfire/snapfire_kill_02": "sounds/vo/snapfire/snapfire_kill_02.mp3",
+  "sounds/vo/snapfire/snapfire_spawn_04": "sounds/vo/snapfire/snapfire_spawn_04.mp3",
+  "sounds/vo/snapfire/snapfire_spawn_05": "sounds/vo/snapfire/snapfire_spawn_05.mp3",
+  "sounds/vo/snapfire/snapfire_win_01": "sounds/vo/snapfire/snapfire_win_01.mp3",
+  "sounds/vo/snapfire/snapfire_win_03": "sounds/vo/snapfire/snapfire_win_03.mp3",
+  "sounds/weapons/creep/greevil/death01": "sounds/weapons/creep/greevil/death01.mp3",
+  "sounds/weapons/creep/greevil/death02": "sounds/weapons/creep/greevil/death02.mp3",
+  "sounds/weapons/creep/greevil/death03": "sounds/weapons/creep/greevil/death03.mp3",
+  "sounds/weapons/creep/greevil/death04": "sounds/weapons/creep/greevil/death04.mp3",
+  "sounds/weapons/creep/greevil/death05": "sounds/weapons/creep/greevil/death05.mp3",
+  "sounds/weapons/hero/snapfire/shotgun_fire": "sounds/weapons/hero/snapfire/shotgun_fire.mp3",
+  "sounds/weapons/hero/snapfire/shotgun_load": "sounds/weapons/hero/snapfire/shotgun_load.mp3",
+  "sounds/weapons/hero/techies/attack": "sounds/weapons/hero/techies/attack.mp3",
+  "sounds/weapons/hero/techies/land_mine01": "sounds/weapons/hero/techies/land_mine01.mp3",
+  "sounds/weapons/hero/techies/land_mine02": "sounds/weapons/hero/techies/land_mine02.mp3"
+ }
+}

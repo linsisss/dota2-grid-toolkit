@@ -132,6 +132,8 @@ export const StudioLayout = memo(function StudioLayout({ onBack }) {
               </label>
               <input id="eraserSize" type="range" min="6" max="400" defaultValue="44" />
               <p className="hint">{t('Колесо мыши над холстом или [ и ] — меньше и больше. Ctrl + колесо — масштаб.')}</p>
+              {/* «Слой»: all layers or one (src/StudioControls.jsx EraserLayer). */}
+              <div id="eraserLayerField" />
             </div>
             {/* «Распыление»: how far the glyphs under the brush fly and how widely they fan out. */}
             <div id="scatterField" hidden>

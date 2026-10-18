@@ -15,7 +15,7 @@ export default {
   'Редактор твоей сетки': 'The editor for your grid',
   '1193 × 593 — твой холст': '1193 × 593 — your canvas',
   'Смотреть сетки и фоны': 'Browse grids and backgrounds',
-  'Фон меню Dota': 'Dota menu background',
+  'Фон меню Dota': 'Dota menu background', 'Фон и интерфейс Dota': 'Dota background and interface',
   'Шрифты': 'Fonts',
   'Проект на GitHub': 'Project on GitHub',
 
@@ -43,8 +43,8 @@ export default {
   // The home page (src/landing/Home.jsx).
   'Разделы': 'Sections', 'Мастерская': 'Workshop', 'Гайды': 'Guides', 'Студия': 'Studio', 'Чат и новости': 'Chat and news', 'Реклама': 'Advertising',
   'Фоны главного меню, сетки героев и шрифты — бесплатно, прямо в браузере.': 'Main menu backgrounds, hero grids and fonts — free, right in the browser.',
-  'Фон меню': 'Menu background', 'Живой фон из видео, GIF или картинки.': 'A live background from a video, GIF or picture.', 'Сделать фон': 'Make a background', 'Готовые': 'Ready ones',
+  'Фон меню': 'Menu background', 'Живой фон из видео, GIF или картинки.': 'A live background from a video, GIF or picture.', 'Сделать фон': 'Make a background', 'Готовые': 'Ready ones', 'Фон и интерфейс': 'Background & interface', 'Живой фон меню, HUD, курсор и тексты — одним файлом.': 'A live menu background, HUD, cursor and texts — in one file.', 'Настроить': 'Customize',
   'Сетка героев': 'Hero grid', 'Герои, рисунки и ASCII-арты из символов.': 'Heroes, drawings and ASCII art from symbols.', 'Создать сетку': 'Create a grid',
   'Шрифт': 'Font', 'Любой шрифт с кириллицей в чате и меню.': 'Any font with Cyrillic in chat and menus.', 'Выбрать шрифт': 'Pick a font',
-  'Dotadle #{number}': 'Dotadle #{number}', 'Угадай героя дня по портрету из символов': 'Guess the hero of the day from a portrait made of symbols',
+  'Dotadle #{number}': 'Dotadle #{number}', 'Угадай героя дня по портрету из символов': 'Guess the hero of the day from a portrait made of symbols', 'Мини-игры': 'Minigames', 'Девять игр Crownfall из Dota 2 прямо в браузере': 'Nine Crownfall games from Dota 2, right in the browser',
 };

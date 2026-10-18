@@ -1,0 +1,378 @@
+{
+ "events": {
+  "crownfall.shmup.boss.breath": {
+   "files": [
+    "sounds/misc/crownfall/zaug_attack.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "pitchRand": [
+    -0.1,
+    0.1
+   ],
+   "delay": 0.2,
+   "duration": 2.783968
+  },
+  "crownfall.shmup.boss.coldembrace": {
+   "files": [
+    "sounds/misc/crownfall/zaug_heal.mp3"
+   ],
+   "volume": 0.66,
+   "pitch": 1,
+   "duration": 5.794649
+  },
+  "crownfall.shmup.boss.coldembrace.shatter": {
+   "files": [
+    "sounds/weapons/hero/winter_wyvern/splinter_blast_cast.mp3"
+   ],
+   "volume": 1,
+   "pitch": 0.75,
+   "duration": 1.960635
+  },
+  "crownfall.shmup.boss.roar": {
+   "files": [
+    "sounds/misc/crownfall/zaug_roar.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "delay": 0.4,
+   "duration": 4.123719
+  },
+  "crownfall.shmup.boss.splinterblast": {
+   "files": [
+    "sounds/weapons/hero/winter_wyvern/splinter_blast_projectile.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 3.31093
+  },
+  "crownfall.shmup.boss.warning": {
+   "files": [
+    "sounds/misc/crownfall/boss_warn.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "stopAt": 6.75,
+   "duration": 0.858231
+  },
+  "crownfall.shmup.boss.wing": {
+   "files": [
+    "sounds/physics/movement/wings/wingflaps_heavy_01.mp3",
+    "sounds/physics/movement/wings/wingflaps_heavy_02.mp3",
+    "sounds/physics/movement/wings/wingflaps_heavy_03.mp3",
+    "sounds/physics/movement/wings/wingflaps_heavy_04.mp3",
+    "sounds/physics/movement/wings/wingflaps_heavy_05.mp3"
+   ],
+   "volume": 0.05,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.552676
+  },
+  "crownfall.shmup.boss_music": {
+   "files": [
+    "sounds/misc/crownfall/music/shmup_main.mp3"
+   ],
+   "volume": 0.6,
+   "pitch": 1,
+   "delay": 5,
+   "fadeOut": 1,
+   "duration": 32.322632
+  },
+  "crownfall.shmup.combo.broken": {
+   "files": [
+    "sounds/misc/crownfall/combo_break.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 0.541043
+  },
+  "crownfall.shmup.combo.success": {
+   "files": [
+    "sounds/misc/crownfall/combo_success.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.183968
+  },
+  "crownfall.shmup.enemy.armor": {
+   "files": [
+    "sounds/weapons/hero/shredder/armor_cast.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 1.55325
+  },
+  "crownfall.shmup.enemy.explode": {
+   "files": [
+    "sounds/misc/crownfall/shmup_explode.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 1.731225
+  },
+  "crownfall.shmup.enemy.hit": {
+   "files": [
+    "sounds/weapons/hero/skywrath/projectile_impact01.mp3",
+    "sounds/weapons/hero/skywrath/projectile_impact02.mp3",
+    "sounds/weapons/hero/skywrath/projectile_impact03.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1.25,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.997075
+  },
+  "crownfall.shmup.enemy.hit.bonus.damage": {
+   "files": [
+    "sounds/weapons/hero/skywrath/mystic_flare_target.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1.25,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.992653
+  },
+  "crownfall.shmup.homing.attack.explode": {
+   "files": [
+    "sounds/ambient/newyear/rocket_explode01.mp3",
+    "sounds/ambient/newyear/rocket_explode02.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 2.491746
+  },
+  "crownfall.shmup.homing.attack.fire": {
+   "files": [
+    "sounds/weapons/hero/skywrath/mystic_flare_target.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.992653
+  },
+  "crownfall.shmup.music": {
+   "files": [
+    "sounds/misc/crownfall/music/fighting_main.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 1,
+   "delay": 1.5,
+   "fadeOut": 4,
+   "duration": 31.68375
+  },
+  "crownfall.shmup.music.attract": {
+   "files": [
+    "sounds/misc/crownfall/music/match3_main.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 1,
+   "delay": 1.5,
+   "fadeOut": 3,
+   "duration": 44.403969
+  },
+  "crownfall.shmup.music.lose": {
+   "files": [
+    "sounds/music/valve_dota_001/stingers/radiant_lose.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "fadeOut": 1,
+   "duration": 24.032654
+  },
+  "crownfall.shmup.music.win": {
+   "files": [
+    "sounds/music/valve_dota_001/stingers/radiant_win.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "fadeOut": 1,
+   "duration": 53.002449
+  },
+  "crownfall.shmup.player.absorb": {
+   "files": [
+    "sounds/weapons/creep/bad/range_projectile_launch4.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.505918
+  },
+  "crownfall.shmup.player.killed": {
+   "files": [
+    "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3",
+    "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3",
+    "sounds/vo/vengefulspirit/venge_crown_anger_03.mp3",
+    "sounds/vo/vengefulspirit/venge_crown_anger_04.mp3",
+    "sounds/vo/vengefulspirit/venge_crown_anger_05.mp3",
+    "sounds/vo/vengefulspirit/venge_crown_anger_06.mp3",
+    "sounds/vo/vengefulspirit/venge_crown_anger_07.mp3",
+    "sounds/vo/vengefulspirit/venge_crown_anger_08.mp3",
+    "sounds/vo/vengefulspirit/venge_crown_anger_09.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "mixgroup": "misc",
+   "duration": 1.289705
+  },
+  "crownfall.shmup.player.shoot": {
+   "files": [
+    "sounds/misc/crownfall/player_shoot.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 1.25,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.47898
+  },
+  "crownfall.shmup.player.swap": {
+   "files": [
+    "sounds/weapons/hero/vengeful_spirit/nether_swap.mp3"
+   ],
+   "volume": 0.6,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 2.157959
+  },
+  "crownfall.shmup.special.gained.charge": {
+   "files": [
+    "sounds/misc/crownfall/charge_gained.mp3"
+   ],
+   "volume": 0.75,
+   "pitch": 1,
+   "duration": 0.863968
+  },
+  "crownfall.shmup.special.max.charge": {
+   "files": [
+    "sounds/misc/crownfall/charge_max.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "duration": 0.821293
+  },
+  "crownfall.shmup.special.max.charge.loop": {
+   "files": [
+    "sounds/null_lp.mp3"
+   ],
+   "volume": 0,
+   "pitch": 1,
+   "duration": 0.100045
+  }
+ },
+ "files": {
+  "sounds/misc/crownfall/boss_warn.mp3": {
+   "duration": 0.858231,
+   "loop": [
+    0,
+    0.8582086167800453
+   ]
+  },
+  "sounds/misc/crownfall/charge_gained.mp3": {
+   "duration": 0.863968
+  },
+  "sounds/misc/crownfall/charge_max.mp3": {
+   "duration": 0.821293
+  },
+  "sounds/misc/crownfall/combo_break.mp3": {
+   "duration": 0.541043
+  },
+  "sounds/misc/crownfall/combo_success.mp3": {
+   "duration": 1.183968
+  },
+  "sounds/misc/crownfall/music/fighting_main.mp3": {
+   "duration": 31.68375,
+   "loop": [
+    0,
+    31.683718820861678
+   ]
+  },
+  "sounds/misc/crownfall/music/match3_main.mp3": {
+   "duration": 44.403969,
+   "loop": [
+    0,
+    44.403945578231294
+   ]
+  },
+  "sounds/misc/crownfall/music/shmup_main.mp3": {
+   "duration": 32.322632,
+   "loop": [
+    0,
+    32.322607709750564
+   ]
+  },
+  "sounds/misc/crownfall/player_shoot.mp3": {
+   "duration": 0.47898
+  },
+  "sounds/misc/crownfall/shmup_explode.mp3": {
+   "duration": 1.731225
+  },
+  "sounds/misc/crownfall/zaug_attack.mp3": {
+   "duration": 2.783968
+  },
+  "sounds/misc/crownfall/zaug_heal.mp3": {
+   "duration": 5.794649
+  },
+  "sounds/misc/crownfall/zaug_roar.mp3": {
+   "duration": 4.123719
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3": {
+   "duration": 0.731678
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3": {
+   "duration": 0.899615
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_03.mp3": {
+   "duration": 0.918141
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_04.mp3": {
+   "duration": 0.757528
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_05.mp3": {
+   "duration": 1.252834
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_06.mp3": {
+   "duration": 1.191519
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_07.mp3": {
+   "duration": 0.971134
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_08.mp3": {
+   "duration": 1.232449
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_09.mp3": {
+   "duration": 1.289705
+  }
+ },
+ "missing": {}
+}

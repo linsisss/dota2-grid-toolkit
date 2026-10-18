@@ -1,0 +1,700 @@
+{
+ "about": "Made by scripts/make-minigame-assets.mjs from Valve’s Dota 2 files; see docs/minigames.md.",
+ "files": {
+  "data.json": {
+   "from": "panorama/styles/battle_pass/crownfall/bp_popup_crownfall_encounter_techiemen.css",
+   "bytes": 2944
+  },
+  "images/blocks.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/blocks_png.png",
+   "width": 864,
+   "height": 32,
+   "lossless": true,
+   "stamp": "4cf598bc717f5381",
+   "bytes": 6232
+  },
+  "images/blocks_02.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/blocks_02_png.png",
+   "width": 864,
+   "height": 32,
+   "lossless": true,
+   "stamp": "f0f23d0ae701289c",
+   "bytes": 6128
+  },
+  "images/blocks_03.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/blocks_03_png.png",
+   "width": 864,
+   "height": 32,
+   "lossless": true,
+   "stamp": "167ad5bd1b6563ca",
+   "bytes": 6072
+  },
+  "images/blue_key.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/blue_key_png.png",
+   "width": 384,
+   "height": 32,
+   "lossless": true,
+   "stamp": "c4bc045994cd12e1",
+   "bytes": 644
+  },
+  "images/blue_key_held.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/blue_key_held_png.png",
+   "width": 36,
+   "height": 24,
+   "lossless": true,
+   "stamp": "0caddc603082470a",
+   "bytes": 140
+  },
+  "images/blue_lock.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/blue_lock_png.png",
+   "width": 64,
+   "height": 32,
+   "lossless": true,
+   "stamp": "c41303043f0a698a",
+   "bytes": 646
+  },
+  "images/bomb.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_psd.png",
+   "width": 160,
+   "height": 64,
+   "lossless": true,
+   "stamp": "aa9bda25e8d2f8ee",
+   "bytes": 11508
+  },
+  "images/bomb_count_icon.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_count_icon_psd.png",
+   "width": 72,
+   "height": 72,
+   "lossless": true,
+   "stamp": "569afa4ebc551047",
+   "bytes": 1244
+  },
+  "images/bomb_count_icon_kick.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_count_icon_kick_psd.png",
+   "width": 72,
+   "height": 72,
+   "lossless": true,
+   "stamp": "34653ba0dee9adfb",
+   "bytes": 1742
+  },
+  "images/bomb_count_icon_remote.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_count_icon_remote_psd.png",
+   "width": 72,
+   "height": 72,
+   "lossless": true,
+   "stamp": "2d8a96fb23b81d48",
+   "bytes": 820
+  },
+  "images/bomb_count_icon_spiky.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_count_icon_spiky_psd.png",
+   "width": 72,
+   "height": 72,
+   "lossless": true,
+   "stamp": "d3f2466de81ff5be",
+   "bytes": 892
+  },
+  "images/bomb_count_powerup.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_count_powerup_png.png",
+   "width": 384,
+   "height": 32,
+   "lossless": true,
+   "stamp": "481ef827405b8a6d",
+   "bytes": 1326
+  },
+  "images/bomb_enemy.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_enemy_psd.png",
+   "width": 160,
+   "height": 64,
+   "lossless": true,
+   "stamp": "49fa8738e2c9146d",
+   "bytes": 8498
+  },
+  "images/bomb_kick_powerup.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_kick_powerup_png.png",
+   "width": 384,
+   "height": 32,
+   "lossless": true,
+   "stamp": "b43d61ef55fb4177",
+   "bytes": 1260
+  },
+  "images/bomb_remote.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_remote_png.png",
+   "width": 256,
+   "height": 32,
+   "lossless": true,
+   "stamp": "1666703031f88bf4",
+   "bytes": 934
+  },
+  "images/bomb_remote_powerup.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_remote_powerup_png.png",
+   "width": 384,
+   "height": 32,
+   "lossless": true,
+   "stamp": "7d49c4bd3aa9f36c",
+   "bytes": 666
+  },
+  "images/bomb_size_icon.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_size_icon_psd.png",
+   "width": 72,
+   "height": 72,
+   "lossless": true,
+   "stamp": "d9073ceb56e81355",
+   "bytes": 1064
+  },
+  "images/bomb_size_powerup.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_size_powerup_png.png",
+   "width": 384,
+   "height": 32,
+   "lossless": true,
+   "stamp": "45cb117f5cd0bb9d",
+   "bytes": 864
+  },
+  "images/bomb_sticky.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/bomb_sticky_psd.png",
+   "width": 160,
+   "height": 64,
+   "lossless": true,
+   "stamp": "f7b00497e2ab3f13",
+   "bytes": 9942
+  },
+  "images/creep.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/creep_psd.png",
+   "width": 1088,
+   "height": 64,
+   "lossless": true,
+   "stamp": "ca0203646c3ff5f1",
+   "bytes": 9806
+  },
+  "images/creep_charger.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/creep_charger_psd.png",
+   "width": 4544,
+   "height": 128,
+   "lossless": true,
+   "stamp": "9f2200259f68ba57",
+   "bytes": 68708
+  },
+  "images/creep_flying.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/creep_flying_psd.png",
+   "width": 4608,
+   "height": 64,
+   "lossless": true,
+   "stamp": "1ca1b8a416369c97",
+   "bytes": 13920
+  },
+  "images/debug_numbers.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/debug_numbers_png.png",
+   "width": 384,
+   "height": 32,
+   "lossless": true,
+   "stamp": "cd070013b031072a",
+   "bytes": 206
+  },
+  "images/dropper_target.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/dropper_target_png.png",
+   "width": 64,
+   "height": 32,
+   "lossless": true,
+   "stamp": "2c4f6f32fe64a9c5",
+   "bytes": 222
+  },
+  "images/exit_closed.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/exit_closed_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "c6eda3eaf6e5dc81",
+   "bytes": 1070
+  },
+  "images/exit_open.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/exit_open_png.png",
+   "width": 96,
+   "height": 32,
+   "lossless": true,
+   "stamp": "205c3f9be6e55344",
+   "bytes": 1072
+  },
+  "images/explosion_standard.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/explosion_standard_png.png",
+   "width": 1120,
+   "height": 192,
+   "lossless": true,
+   "stamp": "b367d213bda76dd9",
+   "bytes": 22782
+  },
+  "images/flying_powerup.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/flying_powerup_png.png",
+   "width": 192,
+   "height": 32,
+   "lossless": true,
+   "stamp": "f3a1dbe18b89dff8",
+   "bytes": 358
+  },
+  "images/green_key.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/green_key_png.png",
+   "width": 384,
+   "height": 32,
+   "lossless": true,
+   "stamp": "374b3537da7a64c2",
+   "bytes": 608
+  },
+  "images/green_key_held.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/green_key_held_png.png",
+   "width": 36,
+   "height": 24,
+   "lossless": true,
+   "stamp": "932cf5ca865e5e7d",
+   "bytes": 140
+  },
+  "images/green_lock.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/green_lock_png.png",
+   "width": 64,
+   "height": 32,
+   "lossless": true,
+   "stamp": "ee3f6312cd880690",
+   "bytes": 634
+  },
+  "images/key_hole_mask.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/key_hole_mask_png.png",
+   "width": 256,
+   "height": 256,
+   "lossless": true,
+   "stamp": "0daecac697a6b679",
+   "bytes": 490
+  },
+  "images/lives_remaining_icon.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/lives_remaining_icon_psd.png",
+   "width": 4176,
+   "height": 72,
+   "lossless": true,
+   "stamp": "b8d7f2c6fd4b00a7",
+   "bytes": 4370
+  },
+  "images/mapbackground_frame.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/mapbackground_frame_psd.png",
+   "width": 680,
+   "height": 488,
+   "lossless": true,
+   "stamp": "8971ac3fc5bc4265",
+   "bytes": 239016
+  },
+  "images/mapbackground_frame_02.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/mapbackground_frame_02_psd.png",
+   "width": 680,
+   "height": 488,
+   "lossless": true,
+   "stamp": "92a829e9d8b31f88",
+   "bytes": 151200
+  },
+  "images/mapbackground_frame_03.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/mapbackground_frame_03_psd.png",
+   "width": 680,
+   "height": 488,
+   "lossless": true,
+   "stamp": "35eb4e90f7205ae8",
+   "bytes": 188310
+  },
+  "images/mapforeground_frame.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/mapforeground_frame_psd.png",
+   "width": 680,
+   "height": 488,
+   "lossless": true,
+   "stamp": "5fd5bc6b27f375a6",
+   "bytes": 30618
+  },
+  "images/mapforeground_frame_02.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/mapforeground_frame_02_psd.png",
+   "width": 680,
+   "height": 488,
+   "lossless": true,
+   "stamp": "98357be4542bbb60",
+   "bytes": 9122
+  },
+  "images/mapforeground_frame_03.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/mapforeground_frame_03_psd.png",
+   "width": 680,
+   "height": 488,
+   "lossless": true,
+   "stamp": "7adc045661f4a1d2",
+   "bytes": 26144
+  },
+  "images/pdpblocks.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/pdpblocks_png.png",
+   "width": 368,
+   "height": 176,
+   "lossless": true,
+   "stamp": "535fff50aa7f1b9c",
+   "bytes": 4286
+  },
+  "images/pdpcursor.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/pdpcursor_png.png",
+   "width": 240,
+   "height": 72,
+   "lossless": true,
+   "stamp": "712d26c17583b760",
+   "bytes": 634
+  },
+  "images/red_key.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/red_key_png.png",
+   "width": 384,
+   "height": 32,
+   "lossless": true,
+   "stamp": "15250b8c02f8f501",
+   "bytes": 762
+  },
+  "images/red_key_held.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/red_key_held_png.png",
+   "width": 36,
+   "height": 24,
+   "lossless": true,
+   "stamp": "aa6ecb50c7db1cbf",
+   "bytes": 142
+  },
+  "images/red_lock.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/red_lock_png.png",
+   "width": 64,
+   "height": 32,
+   "lossless": true,
+   "stamp": "ab0d6beac642667a",
+   "bytes": 652
+  },
+  "images/spiky_bomb_powerup.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/spiky_bomb_powerup_png.png",
+   "width": 384,
+   "height": 32,
+   "lossless": true,
+   "stamp": "c452c33d4e9bba4b",
+   "bytes": 846
+  },
+  "images/startscreen.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_psd.png",
+   "width": 304,
+   "height": 231,
+   "lossless": true,
+   "stamp": "f737e42b7efc9e81",
+   "bytes": 10030
+  },
+  "images/startscreen_letter_a.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_letter_a_psd.png",
+   "width": 10,
+   "height": 12,
+   "lossless": true,
+   "stamp": "a413f6e08c42c392",
+   "bytes": 108
+  },
+  "images/startscreen_letter_b.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_letter_b_psd.png",
+   "width": 10,
+   "height": 12,
+   "lossless": true,
+   "stamp": "ccb9c62eeb58e58b",
+   "bytes": 110
+  },
+  "images/startscreen_letter_e.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_letter_e_psd.png",
+   "width": 9,
+   "height": 12,
+   "lossless": true,
+   "stamp": "1a450e77d8138463",
+   "bytes": 108
+  },
+  "images/startscreen_letter_m.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_letter_m_psd.png",
+   "width": 10,
+   "height": 12,
+   "lossless": true,
+   "stamp": "0a1e165261806cdd",
+   "bytes": 110
+  },
+  "images/startscreen_letter_o.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_letter_o_psd.png",
+   "width": 10,
+   "height": 12,
+   "lossless": true,
+   "stamp": "9adbaf394474f451",
+   "bytes": 106
+  },
+  "images/startscreen_letter_p.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_letter_p_psd.png",
+   "width": 10,
+   "height": 12,
+   "lossless": true,
+   "stamp": "c2655d092a0909ea",
+   "bytes": 108
+  },
+  "images/startscreen_letter_r.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_letter_r_psd.png",
+   "width": 10,
+   "height": 12,
+   "lossless": true,
+   "stamp": "7a30dcb6666881ac",
+   "bytes": 108
+  },
+  "images/startscreen_letter_s.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_letter_s_psd.png",
+   "width": 10,
+   "height": 12,
+   "lossless": true,
+   "stamp": "1fac3663d4564195",
+   "bytes": 112
+  },
+  "images/startscreen_letter_space.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_letter_space_psd.png",
+   "width": 10,
+   "height": 12,
+   "lossless": true,
+   "stamp": "98aaccd10a39277c",
+   "bytes": 28
+  },
+  "images/startscreen_letter_t.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_letter_t_psd.png",
+   "width": 11,
+   "height": 12,
+   "lossless": true,
+   "stamp": "b6fd461af4ecd90c",
+   "bytes": 104
+  },
+  "images/startscreen_logo.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_logo_psd.png",
+   "width": 1000,
+   "height": 180,
+   "lossless": true,
+   "stamp": "c89635807228bed9",
+   "bytes": 37634
+  },
+  "images/startscreen_spoon.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/startscreen_spoon_psd.png",
+   "width": 5920,
+   "height": 97,
+   "lossless": true,
+   "stamp": "31b8034f6fbef2f6",
+   "bytes": 3712
+  },
+  "images/timericon.webp": {
+   "from": "panorama/images/events/crownfall/minesweeper/timericon_psd.png",
+   "width": 72,
+   "height": 72,
+   "lossless": true,
+   "stamp": "60245b6e4ba505e4",
+   "bytes": 914
+  },
+  "images/walk.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/walk_psd.png",
+   "width": 3968,
+   "height": 64,
+   "lossless": true,
+   "stamp": "17984e9f968da1a4",
+   "bytes": 18860
+  },
+  "images/walk_highlight_mask.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/walk_highlight_mask_psd.png",
+   "width": 3968,
+   "height": 64,
+   "lossless": true,
+   "stamp": "34cbe7e42c5b29ac",
+   "bytes": 35590
+  },
+  "images/walk_speed_icon.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/walk_speed_icon_psd.png",
+   "width": 72,
+   "height": 72,
+   "lossless": true,
+   "stamp": "8a8e6ca2c577f075",
+   "bytes": 720
+  },
+  "images/walk_speed_powerup.webp": {
+   "from": "panorama/images/events/crownfall/techiemen/walk_speed_powerup_png.png",
+   "width": 384,
+   "height": 32,
+   "lossless": true,
+   "stamp": "8516dc30b26e4360",
+   "bytes": 860
+  },
+  "sounds.json": {
+   "from": "soundevents/soundevents_techiemen.vsndevts",
+   "bytes": 5382
+  },
+  "sounds/misc/crownfall/combo_success.mp3": {
+   "from": "sounds/misc/crownfall/combo_success.wav",
+   "stamp": "8ac17c81c8bbba4b",
+   "bytes": 11637
+  },
+  "sounds/misc/crownfall/music/fighting_main.mp3": {
+   "from": "sounds/misc/crownfall/music/fighting_main.mp3",
+   "stamp": "16401d5bcc6ea302",
+   "bytes": 558467
+  },
+  "sounds/misc/crownfall/music/spoonman_main.mp3": {
+   "from": "sounds/misc/crownfall/music/spoonman_main.mp3",
+   "stamp": "ebcfd1b779b57f36",
+   "bytes": 561289
+  },
+  "sounds/misc/crownfall/spoonman_bomb_1.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_bomb_1.wav",
+   "stamp": "a217d99cd1794227",
+   "bytes": 16213
+  },
+  "sounds/misc/crownfall/spoonman_bomb_2.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_bomb_2.wav",
+   "stamp": "1c53591ea5e4c993",
+   "bytes": 20099
+  },
+  "sounds/misc/crownfall/spoonman_bomb_3.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_bomb_3.wav",
+   "stamp": "502ae1281f6d1fa3",
+   "bytes": 15689
+  },
+  "sounds/misc/crownfall/spoonman_bomb_plant.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_bomb_plant.wav",
+   "stamp": "07fd6548fc0cff68",
+   "bytes": 12654
+  },
+  "sounds/misc/crownfall/spoonman_bomber_warn.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_bomber_warn.wav",
+   "stamp": "f9df2bd2e5756ce2",
+   "bytes": 8676
+  },
+  "sounds/misc/crownfall/spoonman_dash.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_dash.wav",
+   "stamp": "784f64656b542afd",
+   "bytes": 6524
+  },
+  "sounds/misc/crownfall/spoonman_death.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_death.wav",
+   "stamp": "e8fb5b545f0b01fa",
+   "bytes": 42998
+  },
+  "sounds/misc/crownfall/spoonman_enemy_death.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_enemy_death.wav",
+   "stamp": "4c22b5c2d96bb1cd",
+   "bytes": 10860
+  },
+  "sounds/misc/crownfall/spoonman_exit.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_exit.wav",
+   "stamp": "a2de8e35d6c166f0",
+   "bytes": 16735
+  },
+  "sounds/misc/crownfall/spoonman_fall.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_fall.wav",
+   "stamp": "62c7f3ddc2bc4d76",
+   "bytes": 13078
+  },
+  "sounds/misc/crownfall/spoonman_powerup.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_powerup.wav",
+   "stamp": "0ca082535310db62",
+   "bytes": 4557
+  },
+  "sounds/misc/crownfall/spoonman_timer.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_timer.wav",
+   "stamp": "1410709acb899513",
+   "bytes": 1974
+  },
+  "sounds/misc/crownfall/spoonman_wall_hit.mp3": {
+   "from": "sounds/misc/crownfall/spoonman_wall_hit.wav",
+   "stamp": "166fcd4090225ee3",
+   "bytes": 8620
+  },
+  "sounds/ui/ui_general_deny.mp3": {
+   "from": "sounds/ui/ui_general_deny.wav",
+   "stamp": "00ec2a4be7af7fba",
+   "bytes": 2835
+  },
+  "sounds/weapons/hero/techies/attack.mp3": {
+   "from": "sounds/weapons/hero/techies/attack.wav",
+   "stamp": "1735efecc449a5fd",
+   "bytes": 10730
+  },
+  "strings.en.json": {
+   "from": "resource/localization/dota_english.txt, resource/localization/novels/crownfall_english.txt",
+   "count": 50,
+   "bytes": 3770
+  },
+  "strings.ru.json": {
+   "from": "resource/localization/dota_russian.txt, resource/localization/novels/crownfall_russian.txt",
+   "count": 50,
+   "bytes": 4941
+  }
+ },
+ "valve": {
+  "panorama/images/events/crownfall/minesweeper/timericon_psd": "images/timericon.webp",
+  "panorama/images/events/crownfall/techiemen/blocks_02_png": "images/blocks_02.webp",
+  "panorama/images/events/crownfall/techiemen/blocks_03_png": "images/blocks_03.webp",
+  "panorama/images/events/crownfall/techiemen/blocks_png": "images/blocks.webp",
+  "panorama/images/events/crownfall/techiemen/blue_key_held_png": "images/blue_key_held.webp",
+  "panorama/images/events/crownfall/techiemen/blue_key_png": "images/blue_key.webp",
+  "panorama/images/events/crownfall/techiemen/blue_lock_png": "images/blue_lock.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_count_icon_kick_psd": "images/bomb_count_icon_kick.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_count_icon_psd": "images/bomb_count_icon.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_count_icon_remote_psd": "images/bomb_count_icon_remote.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_count_icon_spiky_psd": "images/bomb_count_icon_spiky.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_count_powerup_png": "images/bomb_count_powerup.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_enemy_psd": "images/bomb_enemy.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_kick_powerup_png": "images/bomb_kick_powerup.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_psd": "images/bomb.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_remote_png": "images/bomb_remote.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_remote_powerup_png": "images/bomb_remote_powerup.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_size_icon_psd": "images/bomb_size_icon.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_size_powerup_png": "images/bomb_size_powerup.webp",
+  "panorama/images/events/crownfall/techiemen/bomb_sticky_psd": "images/bomb_sticky.webp",
+  "panorama/images/events/crownfall/techiemen/creep_charger_psd": "images/creep_charger.webp",
+  "panorama/images/events/crownfall/techiemen/creep_flying_psd": "images/creep_flying.webp",
+  "panorama/images/events/crownfall/techiemen/creep_psd": "images/creep.webp",
+  "panorama/images/events/crownfall/techiemen/debug_numbers_png": "images/debug_numbers.webp",
+  "panorama/images/events/crownfall/techiemen/dropper_target_png": "images/dropper_target.webp",
+  "panorama/images/events/crownfall/techiemen/exit_closed_png": "images/exit_closed.webp",
+  "panorama/images/events/crownfall/techiemen/exit_open_png": "images/exit_open.webp",
+  "panorama/images/events/crownfall/techiemen/explosion_standard_png": "images/explosion_standard.webp",
+  "panorama/images/events/crownfall/techiemen/flying_powerup_png": "images/flying_powerup.webp",
+  "panorama/images/events/crownfall/techiemen/green_key_held_png": "images/green_key_held.webp",
+  "panorama/images/events/crownfall/techiemen/green_key_png": "images/green_key.webp",
+  "panorama/images/events/crownfall/techiemen/green_lock_png": "images/green_lock.webp",
+  "panorama/images/events/crownfall/techiemen/key_hole_mask_png": "images/key_hole_mask.webp",
+  "panorama/images/events/crownfall/techiemen/lives_remaining_icon_psd": "images/lives_remaining_icon.webp",
+  "panorama/images/events/crownfall/techiemen/mapbackground_frame_02_psd": "images/mapbackground_frame_02.webp",
+  "panorama/images/events/crownfall/techiemen/mapbackground_frame_03_psd": "images/mapbackground_frame_03.webp",
+  "panorama/images/events/crownfall/techiemen/mapbackground_frame_psd": "images/mapbackground_frame.webp",
+  "panorama/images/events/crownfall/techiemen/mapforeground_frame_02_psd": "images/mapforeground_frame_02.webp",
+  "panorama/images/events/crownfall/techiemen/mapforeground_frame_03_psd": "images/mapforeground_frame_03.webp",
+  "panorama/images/events/crownfall/techiemen/mapforeground_frame_psd": "images/mapforeground_frame.webp",
+  "panorama/images/events/crownfall/techiemen/pdpblocks_png": "images/pdpblocks.webp",
+  "panorama/images/events/crownfall/techiemen/pdpcursor_png": "images/pdpcursor.webp",
+  "panorama/images/events/crownfall/techiemen/red_key_held_png": "images/red_key_held.webp",
+  "panorama/images/events/crownfall/techiemen/red_key_png": "images/red_key.webp",
+  "panorama/images/events/crownfall/techiemen/red_lock_png": "images/red_lock.webp",
+  "panorama/images/events/crownfall/techiemen/spiky_bomb_powerup_png": "images/spiky_bomb_powerup.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_letter_a_psd": "images/startscreen_letter_a.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_letter_b_psd": "images/startscreen_letter_b.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_letter_e_psd": "images/startscreen_letter_e.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_letter_m_psd": "images/startscreen_letter_m.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_letter_o_psd": "images/startscreen_letter_o.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_letter_p_psd": "images/startscreen_letter_p.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_letter_r_psd": "images/startscreen_letter_r.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_letter_s_psd": "images/startscreen_letter_s.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_letter_space_psd": "images/startscreen_letter_space.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_letter_t_psd": "images/startscreen_letter_t.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_logo_psd": "images/startscreen_logo.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_psd": "images/startscreen.webp",
+  "panorama/images/events/crownfall/techiemen/startscreen_spoon_psd": "images/startscreen_spoon.webp",
+  "panorama/images/events/crownfall/techiemen/walk_highlight_mask_psd": "images/walk_highlight_mask.webp",
+  "panorama/images/events/crownfall/techiemen/walk_psd": "images/walk.webp",
+  "panorama/images/events/crownfall/techiemen/walk_speed_icon_psd": "images/walk_speed_icon.webp",
+  "panorama/images/events/crownfall/techiemen/walk_speed_powerup_png": "images/walk_speed_powerup.webp",
+  "sounds/misc/crownfall/combo_success": "sounds/misc/crownfall/combo_success.mp3",
+  "sounds/misc/crownfall/music/fighting_main": "sounds/misc/crownfall/music/fighting_main.mp3",
+  "sounds/misc/crownfall/music/spoonman_main": "sounds/misc/crownfall/music/spoonman_main.mp3",
+  "sounds/misc/crownfall/spoonman_bomb_1": "sounds/misc/crownfall/spoonman_bomb_1.mp3",
+  "sounds/misc/crownfall/spoonman_bomb_2": "sounds/misc/crownfall/spoonman_bomb_2.mp3",
+  "sounds/misc/crownfall/spoonman_bomb_3": "sounds/misc/crownfall/spoonman_bomb_3.mp3",
+  "sounds/misc/crownfall/spoonman_bomb_plant": "sounds/misc/crownfall/spoonman_bomb_plant.mp3",
+  "sounds/misc/crownfall/spoonman_bomber_warn": "sounds/misc/crownfall/spoonman_bomber_warn.mp3",
+  "sounds/misc/crownfall/spoonman_dash": "sounds/misc/crownfall/spoonman_dash.mp3",
+  "sounds/misc/crownfall/spoonman_death": "sounds/misc/crownfall/spoonman_death.mp3",
+  "sounds/misc/crownfall/spoonman_enemy_death": "sounds/misc/crownfall/spoonman_enemy_death.mp3",
+  "sounds/misc/crownfall/spoonman_exit": "sounds/misc/crownfall/spoonman_exit.mp3",
+  "sounds/misc/crownfall/spoonman_fall": "sounds/misc/crownfall/spoonman_fall.mp3",
+  "sounds/misc/crownfall/spoonman_powerup": "sounds/misc/crownfall/spoonman_powerup.mp3",
+  "sounds/misc/crownfall/spoonman_timer": "sounds/misc/crownfall/spoonman_timer.mp3",
+  "sounds/misc/crownfall/spoonman_wall_hit": "sounds/misc/crownfall/spoonman_wall_hit.mp3",
+  "sounds/ui/ui_general_deny": "sounds/ui/ui_general_deny.mp3",
+  "sounds/weapons/hero/techies/attack": "sounds/weapons/hero/techies/attack.mp3"
+ }
+}

@@ -36,3 +36,34 @@ export async function buildZip(entries, { date = new Date() } = {}) {
   eview.setUint32(12, size, true); eview.setUint32(16, offset, true);
   return new Blob([...local, ...central, end], { type: 'application/zip' });
 }
+
+// The entries of a ZIP read in the browser (or Node): [{ name, data }], stored or deflated (the
+// platform's DecompressionStream); `want(name)` picks which to unpack, `limit` caps the unpacked bytes.
+// Folders and other methods are skipped. Used for the d2pfx cursor packs (src/customize/d2pfx.js).
+async function inflate(data) {
+  const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+export async function readZip(bytes, { want = () => true, limit = 64_000_000 } = {}) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength), decoder = new TextDecoder();
+  let end = -1;
+  for (let at = bytes.length - 22; at >= Math.max(0, bytes.length - 65_557); at--) if (view.getUint32(at, true) === 0x06054b50) { end = at; break; }
+  if (end < 0) throw new Error('not a zip');
+  const count = view.getUint16(end + 10, true), entries = [];
+  let at = view.getUint32(end + 16, true), total = 0;
+  for (let i = 0; i < count; i++) {
+    if (view.getUint32(at, true) !== 0x02014b50) throw new Error('bad zip');
+    const method = view.getUint16(at + 10, true), packed = view.getUint32(at + 20, true), size = view.getUint32(at + 24, true);
+    const nameLength = view.getUint16(at + 28, true), extra = view.getUint16(at + 30, true), comment = view.getUint16(at + 32, true), local = view.getUint32(at + 42, true);
+    const name = decoder.decode(bytes.subarray(at + 46, at + 46 + nameLength));
+    at += 46 + nameLength + extra + comment;
+    if (name.endsWith('/') || ![0, 8].includes(method) || !want(name)) continue;
+    if ((total += size) > limit) throw new Error('zip too big');
+    if (view.getUint32(local, true) !== 0x04034b50) throw new Error('bad zip');
+    const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true), raw = bytes.subarray(start, start + packed);
+    const data = method === 8 ? await inflate(raw) : raw.slice();
+    if (data.length !== size) throw new Error('bad zip');
+    entries.push({ name, data });
+  }
+  return entries;
+}

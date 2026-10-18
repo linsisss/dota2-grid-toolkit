@@ -4,7 +4,7 @@
 // - scripts/make-og-image.mjs draws assets/og/<image>.jpg from `headline`, `text`, `label` and `shot`;
 // - the build (vite.config.mjs) writes the tags into the pages' HTML (`entry`);
 // - the API (server/catalog-api.mjs) answers the tabs that share a page with another
-//   (/workshop?backgrounds, /workshop?rules, /background?tab=font): nginx sends them there.
+//   (/workshop?backgrounds, /workshop?rules, /customize?tab=font): nginx sends them there.
 // A shared work, guide or profile has its own picture (server/link-preview.mjs).
 export const OG_SIZE = [1200, 630];
 
@@ -51,22 +51,31 @@ export const OG_PAGES = {
     alt: 'Сетки героев в мастерской GridStudio',
   },
   background: {
-    entry: 'customize.html', path: '/background', label: 'Фон меню', icon: 'image',
-    title: 'Свой фон главного меню Dota 2',
-    description: 'Собери фон главного меню из картинки, GIF или видео, посмотри его в меню игры и поставь в Dota 2 за пару кликов.',
+    entry: 'customize.html', path: '/customize', label: 'Твоя Dota', icon: 'image',
+    title: 'Свой фон, интерфейс и шрифт в Dota 2',
+    description: 'Фон главного меню из картинки, GIF или видео, вид HUD, чат, курсор, шрифт и тексты — на одной странице, и всё ставится одним файлом.',
     alt: 'Конструктор фона главного меню GridStudio',
     headline: ['Свой фон', 'главного меню', 'Dota 2'],
     text: ['Из картинки, GIF или видео.', 'Смотри, как он выглядит', 'в меню, и ставь в пару кликов.'],
     shot: { file: 'assets/readme/background.webp', crop: [36, 145, 1144, 643] },
   },
   font: {
-    path: '/background?tab=font', label: 'Шрифт', icon: 'font',
+    path: '/customize?tab=font', label: 'Шрифт', icon: 'font',
     title: 'Свой шрифт в Dota 2',
     description: 'Поменяй шрифт Dota 2: выбери из каталога или загрузи свой .ttf / .otf, посмотри его в меню и в матче и поставь за пару кликов.',
     alt: 'Выбор шрифта для Dota 2 в GridStudio',
     headline: ['Свой шрифт', 'в Dota 2'],
     text: ['Выбери из каталога или загрузи', 'свой .ttf / .otf — и посмотри', 'его в меню и в матче.'],
     shot: { file: 'assets/readme/fonts.webp', crop: [36, 145, 1144, 643] },
+  },
+  minigames: {
+    entry: 'minigames.html', path: '/minigames', label: 'Мини-игры', icon: 'gamepad',
+    title: 'Мини-игры Crownfall из Dota 2 в браузере',
+    description: 'Девять мини-игр события Crownfall из Dota 2 — рыбалка, гонки, файтинг, три в ряд и другие — с графикой и звуками оригинала. Без установки, прямо в браузере.',
+    alt: 'Мини-игры Crownfall на GridStudio',
+    headline: ['Мини-игры', 'из Dota 2'],
+    text: ['Девять игр Crownfall с графикой', 'и звуками оригинала — открыл', 'в браузере и играешь.'],
+    shot: { file: 'assets/og-src/minigames.webp', crop: [0, 0, 1920, 1080] },
   },
   guides: {
     entry: 'guides.html', path: '/guides', label: 'Гайды', icon: 'guides',

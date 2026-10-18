@@ -1,0 +1,48 @@
+<!doctype html><html><body style="margin:0;background:transparent">
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script>
+<canvas id="c" width="400" height="400" style="width:400px;height:400px"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { HeroViewer, Loadout } from '/hero/src/index.js'; // dota-loadout's library (--loadout)
+window.THREE = THREE;
+window.S = (x, y, z) => new THREE.Vector3(y, z, x);
+window.GLTFLoader = GLTFLoader;
+// Extra clips (the arcana's fishing animations) join the hero model's own as it loads: the viewer plays
+// whatever clip its model has by name.
+window.EXTRA_CLIPS = [];
+const parse = GLTFLoader.prototype.parse;
+GLTFLoader.prototype.parse = function (data, path, onLoad, onError) {
+  return parse.call(this, data, path, (gltf) => {
+    if (window.EXTRA_FOR && window.EXTRA_FOR.test(path || '') && gltf.animations && window.EXTRA_CLIPS.length) {
+      for (const c of window.EXTRA_CLIPS) gltf.animations.push(c.clone());
+    }
+    onLoad(gltf);
+  }, onError);
+};
+// Valve's style 1 of the arcana (Servants of Scree'Auk, skin 1) also gives the arcana's body its _alt
+// materials; the viewer only does that for a style without models, so the form's manifest is changed.
+const realFetch = window.fetch;
+window.fetch = async (url, ...rest) => {
+  const r = await realFetch(url, ...rest);
+  if (window.ALT_SKIN && /forms\/22718\.0\/hero\.json/.test(String(url))) {
+    const j = await r.clone().json(), m = j.materials;
+    for (const k of ['vengeful_spirit_arcana_base', 'vengeful_spirit_arcana_base_head']) if (m[`${k}_alt`]) m[k] = m[`${k}_alt`];
+    return new Response(JSON.stringify(j), { headers: { 'content-type': 'application/json' } });
+  }
+  return r;
+};
+window.make = async (address, size) => {
+  const c = document.getElementById('c'); c.width = size[0]; c.height = size[1]; c.style.width = size[0] + 'px'; c.style.height = size[1] + 'px';
+  const viewer = new HeroViewer(c, { controls: false, wheel: false, pixelRatio: 1, textureScale: 1, assets: location.origin + '/hero/assets/', bloom: 0.2 });
+  const look = new Loadout(viewer);
+  await look.show(address);
+  await new Promise((r) => setTimeout(r, 300));
+  viewer.renderer.setAnimationLoop(null);
+  viewer.timer = { update() {}, getDelta: () => window.DT || 1 / 30, connect() {} };
+  viewer.visible = true;
+  window.viewer = viewer; window.look = look;
+  return viewer.animations.map((a) => a.name);
+};
+window.ready = true;
+</script></body></html>

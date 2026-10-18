@@ -116,6 +116,30 @@ test('the «Герои» page gets a darker background or a video of its own und
   assert.throws(() => gridPage('<root/>'), /страница «Герои»/);
 });
 
+test('the loading screen plays the menu video or its own; top bar buttons hide', async () => {
+  const [{ readVPK, panoramaSource }, { menuBackgroundPack, loadingPage, LOADING_PAGE, LOADING_STYLE, LOADING_VIDEO, MENU_HIDE_STYLE, MENU_PACK_PATHS }] = await modules;
+  const read = (file) => readFileSync(`assets/dota-menu/${file}`, 'utf8'), dashboard = read('dashboard.xml'), page = read('loading_screen_background_image.xml');
+  const files = (options) => Object.fromEntries(readVPK(menuBackgroundPack({ video: new Uint8Array([1]), dashboard, md5, ...options })).files.map(file => [file.path, file.data]));
+  // The menu's video: over Valve's logo and the equipped picture, the rest of the layout Valve's.
+  const menu = files({ loading: { page } }), menuPage = panoramaSource(menu[LOADING_PAGE]);
+  assert.match(menuPage, /<Panel id="LoadPanel" \/>\s*<MoviePanel id="GridStudioLoadingMovie" src="s2r:\/\/panorama\/videos\/gridstudio_background\.webm"/);
+  assert.equal(menuPage.replace(/\n\t\t<include src="s2r:\/\/panorama\/styles\/gridstudio_loading\.vcss_c" \/>/, '').replace(/\n\t\t<MoviePanel id="GridStudioLoadingMovie"[^\n]*/, ''), page);
+  assert.match(panoramaSource(menu[LOADING_STYLE]), /#GridStudioLoadingMovie/);
+  assert.equal(menu[LOADING_VIDEO], undefined);
+  // Its own video.
+  const own = files({ loading: { page, video: new Uint8Array([5]) } });
+  assert.match(panoramaSource(own[LOADING_PAGE]), /gridstudio_loading\.webm/);
+  assert.deepEqual(own[LOADING_VIDEO], new Uint8Array([5]));
+  assert.equal(files({})[LOADING_PAGE], undefined, 'only when asked');
+  assert.throws(() => loadingPage('<root/>', LOADING_VIDEO), /экран загрузки/);
+  // Hidden buttons: our style after Valve's in the dashboard; unknown keys and «Играть» are not there to hide.
+  const hidden = files({ hide: ['plus', 'watch', 'play'] }), board = panoramaSource(hidden['panorama/layout/dashboard.vxml_c']);
+  assert.match(board, /<include src="s2r:\/\/panorama\/styles\/dashboard_search_results\.vcss_c" \/>\s*<include src="s2r:\/\/panorama\/styles\/gridstudio_menu_hide\.vcss_c" \/>\s*<\/styles>/);
+  assert.match(panoramaSource(hidden[MENU_HIDE_STYLE]), /^[^{]*#TopBarWatch,\n#TopBarPlus,\n#PlusButtonParticlesOverlay\n\{\n\tvisibility: collapse;/m);
+  assert.doesNotMatch(panoramaSource(files({})['panorama/layout/dashboard.vxml_c']), /gridstudio_menu_hide/);
+  for (const path of [LOADING_PAGE, LOADING_STYLE, LOADING_VIDEO, MENU_HIDE_STYLE]) assert.ok(MENU_PACK_PATHS.includes(path), path);
+});
+
 test('profiles get Stratz and Dotabuff buttons that open the player\'s page', async () => {
   const [{ readVPK, panoramaSource }, { menuBackgroundPack, profilePage, PROFILE_PAGE, PROFILE_STYLE, PROFILE_ICONS }] = await modules;
   const read = (file) => readFileSync(`assets/dota-menu/${file}`, 'utf8'), dashboard = read('dashboard.xml'), page = read('dashboard_page_showcase.xml');
@@ -169,6 +193,9 @@ test('a catalog font becomes Valve\'s font files with Valve\'s names inside', as
   }
   // Only the chosen families: Reaver's five files.
   assert.equal(dotaFontPack(monocraft, ['Reaver']).length, 5);
+  // «Рисунки в сетке героев не съедут» (2026-10-16): Valve's Radiance Semibold stays out of the pack.
+  const kept = dotaFontPack(monocraft, ['Radiance'], { keep: ['radiance-semibold'] }).map((file) => file.name);
+  assert.equal(kept.length, 11); assert.ok(!kept.includes('radiance-semibold.otf')); assert.ok(kept.includes('radiance-semibolditalic.otf'));
   assert.throws(() => readFont(new TextEncoder().encode('wOF2 not really')), /WOFF/);
 });
 

@@ -1,0 +1,170 @@
+/* «Подрывник Спун»: Valve's bp_popup_crownfall_encounter_techiemen.css in browser CSS. Sizes are Valve's:
+   the GameBoardContainer is 1392×1052 (renderer 1360×892 under a 128 px header, 16 px padding), the
+   popup frame round it; Fit scales the whole thing to the window. Valve's class names are kept where
+   the game toggles them (Paused, HasKick, SelectedTab0, NewHighScoreEarned…). */
+@font-face { font-family: 'MGReaver'; src: url('../../../../assets/fonts/reaver-regular.otf') format('opentype'); font-weight: 400; font-display: swap; }
+.sp-layout { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.sp-fit { flex: 1; }
+.sp-popup { --gold1: #efd4ac; --gold2: #dcb25e; --gold3: #977628; position: relative; box-sizing: border-box; padding: 8px 16px; border-radius: 8px;
+  background: linear-gradient(#463f316c, #2a1e0cbb); border: 1px solid #8671455d; box-shadow: 0 16px 80px -4px rgba(0, 0, 0, 0.4);
+  font-family: 'MGRadiance', sans-serif; color: var(--lighter-grey, #b0bcc2); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.sp-body { position: relative; border-radius: 4px; overflow: hidden; border: 2px solid; border-image: linear-gradient(#ffe3ba, #cca160 48%, #b88943 52%, #7f5c26) 1; }
+.sp-board { position: relative; width: 1392px; height: 1052px; background: #222; overflow: hidden; }
+.sp-playfield { position: absolute; inset: 0; padding: 16px; }
+.sp-renderer { display: block; width: 1360px; height: 892px; margin-top: 128px; image-rendering: pixelated; image-rendering: crisp-edges; }
+.Paused .DimmedWhenPaused { filter: saturate(0.2) brightness(0.4); }
+
+/* HeaderStats. */
+.sp-header { position: absolute; top: 16px; left: 16px; right: 16px; height: 168px; color: var(--lighter-grey, #b0bcc2); }
+.sp-toprow { position: relative; height: 58px; display: flex; justify-content: space-between; }
+.sp-pickups, .sp-lifestats { display: flex; align-items: center; }
+.sp-pickups img, .sp-lives-icon, .BombCountIconRemoteContainer { width: 58px; height: 58px; image-rendering: pixelated; box-shadow: 0 4px 4px rgba(0, 0, 0, 0.125); }
+.sp-ability { width: 40px; margin-left: 12px; font: 400 36px/1 'MGRadiance', sans-serif; text-align: left; color: var(--lighter-grey, #b0bcc2); }
+.sp-pickups .sp-ability { margin-right: 12px; }
+.BombCountIconKick, .BombCountIconSpiky, .BombCountIconRemoteContainer { display: none; }
+.HasKick .BombCountIcon, .HasSpikyBombs .BombCountIcon, .HasRemoteBombs .BombCountIcon { display: none; }
+.HasKick .BombCountIconKick, .HasSpikyBombs .BombCountIconSpiky { display: block; }
+.HasRemoteBombs .BombCountIconRemoteContainer { display: block; position: relative; }
+.HasSpikyBombs .BombCountIconKick, .HasRemoteBombs .BombCountIconKick, .HasRemoteBombs .BombCountIconSpiky { display: none; }
+.RemoteBombHint { position: absolute; left: 50%; top: 50%; translate: -50% -50%; visibility: hidden; opacity: 0.75; padding: 1px 4px; border: 1px solid #000; border-radius: 2px; background: #2127268a; font: 600 14px 'MGRadiance', sans-serif; color: #fff;
+  animation: sp-remote-hint 0.5s infinite alternate; }
+.ShowRemoteBombHint .RemoteBombHint { visibility: visible; }
+@keyframes sp-remote-hint { to { scale: 1.5; } }
+.sp-lifestats .sp-ability { width: auto; margin: 0 12px 0 0; }
+.sp-lives-icon { display: block; background: url('../../../../assets/minigames/spoon/images/lives_remaining_icon.webp') 0 0 / 3364px 58px; animation: sp-lives 5.22s steps(58) infinite; }
+@keyframes sp-lives { to { background-position: -3364px 0; } }
+.sp-score-text { margin-right: 12px; font-size: 36px; }
+.sp-score { margin-right: 24px; font: 400 36px/1 'MGRadiance', sans-serif; font-variant-numeric: tabular-nums; color: #fff; text-shadow: 0 0 6px #caf7f3a2; }
+.sp-timer { position: absolute; top: 0; left: 50%; translate: -50% 0; height: 58px; display: flex; align-items: center; }
+.sp-timer img { width: 56px; height: 56px; margin: -4px 4px 3px 0; opacity: 0.4; filter: drop-shadow(0 2px 4px #000) brightness(1.2); }
+.sp-timer b { width: 140px; font: 400 48px/1 'MGRadiance', sans-serif; font-variant-numeric: tabular-nums; letter-spacing: 8px; text-align: center; color: #fff; text-shadow: 0 0 6px #caf7f3a2; }
+.TimerPulseAnim .sp-timer b { animation: sp-timer-pulse 1s infinite; }
+@keyframes sp-timer-pulse { 10% { scale: 1.25; color: #ff3b3b; } }
+.sp-stage { position: absolute; left: 0; right: 0; top: 66px; display: flex; align-items: center; }
+.sp-stage i { flex: 1; height: 1px; margin-bottom: 2px; opacity: 0.3; background: linear-gradient(270deg, #fff, transparent); }
+.sp-stage i:last-child { background: linear-gradient(90deg, #fff, transparent); }
+.sp-stage span { margin: 0 8px; font: 300 34px/1.2 'MGRadiance', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: rgba(255, 255, 255, 0.9); }
+
+/* IntroLabel: the count-in and «Game Over». */
+.sp-intro { position: absolute; left: 0; right: 0; top: calc(50% + 32px); translate: 0 -50%; z-index: 5; text-align: center; pointer-events: none;
+  font: 400 128px/1.2 'MGReaver', 'MGRadiance', serif; background: linear-gradient(0deg, #ffff00, #ffffd4); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(4px 4px 4px #000); }
+.sp-countin { animation: sp-countin 1s both; }
+.sp-gameover { animation: sp-gameover 1s both; z-index: 6; }
+@keyframes sp-countin { 0% { scale: 1; } 20% { scale: 1.25; } 75%, 100% { scale: 0; } }
+@keyframes sp-gameover { 0% { scale: 0; } 25% { scale: 1.25; } 30%, 100% { scale: 1; } }
+
+/* Pause: the band and the buttons under it. */
+.sp-pause-band { position: absolute; left: 0; right: 0; top: 50%; translate: 0 -50%; z-index: 8; height: 260px; display: grid; place-items: center;
+  background: linear-gradient(90deg, #0c111c00, #151d2efa 25%, #0c111cfa 50%, #151d2efa 75%, #0c111c00);
+  border-block: 1px solid; border-image: linear-gradient(90deg, #ffffff00, #a9b5cffa 25%, #fff 50%, #a9b5cffa 75%, #ffffff00) 1; }
+.sp-pause-band span { color: #fff; font: 700 50px 'MGRadiance', sans-serif; letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 1px 4px #000; }
+.sp-pause-buttons { position: absolute; left: 0; right: 0; bottom: 342px; z-index: 9; display: flex; justify-content: center; gap: 8px; }
+.sp-pause-buttons .mg-button { min-width: 220px; }
+.sp-board .mg-close { top: 8px; right: 8px; z-index: 20; }
+.sp-sound { position: absolute; left: 16px; top: 14px; z-index: 20; }
+
+/* #MainMenu: the start screen. */
+.sp-menu { position: absolute; inset: 0; z-index: 10; overflow: hidden; animation: sp-fade 0.2s ease-out; }
+@keyframes sp-fade { from { opacity: 0; } }
+.sp-menu-bg { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.sp-logo-box { position: absolute; left: 0; top: 0; width: 65%; height: 100%; animation: sp-bob 2.5s 1s infinite; }
+.sp-logo { position: absolute; left: 50%; top: 0; width: 667px; height: 600px; translate: -50% 0; image-rendering: pixelated;
+  background: url('../../../../assets/minigames/spoon/images/startscreen_logo.webp') 0 0 / 3335px 600px; animation: sp-logo-strip 0.3s steps(5) infinite, sp-logo-drop 0.5s; }
+@keyframes sp-logo-strip { to { background-position: -3335px 0; } }
+@keyframes sp-logo-drop { 0% { scale: 1; opacity: 0; } 35% { scale: 1.5; opacity: 0.3; } 100% { scale: 1; opacity: 1; } }
+@keyframes sp-bob { 50% { translate: 0 -25px; } }
+.sp-spoon-box { position: absolute; left: 0; top: 0; width: 65%; height: 100%; }
+.sp-spoon { position: absolute; left: -1px; bottom: 140px; width: 368px; height: 446px; image-rendering: pixelated;
+  background: url('../../../../assets/minigames/spoon/images/startscreen_spoon.webp') 0 0 / 27232px 446px; animation: sp-spoon-strip 7.4s steps(74) infinite; }
+@keyframes sp-spoon-strip { to { background-position: -27232px 0; } }
+.sp-press { position: absolute; inset: 0; animation: sp-rainbow 8s linear infinite; pointer-events: none; }
+@keyframes sp-rainbow { to { filter: hue-rotate(360deg); } }
+.sp-press-letters { position: absolute; left: 76px; bottom: 80px; display: flex; animation: sp-spring 0.5s ease-in-out; }
+.sp-press-letters img { width: 40px; height: 160px; object-fit: contain; object-position: bottom; image-rendering: pixelated; animation: sp-bob 1.6s infinite; }
+@keyframes sp-spring { 0%, 40% { scale: 3; opacity: 0; } 50% { scale: 1.5; } 100% { scale: 1; opacity: 1; } }
+
+/* SetupScreenMenu: tabs, the panel, «Играть». */
+.sp-setup { position: absolute; right: 72px; top: 52px; bottom: 24px; width: 32%; }
+.sp-tabs { position: absolute; z-index: 2; left: 50%; top: 0; translate: -50% 0; height: 48px; padding: 0 8px; display: flex; align-items: center; }
+.sp-tabs::before { content: ''; position: absolute; inset: 0 -40px; z-index: -1; border-style: solid; border-width: 48px 48px 0 48px; border-image: url('../../../../assets/minigames/shared/images/tabs_background.webp') 100% 112 0 112 fill / 48px 48px 0 48px stretch; }
+.sp-tab { position: relative; min-width: 172px; height: 36px; margin: 0 -3px; padding: 0 20px; border: 0; background: none; cursor: pointer; transition: filter 0.1s, transform 0.1s; }
+.sp-tab:hover { filter: brightness(2); }
+.sp-tab:active { transform: scale(0.98); }
+.sp-tab i { position: absolute; inset: 0; border-style: solid; border-width: 36px 36px 0 36px; border-image: url('../../../../assets/minigames/shared/images/tab_background.webp') 100% 84 0 84 fill / 36px 36px 0 36px stretch;
+  opacity: 0; scale: 0.95; transition: opacity 0.15s, scale 0.15s; }
+.sp-tab-on i { opacity: 1; scale: 1; }
+.sp-tab span { position: relative; font: 400 15px 'MGRadiance', sans-serif; letter-spacing: 1.5px; text-transform: uppercase; background: linear-gradient(#fff, #b0bcc2); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8)); }
+.sp-scroll { position: absolute; inset: 0; box-sizing: border-box; padding: 36px 24px 24px; overflow: hidden auto; scrollbar-width: thin; scrollbar-color: #ffffff30 transparent; }
+.sp-contents { position: absolute; left: 0; right: 0; top: 24px; bottom: 53px; overflow: hidden;
+  background: linear-gradient(#253242, #0b111a); box-shadow: 0 16px 140px -8px rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.02); }
+.sp-contents::before, .sp-contents::after { content: ''; position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--gold3), var(--gold1), var(--gold3)); opacity: 0.8; }
+.sp-contents::before { top: 0; } .sp-contents::after { bottom: 0; }
+.sp-play { position: absolute; left: 50%; bottom: 31px; translate: -50% 0; }
+.sp-play > span { padding: 11px 34px 10px; font-size: 17px; }
+
+.sp-scores { display: flex; flex-direction: column; }
+.sp-title { display: flex; align-items: center; gap: 12px; color: var(--lighter-grey, #b0bcc2); font-size: 18px; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 6px #000; }
+.sp-title i { flex: 1; height: 1px; opacity: 0.6; background: linear-gradient(270deg, var(--gold1), #dcb25e66 50%, #97762800); }
+.sp-title i:last-child { background: linear-gradient(90deg, var(--gold1), #dcb25e66 50%, #97762800); }
+.sp-highscore { margin-top: 2px; text-align: center; color: #fff; font: 600 24px 'MGRadiance', sans-serif; }
+.sp-newhigh { height: 0; opacity: 0; overflow: hidden; text-align: center; font: 600 28px/42px 'MGRadiance', sans-serif; text-transform: uppercase;
+  background: linear-gradient(#fff2df 35%, #ebc386 48%, #ba8c47 52%, #8d6c3a); -webkit-background-clip: text; background-clip: text; color: transparent; filter: brightness(1.3); transition: opacity 0.2s, height 0.2s; }
+.NewHighScoreEarned .sp-newhigh { height: 42px; opacity: 1; animation: sp-glow 0.4s infinite alternate-reverse; }
+@keyframes sp-glow { to { filter: brightness(2.2); scale: 1.06; } }
+.sp-leaders { margin: 18px 0 24px; }
+.sp-leaders-head { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 15px; color: var(--lighter-grey, #b0bcc2); }
+.sp-leaders-row { display: flex; justify-content: space-between; padding: 4px 6px; background: #b7e3ff08; font-size: 15px; color: var(--lightest-grey, #dae2e5); }
+.sp-gold { margin: 4px 0 8px; padding-top: 8px; font: 600 18px 'MGRadiance', sans-serif; letter-spacing: 2px; text-transform: uppercase; color: #fff; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  border-top: 1px solid; border-image: linear-gradient(90deg, #ffffff12, #ffffff12 70%, #fff0) 1; }
+.sp-marks { display: flex; flex-direction: column; gap: 2px; font-size: 16px; }
+.sp-marks div { display: flex; align-items: center; height: 32px; color: var(--light-grey, #8b989e); opacity: 0.55; }
+.sp-marks span { width: 80px; font-weight: 700; }
+.sp-marks i { display: flex; gap: 4px; }
+.sp-marks em { width: 12px; height: 13px; background: #3f8d4b; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.sp-marks .sp-mark-done { opacity: 1; color: var(--lightest-grey, #dae2e5); }
+.sp-marks .sp-mark-done em { background: #5fd36f; }
+
+.sp-howto { font-size: 16px; color: var(--lighter-grey, #b0bcc2); }
+.sp-howto .sp-gold:first-child { margin-top: 0; border-top: 0; }
+.sp-control-row { display: flex; align-items: center; padding-bottom: 12px; line-height: 1.3; }
+.sp-control-row small { color: var(--light-grey, #8b989e); font-size: 13px; }
+.sp-control-col { flex: 0 0 132px; display: flex; justify-content: center; }
+.sp-keys { display: flex; flex-direction: column; align-items: center; }
+.sp-keys > span { display: flex; }
+.sp-key { min-width: 26px; height: 26px; margin: 2px; padding: 0 4px; box-sizing: border-box; display: inline-grid; place-items: center; border: 1px solid #000; border-radius: 3px; background: #2127268a; box-shadow: 1px 0 1px 1px #000000bb; }
+.sp-key img { width: 20px; height: 20px; }
+.sp-strip { display: block; width: 48px; height: 48px; image-rendering: pixelated; background: 0 0 / auto 100% no-repeat; animation: sp-strip-12 1.08s steps(12) infinite; }
+.sp-strip-still { animation: none; }
+.sp-strip-exit { animation: sp-strip-3 0.36s steps(3) infinite; }
+@keyframes sp-strip-12 { to { background-position: -576px 0; } }
+@keyframes sp-strip-3 { to { background-position: -144px 0; } }
+
+/* The story box. */
+.sp-novel { position: absolute; inset: 0; z-index: 12; padding-top: 200px; background: #00000059; animation: sp-fade 0.25s; }
+.sp-novel-box { position: relative; width: 100%; display: flex; align-items: flex-end; gap: 24px; padding: 22px 120px 22px 80px; border: 0; cursor: pointer; text-align: left; font: inherit; color: #fff;
+  background: linear-gradient(90deg, #0b111a00, #0b111af2 12%, #121d2cf2 88%, #121d2c00); border-block: 1px solid; border-image: linear-gradient(90deg, #fff0, #a9b5cf99 20%, #a9b5cf99 80%, #fff0) 1; }
+.sp-novel-box img { width: 180px; height: 180px; object-fit: cover; object-position: top; border-radius: 6px; border: 1px solid #ffffff30; background: #0b111a; }
+.sp-novel-text { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-bottom: 24px; font-size: 34px; line-height: 1.3; text-shadow: 0 2px 4px #000; }
+.sp-novel-text b { font-size: 22px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold1); }
+.sp-novel-next { position: absolute; right: 80px; bottom: 18px; font-size: 20px; color: var(--lighter-grey, #b0bcc2); letter-spacing: 1px; text-transform: uppercase; }
+
+/* Touch screens: the cross and the buttons under the popup. */
+.sp-touch { display: none; flex: none; height: 168px; padding: 8px 6px max(8px, env(safe-area-inset-bottom)); align-items: center; justify-content: space-between; touch-action: none; user-select: none; -webkit-user-select: none; }
+@media (pointer: coarse) { .sp-touch { display: flex; } }
+.sp-touch button { border: 1px solid #ffffff2e; background: #0b111acc; border-radius: 14px; display: grid; place-items: center; padding: 0; touch-action: none; -webkit-tap-highlight-color: transparent; }
+.sp-touch button:active { background: #2a3b55; }
+.sp-touch img { pointer-events: none; }
+.sp-dpad { position: relative; width: 156px; height: 156px; }
+.sp-dpad button { position: absolute; width: 56px; height: 56px; }
+.sp-dpad img { width: 28px; height: 28px; }
+.sp-dpad-up { left: 50px; top: 0; } .sp-dpad-down { left: 50px; bottom: 0; } .sp-dpad-left { left: 0; top: 50px; } .sp-dpad-right { right: 0; top: 50px; }
+.sp-touch-pause { width: 48px; height: 40px; color: var(--lighter-grey, #b0bcc2); font: 700 16px 'MGRadiance', sans-serif; }
+.sp-touch-buttons { display: flex; align-items: flex-end; gap: 14px; }
+.sp-touch-bomb { width: 92px; height: 92px; border-radius: 50% !important; }
+.sp-touch-bomb img { width: 64px; height: 64px; image-rendering: pixelated; }
+.sp-touch-action { width: 60px; height: 60px; border-radius: 50% !important; margin-bottom: 40px; }
+.sp-touch-action img { width: 30px; height: 30px; }
+.sp-touch-off { opacity: 0.45; }
+
+@media (prefers-reduced-motion: reduce) { .sp-logo-box, .sp-press, .sp-press-letters img, .sp-newhigh { animation: none !important; } }

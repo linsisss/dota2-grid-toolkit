@@ -765,8 +765,13 @@ a:hover:where(:not(:is(.catalog-page, .catalog-dialog) *)) {
   flex-shrink: 0;
   position: relative;
 }
+/* The canvas reaches past the grid's box by the margin where outside content is shown (app.mjs BLEED,
+   left/top set with the zoom); #stageWrap stays the grid itself. */
 #stage {
   display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
   transform-origin: top left;
   touch-action: none;
   cursor: default;

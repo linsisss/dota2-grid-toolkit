@@ -1,0 +1,184 @@
+/* «Сапёр Сплин»: Valve's bp_popup_crownfall_encounter_minesweeper.css in browser CSS. Sizes are Valve's
+   (cellSize 36px, board borders, HUD margins); the popup is drawn at 1400×790 and scaled by Fit. */
+.ms-popup { --cell: 36px; position: relative; width: 1400px; height: 790px; font-family: 'MGRadiance', sans-serif; color: var(--lightest-grey); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.ms-wrapper { box-sizing: border-box; height: 100%; padding: 8px; background: linear-gradient(#463f3186, #2a1e0c); border: 1px solid #8671455d; box-shadow: 0 16px 80px -4px rgba(0, 0, 0, 0.4); }
+.ms-main { position: relative; height: 100%; box-sizing: border-box; overflow: hidden; display: flex; align-items: center; justify-content: center;
+  border: 1px solid; border-image: linear-gradient(var(--gold1), var(--gold2), var(--gold3)) 1; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+  background: rgb(19, 35, 66) url('../../../../assets/minigames/sweeper/images/minesweeper_ui_bg_1.webp') center / cover; }
+.ms-gold-dash { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--gold3), var(--gold1), var(--gold3)); border-top: 1px solid rgba(255, 255, 255, 0.2); z-index: 2; }
+
+/* The main menu (IntroMenu). */
+.ms-menu-area { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; animation: ms-menu-in 0.2s ease-out; }
+@keyframes ms-menu-in { from { opacity: 0; transform: translateY(-20px); } }
+.ms-logo { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); height: 150px; z-index: 2; pointer-events: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); }
+.ms-menu { position: relative; box-sizing: border-box; width: 800px; height: 690px; padding: 0 30px; display: flex; flex-direction: column;
+  border: 2px solid; border-image: linear-gradient(var(--gold1), var(--gold2), var(--gold3)) 1; background: linear-gradient(var(--charcoal-light), var(--charcoal-dark)); }
+.ms-subtitle { margin: 120px 0 12px; text-align: center; font-size: 14px; font-style: italic; color: var(--lighter-grey); }
+.ms-columns { display: flex; height: 455px; }
+.ms-column1 { width: 60%; overflow-y: auto; padding-right: 12px; scrollbar-width: thin; scrollbar-color: #ffffff30 transparent; }
+.ms-column2 { width: 40%; padding-left: 10px; display: flex; flex-direction: column; }
+.ms-gold-title { margin: 0 0 6px; font: 600 20px 'MGRadiance', sans-serif; letter-spacing: 2px; text-transform: uppercase;
+  background: linear-gradient(#fff2df 30%, #ebc386 48%, #ba8c47 52%, #8d6c3a); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6)); }
+.ms-column2 .ms-gold-title { margin-top: 18px; font-size: 18px; }
+.ms-board-list { margin-left: 10px; }
+.ms-list-head { display: flex; justify-content: space-between; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--lighter-grey); margin-bottom: 6px; }
+.ms-list-row { display: flex; justify-content: space-between; padding: 3px 6px; background: #ffffff0a; font-size: 15px; color: var(--lightest-grey); }
+.ms-score-list, .ms-marks { margin-left: 10px; display: flex; flex-direction: column; gap: 2px; font-size: 16px; }
+.ms-score-list div, .ms-marks div { display: flex; justify-content: space-between; align-items: center; }
+.ms-score-list b { font-weight: 700; }
+.ms-marks div { color: var(--light-grey); opacity: 0.55; }
+.ms-marks div span { width: 80px; font-weight: 700; }
+.ms-marks i { display: flex; gap: 4px; flex: 1; }
+.ms-marks em { width: 12px; height: 13px; background: #3f8d4b; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.ms-marks .ms-mark-done { opacity: 1; color: var(--lightest-grey); }
+.ms-marks .ms-mark-done em { background: #5fd36f; }
+.ms-bottom-buttons { margin-top: auto; margin-bottom: 26px; display: flex; justify-content: center; gap: 14px; }
+.ms-howto .ms-gold-title { margin-top: 2px; }
+.ms-subhead { display: block; margin-top: 4px; font-weight: 400; font-size: 17px; color: var(--lightest-grey); }
+.ms-line { display: block; }
+.ms-line b { color: var(--lightest-grey); }
+.ms-touch-note { display: none; margin: 8px 0 0; font-size: 13px; color: var(--light-grey); }
+@media (pointer: coarse) { .ms-touch-note { display: block; } }
+.ms-help-board { display: grid; grid-template-columns: repeat(3, 24px); border: 2px solid #000000af; border-radius: 4px; background: url('../../../../assets/minigames/sweeper/images/board_background.webp') 0 0 / 100% 100%; }
+.ms-help-board .ms-cell { --cell: 24px; cursor: default; }
+.ms-help-board .ms-count { font-size: 17px; }
+.ms-help-ability { position: relative; display: block; width: 46px; height: 46px; border: 1px solid #000; }
+.ms-help-ability img { width: 46px; height: 46px; display: block; }
+.ms-help-ability kbd, .ms-ability kbd { position: absolute; top: -2px; left: -2px; min-width: 14px; padding: 0 2px; border: 1px solid #000; border-radius: 2px; background: #2127268a; box-shadow: 1px 0 1px 1px #000000bb; font: 12px/14px 'MGRadiance', sans-serif; color: #fff; text-align: center; }
+.ms-help-items { position: relative; width: 60px; height: 50px; }
+.ms-help-items .ms-strip { position: absolute; }
+.ms-help-items .ms-strip-timer { left: 0; top: 0; }
+.ms-help-items .ms-strip-mana { right: 0; bottom: 0; }
+
+/* The playing field (Scene): HUD, stage line and ability row overlap the box, the board sits in the middle. */
+.ms-scene { position: relative; padding: 8px; border-radius: 4px; background: #000000cc; animation: ms-scene-in 0.3s ease-out; }
+@keyframes ms-scene-in { from { opacity: 0; } }
+.ms-hud { position: absolute; top: 20px; left: 8px; right: 8px; height: 30px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+.ms-hud img { width: 28px; height: 28px; margin-right: 4px; filter: drop-shadow(0 2px 4px #000) brightness(0.85); }
+.ms-hud b { color: #fff; font-size: 24px; }
+.ms-hud-logo { justify-self: start; }
+.ms-timer { display: flex; align-items: center; justify-self: center; }
+.ms-timer b { font-weight: 700; font-variant-numeric: tabular-nums; text-shadow: 0 0 6px #caf7f3a2; }
+.ms-flagged { display: flex; align-items: center; justify-self: end; }
+.ms-flagged b { font-weight: 300; text-shadow: 0 1px 4px #000; }
+.ms-stage-row { position: absolute; top: 58px; left: 8px; right: 8px; display: flex; align-items: center; }
+.ms-stage-row i { flex: 1; height: 1px; opacity: 0.3; background: linear-gradient(270deg, #fff, transparent); }
+.ms-stage-row i:last-child { background: linear-gradient(90deg, #fff, transparent); }
+.ms-stage-row span { margin: 0 12px; font-size: 16px; font-weight: 300; letter-spacing: 1px; text-transform: uppercase; color: rgba(255, 255, 255, 0.9); }
+.ms-board-container { position: relative; margin: 80px 0 56px; }
+.ms-board-border { border: 1px solid; border-image: linear-gradient(#ffe3ba, #cca160 48%, #b88943 52%, #7f5c26) 1; }
+.ms-board { position: relative; display: grid; grid-template-columns: repeat(var(--cols), var(--cell)); grid-auto-rows: var(--cell); border: 4px solid #000000af; border-radius: 8px;
+  background: url('../../../../assets/minigames/sweeper/images/board_background.webp') 0 0 / 100% 100%; }
+
+/* A cell (MinesweeperCell): grass of 4 kinds, dimmed until hovered; opened, it is the dirt of the board. */
+.ms-cell { position: relative; box-sizing: border-box; width: var(--cell); height: var(--cell); padding: 0; margin: 0; border: 0.5px solid #000; border-radius: 4px; cursor: pointer; font: inherit;
+  background: transparent center / contain no-repeat; image-rendering: pixelated; filter: brightness(0.75); transition: filter 0.25s ease-in-out; display: grid; place-items: center; touch-action: manipulation; }
+.ms-cell.v1 { background-image: url('../../../../assets/minigames/sweeper/images/cell_background_hidden_1.webp'); }
+.ms-cell.v2 { background-image: url('../../../../assets/minigames/sweeper/images/cell_background_hidden_2.webp'); }
+.ms-cell.v3 { background-image: url('../../../../assets/minigames/sweeper/images/cell_background_hidden_3.webp'); }
+.ms-cell.v4 { background-image: url('../../../../assets/minigames/sweeper/images/cell_background_hidden_4.webp'); }
+.ms-board .ms-cell:hover { filter: brightness(1); animation: ms-glow 1.2s ease-in-out infinite; }
+.ms-board .ms-cell.v1:active:not(.ms-revealed) { background-image: url('../../../../assets/minigames/sweeper/images/cell_background_hidden_hovered_1.webp'); }
+.ms-board .ms-cell.v2:active:not(.ms-revealed) { background-image: url('../../../../assets/minigames/sweeper/images/cell_background_hidden_hovered_2.webp'); }
+.ms-board .ms-cell.v3:active:not(.ms-revealed) { background-image: url('../../../../assets/minigames/sweeper/images/cell_background_hidden_hovered_3.webp'); }
+.ms-board .ms-cell.v4:active:not(.ms-revealed) { background-image: url('../../../../assets/minigames/sweeper/images/cell_background_hidden_hovered_4.webp'); }
+@keyframes ms-glow { 50% { filter: brightness(1.5); } }
+@keyframes ms-glow-dirt { 50% { filter: brightness(1.2); } }
+.ms-cell.ms-revealed { background: #efb5890e; border: 1px solid #321c025f; filter: none; cursor: default; }
+.ms-board .ms-cell.ms-revealed:hover { animation: ms-glow-dirt 2.5s ease-in-out infinite; }
+.ms-cell.ms-mine { background: red url('../../../../assets/minigames/sweeper/images/cell_background_mine_revealed.webp') center / contain; }
+.ms-count { font: 700 24px/1 'MGRadiance', sans-serif; margin-top: -2px; text-shadow: 0 2px 2px #0000005e; animation: ms-bounce 0.55s ease-in-out; pointer-events: none; }
+.n1 .ms-count { color: rgba(135, 181, 55, 0.92); }
+.n2 .ms-count { color: rgb(197, 224, 48); }
+.n3 .ms-count { color: rgba(255, 225, 0, 0.865); }
+.n4 .ms-count { color: orange; animation: ms-drop 0.3s ease-in-out; }
+.n5 .ms-count { color: rgb(255, 98, 0); animation: ms-drop 0.3s ease-in-out; }
+.n6 .ms-count { color: orangered; animation: ms-drop 0.3s ease-in-out; }
+.n7 .ms-count, .n8 .ms-count { color: red; animation: ms-drop 0.3s ease-in-out; }
+@keyframes ms-bounce { 0% { transform: scale(0.3) rotate(-10deg); opacity: 0; } 25% { transform: scale(1.5) rotate(2deg); opacity: 1; } 50% { transform: scale(0.8) rotate(-2deg); } 75% { transform: scale(1.1) rotate(1deg); } 100% { transform: none; } }
+@keyframes ms-drop { 0% { transform: scale(1.8) translateY(-60px); opacity: 0; } 90% { transform: scale(0.8) translateY(2px); opacity: 1; } 100% { transform: none; } }
+.ms-flag-icon { position: absolute; inset: 0; background: url('../../../../assets/minigames/sweeper/images/cellflagicon.webp') center / cover; animation: ms-drop 0.2s ease-in-out; pointer-events: none; }
+.ms-board .ms-cell.ms-flag { filter: brightness(0.9); }
+:is(.ms-phase-lost, .ms-phase-won, .ms-phase-stageWon) .ms-board { pointer-events: none; }
+.ms-strip { display: block; width: 36px; height: 36px; background: 0 0 / auto 100% no-repeat; image-rendering: pixelated; pointer-events: none; }
+.ms-strip-mana { background-image: url('../../../../assets/minigames/sweeper/images/item_mana_icon.webp'); animation: ms-strip-6 0.9s steps(6) infinite, ms-bounce 0.2s ease-in-out; filter: drop-shadow(0 0 4px rgb(0, 225, 255)); }
+.ms-strip-timer { background-image: url('../../../../assets/minigames/sweeper/images/item_timer_icon.webp'); animation: ms-strip-7 0.7s steps(7) infinite, ms-bounce 0.2s ease-in-out; filter: drop-shadow(0 2px 4px #000); }
+@keyframes ms-strip-6 { to { background-position: -216px 0; } }
+@keyframes ms-strip-7 { to { background-position: -252px 0; } }
+.ms-item .ms-strip { position: absolute; inset: 0; }
+.ms-clicks { position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 2px; background: #000000cc; color: #fff; font: normal 12px/12px 'MGRadiance', sans-serif; text-align: center; pointer-events: none; }
+.ms-cell.ms-hint { animation: ms-hint 0.4s; }
+.ms-help-hint { animation: ms-help-hint 2s infinite; }
+@keyframes ms-hint { 20% { box-shadow: inset 0 0 0 var(--cell) rgba(200, 0, 0, 0.6); } }
+@keyframes ms-help-hint { 20% { box-shadow: inset 0 0 0 var(--cell) rgba(200, 0, 0, 0.2); } }
+.ms-board .ms-cell:focus-visible { outline: none; box-shadow: inset 0 0 0 2px #ffffffa0; }
+.ms-illusion .ms-board .ms-cell:not(.ms-revealed) { cursor: crosshair; }
+/* While the board rests (BoardOnCooldown) only chords are blocked: cells still open and take flags. */
+.ms-paused .ms-board { pointer-events: none; }
+
+/* Effects in place of Valve's particles: the explosion, the illusion's slash, an item taken or lost. */
+.ms-fx { position: absolute; left: calc(var(--x) * var(--cell) + var(--cell) / 2); top: calc(var(--y) * var(--cell) + var(--cell) / 2); width: 0; height: 0; pointer-events: none; z-index: 3; }
+.ms-fx::before, .ms-fx::after { content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; }
+.ms-fx-explode::before { width: 150px; height: 150px; background: radial-gradient(circle, #fff6c8 0, #ffb13b 22%, #ff5a1a 42%, #ff3d0040 62%, transparent 70%); animation: ms-boom 0.9s ease-out forwards; }
+.ms-fx-explode::after { width: 40px; height: 40px; border: 4px solid #ffcf4a; box-shadow: 0 0 12px #ff9b2f; animation: ms-ring 1.4s ease-out forwards; }
+@keyframes ms-boom { 0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; } 40% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; } }
+@keyframes ms-ring { 0%, 30% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); } 40% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); } }
+.ms-fx-illusion::before { width: 70px; height: 70px; background: radial-gradient(circle, #bff6ff 0, #4fc6ff 30%, #2468ff40 55%, transparent 70%); animation: ms-boom 0.7s ease-out forwards; }
+.ms-fx-itemUse-mana::before { width: 60px; height: 60px; background: radial-gradient(circle, #9ff 0, #00e1ff80 40%, transparent 70%); animation: ms-boom 0.8s ease-out forwards; }
+.ms-fx-itemUse-timer::before { width: 60px; height: 60px; background: radial-gradient(circle, #fff3b0 0, #ffd24a80 40%, transparent 70%); animation: ms-boom 0.8s ease-out forwards; }
+.ms-fx-itemLost-mana::before, .ms-fx-itemLost-timer::before { width: 40px; height: 40px; background: radial-gradient(circle, #ffffff60, #50505040 50%, transparent 70%); animation: ms-boom 0.7s ease-out forwards; }
+
+.ms-paused-screen, .ms-cooldown-screen { position: absolute; inset: 0; z-index: 4; border-radius: 8px; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 60px; animation: ms-scene-in 0.2s; }
+.ms-paused-screen b, .ms-cooldown-screen b { color: #fff; font-size: 50px; font-weight: 700; text-align: center; white-space: pre-line; text-shadow: 0 1px 4px #000; }
+.ms-cooldown-screen { background: #00000080; pointer-events: none; }
+
+.ms-ability-row { position: absolute; left: 8px; right: 8px; bottom: 10px; display: flex; justify-content: center; align-items: center; }
+.ms-ability { position: relative; padding: 0; border: 1px solid #000; background: none; cursor: pointer; line-height: 0; }
+.ms-ability img { height: 46px; width: 46px; }
+.ms-illusion .ms-ability { border-color: darkorange; box-shadow: 0 0 10px darkorange; }
+.ms-ability-off img { filter: grayscale(0.8) brightness(0.6); }
+.ms-mana-cost { position: absolute; right: 2px; bottom: 2px; color: #57b7ff; font: 14px/1 'MGRadiance', sans-serif; text-shadow: 0 0 3px #000, 0 0 3px #000; }
+.ms-mana { position: relative; width: 250px; height: 20px; margin-left: 8px; border-radius: 3px; overflow: hidden; background: linear-gradient(#101932, #172447 20%, #162244 50%, #101932); }
+.ms-mana-fill { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: linear-gradient(#2b4287, #4165ce 20%, #4a73ea 50%, #2b4287); transition: width 0.3s; }
+.ms-mana span { position: absolute; inset: 0; text-align: center; font: 700 14px/20px 'MGRadiance', sans-serif; color: #fff; text-shadow: 0 1px 4px #000, 0 0 2px #000; }
+
+/* The centre band, the help and the story box. */
+.ms-center { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; animation: ms-band-in 0.5s ease-in-out 0.4s both; }
+.ms-center-late { animation-delay: 1.5s; }
+.ms-center-stage .mg-band-body { padding-bottom: 40px; }
+@keyframes ms-band-in { from { opacity: 0; visibility: hidden; } }
+.ms-help-layer { position: absolute; inset: 0; z-index: 12; display: flex; align-items: center; justify-content: center; background: #0006; animation: ms-scene-in 0.2s; }
+.ms-help-body { width: 640px; max-height: 660px; overflow-y: auto; box-sizing: border-box; padding: 32px 50px 40px;
+  background: linear-gradient(90deg, #0c111c00, #151d2efa 5%, #0c111cfa 50%, #151d2efa 95%, #0c111c00);
+  border-block: 1px solid; border-image: linear-gradient(90deg, #ffffff00, #a9b5cffa 5%, #fff 50%, #a9b5cffa 95%, #ffffff00) 1; }
+.ms-novel .ms-scene { filter: brightness(0.8) blur(1px); }
+.ms-novel-box { position: absolute; top: 0; left: 0; right: 0; z-index: 14; display: flex; align-items: flex-end; gap: 20px; padding: 18px 80px 18px 60px; border: 0; cursor: pointer; text-align: left;
+  background: linear-gradient(#0b111af2, #121d2ce6 80%, #121d2c00); color: #fff; font: inherit; animation: ms-scene-in 0.25s; }
+.ms-novel-box img { width: 120px; height: 120px; object-fit: cover; object-position: top; border-radius: 6px; border: 1px solid #ffffff30; background: #0b111a; }
+.ms-novel-text { flex: 1; display: flex; flex-direction: column; gap: 6px; padding-bottom: 16px; font-size: 24px; line-height: 1.3; text-shadow: 0 2px 4px #000; }
+.ms-novel-text b { font-size: 16px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold1); }
+.ms-novel-next { position: absolute; right: 60px; bottom: 16px; font-size: 14px; color: var(--lighter-grey); letter-spacing: 1px; text-transform: uppercase; }
+.ms-corner { position: absolute; right: 20px; bottom: 16px; z-index: 16; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+@media (prefers-reduced-motion: reduce) { .ms-count, .ms-flag-icon, .ms-fx::before, .ms-fx::after, .ms-board .ms-cell:hover { animation: none !important; } }
+
+/* Compact (phones, narrow windows): the popup hugs the board so the cells stay big; the menu is one
+   column and scrolls with the page. */
+.ms-popup.ms-compact { width: auto; height: auto; }
+.ms-compact .ms-main { min-width: 360px; padding: 48px 12px 64px; }
+.ms-compact .ms-menu-area { position: relative; inset: auto; padding-top: 70px; }
+.ms-compact .ms-logo { top: 0; height: 120px; }
+.ms-compact .ms-menu { width: 460px; height: auto; padding: 0 22px; }
+.ms-compact .ms-subtitle { margin-top: 64px; font-size: 16px; }
+.ms-compact .ms-columns { flex-direction: column; height: auto; }
+.ms-compact .ms-column1, .ms-compact .ms-column2 { width: 100%; padding: 0; overflow: visible; }
+.ms-compact .ms-column2 { margin-top: 12px; }
+.ms-compact .ms-bottom-buttons { margin-top: 20px; }
+.ms-compact .ms-corner { flex-direction: row; align-items: center; gap: 14px; right: 12px; bottom: 14px; }
+.ms-compact .mg-band-body { padding: 24px 40px 40px; min-width: 0; }
+.ms-compact .mg-band-lines { width: 320px; }
+.ms-compact .mg-band-message { font-size: 34px; min-width: 0; }
+.ms-compact .ms-novel-box { padding: 14px 16px; }
+.ms-compact .ms-novel-box img { width: 80px; height: 80px; }
+.ms-compact .ms-novel-text { font-size: 18px; }
+.ms-compact .ms-help-body { width: 100%; max-height: none; padding: 24px 16px; }

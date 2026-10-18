@@ -8,7 +8,7 @@ export const RULES_PATH = `${CATALOG_PATH}?rules`;
 export const ADVERTISE_PATH = `${CATALOG_PATH}?advertise`;
 // Dota customization (menu background, font): /background (/customize until 1.6.3, which now
 // redirects), customize.html on static hosting.
-export const CUSTOMIZE_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'customize.html' : 'background'}`;
+export const CUSTOMIZE_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'customize.html' : 'customize'}`;
 export const FONT_PATH = `${CUSTOMIZE_PATH}?tab=font`;
 export const EDITOR_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY || 'editor'}`;
 // The file list itself; plain EDITOR_PATH reopens the file this tab last edited.

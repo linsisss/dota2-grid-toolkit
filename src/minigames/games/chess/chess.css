@@ -1,0 +1,257 @@
+/* «Драконьи шахматы»: bp_popup_crownfall_encounter_match3.css (+ match3_popup_help, the tooltips and the
+   shared minigame popup) for the browser. Valve's class names are kept under .ch-popup; sizes are Valve's
+   (cellSize 90 px, gridSize 720 px, the right column 752 px) and Fit scales the whole popup. Rules other
+   games leave unscoped (.SetupScreen, .BottomButtons…) are overridden here property by property. */
+.ch-layout { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.ch-fit { flex: 1; }
+.ch-popup { --gold1: #efd4ac; --gold2: #dcb25e; --gold3: #977628; --charcoal-light: #253242; --charcoal-dark: #0b111a; --lightest: #dae2e5; --lighter: #b0bcc2;
+  --light: #8b989e; --grey: #6d7a80; --winner: #69c34c; --winner-low: #2f6b1f; --loser: #e34b3b;
+  position: relative; width: 1504px; height: 960px; padding-top: 40px; box-sizing: border-box; font-family: 'MGRadiance', sans-serif; color: var(--lighter);
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.ch-popup button { font: inherit; color: inherit; }
+.ch-popup .TitleMedium { font: 700 30px 'MGReaver', 'MGRadiance', serif; text-transform: uppercase; letter-spacing: 1.5px; }
+.ch-popup .TitleLarge { font-weight: 700; }
+.ch-popup .LabelMedium { font-size: 17px; text-transform: uppercase; letter-spacing: 1.5px; }
+
+.ch-popup .MainContentsWrapper { position: relative; width: 1504px; height: 842px; }
+.ch-popup .MainContents { position: absolute; inset: 0; overflow: hidden; background: #0d1219; box-shadow: 0 16px 120px -8px rgba(0, 0, 0, 0.7); }
+.ch-popup #GameBackground, .ch-popup #OpponentScene { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(12px); transition: filter 0.4s; pointer-events: none; }
+.ch-popup #GameBackground { filter: blur(12px) hue-rotate(10deg); }
+.ch-popup.GameState_Active #GameBackground { filter: hue-rotate(10deg); }
+.ch-popup.GameState_Active #OpponentScene, .ch-popup.GameState_Finished #OpponentScene { filter: none; }
+.ch-popup .PlayerTookDamage { animation: ch-shake 0.1s 3; }
+@keyframes ch-shake { 0% { transform: translate(6px, 0); } 50% { transform: translate(-3px, -3px); } 100% { transform: translate(0, 2px); } }
+.ch-popup #ForegroundScene { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; transition: filter 0.4s, opacity 0.4s; }
+.ch-popup.GameplayFrozen #ForegroundScene { filter: saturate(0.2) brightness(0.2); opacity: 0.2; }
+
+/* .Body: the board on the left, the opponent's column on the right. */
+.ch-popup .Body { position: absolute; inset: 0; display: flex; }
+.ch-popup .LeftColumn { display: flex; flex-direction: column; padding: 16px 16px 24px; background: linear-gradient(#323744f9, #171b23f9); opacity: 0; transform: scale(1.2);
+  transition: opacity 0.5s cubic-bezier(0, 1, 0, 1), transform 0.5s cubic-bezier(0, 1, 0, 1); }
+.ch-popup.GameState_Active .LeftColumn, .ch-popup.GameState_Starting .LeftColumn, .ch-popup.GameState_Finished .LeftColumn { opacity: 1; transform: none; }
+.ch-popup .GameBoardContainer { position: relative; width: 720px; height: 720px; }
+.ch-popup #GameBoard { display: block; width: 720px; height: 720px; touch-action: none; cursor: grab; transition: opacity 0.4s, filter 0.4s; }
+.ch-popup.GameplayFrozen #GameBoard { filter: saturate(0.2) brightness(0.2); }
+.ch-popup.IsPaused #GameBoard { opacity: 0; }
+.ch-marks { position: absolute; inset: 0; pointer-events: none; }
+.ch-cursor, .ch-selected { position: absolute; width: 90px; height: 90px; box-sizing: border-box; border-radius: 6px; }
+.ch-cursor { border: 2px dashed rgba(255, 255, 255, 0.55); }
+.ch-selected { border: 3px solid #fff; box-shadow: 0 0 18px rgba(255, 230, 160, 0.7) inset, 0 0 12px rgba(255, 230, 160, 0.6); }
+.ch-popup .GameBoardOverlay { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+.ch-popup .GameOverlays { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; }
+.ch-popup .StatusOverlay { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; padding: 20px 40px;
+  background: linear-gradient(90deg, #0000, #000e 20%, #000e 80%, #0000); opacity: 0; transition: opacity 0.2s; }
+.ch-popup .StatusOverlay .Title { color: #fff; font-size: 92px; font-weight: 900; font-style: italic; letter-spacing: 4px; text-transform: uppercase; text-align: center; text-shadow: 2px 2px 4px #000; line-height: 1.05; white-space: nowrap; }
+.ch-popup .StatusOverlay .Desc { color: #ccc; text-align: center; text-shadow: 2px 2px 4px #000; margin: -4px 0 12px; font-size: 18px; }
+.ch-popup.PlayerIsStunned .StunnedOverlay, .ch-popup.OutOfMoves .OutOfMovesOverlay { opacity: 1; }
+.ch-popup .PauseScreen { position: relative; z-index: 2; padding: 48px; display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: auto; animation: ch-pop 0.15s ease-in; }
+@keyframes ch-pop { from { opacity: 0; transform: scale(1.3); } }
+.ch-popup .PauseScreen .PauseText { margin-bottom: 24px; font: 700 40px 'MGReaver', 'MGRadiance', serif; text-transform: uppercase; letter-spacing: 2px; text-align: center;
+  background: linear-gradient(#f9e7cd, var(--gold2)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.8)); }
+.ch-popup .PauseScreen .mg-button { min-width: 320px; }
+
+/* The user: modifiers and health. */
+.ch-popup .Player { display: flex; flex-direction: column; opacity: 0; transform: translateY(24px); transition: opacity 0.2s 0.5s cubic-bezier(0, 1, 0, 1), transform 0.2s 0.5s cubic-bezier(0, 1, 0, 1); }
+.ch-popup.GameState_Active .Player, .ch-popup.GameState_Finished .Player { opacity: 1; transform: none; }
+.ch-popup #PlayerModifiers { height: 46px; margin-top: 8px; }
+.ch-popup .PlayerHealthContainer, .ch-popup .HealthContainer { position: relative; align-self: center; margin-top: 8px; }
+.ch-popup .ProgressBar { width: 420px; height: 28px; box-sizing: border-box; border-radius: 3px; border: 1px solid #000; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02); background: rgba(0, 0, 0, 0.96); overflow: hidden; }
+.ch-popup .ProgressBarLeft { height: 100%; transition: width 0.15s; }
+.ch-popup #PlayerHealthProgressBar .ProgressBarLeft { background: linear-gradient(#5ca33c, #3e5f23); }
+.ch-popup.OpponentActionIsActive #PlayerHealthProgressBar .ProgressBarLeft { animation: ch-flash 0.5s 0.5s; }
+@keyframes ch-flash { 0% { filter: brightness(1); } 10% { filter: brightness(10); } 100% { filter: brightness(1); } }
+.ch-popup #OpponentHealthProgressBar .ProgressBarLeft { background: linear-gradient(#e84848, #ba1c1c); }
+.ch-popup .BarLabel { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; letter-spacing: 1px; font-size: 17px; text-shadow: 0 2px 12px #000; font-variant-numeric: tabular-nums; }
+
+.ch-popup .ModifierList { display: flex; justify-content: center; min-height: 46px; }
+.ch-popup .Modifier { position: relative; width: 46px; height: 46px; margin: 0 4px; border-radius: 50%; animation: ch-pop 0.2s ease-out; }
+.ch-popup .Modifier #ModifierImage { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.ch-popup .Modifier #ModifierBorder { position: absolute; inset: -1px; background: #e43c10; -webkit-mask: url('../../../../assets/minigames/chess/images/buff_outline.webp') center / 105% 105% no-repeat;
+  mask: url('../../../../assets/minigames/chess/images/buff_outline.webp') center / 105% 105% no-repeat; }
+.ch-popup .Modifier.IsBuff #ModifierBorder { background: #8bdd4f; }
+.ch-popup .Modifier .ModifierNumber { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-variant-numeric: tabular-nums; text-shadow: 0 0 4px #000, 0 0 6px #000; }
+.ch-popup .Modifier.ShowNumber .ModifierNumber { display: flex; }
+
+/* The opponent's column. */
+.ch-popup .RightColumn { position: relative; width: 752px; height: 100%; display: flex; flex-direction: column; }
+.ch-popup .OpponentHeader { align-self: center; width: 520px; margin-top: 44px; display: flex; flex-direction: column; opacity: 0; transform: translateY(-24px); transition: opacity 0.2s cubic-bezier(0, 1, 0, 1), transform 0.2s cubic-bezier(0, 1, 0, 1); }
+.ch-popup.GameState_Active.HasOpponent.OpponentState_Active .OpponentHeader, .ch-popup.GameState_Finished.HasOpponent .OpponentHeader { opacity: 1; transform: none; }
+.ch-popup .LevelContainer, .ch-popup .DashDotDivider { display: flex; align-items: center; }
+.ch-popup .Dash { flex: 1; height: 1px; opacity: 0.3; }
+.ch-popup .Dash.Left { background: linear-gradient(270deg, #fff, rgba(255, 255, 255, 0)); }
+.ch-popup .Dash.Right { background: linear-gradient(90deg, #fff, rgba(255, 255, 255, 0)); }
+.ch-popup .OpponentLevel { margin: 0 12px; color: rgba(255, 255, 255, 0.9); text-shadow: 0 2px 8px #000; }
+.ch-popup .OpponentHeader .OpponentName { margin: 6px 0; color: #fff; text-align: center; text-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.7); }
+.ch-popup .OpponentFlavor { display: none; margin: -6px 0 6px; color: #ccc; font-size: 16px; text-align: center; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8); }
+.ch-popup.HasOpponentFlavor .OpponentFlavor { display: block; }
+.ch-popup .DashDotDivider .Dot { width: 7px; height: 7px; margin: 4px 12px; background: #fff; transform: rotate(45deg); opacity: 0.6; }
+
+.ch-popup #OpponentActionQueue { position: absolute; left: 0; top: 290px; display: none; flex-direction: column; align-items: flex-start; padding: 16px; }
+.ch-popup.HasOpponent.GameState_Active #OpponentActionQueue { display: flex; }
+.ch-popup .OpponentAction { position: relative; width: 64px; height: 64px; margin-bottom: 12px; border: 1px solid #000; box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.6); opacity: 0;
+  transition: border 0.1s, opacity 0.5s, width 0.3s, height 0.3s; }
+.ch-popup .OpponentAction.Showing { opacity: 1; }
+.ch-popup .OpponentAction.IsCurrentAction { width: 92px; height: 92px; }
+.ch-popup .OpponentAction.IsCurrentAction:not(.OnCooldown) { border: 3px solid var(--winner); box-shadow: 0 0 24px #69c34c22; filter: brightness(2); }
+.ch-popup .OpponentAction #ActionImage { display: block; width: 100%; height: 100%; object-fit: cover; }
+.ch-popup .OpponentAction #CooldownOverlay { position: absolute; inset: 0; background: #000d; display: none; }
+.ch-popup .OpponentAction .CooldownTime, .ch-popup .OpponentAction .InterruptedOverlay { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: #fff; font-size: 28px; text-shadow: 0 2px 12px #000; }
+.ch-popup .OpponentAction.OnCooldown.IsCurrentAction #CooldownOverlay { display: block; }
+.ch-popup .OpponentAction.OnCooldown.IsCurrentAction .CooldownTime { display: flex; }
+.ch-popup .OpponentAction.IsInterrupted { animation: ch-shake 0.2s; }
+.ch-popup .OpponentAction.IsInterrupted #ActionImage { filter: saturate(0.2) brightness(0.2); }
+.ch-popup .OpponentAction.IsInterrupted .InterruptedOverlay { display: flex; }
+.ch-popup .OpponentAction.IsInterrupted.IsCurrentAction .CooldownTime { display: none; }
+
+.ch-popup .StageIntroContainer { position: absolute; left: 0; right: 0; top: 50%; display: flex; flex-direction: column; align-items: center; padding: 24px; transform: translateY(-50%) scale(1.3); opacity: 0;
+  background: linear-gradient(90deg, #32374400, #13161eeb 20%, #191e29 50%, #13161eeb 80%, #32374400); border-block: 1px solid;
+  border-image: linear-gradient(90deg, #32374400, #ffddaa69 20%, #ffdfb0 50%, #ffddaa69 80%, #32374400) 1; transition: opacity 0.4s cubic-bezier(0, 0.9, 0, 0.9), transform 0.4s cubic-bezier(0, 0.9, 0, 0.9); pointer-events: none; }
+.ch-popup.StageIntro .StageIntroContainer { opacity: 1; transform: translateY(-50%); transition-duration: 0.2s; transition-timing-function: cubic-bezier(1, 0, 1, 1); }
+.ch-popup .StageIntroContainer .LevelName { color: #999; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 4px 12px #000; }
+.ch-popup .StageIntroContainer .OpponentName { color: #fff; font: 700 40px 'MGReaver', 'MGRadiance', serif; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 4px 16px #000; text-align: center; }
+.ch-popup .StageIntroContainer .BossBattle { display: none; font-size: 40px; font-weight: 700; font-style: italic; text-transform: uppercase; letter-spacing: 2px;
+  background: linear-gradient(red, orange); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(2px 2px 2px #000); }
+.ch-popup.BossLevel .StageIntroContainer .BossBattle { display: block; }
+
+.ch-popup .OpponentFooter { margin-top: auto; margin-bottom: 24px; display: flex; flex-direction: column; opacity: 0; transform: translateY(24px); transition: opacity 0.2s cubic-bezier(0, 1, 0, 1), transform 0.2s cubic-bezier(0, 1, 0, 1); }
+.ch-popup.GameState_Active.HasOpponent.OpponentState_Active .OpponentFooter, .ch-popup.GameState_Finished.HasOpponent .OpponentFooter { opacity: 1; transform: none; }
+
+/* EventsOverlay: the floating numbers (ScoreEvent 0.7 s, DefaultDamageEvent 0.7 s, CritDamageEvent 1.5 s, MagicDamageEvent 0.7 s). */
+.ch-popup #EventsOverlay { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.ch-popup .ScoreEvent, .ch-popup .DamageEvent { position: absolute; width: 300px; height: 200px; margin: -100px 0 0 -150px; display: flex; align-items: center; justify-content: center; }
+.ch-popup .ScoreEvent .Contents { display: flex; flex-direction: column; align-items: center; animation: ch-rise 0.7s forwards; }
+.ch-popup .ScoreEvent .EventTitle { color: #fff; font-size: 24px; text-transform: uppercase; text-shadow: 2px 2px 4px #000; }
+.ch-popup .ScoreEvent .ScoreAmount { color: yellow; font-size: 32px; text-shadow: 2px 2px 4px #000; }
+.ch-popup .ScoreEvent.ch-big .Contents { animation-duration: 1.4s; }
+.ch-popup .DefaultDamageEvent .DamageAmount { color: #fff; font-size: 36px; font-weight: 700; text-shadow: 2px 2px 4px #000; animation: ch-rise 0.7s forwards; }
+.ch-popup .CritDamageEvent .Contents, .ch-popup .MagicDamageEvent .Contents { display: flex; align-items: center; animation: ch-rise 0.7s forwards; }
+.ch-popup .CritDamageEvent .Contents { animation: ch-crit 1.5s forwards; }
+.ch-popup .DamageEvent .Icon { width: 32px; height: 32px; margin-right: 4px; background: red; -webkit-mask: url('../../../../assets/minigames/chess/images/crit_damage.webp') center / contain no-repeat; mask: url('../../../../assets/minigames/chess/images/crit_damage.webp') center / contain no-repeat; }
+.ch-popup .MagicDamageEvent .Icon { background: rgb(163, 38, 228); -webkit-mask-image: url('../../../../assets/minigames/chess/images/magic_damage.webp'); mask-image: url('../../../../assets/minigames/chess/images/magic_damage.webp'); }
+.ch-popup .CritDamageEvent .DamageAmount { color: red; font-size: 48px; font-weight: 700; text-shadow: 2px 2px 4px #000; }
+.ch-popup .MagicDamageEvent .DamageAmount { color: rgb(163, 38, 228); font-size: 48px; font-weight: 700; text-shadow: 2px 2px 4px #000; }
+@keyframes ch-rise { 0% { transform: scale(1.2); } 10% { transform: scale(1.5); } 100% { transform: translateY(-30px); opacity: 0.85; } }
+@keyframes ch-crit { 0% { transform: scale(1.2); } 10% { transform: scale(2); } 100% { transform: translateY(-60px); } }
+
+/* The score plate under the board. */
+.ch-popup .Score { position: absolute; left: 50%; top: 842px; width: 270px; transform: translate(-50%, -8px); pointer-events: none; opacity: 0; transition: opacity 0.2s 0.5s, transform 0.2s 0.5s; }
+.ch-popup.GameState_Active .Score, .ch-popup.GameState_Finished .Score { opacity: 1; transform: translate(-50%, -8px); }
+.ch-popup .Score img { position: absolute; left: 0; top: 0; width: 270px; }
+.ch-popup .ScoreData { position: relative; display: flex; flex-direction: column; align-items: center; padding-top: 10px; }
+.ch-popup .ScoreLabel { margin-bottom: -5px; color: rgba(245, 245, 245, 0.6); font-size: 15px; }
+.ch-popup .Score .ScoreValue { color: #fff; font-size: 36px; letter-spacing: 0.5px; text-shadow: 0 0 12px rgba(255, 200, 0, 0.3); font-variant-numeric: tabular-nums; }
+
+/* The setup screen (Valve's shared minigame popup). */
+.ch-popup .SetupScreen { position: absolute; inset: auto; left: 50%; top: 50%; z-index: 6; width: 1000px; height: 600px; box-sizing: border-box; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; border: 2px solid; border-image: linear-gradient(var(--gold1), var(--gold2) 50%, var(--gold3)) 1; background: linear-gradient(var(--charcoal-light), var(--charcoal-dark));
+  box-shadow: 0 12px 80px -4px rgba(0, 0, 0, 0.7); animation: ch-pop 0.25s cubic-bezier(0, 0.9, 0, 0.9); }
+.ch-popup .SetupScreen .Header { position: relative; width: 100%; margin-top: 12px; display: flex; flex-direction: column; align-items: center; }
+.ch-popup .SetupScreen .EncounterGraphic { height: 100px; -webkit-mask: linear-gradient(rgba(255, 255, 255, 0), #fff 30%); mask: linear-gradient(rgba(255, 255, 255, 0), #fff 30%); }
+.ch-popup .SetupScreen .Title { position: absolute; left: 0; right: 0; top: 46px; font: 700 40px 'MGReaver', 'MGRadiance', serif; text-transform: uppercase; letter-spacing: 2px; text-align: center;
+  background: linear-gradient(#f9e7cd, var(--gold2)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.8)); }
+.ch-popup .ColumnContainer { display: flex; gap: 24px; width: 100%; height: 400px; padding: 0 24px; box-sizing: border-box; }
+.ch-popup .Column1 { flex: 1; height: 100%; overflow-y: auto; padding-bottom: 24px; padding-right: 8px; scrollbar-width: thin; -webkit-mask: linear-gradient(#fff 85%, transparent); mask: linear-gradient(#fff 85%, transparent); }
+.ch-popup .Column2 { flex: 1; height: 100%; display: flex; flex-direction: column; min-height: 0; }
+.ch-popup .HowToPlaySection { width: 100%; display: flex; flex-direction: column; padding-right: 12px; box-sizing: border-box; }
+.ch-popup .HowToPlayTitle, .ch-popup .RewardsLabel, .ch-campaign-title { margin-bottom: 6px; color: var(--gold1); font-size: 20px; letter-spacing: 2px; text-transform: uppercase; }
+.ch-popup .HowToPlayDescription { font-size: 16px; line-height: 1.2; color: var(--lighter); }
+.ch-popup .HowToPlayDescription .ch-line { display: block; min-height: 0.6em; }
+.ch-popup .HowToPlayDescription b { color: #fff; font-weight: 700; }
+.ch-popup .HowToPlayDescription.ch-controls { margin-top: 10px; color: var(--light); font-size: 14px; }
+.ch-popup .RewardsLabel { margin-top: 14px; }
+.ch-popup .RewardsSection { display: flex; flex-direction: column; gap: 2px; }
+.ch-popup .RewardRow { display: flex; gap: 8px; font-size: 16px; color: var(--lighter); }
+.ch-popup .RewardRow .RewardScore { width: 80px; font-weight: 700; }
+.ch-popup .RewardRow.ch-got .RewardScore { color: var(--gold1); }
+.ch-popup .RewardRow .RewardValue { color: var(--winner); }
+.ch-popup .LeaderboardContainer { margin-top: 0; }
+.ch-popup .LeaderListHeader, .ch-popup .LeaderboardRow { display: flex; justify-content: space-between; gap: 8px; }
+.ch-popup .LeaderListHeader { color: rgba(241, 249, 255, 0.5); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; padding-bottom: 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.07); }
+.ch-popup .LeaderboardRow { padding: 6px 0; font-size: 16px; color: var(--lightest); }
+.ch-campaign { margin-top: 14px; display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.ch-campaign ol { margin: 0; padding: 0 6px 0 0; list-style: none; overflow-y: auto; scrollbar-width: thin; flex: 1; min-height: 0; }
+.ch-stage { display: flex; align-items: center; gap: 10px; padding: 3px 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: var(--light); font-size: 15px; }
+.ch-stage-face { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: radial-gradient(#3a4a5e, #141b25); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12); }
+.ch-stage-face > span { display: block; width: 100%; height: 100%; filter: grayscale(0.7) brightness(0.8); }
+.ch-stage-text { display: flex; flex-direction: column; line-height: 1.15; }
+.ch-stage-text small { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--grey); }
+.ch-stage.ch-reached { color: var(--lightest); }
+.ch-stage.ch-reached .ch-stage-face > span { filter: none; }
+.ch-stage.ch-friendly { color: #8fc9a8; }
+.ch-stage-boss { margin-left: auto; font-size: 11px; font-weight: 700; font-style: italic; text-transform: uppercase; letter-spacing: 1px; color: #ff8a3a; }
+.ch-popup .SetupScreen .BottomButtons { position: absolute; left: 0; right: 0; bottom: 0; top: auto; display: flex; justify-content: center; gap: 12px; transform: translateY(50%); }
+.ch-popup .SetupScreen .BottomButtons .mg-button { min-width: 260px; }
+.ch-popup .SetupScreen .BottomButtons .mg-button > span { font-size: 17px; padding: 11px 30px 10px; }
+.ch-popup .SetupScreen .ExitButton { display: none; }
+.ch-popup.PlayedOnce .SetupScreen .ExitButton { display: block; }
+.ch-popup .GlowButton { box-shadow: 0 0 24px rgba(255, 200, 120, 0.35); }
+
+/* The countdown and the end. */
+.ch-popup .StartingScreen { position: absolute; left: 0; right: 0; top: 0; height: 842px; display: none; align-items: center; justify-content: center; pointer-events: none; z-index: 5; }
+.ch-popup.GameState_Starting .StartingScreen { display: flex; }
+.ch-popup .StartingScreen span { padding: 40px; font: 700 100px 'MGReaver', 'MGRadiance', serif; letter-spacing: 4px; text-transform: uppercase; color: #fff; text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8); animation: ch-count 0.3s; }
+@keyframes ch-count { from { transform: scale(1.5); } }
+.ch-popup .FinishedScreen { position: absolute; left: 50%; top: 421px; z-index: 6; min-width: 520px; padding: 48px; box-sizing: border-box; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;
+  border: 2px solid; border-image: linear-gradient(var(--gold1), var(--gold2) 50%, var(--gold3)) 1; background: linear-gradient(var(--charcoal-light), var(--charcoal-dark)); box-shadow: 0 12px 80px -4px rgba(0, 0, 0, 0.7); animation: ch-pop 0.2s ease-out; }
+.ch-popup .FinishedScreen .Title { font: 700 40px 'MGReaver', 'MGRadiance', serif; text-transform: uppercase; letter-spacing: 2px; text-align: center;
+  background: linear-gradient(#f9e7cd, var(--gold2)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.8)); }
+.ch-popup .FinishedScreen .FinalScore { margin-top: 20px; font-size: 24px; color: #fff; text-align: center; }
+.ch-popup .FinishedScreen .FinalScore .ScoreValue { color: var(--gold1); font-weight: 700; }
+.ch-reached, .ch-record { margin-top: 8px; font-size: 16px; color: var(--light); }
+.ch-record { color: var(--gold1); }
+.ch-popup .FinishedScreen .PlayAgainButton { margin-top: 24px; min-width: 260px; }
+.ch-link { margin-top: 12px; padding: 4px 8px; border: 0; background: none; color: var(--light) !important; font-size: 14px !important; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; }
+.ch-link:hover { color: #fff !important; }
+
+.ch-popup #CloseButtonContainer { position: absolute; top: 0; right: 0; z-index: 9; }
+.ch-popup .PauseHint { position: absolute; right: 0; bottom: 18px; display: flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; cursor: pointer; opacity: 0; transform: translateY(24px);
+  transition: opacity 0.3s cubic-bezier(0, 1, 0, 1), transform 0.3s cubic-bezier(0, 1, 0, 1), filter 0.2s; pointer-events: none; }
+.ch-popup.GameState_Active .PauseHint { opacity: 1; transform: none; pointer-events: auto; }
+.ch-popup .PauseHint:hover { filter: brightness(2); }
+.ch-popup .PauseLabelContainer { position: relative; display: grid; justify-items: end; color: #b0bcc2; }
+.ch-popup .PauseLabelContainer > span { grid-area: 1 / 1; transition: opacity 0.2s, transform 0.2s; }
+.ch-popup .PauseLabelContainer .UnPauseLabel { opacity: 0; transform: translateY(8px); }
+.ch-popup.IsPaused .PauseLabelContainer .PauseLabel { opacity: 0; transform: translateY(-8px); }
+.ch-popup.IsPaused .PauseLabelContainer .UnPauseLabel { opacity: 1; transform: none; }
+.ch-popup .ControlKey { min-width: 26px; padding: 2px 6px; border: 1px solid #000; border-radius: 2px; background: #2127268a; box-shadow: 1px 0 1px 1px #000000bb; color: #fff; font: 600 14px 'MGRadiance', sans-serif; text-align: center; }
+.ch-sound { position: absolute; left: 0; bottom: 14px; }
+
+/* Tooltips (match3_tooltip_ability / _opponent_action). */
+.ch-tooltip { position: absolute; z-index: 20; width: 400px; padding: 12px 14px; box-sizing: border-box; background: linear-gradient(#1c2532f2, #0f151df2); border: 1px solid #000; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7); pointer-events: none; }
+.ch-tooltip .AbilityName { color: #fff; text-transform: uppercase; letter-spacing: 2px; font-size: 18px; }
+.ch-tooltip .AbilityDescription { margin-top: 4px; color: #9ab0cd; font-size: 17px; line-height: 1.25; }
+.ch-tooltip #AbilityValues { margin-top: 6px; color: #596e89; font-size: 16px; text-transform: uppercase; }
+
+/* match3_popup_help: the heroes and their abilities. */
+.ch-help-layer { position: absolute; left: 0; top: 0; width: 1504px; height: 842px; z-index: 12; display: flex; align-items: center; justify-content: center; background: rgba(4, 7, 12, 0.6); backdrop-filter: blur(6px); }
+.ch-popup .DOTAMatch3PopupHelp { position: relative; width: 1260px; max-height: 820px; display: flex; flex-direction: column; border: 2px solid; border-image: linear-gradient(var(--gold1), var(--gold2) 50%, var(--gold3)) 1;
+  background: linear-gradient(var(--charcoal-light), var(--charcoal-dark)); }
+.ch-popup .DOTAMatch3PopupHelp .PopupContents { display: flex; flex-direction: column; padding: 24px 24px 0; min-height: 0; }
+.ch-popup .DOTAMatch3PopupHelp .Title { margin-bottom: 16px; font: 700 32px 'MGReaver', 'MGRadiance', serif; text-transform: uppercase; letter-spacing: 2px; text-align: center;
+  background: linear-gradient(#f9e7cd, var(--gold2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ch-popup #HeroesList { display: flex; flex-direction: column; max-height: 700px; overflow-y: auto; padding: 8px 16px 48px; scrollbar-width: thin; }
+.ch-popup .Hero { display: flex; align-items: center; margin-bottom: 8px; background: rgba(1, 10, 19, 0.8); }
+.ch-popup .Hero #HeroMovie { width: 142px; height: 188px; object-fit: cover; flex: 0 0 auto; }
+.ch-popup .Hero .Spacer { align-self: stretch; width: 1px; margin: 24px 0; background: linear-gradient(#fff0, rgba(232, 245, 255, 1) 30%, rgba(232, 245, 255, 1) 70%, #fff0); opacity: 0.04; }
+.ch-popup .Ability { flex: 1; display: flex; align-items: center; padding: 0 24px; }
+.ch-popup .AbilityImageContainer { display: flex; flex-direction: column; align-items: center; margin-right: 20px; }
+.ch-popup .AbilityImageContainer #AbilityImage { width: 100px; height: 100px; margin: 12px 12px 8px; box-shadow: 0 8px 48px -4px rgba(0, 0, 0, 0.6); }
+.ch-popup .AbilityType { color: #b0bcc2; font-size: 14px; text-transform: uppercase; text-align: center; }
+.ch-popup .AbilityDetails { display: flex; flex-direction: column; margin: 16px 0; }
+.ch-popup .AbilityDetails .AbilityName { margin-bottom: 6px; color: #fff; font: 600 20px 'MGReaver', 'MGRadiance', serif; text-transform: uppercase; letter-spacing: 1.2px; }
+.ch-popup .AbilityDetails .AbilityDescription { margin-bottom: 6px; color: #dae2e5; font-size: 17px; line-height: 1.2; }
+.ch-popup .AbilityDetails #AbilityValues { font-size: 15px; text-transform: uppercase; color: var(--grey); }
+.ch-popup .AbilityDetails .GameplayVariable { color: #e1e1e1; font-weight: 600; }
+.ch-popup .DOTAMatch3PopupHelp .mg-close { top: 4px; right: 4px; }
+
+/* The Winter Wyvern's lines (the visual novel's box). */
+.ch-novel { position: absolute; left: 0; top: 0; width: 1504px; height: 842px; z-index: 14; padding: 0; border: 0; background: linear-gradient(transparent 40%, rgba(4, 7, 12, 0.85)); cursor: pointer; text-align: left; }
+.ch-novel-portrait { position: absolute; left: 60px; bottom: 0; height: 640px; filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.6)); animation: ch-novel-in 0.4s ease-out; }
+@keyframes ch-novel-in { from { opacity: 0; transform: translateX(-30px); } }
+.ch-novel-box { position: absolute; left: 380px; right: 80px; bottom: 60px; display: flex; flex-direction: column; gap: 8px; padding: 24px 32px; background: linear-gradient(#1c2532f0, #0b111af0);
+  border: 1px solid rgba(239, 212, 172, 0.4); box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7); color: #e8eef0; font-size: 24px; line-height: 1.35; }
+.ch-novel-box b { color: var(--gold1); font: 700 22px 'MGReaver', 'MGRadiance', serif; text-transform: uppercase; letter-spacing: 1px; }
+.ch-novel-next { align-self: flex-end; color: var(--light); font-size: 15px; text-transform: uppercase; letter-spacing: 1px; }
+
+@media (prefers-reduced-motion: reduce) { .ch-popup .PlayerTookDamage { animation: none; } }
+.ch-novel:focus { outline: none; }

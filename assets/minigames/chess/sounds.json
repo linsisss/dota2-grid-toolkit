@@ -1,0 +1,682 @@
+{
+ "events": {
+  "match3.Damage_Melee": {
+   "files": [
+    "sounds/physics/damage/player/melee01.mp3",
+    "sounds/physics/damage/player/melee02.mp3",
+    "sounds/physics/damage/player/melee03.mp3",
+    "sounds/physics/damage/player/melee04.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 0.975,
+   "pitchRand": [
+    -0.025,
+    0.025
+   ],
+   "duration": 0.704036
+  },
+  "match3.Damage_Ranged": {
+   "files": [
+    "sounds/physics/damage/player/projectile01.mp3",
+    "sounds/physics/damage/player/projectile02.mp3",
+    "sounds/physics/damage/player/projectile03.mp3",
+    "sounds/physics/damage/player/projectile04.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 0.75,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.644898
+  },
+  "match3.ancient_apparition.attack": {
+   "files": [
+    "sounds/weapons/hero/ancient_apparition/attack1.mp3",
+    "sounds/weapons/hero/ancient_apparition/attack2.mp3",
+    "sounds/weapons/hero/ancient_apparition/attack3.mp3",
+    "sounds/weapons/hero/ancient_apparition/attack4.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 0.954603
+  },
+  "match3.ancient_apparition.cold_feet.cast": {
+   "files": [
+    "sounds/weapons/hero/ancient_apparition/cold_feet.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 3.059637
+  },
+  "match3.ancient_apparition.cold_feet.freeze": {
+   "files": [
+    "sounds/weapons/hero/ancient_apparition/cold_feet.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 3.059637
+  },
+  "match3.ancient_apparition.cold_feet.tick": {
+   "files": [
+    "sounds/weapons/hero/ancient_apparition/cold_feet_tick.mp3",
+    "sounds/weapons/hero/ancient_apparition/cold_feet_tick2.mp3",
+    "sounds/weapons/hero/ancient_apparition/cold_feet_tick3.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.796712
+  },
+  "match3.ancient_apparition.ice_blast.impact": {
+   "files": [
+    "sounds/weapons/hero/ancient_apparition/iceblast_explode.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 2.698776
+  },
+  "match3.ancient_apparition.ice_blast.tick": {
+   "files": [
+    "sounds/weapons/hero/ancient_apparition/iceblast_tick01.mp3",
+    "sounds/weapons/hero/ancient_apparition/iceblast_tick02.mp3",
+    "sounds/weapons/hero/ancient_apparition/iceblast_tick03.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.092925
+  },
+  "match3.ancient_frostbitten_golem.butt_slam": {
+   "files": [
+    "sounds/misc/ogre_smash_01.mp3",
+    "sounds/misc/ogre_smash_02.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.33746
+  },
+  "match3.ancient_ice_shaman.icefire_bomb.cast": {
+   "files": [
+    "sounds/weapons/creep/shared/whoosh01.mp3",
+    "sounds/weapons/creep/shared/whoosh02.mp3",
+    "sounds/weapons/creep/shared/whoosh03.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 0.349138
+  },
+  "match3.ancient_ice_shaman.icefire_bomb.tick": {
+   "files": [
+    "sounds/weapons/hero/alchemist/acid_spray_damage01.mp3",
+    "sounds/weapons/hero/alchemist/acid_spray_damage02.mp3",
+    "sounds/weapons/hero/alchemist/acid_spray_damage03.mp3",
+    "sounds/weapons/hero/alchemist/acid_spray_damage04.mp3",
+    "sounds/weapons/hero/alchemist/acid_spray_damage05.mp3",
+    "sounds/weapons/hero/alchemist/acid_spray_damage06.mp3",
+    "sounds/weapons/hero/alchemist/acid_spray_damage07.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 1.091338
+  },
+  "match3.black_king_bar": {
+   "files": [
+    "sounds/items/black_king_bar.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 3.884853
+  },
+  "match3.broodmother.insatiable_hunger": {
+   "files": [
+    "sounds/weapons/hero/broodmother/insatiable_hunger.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "fadeOut": 1,
+   "stopAt": 5,
+   "limiter": true,
+   "duration": 6.959524
+  },
+  "match3.broodmother.spawn_spiderlings.cast": {
+   "files": [
+    "sounds/weapons/hero/broodmother/spiderling_cast.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 0.921542
+  },
+  "match3.broodmother.spawn_spiderlings.impact": {
+   "files": [
+    "sounds/weapons/hero/broodmother/spiderling_impact.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 0.835102
+  },
+  "match3.broodmother.spin_web.cast": {
+   "files": [
+    "sounds/weapons/hero/broodmother/web_cast.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.275692
+  },
+  "match3.chaos_knight.attack": {
+   "files": [
+    "sounds/weapons/hero/shared/large_blade/thump01.mp3",
+    "sounds/weapons/hero/shared/large_blade/thump02.mp3",
+    "sounds/weapons/hero/shared/large_blade/thump03.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 0.330522
+  },
+  "match3.chaos_knight.chaos_bolt.cast": {
+   "files": [
+    "sounds/weapons/hero/chaos_knight/chaos_bolt_cast.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.454807
+  },
+  "match3.chaos_knight.chaos_bolt.impact": {
+   "files": [
+    "sounds/weapons/hero/chaos_knight/chaos_bolt_target.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.34
+  },
+  "match3.chaos_knight.chaos_strike": {
+   "files": [
+    "sounds/weapons/hero/chaos_knight/chaos_strike.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.710317
+  },
+  "match3.countdown.go": {
+   "files": [
+    "sounds/ambient/horn_dire.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 8.749569
+  },
+  "match3.countdown.tick": {
+   "files": [
+    "sounds/ui/buttonclick.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 0.078549
+  },
+  "match3.crystal_maiden.crystal_nova": {
+   "files": [
+    "sounds/weapons/hero/crystal_maiden/crystal_nova.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 2.197732
+  },
+  "match3.crystal_maiden.freezing_field.explosion": {
+   "files": [
+    "sounds/weapons/hero/crystal_maiden/freeze_explosion01.mp3",
+    "sounds/weapons/hero/crystal_maiden/freeze_explosion02.mp3",
+    "sounds/weapons/hero/crystal_maiden/freeze_explosion03.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1.25,
+   "pitchRand": [
+    -0.15,
+    0.15
+   ],
+   "limiter": true,
+   "duration": 1.329705
+  },
+  "match3.crystal_maiden.freezing_field.wind": {
+   "files": [
+    "sounds/weapons/hero/crystal_maiden/freezing_field.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 12.251429
+  },
+  "match3.drow_ranger.attack": {
+   "files": [
+    "sounds/weapons/hero/drow_ranger/arrow_1.mp3",
+    "sounds/weapons/hero/drow_ranger/arrow_2.mp3",
+    "sounds/weapons/hero/drow_ranger/arrow_3.mp3",
+    "sounds/weapons/hero/drow_ranger/arrow_4.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 0.876712
+  },
+  "match3.drow_ranger.gust": {
+   "files": [
+    "sounds/weapons/hero/drow_ranger/silence.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 2.420952
+  },
+  "match3.frost_dragon.frost_attack": {
+   "files": [
+    "sounds/weapons/hero/dragon_knight/dragonknight_elderdragon_shoot3.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.504512
+  },
+  "match3.healing_salve": {
+   "files": [
+    "sounds/items/healing_salve.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 2.762336
+  },
+  "match3.lich.chain_frost.cast": {
+   "files": [
+    "sounds/weapons/hero/lich/chain_frost_cast.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 3.014966
+  },
+  "match3.lich.chain_frost.impact.creep": {
+   "files": [
+    "sounds/weapons/hero/lich/chain_frost_impact.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.034014
+  },
+  "match3.lich.chain_frost.impact.hero": {
+   "files": [
+    "sounds/weapons/hero/lich/chain_frost_impact_hero01.mp3",
+    "sounds/weapons/hero/lich/chain_frost_impact_hero02.mp3",
+    "sounds/weapons/hero/lich/chain_frost_impact_hero03.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.705215
+  },
+  "match3.lich.frost_nova": {
+   "files": [
+    "sounds/weapons/hero/lich/frost_nova.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 4.005986
+  },
+  "match3.lina.dragon_slave": {
+   "files": [
+    "sounds/weapons/hero/lina/dragonslave01.mp3",
+    "sounds/weapons/hero/lina/dragonslave02.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 2.411973
+  },
+  "match3.lina.light_strike_array": {
+   "files": [
+    "sounds/weapons/hero/lina/lightstrikearray.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 2.137143
+  },
+  "match3.match_music": {
+   "files": [
+    "sounds/misc/crownfall/music/match3_main.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "delay": 1,
+   "fadeIn": 2,
+   "fadeOut": 3,
+   "duration": 44.403969
+  },
+  "match3.match_music.creep": {
+   "files": [
+    "sounds/misc/crownfall/music/match3_mus_norm_1.mp3",
+    "sounds/misc/crownfall/music/match3_mus_norm_2.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "delay": 1,
+   "fadeIn": 3,
+   "fadeOut": 3,
+   "mixgroup": "misc",
+   "duration": 106.083265
+  },
+  "match3.match_music.hero": {
+   "files": [
+    "sounds/misc/crownfall/music/match3_mus_hard_1.mp3",
+    "sounds/misc/crownfall/music/match3_mus_hard_2.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "delay": 2,
+   "fadeOut": 3,
+   "mixgroup": "misc",
+   "duration": 71.304352
+  },
+  "match3.match_music.loss": {
+   "files": [
+    "sounds/music/valve_dota_001/music/killed.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "fadeOut": 1,
+   "mixgroup": "misc",
+   "duration": 45.035102
+  },
+  "match3.match_music.win": {
+   "files": [
+    "sounds/music/valve_dota_001/stingers/radiant_win.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "fadeOut": 3,
+   "duration": 45.035102
+  },
+  "match3.piece_grab": {
+   "files": [
+    "sounds/ui/crafting/gem_create.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.021587
+  },
+  "match3.piece_matched": {
+   "files": [
+    "sounds/misc/crownfall/matched_layer.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 1.136327
+  },
+  "match3.piece_matched.2": {
+   "files": [
+    "sounds/items/rune_dd.mp3"
+   ],
+   "volume": 0.15,
+   "pitch": 1,
+   "layers": [
+    "match3.piece_matched"
+   ],
+   "limiter": true,
+   "duration": 2.651633
+  },
+  "match3.piece_matched.3": {
+   "files": [
+    "sounds/items/rune_haste.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "layers": [
+    "match3.piece_matched"
+   ],
+   "limiter": true,
+   "duration": 1.692494
+  },
+  "match3.piece_matched.4": {
+   "files": [
+    "sounds/items/rune_illusion.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "layers": [
+    "match3.piece_matched"
+   ],
+   "limiter": true,
+   "duration": 2.670862
+  },
+  "match3.piece_matched.5": {
+   "files": [
+    "sounds/items/rune_invis.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "layers": [
+    "match3.piece_matched"
+   ],
+   "limiter": true,
+   "duration": 2.472381
+  },
+  "match3.piece_matched.6": {
+   "files": [
+    "sounds/items/rune_regen.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "layers": [
+    "match3.piece_matched"
+   ],
+   "limiter": true,
+   "duration": 3.475556
+  },
+  "match3.piece_matched.7": {
+   "files": [
+    "sounds/items/rune_shield.mp3"
+   ],
+   "volume": 1,
+   "pitch": 1,
+   "layers": [
+    "match3.piece_matched"
+   ],
+   "limiter": true,
+   "duration": 6.016916
+  },
+  "match3.piece_matched.8": {
+   "files": [
+    "sounds/items/rune_arcane.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "layers": [
+    "match3.piece_matched"
+   ],
+   "limiter": true,
+   "duration": 2.781315
+  },
+  "match3.piece_merged.super": {
+   "files": [
+    "sounds/ui/stacked.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "duration": 3.863673
+  },
+  "match3.piece_merged.ultra": {
+   "files": [
+    "sounds/ui/treasure_01.mp3"
+   ],
+   "volume": 0.66,
+   "pitch": 1,
+   "duration": 3.376009
+  },
+  "match3.piece_released.fail": {
+   "files": [
+    "sounds/ui/ui_general_deny.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 0.1678
+  },
+  "match3.piece_released.success": {
+   "files": [
+    "sounds/ui/item_drop_gem_shop.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.205896
+  },
+  "match3.tusk.walrus_punch": {
+   "files": [
+    "sounds/weapons/hero/tusk/punch_target.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.916984
+  },
+  "match3.vengefulspirit.magic_missile.cast": {
+   "files": [
+    "sounds/weapons/hero/vengeful_spirit/magic_missile1.mp3",
+    "sounds/weapons/hero/vengeful_spirit/magic_missile2.mp3",
+    "sounds/weapons/hero/vengeful_spirit/magic_missile3.mp3",
+    "sounds/weapons/hero/vengeful_spirit/magic_missile4.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.23102
+  },
+  "match3.vengefulspirit.magic_missile.impact": {
+   "files": [
+    "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.835125
+  },
+  "match3.vengefulspirit.nether_swap": {
+   "files": [
+    "sounds/weapons/hero/vengeful_spirit/nether_swap.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 2.157959
+  },
+  "match3.winter_wyvern.cold_embrace": {
+   "files": [
+    "sounds/weapons/hero/winter_wyvern/cold_embrace.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 5.794649
+  },
+  "match3.winter_wyvern.splinter_blast.splinter": {
+   "files": [
+    "sounds/weapons/hero/winter_wyvern/splinter01.mp3",
+    "sounds/weapons/hero/winter_wyvern/splinter02.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 3.656757
+  },
+  "match3.winter_wyvern.splinter_blast.target": {
+   "files": [
+    "sounds/weapons/hero/winter_wyvern/splinter_blast_target.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.462222
+  }
+ },
+ "files": {
+  "sounds/misc/crownfall/matched_layer.mp3": {
+   "duration": 1.136327
+  },
+  "sounds/misc/crownfall/music/match3_main.mp3": {
+   "duration": 44.434286,
+   "loop": [
+    0,
+    44.434286
+   ]
+  },
+  "sounds/misc/crownfall/music/match3_mus_hard_1.mp3": {
+   "duration": 62.249796,
+   "loop": [
+    0,
+    62.249796
+   ]
+  },
+  "sounds/misc/crownfall/music/match3_mus_hard_2.mp3": {
+   "duration": 71.340408,
+   "loop": [
+    0,
+    71.340408
+   ]
+  },
+  "sounds/misc/crownfall/music/match3_mus_norm_1.mp3": {
+   "duration": 106.083265,
+   "loop": [
+    0,
+    106.083265
+   ]
+  },
+  "sounds/misc/crownfall/music/match3_mus_norm_2.mp3": {
+   "duration": 69.355102,
+   "loop": [
+    0,
+    69.355102
+   ]
+  },
+  "sounds/misc/ogre_smash_01.mp3": {
+   "duration": 1.336735
+  },
+  "sounds/misc/ogre_smash_02.mp3": {
+   "duration": 1.33746
+  },
+  "sounds/music/valve_dota_001/stingers/radiant_win.mp3": {
+   "duration": 45.035102
+  },
+  "sounds/music/valve_dota_001/music/killed.mp3": {
+   "duration": 45.035102
+  }
+ },
+ "missing": {
+  "match3.game_sound": []
+ }
+}

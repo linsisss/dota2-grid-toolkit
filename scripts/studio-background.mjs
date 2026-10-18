@@ -1,4 +1,4 @@
-import { MENU_FRAME, MENU_FRAME_ZOOM, MENU_SIZES } from './menu-background.mjs';
+import { MENU_FRAME, MENU_FRAME_ZOOM, MENU_HIDE, MENU_SIZES } from './menu-background.mjs';
 
 // A menu background kept in «Студия» (docs/customize.md «Фоны в студии»). The browser keeps the
 // built WebM with it (scripts/background-library.mjs), so it downloads again at once; an account
@@ -14,6 +14,9 @@ export const STUDIO_HERO_MODES = Object.freeze(['menu', 'own', 'off']);
 // Under the hero grid on the «Герои» page (1.6.4): the menu's background, darker (dim, a percent of
 // GRID_DIM.max), or a video of its own.
 export const STUDIO_GRID_MODES = Object.freeze(['menu', 'dim', 'own']);
+// The loading screen of a match (2026-10-16): Valve's ('off', also for recipes before it), the menu's
+// background, or a video of its own.
+export const STUDIO_LOADING_MODES = Object.freeze(['off', 'menu', 'own']);
 
 class ValidationError extends Error { constructor(message) { super(message); this.status = 400; } }
 const broken = () => { throw new ValidationError('Настройки фона не читаются.'); };
@@ -76,6 +79,19 @@ function studioGrid(input) {
   return { ...own, mode: 'own' };
 }
 
+function studioLoading(input) {
+  if (input == null) return { mode: 'off' };
+  if (!STUDIO_LOADING_MODES.includes(input.mode)) broken();
+  if (input.mode !== 'own') return { mode: input.mode };
+  return { ...studioHero({ ...input, mode: 'own' }), mode: 'own' };
+}
+// Top bar buttons hidden (MENU_HIDE keys, 2026-10-16); none before.
+function studioHide(input) {
+  if (input == null) return [];
+  if (!Array.isArray(input) || input.length > Object.keys(MENU_HIDE).length || input.some((key) => !Object.hasOwn(MENU_HIDE, key))) broken();
+  return [...new Set(input)];
+}
+
 export function studioRecipe(input) {
   if (!input || typeof input !== 'object') broken();
   if (input.folder === 'custom') input = { ...input, folder: 'russian' };
@@ -84,7 +100,8 @@ export function studioRecipe(input) {
   // news (2026-10-08): which of the home page's news cards stay; recipes before it have `clean` only (both or none).
   const news = input.news == null ? null : (typeof input.news === 'object' && typeof input.news.carnival === 'boolean' && typeof input.news.season === 'boolean' ? { carnival: input.news.carnival, season: input.news.season } : broken());
   return { aspect: input.aspect, fit: input.fit, blur: percent(input.blur), dim: percent(input.dim), frame: studioFrame(input.frame), clean: input.clean, ...(news ? { news } : {}), folder: input.folder,
-    delivery: input.delivery, piece: studioPiece(input.piece), crossfade: input.crossfade, source: studioSource(input.source), hero: studioHero(input.hero), event: studioSwitch(input.event), profile: studioSwitch(input.profile), grid: studioGrid(input.grid) };
+    delivery: input.delivery, piece: studioPiece(input.piece), crossfade: input.crossfade, source: studioSource(input.source), hero: studioHero(input.hero), event: studioSwitch(input.event), profile: studioSwitch(input.profile), grid: studioGrid(input.grid),
+    loading: studioLoading(input.loading), hide: studioHide(input.hide) };
 }
 
 // A workshop submission of the background: its gallery id and the status token.

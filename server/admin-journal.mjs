@@ -1,4 +1,5 @@
 import { badgeOf } from '../scripts/profile-badges.mjs';
+import { MINIGAME_NAMES } from './minigames.mjs';
 // The admin panel's «Журнал» (src/catalog/AdminJournal.jsx): the latest decisions with who took them,
 // on the site or by a button in the Telegram topic, across grids, arts, backgrounds, guides, profile badges and the moderator role. Read
 // from the audit log; only entries with an actor (people's decisions, not the system's).
@@ -18,8 +19,11 @@ function parse(entry) {
   const comment = /^comment-delete:(\d+)$/.exec(entry.action);
   // A profile badge (scripts/profile-badges.mjs): «Значок выдан: Разработчик».
   const badge = /^badge-(on|off):(\w+)$/.exec(entry.action);
-  const action = telegram ? telegram[1] : comment ? 'comment' : badge ? `badge-${badge[1]}` : entry.action;
-  const label = comment ? 'Комментарий удалён' : badge ? `${badge[1] === 'on' ? 'Значок выдан' : 'Значок снят'}: ${badgeOf(badge[2])?.label || badge[2]}` : ACTIONS[action];
+  // Off a minigame's tables of records (server/minigames.mjs remove): «Убран из таблиц: Рыбалка».
+  const minigame = /^minigame-(remove|ban):(\w+)$/.exec(entry.action);
+  const action = telegram ? telegram[1] : comment ? 'comment' : badge ? `badge-${badge[1]}` : minigame ? `minigame-${minigame[1]}` : entry.action;
+  const label = comment ? 'Комментарий удалён' : badge ? `${badge[1] === 'on' ? 'Значок выдан' : 'Значок снят'}: ${badgeOf(badge[2])?.label || badge[2]}`
+    : minigame ? `${minigame[1] === 'ban' ? 'Убран из таблиц рекордов и закрыт доступ' : 'Убран из таблиц рекордов'}: ${MINIGAME_NAMES[minigame[2]] || minigame[2]}` : ACTIONS[action];
   return label ? { action, label, via: telegram ? 'telegram' : 'site' } : null;
 }
 

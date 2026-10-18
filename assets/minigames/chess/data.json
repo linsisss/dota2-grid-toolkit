@@ -1,0 +1,2008 @@
+{
+ "abilities": {
+  "generic_data_type": "CMatch3AbilityDefinition",
+  "axe_counter_helix": {
+   "m_unAbilityID": 20
+  },
+  "axe_culling_blade": {
+   "m_unAbilityID": 21
+  },
+  "centaur_hoof_stomp": {
+   "m_unAbilityID": 960
+  },
+  "centaur_stampede": {
+   "m_unAbilityID": 961
+  },
+  "crystal_maiden_crystal_nova": {
+   "m_unAbilityID": 50,
+   "m_sLocName": "#DOTA_Tooltip_ability_crystal_maiden_crystal_nova",
+   "m_sLocDescription": "#DOTA_Match3_Ability_CrystalMaiden_CrystalNova",
+   "m_sImage": "file://{images}/spellicons/crystal_maiden_crystal_nova.png",
+   "m_vecParams": [
+    {
+     "name": "radius",
+     "value": 1.5
+    },
+    {
+     "name": "damage",
+     "value": 10,
+     "desc": "#DOTA_Match3_AbilityValue_Damage"
+    },
+    {
+     "name": "slow_percentage",
+     "value": 50,
+     "desc": "#DOTA_Match3_AbilityValue_SlowPercentage"
+    },
+    {
+     "name": "slow_duration",
+     "value": 6,
+     "desc": "#DOTA_Match3_AbilityValue_SlowDuration"
+    },
+    {
+     "name": "explosion_delay",
+     "value": 0.4
+    },
+    {
+     "name": "explosion",
+     "resource": "particles/units/heroes/hero_crystalmaiden/maiden_crystal_nova.vpcf"
+    }
+   ]
+  },
+  "crystal_maiden_freezing_field": {
+   "m_unAbilityID": 51,
+   "m_sLocName": "#DOTA_Tooltip_ability_crystal_maiden_freezing_field",
+   "m_sLocDescription": "#DOTA_Match3_Ability_CrystalMaiden_FreezingField",
+   "m_sImage": "file://{images}/spellicons/crystal_maiden_freezing_field.png",
+   "m_vecParams": [
+    {
+     "name": "radius",
+     "value": 2.5
+    },
+    {
+     "name": "explosions",
+     "value": 30,
+     "desc": "#DOTA_Match3_AbilityValue_IceShards"
+    },
+    {
+     "name": "duration",
+     "value": 10,
+     "desc": "#DOTA_Match3_AbilityValue_Duration"
+    },
+    {
+     "name": "explosion",
+     "resource": "particles/units/heroes/hero_crystalmaiden/maiden_freezing_field_explosion.vpcf"
+    }
+   ]
+  },
+  "skywrath_mage_arcane_bolt": {
+   "m_unAbilityID": 1010
+  },
+  "skywrath_mage_mystic_flare": {
+   "m_unAbilityID": 1011
+  },
+  "vengefulspirit_magic_missile": {
+   "m_unAbilityID": 200,
+   "m_sLocName": "#DOTA_Tooltip_ability_vengefulspirit_magic_missile",
+   "m_sLocDescription": "#DOTA_Match3_Ability_VengefulSpirit_MagicMissile",
+   "m_sImage": "file://{images}/spellicons/vengefulspirit_magic_missile.png",
+   "m_vecParams": [
+    {
+     "name": "damage",
+     "value": 20,
+     "desc": "#DOTA_Match3_AbilityValue_Damage"
+    },
+    {
+     "name": "projectile_speed",
+     "value": 10
+    },
+    {
+     "name": "stun_duration",
+     "value": 2,
+     "desc": "#DOTA_Match3_AbilityValue_StunDuration"
+    },
+    {
+     "name": "projectile",
+     "resource": "particles/units/heroes/hero_vengeful/vengeful_magic_missle.vpcf"
+    }
+   ]
+  },
+  "vengefulspirit_nether_swap": {
+   "m_unAbilityID": 201,
+   "m_sLocName": "#DOTA_Tooltip_ability_vengefulspirit_nether_swap",
+   "m_sLocDescription": "#DOTA_Match3_Ability_VengefulSpirit_NetherSwap",
+   "m_sImage": "file://{images}/spellicons/vengefulspirit_nether_swap.png",
+   "m_vecParams": [
+    {
+     "name": "swap_duration",
+     "value": 0.6
+    }
+   ]
+  },
+  "winter_wyvern_splinter_blast": {
+   "m_unAbilityID": 1120,
+   "m_sLocName": "#DOTA_Tooltip_ability_winter_wyvern_splinter_blast",
+   "m_sLocDescription": "#DOTA_Match3_Ability_WinterWyvern_SplinterBlast",
+   "m_sImage": "file://{images}/spellicons/winter_wyvern_splinter_blast.png",
+   "m_vecParams": [
+    {
+     "name": "splinter_count",
+     "value": 5,
+     "desc": "#DOTA_Match3_AbilityValue_SplinterCount"
+    },
+    {
+     "name": "damage",
+     "value": 15,
+     "desc": "#DOTA_Match3_AbilityValue_Damage"
+    },
+    {
+     "name": "projectile_speed",
+     "value": 5
+    },
+    {
+     "name": "projectile",
+     "resource": "particles/units/heroes/hero_winter_wyvern/wyvern_splinter.vpcf"
+    }
+   ]
+  },
+  "winter_wyvern_cold_embrace": {
+   "m_unAbilityID": 1121,
+   "m_sLocName": "#DOTA_Tooltip_ability_winter_wyvern_cold_embrace",
+   "m_sLocDescription": "#DOTA_Match3_Ability_WinterWyvern_ColdEmbrace",
+   "m_sImage": "file://{images}/spellicons/winter_wyvern_cold_embrace.png",
+   "m_vecParams": [
+    {
+     "name": "heal",
+     "value": 150,
+     "desc": "#DOTA_Match3_AbilityValue_Heal"
+    },
+    {
+     "name": "duration",
+     "value": 8,
+     "desc": "#DOTA_Match3_AbilityValue_Duration"
+    }
+   ]
+  },
+  "pangolier_shield_crash": {
+   "m_unAbilityID": 1200
+  },
+  "pangolier_gyroshell": {
+   "m_unAbilityID": 1201
+  },
+  "broodmother_spawn_spiderlings": {
+   "m_unAbilityID": 610,
+   "m_sLocName": "#DOTA_Tooltip_ability_broodmother_spawn_spiderlings",
+   "m_sLocDescription": "#DOTA_Match3_Ability_Broodmother_SpawnSpiderlings",
+   "m_sImage": "file://{images}/spellicons/broodmother_spawn_spiderlings.png",
+   "m_vecParams": [
+    {
+     "name": "spider_count",
+     "value": 12,
+     "desc": "#DOTA_Match3_AbilityValue_Spiders"
+    },
+    {
+     "name": "projectile_speed",
+     "value": 7
+    },
+    {
+     "name": "swap_duration",
+     "value": 0.6
+    },
+    {
+     "name": "projectile",
+     "resource": "particles/units/heroes/hero_broodmother/broodmother_web_cast.vpcf"
+    }
+   ]
+  },
+  "broodmother_spin_web": {
+   "m_unAbilityID": 611,
+   "m_sLocName": "#DOTA_Tooltip_ability_broodmother_spin_web",
+   "m_sLocDescription": "#DOTA_Match3_Ability_Broodmother_SpinWeb",
+   "m_sImage": "file://{images}/spellicons/broodmother_spin_web.png",
+   "m_vecParams": [
+    {
+     "name": "radius",
+     "value": 2.5,
+     "desc": "#DOTA_Match3_AbilityValue_Radius"
+    },
+    {
+     "name": "duration",
+     "value": 10,
+     "desc": "#DOTA_Match3_AbilityValue_Duration"
+    },
+    {
+     "name": "projectile",
+     "resource": "particles/units/heroes/hero_broodmother/broodmother_web.vpcf"
+    }
+   ]
+  },
+  "broodmother_insatiable_hunger": {
+   "m_unAbilityID": 612,
+   "m_sLocName": "#DOTA_Tooltip_ability_broodmother_insatiable_hunger",
+   "m_sLocDescription": "#DOTA_Match3_Ability_Broodmother_InsatiableHunger",
+   "m_sImage": "file://{images}/spellicons/broodmother_insatiable_hunger.png",
+   "m_vecParams": [
+    {
+     "name": "lifesteal_percent",
+     "value": 200,
+     "desc": "#DOTA_Match3_AbilityValue_LifestealPercentage"
+    },
+    {
+     "name": "duration",
+     "value": 10,
+     "desc": "#DOTA_Match3_AbilityValue_Duration"
+    }
+   ]
+  },
+  "lina_dragon_slave": {
+   "m_unAbilityID": 250,
+   "m_sLocName": "#DOTA_Tooltip_ability_lina_dragon_slave",
+   "m_sLocDescription": "#DOTA_Match3_Ability_Lina_DragonSlave",
+   "m_sImage": "file://{images}/spellicons/lina_dragon_slave.png",
+   "m_vecParams": [
+    {
+     "name": "damage",
+     "value": 20,
+     "desc": "#DOTA_Match3_AbilityValue_Damage"
+    },
+    {
+     "name": "projectile_speed",
+     "value": 10
+    },
+    {
+     "name": "projectile",
+     "resource": "particles/units/heroes/hero_lina/lina_spell_dragon_slave.vpcf"
+    }
+   ]
+  },
+  "lina_light_strike_array": {
+   "m_unAbilityID": 251,
+   "m_sLocName": "#DOTA_Tooltip_ability_lina_light_strike_array",
+   "m_sLocDescription": "#DOTA_Match3_Ability_Lina_LightStrikeArray",
+   "m_sImage": "file://{images}/spellicons/lina_light_strike_array.png",
+   "m_vecParams": [
+    {
+     "name": "radius",
+     "value": 2.5
+    },
+    {
+     "name": "damage",
+     "value": 25,
+     "desc": "#DOTA_Match3_AbilityValue_Damage"
+    },
+    {
+     "name": "stun_duration",
+     "value": 5,
+     "desc": "#DOTA_Match3_AbilityValue_StunDuration"
+    },
+    {
+     "name": "explosion",
+     "resource": "particles/units/heroes/hero_lina/lina_spell_light_strike_array.vpcf"
+    }
+   ]
+  },
+  "lich_frost_nova": {
+   "m_unAbilityID": 310,
+   "m_sLocName": "#DOTA_Tooltip_ability_lich_frost_nova",
+   "m_sLocDescription": "#DOTA_Match3_Ability_Lich_FrostNova",
+   "m_sImage": "file://{images}/spellicons/lich_frost_nova.png",
+   "m_vecParams": [
+    {
+     "name": "radius",
+     "value": 1.5
+    },
+    {
+     "name": "damage",
+     "value": 15,
+     "desc": "#DOTA_Match3_AbilityValue_Damage"
+    },
+    {
+     "name": "slow_percentage",
+     "value": 100,
+     "desc": "#DOTA_Match3_AbilityValue_SlowPercentage"
+    },
+    {
+     "name": "slow_duration",
+     "value": 3,
+     "desc": "#DOTA_Match3_AbilityValue_SlowDuration"
+    },
+    {
+     "name": "explosion",
+     "resource": "particles/units/heroes/hero_lich/lich_frost_nova.vpcf"
+    }
+   ]
+  },
+  "lich_chain_frost": {
+   "m_unAbilityID": 311,
+   "m_sLocName": "#DOTA_Tooltip_ability_lich_chain_frost",
+   "m_sLocDescription": "#DOTA_Match3_Ability_Lich_ChainFrost",
+   "m_sImage": "file://{images}/spellicons/lich_chain_frost.png",
+   "m_vecParams": [
+    {
+     "name": "bounces",
+     "value": 12,
+     "desc": "#DOTA_Match3_AbilityValue_Bounces"
+    },
+    {
+     "name": "opponent_bounce_interval",
+     "value": 3
+    },
+    {
+     "name": "damage",
+     "value": 15,
+     "desc": "#DOTA_Match3_AbilityValue_Damage"
+    },
+    {
+     "name": "projectile_speed",
+     "value": 10
+    },
+    {
+     "name": "projectile",
+     "resource": "particles/units/heroes/hero_lich/lich_chain_frost.vpcf"
+    }
+   ]
+  }
+ },
+ "game_modes": {
+  "generic_data_type": "CMatch3GameModeDefinition",
+  "crownfall_act3": {
+   "m_unGameModeID": 1,
+   "m_sLocName": "#DOTA_Crownfall_EncounterName_Match3",
+   "m_sOpponentScene": "maps/scenes/crownfall/match3_icewrack.vpk",
+   "m_sBackgroundImage": "file://{images}/events/crownfall/match3/match3_background_icewrack.png",
+   "m_nBoardRows": 8,
+   "m_nBoardCols": 8,
+   "m_flPlayerHealth": 1000,
+   "m_vecHeroes": [
+    "match3_hero_lina",
+    "match3_hero_broodmother",
+    "match3_hero_crystal_maiden",
+    "match3_hero_lich",
+    "match3_hero_vengefulspirit",
+    "match3_hero_winter_wyvern"
+   ],
+   "m_vecLevels": [
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_1_1",
+     "m_sOpponentName": "match3_opponent_melee_creep_dire",
+     "m_nCompletionScore": 100
+    },
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_1_2",
+     "m_sOpponentName": "match3_opponent_ranged_creep_radiant",
+     "m_nCompletionScore": 100
+    },
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_1_3",
+     "m_sOpponentName": "match3_opponent_chaos_knight",
+     "m_nCompletionScore": 500,
+     "m_eLevelFlags": "k_eMatch3LevelFlag_Boss"
+    },
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_Interlude",
+     "m_sOpponentName": "match3_opponent_healing_puppy",
+     "m_eLevelFlags": "k_eMatch3LevelFlag_Friendly"
+    },
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_2_1",
+     "m_sOpponentName": "match3_opponent_warpine_raider",
+     "m_nCompletionScore": 200
+    },
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_2_2",
+     "m_sOpponentName": "match3_opponent_alpha_wolf",
+     "m_nCompletionScore": 200
+    },
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_2_3",
+     "m_sOpponentName": "match3_opponent_angry_icicle",
+     "m_nCompletionScore": 1000,
+     "m_eLevelFlags": "k_eMatch3LevelFlag_Boss"
+    },
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_Interlude",
+     "m_sOpponentName": "match3_opponent_healing_puppy",
+     "m_eLevelFlags": "k_eMatch3LevelFlag_Friendly"
+    },
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_3_1",
+     "m_sOpponentName": "match3_opponent_ancient_ice_shaman",
+     "m_nCompletionScore": 300
+    },
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_3_2",
+     "m_sOpponentName": "match3_opponent_ancient_frostbitten_golem",
+     "m_nCompletionScore": 300
+    },
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_3_3",
+     "m_sOpponentName": "match3_opponent_ice_ranger",
+     "m_nCompletionScore": 1500,
+     "m_eLevelFlags": "k_eMatch3LevelFlag_Boss"
+    },
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_Interlude",
+     "m_sOpponentName": "match3_opponent_healing_puppy",
+     "m_eLevelFlags": "k_eMatch3LevelFlag_Friendly"
+    },
+    {
+     "m_sLevelName": "#DOTA_Match3_Stage_FinalBoss",
+     "m_sOpponentName": "match3_opponent_frost_dragon",
+     "m_nCompletionScore": 2000,
+     "m_eLevelFlags": "k_eMatch3LevelFlag_Boss"
+    }
+   ]
+  }
+ },
+ "heroes": {
+  "generic_data_type": "CMatch3HeroDefinition",
+  "match3_hero_axe": {
+   "m_nHeroID": 2,
+   "m_sSuperAbility": "axe_counter_helix",
+   "m_sUltraAbility": "axe_culling_blade"
+  },
+  "match3_hero_centaur": {
+   "m_nHeroID": 96,
+   "m_sSuperAbility": "centaur_hoof_stomp",
+   "m_sUltraAbility": "centaur_stampede"
+  },
+  "match3_hero_crystal_maiden": {
+   "m_nHeroID": 5,
+   "m_sPieceModel": "models/events/crownfall/match3/gems/gem_crystalmaiden.vmdl",
+   "m_sAttackParticleEffect": "particles/units/heroes/hero_crystalmaiden/maiden_base_attack.vpcf",
+   "m_sSuperAbility": "crystal_maiden_crystal_nova",
+   "m_sUltraAbility": "crystal_maiden_freezing_field"
+  },
+  "match3_hero_skywrath_mage": {
+   "m_nHeroID": 101,
+   "m_sSuperAbility": "skywrath_mage_arcane_bolt",
+   "m_sUltraAbility": "skywrath_mage_mystic_flare"
+  },
+  "match3_hero_vengefulspirit": {
+   "m_nHeroID": 20,
+   "m_sPieceModel": "models/events/crownfall/match3/gems/gem_venge.vmdl",
+   "m_sAttackParticleEffect": "particles/units/heroes/hero_vengeful/vengeful_base_attack.vpcf",
+   "m_sSuperAbility": "vengefulspirit_magic_missile",
+   "m_sUltraAbility": "vengefulspirit_nether_swap"
+  },
+  "match3_hero_winter_wyvern": {
+   "m_nHeroID": 112,
+   "m_sPieceModel": "models/events/crownfall/match3/gems/gem_wyvern.vmdl",
+   "m_sAttackParticleEffect": "particles/units/heroes/hero_winter_wyvern/winter_wyvern_base_attack.vpcf",
+   "m_sSuperAbility": "winter_wyvern_splinter_blast",
+   "m_sUltraAbility": "winter_wyvern_cold_embrace"
+  },
+  "match3_hero_pangolier": {
+   "m_nHeroID": 120,
+   "m_sSuperAbility": "pangolier_shield_crash",
+   "m_sUltraAbility": "pangolier_gyroshell"
+  },
+  "match3_hero_broodmother": {
+   "m_nHeroID": 61,
+   "m_sPieceModel": "models/events/crownfall/match3/gems/gem_broodmother.vmdl",
+   "m_sAttackParticleEffect": "particles/units/heroes/hero_weaver/weaver_base_attack.vpcf",
+   "m_sSuperAbility": "broodmother_insatiable_hunger",
+   "m_sUltraAbility": "broodmother_spawn_spiderlings"
+  },
+  "match3_hero_lina": {
+   "m_nHeroID": 25,
+   "m_sPieceModel": "models/events/crownfall/match3/gems/gem_lina.vmdl",
+   "m_sAttackParticleEffect": "particles/units/heroes/hero_lina/lina_base_attack.vpcf",
+   "m_sSuperAbility": "lina_dragon_slave",
+   "m_sUltraAbility": "lina_light_strike_array"
+  },
+  "match3_hero_lich": {
+   "m_nHeroID": 31,
+   "m_sPieceModel": "models/events/crownfall/match3/gems/gem_lich.vmdl",
+   "m_sAttackParticleEffect": "particles/units/heroes/hero_lich/lich_base_attack.vpcf",
+   "m_sSuperAbility": "lich_frost_nova",
+   "m_sUltraAbility": "lich_chain_frost"
+  }
+ },
+ "opponent_actions": {
+  "generic_data_type": "CMatch3OpponentActionDefinition",
+  "activity_animation": {
+   "m_unOpponentActionID": 1,
+   "m_vecParams": [
+    {
+     "name": "min_duration",
+     "value": 0
+    },
+    {
+     "name": "max_duration",
+     "value": 10
+    }
+   ]
+  },
+  "spawn_animation": {
+   "m_unOpponentActionID": 2,
+   "m_vecParams": [
+    {
+     "name": "min_duration",
+     "value": 0
+    },
+    {
+     "name": "max_duration",
+     "value": 10
+    }
+   ]
+  },
+  "death_animation": {
+   "m_unOpponentActionID": 3,
+   "m_vecParams": [
+    {
+     "name": "min_duration",
+     "value": 0
+    },
+    {
+     "name": "max_duration",
+     "value": 10
+    }
+   ]
+  },
+  "stage_intro": {
+   "m_unOpponentActionID": 5,
+   "m_vecParams": [
+    {
+     "name": "duration",
+     "value": 2
+    }
+   ]
+  },
+  "stage_intro_boss": {
+   "m_unOpponentActionID": 6,
+   "m_vecParams": [
+    {
+     "name": "duration",
+     "value": 3
+    }
+   ]
+  },
+  "stage_intro_friendly": {
+   "m_unOpponentActionID": 7,
+   "m_vecParams": [
+    {
+     "name": "duration",
+     "value": 2
+    }
+   ]
+  },
+  "basic_attack": {
+   "m_unOpponentActionID": 10,
+   "m_sLocName": "#DOTA_Match3_OpponentAction_BasicAttack",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_BasicAttack_Desc",
+   "m_sImage": "file://{images}/spellicons/action_attack.png",
+   "m_vecParams": [
+    {
+     "name": "min_damage",
+     "value": 20
+    },
+    {
+     "name": "max_damage",
+     "value": 30
+    }
+   ]
+  },
+  "crit_attack": {
+   "m_unOpponentActionID": 11,
+   "m_sLocName": "#DOTA_Tooltip_ability_alpha_wolf_critical_strike",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_CritAttack",
+   "m_sImage": "file://{images}/spellicons/alpha_wolf_critical_strike.png",
+   "m_vecParams": [
+    {
+     "name": "activity",
+     "str": "ACT_DOTA_ATTACK"
+    },
+    {
+     "name": "min_damage",
+     "value": 10
+    },
+    {
+     "name": "max_damage",
+     "value": 20
+    },
+    {
+     "name": "crit_percent",
+     "value": 200,
+     "desc": "#DOTA_Match3_AbilityValue_CritPercentage"
+    }
+   ]
+  },
+  "healing_salve": {
+   "m_unOpponentActionID": 12,
+   "m_sLocName": "#DOTA_Tooltip_Ability_item_flask",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_HealingSalve",
+   "m_vecParams": [
+    {
+     "name": "heal_amount",
+     "value": 300,
+     "desc": "#DOTA_Match3_AbilityValue_Heal"
+    },
+    {
+     "name": "heal_duration",
+     "value": 3,
+     "desc": "#DOTA_Match3_AbilityValue_Duration"
+    }
+   ]
+  },
+  "walrus_punch": {
+   "m_unOpponentActionID": 20,
+   "m_sLocName": "#DOTA_Tooltip_ability_tusk_walrus_punch",
+   "m_sImage": "file://{images}/spellicons/tusk_walrus_punch.png",
+   "m_vecParams": [
+    {
+     "name": "duration",
+     "value": 1.5
+    },
+    {
+     "name": "offset",
+     "value": 2500
+    },
+    {
+     "name": "radius",
+     "value": 2
+    },
+    {
+     "name": "crit_percent",
+     "value": 200
+    }
+   ]
+  },
+  "chaos_bolt": {
+   "m_unOpponentActionID": 30,
+   "m_sLocName": "#DOTA_Tooltip_ability_chaos_knight_chaos_bolt",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_ChaosBolt",
+   "m_sImage": "file://{images}/spellicons/chaos_knight_chaos_bolt.png",
+   "m_vecParams": [
+    {
+     "name": "stun_duration",
+     "value": 3,
+     "desc": "#DOTA_Match3_AbilityValue_StunDuration"
+    },
+    {
+     "name": "damage",
+     "value": 20,
+     "desc": "#DOTA_Match3_AbilityValue_Damage"
+    }
+   ]
+  },
+  "chaos_strike": {
+   "m_unOpponentActionID": 31,
+   "m_sLocName": "#DOTA_Tooltip_ability_chaos_knight_chaos_strike",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_ChaosStrike",
+   "m_sImage": "file://{images}/spellicons/chaos_knight_chaos_strike.png",
+   "m_vecParams": [
+    {
+     "name": "min_damage",
+     "value": 30
+    },
+    {
+     "name": "max_damage",
+     "value": 40
+    },
+    {
+     "name": "crit_percent",
+     "value": 200,
+     "desc": "#DOTA_Match3_AbilityValue_CritPercentage"
+    },
+    {
+     "name": "lifesteal_percent",
+     "value": 70,
+     "desc": "#DOTA_Match3_AbilityValue_LifestealPercentage"
+    }
+   ]
+  },
+  "cold_feet": {
+   "m_unOpponentActionID": 32,
+   "m_sLocName": "#DOTA_Tooltip_ability_ancient_apparition_cold_feet",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_ColdFeet",
+   "m_sImage": "file://{images}/spellicons/ancient_apparition_cold_feet.png",
+   "m_vecParams": [
+    {
+     "name": "damage",
+     "value": 25,
+     "desc": "#DOTA_Match3_AbilityValue_Damage"
+    },
+    {
+     "name": "debuff_duration",
+     "value": 5,
+     "desc": "#DOTA_Match3_AbilityValue_DebuffDuration"
+    },
+    {
+     "name": "damage_interval",
+     "value": 1
+    },
+    {
+     "name": "match_count",
+     "value": 5,
+     "desc": "#DOTA_Match3_AbilityValue_MatchCount"
+    },
+    {
+     "name": "stun_duration",
+     "value": 4,
+     "desc": "#DOTA_Match3_AbilityValue_StunDuration"
+    }
+   ]
+  },
+  "ice_blast": {
+   "m_unOpponentActionID": 33,
+   "m_sLocName": "#DOTA_Tooltip_ability_ancient_apparition_ice_blast",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_IceBlast",
+   "m_sImage": "file://{images}/spellicons/ancient_apparition_ice_blast.png",
+   "m_vecParams": [
+    {
+     "name": "duration",
+     "value": 10,
+     "desc": "#DOTA_Match3_AbilityValue_Duration"
+    },
+    {
+     "name": "impact_damage",
+     "value": 20,
+     "desc": "#DOTA_Match3_AbilityValue_ImpactDamage"
+    },
+    {
+     "name": "damage_over_time",
+     "value": 30,
+     "desc": "#DOTA_Match3_AbilityValue_DamageOverTime"
+    },
+    {
+     "name": "damage_interval",
+     "value": 1
+    }
+   ]
+  },
+  "icefire_bomb": {
+   "m_unOpponentActionID": 40,
+   "m_sLocName": "#DOTA_Tooltip_ability_ice_shaman_incendiary_bomb",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_IcefireBomb",
+   "m_sImage": "file://{images}/spellicons/ice_shaman_incendiary_bomb.png",
+   "m_vecParams": [
+    {
+     "name": "duration",
+     "value": 4,
+     "desc": "#DOTA_Match3_AbilityValue_Duration"
+    },
+    {
+     "name": "impact_damage",
+     "value": 20,
+     "desc": "#DOTA_Match3_AbilityValue_ImpactDamage"
+    },
+    {
+     "name": "damage_over_time",
+     "value": 20,
+     "desc": "#DOTA_Match3_AbilityValue_DamageOverTime"
+    },
+    {
+     "name": "damage_interval",
+     "value": 1
+    }
+   ]
+  },
+  "butt_slam": {
+   "m_unOpponentActionID": 50,
+   "m_sLocName": "#DOTA_Match3_OpponentAction_ButtSlam",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_ButtSlam_Desc",
+   "m_sImage": "file://{images}/spellicons/ogre_bruiser_ogre_smash.png",
+   "m_vecParams": [
+    {
+     "name": "spread_duration",
+     "value": 0.3
+    },
+    {
+     "name": "wait_duration",
+     "value": 2.4
+    },
+    {
+     "name": "duration",
+     "value": 3,
+     "desc": "#DOTA_Match3_AbilityValue_Duration"
+    },
+    {
+     "name": "damage",
+     "value": 50,
+     "desc": "#DOTA_Match3_AbilityValue_Damage"
+    },
+    {
+     "name": "impact_cycle",
+     "value": 0.3
+    },
+    {
+     "name": "min_origin_offset",
+     "value": 20
+    },
+    {
+     "name": "max_origin_offset",
+     "value": 100
+    },
+    {
+     "name": "min_angle_offset",
+     "value": 45
+    },
+    {
+     "name": "max_angle_offset",
+     "value": 315
+    }
+   ]
+  },
+  "hypothermia": {
+   "m_unOpponentActionID": 60,
+   "m_sLocName": "#DOTA_Tooltip_modifier_drow_ranger_frost_arrows_hypothermia",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_Hypothermia",
+   "m_sImage": "file://{images}/spellicons/drow_ranger_glacier.png",
+   "m_vecParams": [
+    {
+     "name": "damage",
+     "value": 35,
+     "desc": "#DOTA_Match3_AbilityValue_Damage"
+    },
+    {
+     "name": "duration",
+     "value": 30,
+     "desc": "#DOTA_Match3_AbilityValue_Duration"
+    },
+    {
+     "name": "heal_reduction_percent",
+     "value": 25,
+     "desc": "#DOTA_Match3_AbilityValue_HealReductionPercentage"
+    }
+   ]
+  },
+  "gust": {
+   "m_unOpponentActionID": 61,
+   "m_sLocName": "#DOTA_Tooltip_ability_drow_ranger_wave_of_silence",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_Gust",
+   "m_sImage": "file://{images}/spellicons/drow_ranger_wave_of_silence.png",
+   "m_vecParams": [
+    {
+     "name": "duration",
+     "value": 10,
+     "desc": "#DOTA_Match3_AbilityValue_Duration"
+    }
+   ]
+  },
+  "black_king_bar": {
+   "m_unOpponentActionID": 70,
+   "m_sLocName": "#DOTA_Tooltip_Ability_item_black_king_bar",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_BlackKingBar",
+   "m_sImage": "file://{images}/items/black_king_bar.png",
+   "m_vecParams": [
+    {
+     "name": "duration",
+     "value": 10,
+     "desc": "#DOTA_Match3_AbilityValue_Duration"
+    }
+   ]
+  },
+  "frost_attack": {
+   "m_unOpponentActionID": 71,
+   "m_sLocName": "#DOTA_Tooltip_ability_ghost_frost_attack",
+   "m_sLocDescription": "#DOTA_Match3_OpponentAction_FrostAttack",
+   "m_sImage": "file://{images}/spellicons/ghost_frost_attack.png",
+   "m_vecParams": [
+    {
+     "name": "damage",
+     "value": 35,
+     "desc": "#DOTA_Match3_AbilityValue_Damage"
+    },
+    {
+     "name": "slow_percent",
+     "value": 300,
+     "desc": "#DOTA_Match3_AbilityValue_SlowPercentage"
+    },
+    {
+     "name": "duration",
+     "value": 10,
+     "desc": "#DOTA_Match3_AbilityValue_Duration"
+    }
+   ]
+  }
+ },
+ "opponents": {
+  "generic_data_type": "CMatch3OpponentDefinition",
+  "match3_opponent_melee_creep_radiant": {
+   "m_unOpponentID": 1,
+   "m_sLocName": "Radiant Melee Creep",
+   "m_sUnitName": "npc_dota_creep_goodguys_melee",
+   "m_flMaxHealth": 100,
+   "m_sAttackImpactSound": "match3.Damage_Melee",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "activity_animation",
+     "m_kvActionParams": {
+      "activity": "ACT_DOTA_VICTORY",
+      "min_duration": 2,
+      "max_duration": 3
+     }
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 25,
+      "max_damage": 35
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation"
+    }
+   ]
+  },
+  "match3_opponent_melee_creep_dire": {
+   "m_unOpponentID": 2,
+   "m_sLocName": "#DOTA_Match3_Opponent_DireMeleeCreep",
+   "m_sUnitName": "npc_dota_creep_badguys_melee",
+   "m_flMaxHealth": 100,
+   "m_sAttackImpactSound": "match3.Damage_Melee",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "activity_animation",
+     "m_kvActionParams": {
+      "activity": "ACT_DOTA_VICTORY",
+      "min_duration": 2,
+      "max_duration": 3
+     }
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation"
+    }
+   ]
+  },
+  "match3_opponent_ranged_creep_radiant": {
+   "m_unOpponentID": 3,
+   "m_sLocName": "#DOTA_Match3_Opponent_RadiantRangedCreep",
+   "m_sUnitName": "npc_dota_creep_goodguys_ranged",
+   "m_flMaxHealth": 150,
+   "m_sAttackImpactSound": "match3.Damage_Ranged",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "activity_animation",
+     "m_kvActionParams": {
+      "activity": "ACT_DOTA_VICTORY",
+      "min_duration": 2,
+      "max_duration": 3
+     }
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 30,
+      "max_damage": 40
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation"
+    }
+   ]
+  },
+  "match3_opponent_ranged_creep_dire": {
+   "m_unOpponentID": 4,
+   "m_sLocName": "Dire Ranged Creep",
+   "m_sUnitName": "npc_dota_creep_badguys_ranged",
+   "m_flMaxHealth": 80,
+   "m_sAttackImpactSound": "match3.Damage_Ranged",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "activity_animation",
+     "m_kvActionParams": {
+      "activity": "ACT_DOTA_VICTORY",
+      "min_duration": 2,
+      "max_duration": 3
+     }
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 30,
+      "max_damage": 40
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation"
+    }
+   ]
+  },
+  "match3_opponent_skeleton": {
+   "m_unOpponentID": 5,
+   "m_sLocName": "A Spooky Skeleton",
+   "m_sUnitName": "npc_dota_dark_troll_warlord_skeleton_warrior",
+   "m_flMaxHealth": 50,
+   "m_sAttackImpactSound": "match3.Damage_Melee",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "spawn_animation"
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_wolf_of_icewrack": {
+   "m_unOpponentID": 6,
+   "m_sLocName": "A Wolf of Icewrack",
+   "m_nHeroID": 5,
+   "m_vecHeroItems": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_unItemDef": 19205
+    }
+   ],
+   "m_flMaxHealth": 50,
+   "m_sAttackImpactSound": "match3.Damage_Melee",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_poison_dragon": {
+   "m_unOpponentID": 7,
+   "m_sLocName": "Poison Dragon",
+   "m_nHeroID": 49,
+   "m_nHeroPrimarySlotIndex": 6,
+   "m_nHeroSkinOverride": 0,
+   "m_flMaxHealth": 50,
+   "m_sAttackImpactSound": "match3.Damage_Ranged",
+   "m_vModelOffset": [
+    0,
+    0,
+    -40
+   ],
+   "m_flModelScale": 0.6,
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenbite.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_fire_dragon": {
+   "m_unOpponentID": 8,
+   "m_sLocName": "Fire Dragon",
+   "m_nHeroID": 49,
+   "m_nHeroPrimarySlotIndex": 6,
+   "m_nHeroSkinOverride": 1,
+   "m_flMaxHealth": 50,
+   "m_sAttackImpactSound": "match3.Damage_Ranged",
+   "m_vModelOffset": [
+    0,
+    0,
+    -40
+   ],
+   "m_flModelScale": 0.6,
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenbite.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_frost_dragon": {
+   "m_unOpponentID": 9,
+   "m_sLocName": "#DOTA_Match3_Opponent_FrostDragon",
+   "m_sLocFlavor": "#DOTA_Match3_Opponent_FrostDragon_Flavor",
+   "m_nHeroID": 49,
+   "m_nHeroPrimarySlotIndex": 6,
+   "m_nHeroSkinOverride": 2,
+   "m_flMaxHealth": 600,
+   "m_sAttackImpactSound": "match3.Damage_Ranged",
+   "m_vModelOffset": [
+    0,
+    0,
+    -40
+   ],
+   "m_flModelScale": 0.6,
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenbite.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "spawn_animation"
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 35,
+      "max_damage": 45
+     }
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 35,
+      "max_damage": 45
+     }
+    },
+    {
+     "m_sActionName": "black_king_bar",
+     "m_flCooldown": 6
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 35,
+      "max_damage": 45
+     }
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 35,
+      "max_damage": 45
+     }
+    },
+    {
+     "m_sActionName": "frost_attack",
+     "m_flCooldown": 6
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_black_dragon": {
+   "m_unOpponentID": 10,
+   "m_sLocName": "Black Dragon",
+   "m_nHeroID": 49,
+   "m_nHeroPrimarySlotIndex": 6,
+   "m_nHeroSkinOverride": 3,
+   "m_flMaxHealth": 50,
+   "m_sAttackImpactSound": "match3.Damage_Ranged",
+   "m_vModelOffset": [
+    0,
+    0,
+    -40
+   ],
+   "m_flModelScale": 0.6,
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenbite.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_ghost": {
+   "m_unOpponentID": 11,
+   "m_sLocName": "A Ghastly Ghost",
+   "m_sUnitName": "npc_dota_neutral_ghost",
+   "m_flMaxHealth": 50,
+   "m_sAttackImpactSound": "match3.Damage_Ranged",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_flModelScale": 0.8,
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_mega_melee_creep_radiant": {
+   "m_unOpponentID": 12,
+   "m_sLocName": "Mega Radiant Melee Creep",
+   "m_sUnitName": "npc_dota_creep_goodguys_melee_upgraded_mega",
+   "m_flMaxHealth": 50,
+   "m_sAttackImpactSound": "match3.Damage_Melee",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_mega_ranged_creep_radiant": {
+   "m_unOpponentID": 13,
+   "m_sLocName": "Mega Radiant Ranged Creep",
+   "m_sUnitName": "npc_dota_creep_goodguys_ranged_upgraded_mega",
+   "m_flMaxHealth": 50,
+   "m_sAttackImpactSound": "match3.Damage_Ranged",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_mega_melee_creep_dire": {
+   "m_unOpponentID": 14,
+   "m_sLocName": "Mega Dire Melee Creep",
+   "m_sUnitName": "npc_dota_creep_badguys_melee_upgraded_mega",
+   "m_flMaxHealth": 50,
+   "m_sAttackImpactSound": "match3.Damage_Melee",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_mega_ranged_creep_dire": {
+   "m_unOpponentID": 15,
+   "m_sLocName": "Mega Dire Ranged Creep",
+   "m_sUnitName": "npc_dota_creep_badguys_ranged_upgraded_mega",
+   "m_flMaxHealth": 50,
+   "m_sAttackImpactSound": "match3.Damage_Ranged",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_angry_walrus_man": {
+   "m_unOpponentID": 16,
+   "m_sLocName": "Angry Walrus Man",
+   "m_nHeroID": 100,
+   "m_flMaxHealth": 250,
+   "m_sAttackImpactSound": "match3.Damage_Melee",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "walrus_punch",
+     "m_flCooldown": 6
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_warpine_raider": {
+   "m_unOpponentID": 17,
+   "m_sLocName": "#DOTA_Match3_Opponent_WarpineRaider",
+   "m_sUnitName": "npc_dota_neutral_warpine_raider",
+   "m_flMaxHealth": 200,
+   "m_sAttackImpactSound": "match3.Damage_Melee",
+   "m_flModelScale": 0.8,
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 4,
+     "m_kvActionParams": {
+      "min_damage": 30,
+      "max_damage": 40
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_kvActionParams": {
+      "max_duration": 4
+     }
+    }
+   ]
+  },
+  "match3_opponent_alpha_wolf": {
+   "m_unOpponentID": 18,
+   "m_sLocName": "#DOTA_Match3_Opponent_AlphaWolf",
+   "m_nHeroID": 77,
+   "m_nHeroPrimarySlotIndex": 6,
+   "m_vecHeroItems": [
+    {
+     "m_unItemDef": 5596
+    }
+   ],
+   "m_sAttackImpactSound": "match3.Damage_Melee",
+   "m_flMaxHealth": 200,
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenbite.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "crit_attack",
+     "m_flCooldown": 6,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30,
+      "crit_percent": 200
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_ancient_ice_shaman": {
+   "m_unOpponentID": 19,
+   "m_sLocName": "#DOTA_Match3_Opponent_AncientIceShaman",
+   "m_sUnitName": "npc_dota_neutral_ice_shaman",
+   "m_flMaxHealth": 200,
+   "m_sAttackImpactSound": "match3.Damage_Ranged",
+   "m_flModelScale": 0.7,
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 4,
+     "m_kvActionParams": {
+      "min_damage": 30,
+      "max_damage": 40
+     }
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 4,
+     "m_kvActionParams": {
+      "min_damage": 30,
+      "max_damage": 40
+     }
+    },
+    {
+     "m_sActionName": "icefire_bomb",
+     "m_flCooldown": 6
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_ice_ranger": {
+   "m_unOpponentID": 20,
+   "m_sLocName": "#DOTA_Match3_Opponent_IceRanger",
+   "m_sLocFlavor": "#DOTA_Match3_Opponent_IceRanger_Flavor",
+   "m_nHeroID": 6,
+   "m_flMaxHealth": 300,
+   "m_sAttackImpactSound": "Hero_DrowRanger.Attack",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 30,
+      "max_damage": 50
+     }
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 30,
+      "max_damage": 50
+     }
+    },
+    {
+     "m_sActionName": "hypothermia",
+     "m_flCooldown": 6
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 30,
+      "max_damage": 50
+     }
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 30,
+      "max_damage": 50
+     }
+    },
+    {
+     "m_sActionName": "gust",
+     "m_flCooldown": 6
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_ancient_rumblehide": {
+   "m_unOpponentID": 21,
+   "m_sLocName": "#npc_dota_neutral_small_thunder_lizard",
+   "m_sUnitName": "npc_dota_neutral_small_thunder_lizard",
+   "m_flMaxHealth": 50,
+   "m_sAttackImpactSound": "match3.Damage_Ranged",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenbite.vpcf",
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_ancient_rock_golem": {
+   "m_unOpponentID": 22,
+   "m_sLocName": "#npc_dota_neutral_rock_golem",
+   "m_sUnitName": "npc_dota_neutral_rock_golem",
+   "m_flMaxHealth": 50,
+   "m_sAttackImpactSound": "match3.Damage_Melee",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_flModelScale": 0.7,
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_ancient_frostbitten_golem": {
+   "m_unOpponentID": 23,
+   "m_sLocName": "#DOTA_Match3_Opponent_AncientFrostbittenGolem",
+   "m_sUnitName": "npc_dota_neutral_frostbitten_golem",
+   "m_flMaxHealth": 200,
+   "m_sAttackImpactSound": "match3.Damage_Melee",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_flModelScale": 0.8,
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "butt_slam",
+     "m_flCooldown": 6,
+     "m_kvActionParams": {
+      "damage": 50
+     }
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_angry_icicle": {
+   "m_unOpponentID": 24,
+   "m_sLocName": "#DOTA_Match3_Opponent_AngryIcicle",
+   "m_nHeroID": 68,
+   "m_vecHeroItems": [
+    {
+     "m_unItemDef": 25902
+    },
+    {
+     "m_unItemDef": 12441
+    },
+    {
+     "m_unItemDef": 12440
+    },
+    {
+     "m_unItemDef": 25904
+    }
+   ],
+   "m_flMaxHealth": 300,
+   "m_sAttackImpactSound": "match3.ancient_apparition.attack",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_flModelScale": 0.75,
+   "m_vModelOffset": [
+    0,
+    0,
+    -30
+   ],
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "spawn_animation",
+     "m_flCooldown": 0
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "cold_feet",
+     "m_flCooldown": 6
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "ice_blast",
+     "m_flCooldown": 6
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation",
+     "m_flCooldown": 0
+    }
+   ]
+  },
+  "match3_opponent_healing_puppy": {
+   "m_unOpponentID": 25,
+   "m_sLocName": "#DOTA_Match3_Opponent_HealingPuppy",
+   "m_sModelName": "models/pets/icewrack_wolf/icewrack_wolf.vmdl",
+   "m_flMaxHealth": 50,
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "spawn_animation"
+    },
+    {
+     "m_sActionName": "activity_animation",
+     "m_kvActionParams": {
+      "activity": "ACT_DOTA_GREET"
+     }
+    },
+    {
+     "m_sActionName": "healing_salve"
+    },
+    {
+     "m_sActionName": "activity_animation",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "activity": "ACT_DOTA_FLEE"
+     }
+    }
+   ],
+   "m_vecRepeatingActions": [],
+   "m_vecOutroActions": []
+  },
+  "match3_opponent_chaos_knight": {
+   "m_unOpponentID": 26,
+   "m_sLocName": "#DOTA_Match3_Opponent_ChaosKnight",
+   "m_sLocFlavor": "#DOTA_Match3_Opponent_ChaosKnight_Flavor",
+   "m_nHeroID": 81,
+   "m_vecHeroItems": [
+    {
+     "m_unItemDef": 18136
+    },
+    {
+     "m_unItemDef": 18135
+    },
+    {
+     "m_unItemDef": 18134
+    },
+    {
+     "m_unItemDef": 18128
+    },
+    {
+     "m_unItemDef": 18102
+    }
+   ],
+   "m_flMaxHealth": 300,
+   "m_sAttackImpactSound": "match3.chaos_knight.attack",
+   "m_sAttackParticleEffect": "particles/events/crownfall/match3/match3_screenslash.vpcf",
+   "m_flModelScale": 0.65,
+   "m_vecIntroActions": [
+    {
+     "m_sActionName": "stage_intro"
+    },
+    {
+     "m_sActionName": "activity_animation",
+     "m_kvActionParams": {
+      "activity": "ACT_DOTA_VICTORY"
+     }
+    }
+   ],
+   "m_vecRepeatingActions": [
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "chaos_bolt",
+     "m_flCooldown": 6
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "basic_attack",
+     "m_flCooldown": 3,
+     "m_kvActionParams": {
+      "min_damage": 20,
+      "max_damage": 30
+     }
+    },
+    {
+     "m_sActionName": "chaos_strike",
+     "m_flCooldown": 6
+    }
+   ],
+   "m_vecOutroActions": [
+    {
+     "m_sActionName": "death_animation"
+    }
+   ]
+  }
+ }
+}

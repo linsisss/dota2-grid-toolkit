@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { randomUUID } = require('node:crypto');
 
 const recipe = (extra = {}) => ({ aspect: '16:9', fit: 'cover', blur: 40, dim: 20, frame: { zoom: 1.5, x: 0.25, y: 0.5 }, clean: false, folder: 'russian', delivery: 'file',
-  piece: { start: 1.5, end: 21.5 }, crossfade: 1, source: { kind: 'workshop', id: 7, title: 'Корги' }, hero: { mode: 'menu' }, event: true, profile: true, grid: { mode: 'menu' }, ...extra });
+  piece: { start: 1.5, end: 21.5 }, crossfade: 1, source: { kind: 'workshop', id: 7, title: 'Корги' }, hero: { mode: 'menu' }, event: true, profile: true, grid: { mode: 'menu' }, loading: { mode: 'off' }, hide: [], ...extra });
 
 test('studio recipes: the settings and the source, nothing else', async () => {
   const { studioRecipe, defaultStudioName } = await import('../scripts/studio-background.mjs');
@@ -28,6 +28,14 @@ test('studio recipes: the settings and the source, nothing else', async () => {
   assert.equal(studioRecipe(older).profile, true, '…and the profile buttons');
   assert.deepEqual(studioRecipe(older).grid, { mode: 'menu' }, '…and the «Герои» page as it was');
   assert.deepEqual(studioRecipe(recipe({ grid: { mode: 'dim', dim: 60 } })).grid, { mode: 'dim', dim: 60 });
+  // The loading screen and hidden top bar buttons (2026-10-16): none before.
+  const { loading, hide, ...older2 } = recipe();
+  assert.deepEqual([studioRecipe(older2).loading, studioRecipe(older2).hide], [{ mode: 'off' }, []]);
+  assert.deepEqual(studioRecipe(recipe({ loading: { mode: 'menu' }, hide: ['plus', 'shards', 'plus'] })).hide, ['plus', 'shards']);
+  const ownLoading = studioRecipe(recipe({ loading: { mode: 'own', fit: 'contain', blur: 0, dim: 10, frame: null, piece: null, crossfade: 0, source: { kind: 'workshop', id: 3, title: 'Лес' } } })).loading;
+  assert.equal(ownLoading.mode, 'own'); assert.deepEqual(ownLoading.source, { kind: 'workshop', id: 3, title: 'Лес' });
+  for (const wrong of [{ loading: { mode: 'dim' } }, { hide: ['play'] }, { hide: 'plus' }])
+    assert.throws(() => studioRecipe(recipe(wrong)), /не читаются/, JSON.stringify(wrong));
   assert.equal(studioRecipe(recipe({ event: false, profile: false })).event, false);
   assert.equal(studioRecipe(recipe({ event: false, profile: false })).profile, false);
 });

@@ -11,6 +11,7 @@ import { countAction } from '../site-stats.js';
 import { t } from '../../scripts/i18n.mjs';
 import { SHARE_CODE, shareRow } from '../../scripts/dotadle-share.mjs';
 import { BADGES } from '../../scripts/profile-badges.mjs';
+import { BadgeMark } from '../catalog/BadgeMark.jsx';
 import { heroIndex, nearestHeroes, searchHeroes } from '../../scripts/hero-search.mjs';
 
 // Dotadle (1.8.18): today's hero in symbols from its portrait, sharper after every miss, with hints
@@ -171,7 +172,7 @@ function Stats({ stats }) {
   return <div className="dle-stats">
     <dl><div><dd>{stats.played}</dd><dt>{t('Сыграно')}</dt></div><div><dd>{stats.played ? Math.round(stats.won / stats.played * 100) : 0}%</dd><dt>{t('Побед')}</dt></div>
       <div><dd>{stats.streak}</dd><dt>{t('Серия')}</dt></div><div><dd>{stats.best}</dd><dt>{t('Лучшая')}</dt></div></dl>
-    {next && <p className="dle-next"><Icon name={next.icon} size={14}/>{t('До значка «{label}» осталось побед подряд: {left}', { label: t(next.label), left: next.streak - stats.streak })}</p>}
+    {next && <p className="dle-next"><BadgeMark badge={next} size={18}/>{t('До значка «{label}» осталось побед подряд: {left}', { label: t(next.label), left: next.streak - stats.streak })}</p>}
     <ol className="dle-dist" aria-label={t('С какой попытки угадано')}>{stats.dist.map((count, i) => <li key={i} title={t('С {try}-й попытки: {count}', { try: i + 1, count })}><i style={{ height: `${Math.max(8, count / most * 100)}%` }}/><span>{i + 1}</span></li>)}</ol>
   </div>;
 }

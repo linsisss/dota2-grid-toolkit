@@ -138,11 +138,14 @@ test('all non-hero categories export 30x30 across untouched configs, rows and ro
 
 test('category count matches export expansion, compact rows, hidden layers, and the 2000 threshold', () => {
   const doc = C.createDocument();
-  const row = C.entity(doc, { text: '@'.repeat(2000), rotation: 90, w: 20000, h: 30 });
+  // On the canvas: exports crop glyphs outside it since 2026-10-16, and the count follows them.
+  const metrics = (n) => ({ text: '@'.repeat(n), advances: Array(n).fill(0.25) });
+  const row = C.entity(doc, { text: '@'.repeat(2000), rotation: 90, x: 50, y: 300, w: 500, h: 30, textMetrics: metrics(2000) });
   doc.entities.push(row);
   assert.equal(C.categoryCount(doc), 2000);
   assert.ok(!C.warnings(doc).some((s) => s.includes('вылет')));
   row.text += '@';
+  row.textMetrics = metrics(2001);
   assert.equal(C.categoryCount(doc), C.exportDota(doc).configs[0].categories.length);
   assert.ok(C.warnings(doc).some((s) => s.includes('вылет')));
   doc.layers.find((l) => l.id === 'decor').visible = false;
@@ -150,6 +153,7 @@ test('category count matches export expansion, compact rows, hidden layers, and 
   doc.layers.find((l) => l.id === 'decor').visible = true;
   row.rotation = 0;
   row.text = 'AB';
+  delete row.textMetrics;
   row.rowGlyphs = [
     { text: 'A', x: 0, w: 30, h: 30 },
     { text: 'B', x: 20, w: 30, h: 30 }
@@ -198,7 +202,10 @@ test('alignment, overflow, cropping, mirrors and image conversion follow custom 
   assert.equal(E.overflow(doc).count, 0);
   E.alignItems([item], 'right', doc.canvas);
   assert.equal(item.x, 1570);
+  // Outside when the middle of the glyph's ink is (x + 9 past 1600; core glyphOutside).
   item.x = 1590;
+  assert.equal(E.overflow(doc).count, 0);
+  item.x = 1595;
   assert.equal(E.overflow(doc).count, 1);
   E.cropSymbols(doc);
   assert.equal(doc.entities.length, 0);

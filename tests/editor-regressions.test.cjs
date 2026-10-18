@@ -54,8 +54,9 @@ test('canvas mapping stays exact at fractional zoom, scrolling and independently
 test('brush hotspot matches the visible glyph center rather than the category box', () => {
   const p=centerBrushPoints([{x:220,y:120,ch:'.'}],ink)[0];
   assert.equal(p.x+4+2,220); assert.equal(p.y+10+2,120);
+  // Past the canvas edge since 2026-10-16: not pressed back to the origin.
   const edge=centerBrushPoints([{x:0,y:0,ch:'.'}],ink)[0];
-  assert.equal(edge.x,0); assert.equal(edge.y,0);
+  assert.equal(edge.x,-6); assert.equal(edge.y,-12);
 });
 
 test('dense art selects the nearest visible symbol; empty category boxes and locked layers do not steal hits', () => {

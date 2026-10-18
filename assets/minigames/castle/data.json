@@ -1,0 +1,3759 @@
+{
+ "constants": {
+  "generic_data_type": "ArtyConstants_t",
+  "constants": {
+   "m_flWindAccel": 50,
+   "m_flG0": 1200,
+   "m_flDragCoeff": 0.003,
+   "m_bPuzzle": true,
+   "m_flMinVelocityForFallDamage": 50,
+   "m_flFallDamageMult": 0.002,
+   "m_flMinAirTimeForDamage": 0.3,
+   "m_bRefillAmmoEachLevel": true,
+   "m_flMaxClimbHeight": 3,
+   "m_bShowPathProjection": false,
+   "m_bShowTrails": false,
+   "m_bClearOldTrailsOnFire": false,
+   "m_flTrailLingerSeconds": 30,
+   "m_flVelocityPerChargeSecond": 900,
+   "m_flMinimumGameObjectY": -300
+  }
+ },
+ "gamemodes": {
+  "generic_data_type": "ArtyGameModeInfo_t",
+  "crownfall_act4": {
+   "m_vecLevels": [
+    {
+     "m_szLevelName": "gatehouse"
+    },
+    {
+     "m_szLevelName": "bridges"
+    },
+    {
+     "m_szLevelName": "three_towers"
+    },
+    {
+     "m_szLevelName": "two_towers"
+    },
+    {
+     "m_szLevelName": "compound"
+    },
+    {
+     "m_szLevelName": "opposing_walls"
+    },
+    {
+     "m_szLevelName": "supper_time"
+    },
+    {
+     "m_szLevelName": "guardhouse"
+    },
+    {
+     "m_szLevelName": "bastion"
+    }
+   ]
+  },
+  "crownfall_act4_hard": {
+   "m_vecLevels": [
+    {
+     "m_szLevelName": "h_bridges"
+    },
+    {
+     "m_szLevelName": "h_compound"
+    },
+    {
+     "m_szLevelName": "h_two_towers"
+    },
+    {
+     "m_szLevelName": "h_gatehouse"
+    },
+    {
+     "m_szLevelName": "h_bastion"
+    },
+    {
+     "m_szLevelName": "h_three_towers"
+    },
+    {
+     "m_szLevelName": "h_opposing_walls"
+    },
+    {
+     "m_szLevelName": "h_guardhouse"
+    },
+    {
+     "m_szLevelName": "h_supper_time"
+    }
+   ]
+  }
+ },
+ "gameobjects": {
+  "generic_data_type": "ArtyGameObjectDef_t",
+  "explosion": {
+   "_class": "ArtyGameObjectDef_t",
+   "m_unID": 1,
+   "m_eType": "k_eTypeFX",
+   "m_szGraphicsDef": "explosion",
+   "m_eLayer": "k_eFX",
+   "m_flLifetime": 0.45,
+   "m_flDieTime": 0,
+   "m_bCanCollide": false,
+   "m_bDestroyOnFallThrough": false,
+   "m_flFallDamagePerVelocity": 0
+  },
+  "player_cannon": {
+   "_class": "ArtyCannonDef_t",
+   "m_unID": 2,
+   "m_eType": "k_eTypeCannon",
+   "m_szGraphicsDef": "aim_arrow",
+   "m_bCanCollide": false,
+   "m_bInheritTransform": true,
+   "m_bInheritVisibility": true,
+   "m_vecWeapons": [
+    "default"
+   ],
+   "m_vShotOffset": [
+    70,
+    25
+   ],
+   "m_vecChildren": [
+    {
+     "m_szName": "PlayerAimPowerBar",
+     "m_szGameObject": "player_aim_power_bar",
+     "m_vPosition": [
+      0,
+      0
+     ]
+    },
+    {
+     "m_szName": "WeaponIcon",
+     "m_szGameObject": "weapon_icon",
+     "m_vPosition": [
+      0,
+      0
+     ]
+    }
+   ],
+   "m_flDieTime": -1
+  },
+  "player": {
+   "_class": "ArtyPlayerDef_t",
+   "m_unID": 3,
+   "m_eType": "k_eTypePlayer",
+   "m_szGraphicsDef": "player",
+   "m_flHealth": 1,
+   "m_flMaxHealth": 1,
+   "m_bDoPhysics": true,
+   "m_eHitboxType": "k_eAABB",
+   "m_vHitboxMin": [
+    -48,
+    0
+   ],
+   "m_vHitboxMax": [
+    48,
+    96
+   ],
+   "m_bRotateReloadBar": true,
+   "m_vecChildren": [
+    {
+     "m_szName": "UnitCanon",
+     "m_szGameObject": "player_cannon",
+     "m_vPosition": [
+      25,
+      50
+     ]
+    }
+   ],
+   "m_flDieTime": 1.1
+  },
+  "player_aim_power_bar": {
+   "_class": "ArtyProgressBarDef_t",
+   "m_unID": 4,
+   "m_eType": "k_eTypeUI",
+   "m_szGraphicsDef": "aim_power_bar",
+   "m_bCanCollide": false,
+   "m_bInheritTransform": true,
+   "m_bVisible": false,
+   "m_flNotchSize": 0
+  },
+  "explosive_barrel": {
+   "_class": "ArtyGameObjectDef_t",
+   "m_unID": 5,
+   "m_eType": "k_eTypeObject",
+   "m_bDoPhysics": true,
+   "m_szGraphicsDef": "explosive_barrel",
+   "m_eHitboxType": "k_eAABB",
+   "m_vHitboxMin": [
+    -32,
+    0
+   ],
+   "m_vHitboxMax": [
+    32,
+    64
+   ],
+   "m_bDeathCausesExplosion": true,
+   "m_flExplosionRadius": 200,
+   "m_flExplosionTerrainRadius": 200,
+   "m_flExplosionDamage": 1,
+   "m_flFallDamagePerVelocity": 0,
+   "m_flDeathMaxScaleFactor": 1.8,
+   "m_flDieTime": 0.3
+  },
+  "ogre_med": {
+   "_class": "ArtyEnemyDef_t",
+   "m_unID": 6,
+   "m_eType": "k_eTypeEnemy",
+   "m_szGraphicsDef": "ogre_med",
+   "m_szDeathSound": "crownfall.artillery.ogre.death",
+   "m_vecWeapons": [
+    "enemy_slow"
+   ],
+   "m_eHitboxType": "k_eAABB",
+   "m_vHitboxMin": [
+    -30,
+    0
+   ],
+   "m_vHitboxMax": [
+    30,
+    90
+   ],
+   "m_vecChildren": [],
+   "m_flDieTime": 1.1,
+   "m_flFallDamagePerVelocity": 0,
+   "m_bDoPhysics": true
+  },
+  "skeleton_melee": {
+   "_class": "ArtyEnemyDef_t",
+   "m_unID": 7,
+   "m_eType": "k_eTypeEnemy",
+   "m_szGraphicsDef": "skeleton_melee",
+   "m_szDeathSound": "crownfall.artillery.skeleton.death",
+   "m_vecWeapons": [
+    "enemy_slow"
+   ],
+   "m_eHitboxType": "k_eAABB",
+   "m_vHitboxMin": [
+    -30,
+    0
+   ],
+   "m_vHitboxMax": [
+    30,
+    90
+   ],
+   "m_bDoPhysics": true,
+   "m_vecChildren": [],
+   "m_flFallDamagePerVelocity": 0,
+   "m_flDieTime": 1.1
+  },
+  "skywrath": {
+   "_class": "ArtyEnemyDef_t",
+   "m_unID": 8,
+   "m_eType": "k_eTypeEnemy",
+   "m_szGraphicsDef": "skywrath_mage",
+   "m_szDeathSound": "crownfall.artillery.skywrath.death",
+   "m_eHitboxType": "k_eAABB",
+   "m_vHitboxMin": [
+    -30,
+    0
+   ],
+   "m_vHitboxMax": [
+    30,
+    90
+   ],
+   "m_bDoPhysics": true,
+   "m_flFallDamagePerVelocity": 0,
+   "m_flDieTime": 1.1
+  },
+  "explosion_terrain_only": {
+   "_class": "ArtyGameObjectDef_t",
+   "m_unID": 9,
+   "m_eType": "k_eTypeFX",
+   "m_szGraphicsDef": "explosion_terrain_only",
+   "m_eLayer": "k_eFX",
+   "m_flLifetime": 0.45,
+   "m_flDieTime": 0,
+   "m_bCanCollide": false,
+   "m_bDestroyOnFallThrough": false,
+   "m_flFallDamagePerVelocity": 0
+  },
+  "weapon_icon": {
+   "_class": "ArtyGameObjectDef_t",
+   "m_unID": 10,
+   "m_eType": "k_eTypeUI",
+   "m_szGraphicsDef": "weapon_icon",
+   "m_bCanCollide": false,
+   "m_bInheritTransform": true,
+   "m_bVisible": true,
+   "m_bInheritRotation": false
+  },
+  "crownfall_ranged": {
+   "_class": "ArtyEnemyDef_t",
+   "m_unID": 11,
+   "m_eType": "k_eTypeEnemy",
+   "m_szGraphicsDef": "crownfall_ranged",
+   "m_szDeathSound": "crownfall.artillery.creep.death",
+   "m_vecWeapons": [
+    "enemy_slow"
+   ],
+   "m_eHitboxType": "k_eAABB",
+   "m_vHitboxMin": [
+    -30,
+    0
+   ],
+   "m_vHitboxMax": [
+    30,
+    90
+   ],
+   "m_vecChildren": [],
+   "m_flDieTime": 1.1,
+   "m_flFallDamagePerVelocity": 0,
+   "m_bDoPhysics": true
+  },
+  "crownfall_melee": {
+   "_class": "ArtyEnemyDef_t",
+   "m_unID": 12,
+   "m_eType": "k_eTypeEnemy",
+   "m_szGraphicsDef": "crownfall_melee",
+   "m_szDeathSound": "crownfall.artillery.creep.death",
+   "m_vecWeapons": [
+    "enemy_slow"
+   ],
+   "m_eHitboxType": "k_eAABB",
+   "m_vHitboxMin": [
+    -30,
+    0
+   ],
+   "m_vHitboxMax": [
+    30,
+    90
+   ],
+   "m_bDoPhysics": true,
+   "m_vecChildren": [],
+   "m_flFallDamagePerVelocity": 0,
+   "m_flDieTime": 1.1
+  },
+  "undying_minion": {
+   "_class": "ArtyEnemyDef_t",
+   "m_unID": 13,
+   "m_eType": "k_eTypeEnemy",
+   "m_szGraphicsDef": "undying_minion",
+   "m_szDeathSound": "crownfall.artillery.zombie.death",
+   "m_vecWeapons": [
+    "enemy_slow"
+   ],
+   "m_eHitboxType": "k_eAABB",
+   "m_vHitboxMin": [
+    -30,
+    0
+   ],
+   "m_vHitboxMax": [
+    30,
+    90
+   ],
+   "m_bDoPhysics": true,
+   "m_vecChildren": [],
+   "m_flFallDamagePerVelocity": 0,
+   "m_flDieTime": 1.1
+  }
+ },
+ "graphics": {
+  "generic_data_type": "ArtyGraphicInfo_t",
+  "weapon_icon": {
+   "m_unID": 1,
+   "m_eType": "k_eSprite",
+   "m_szSnippet": "WeaponIcon",
+   "m_nWidth": 64,
+   "m_nHeight": 64
+  },
+  "aim_arrow": {
+   "m_unID": 2,
+   "m_eType": "k_eSprite",
+   "m_szSnippet": "AimArrow",
+   "m_nWidth": 36,
+   "m_nHeight": 8
+  },
+  "aim_power_bar": {
+   "m_unID": 3,
+   "m_eType": "k_eProgressBar",
+   "m_szSnippet": "AimPowerBar",
+   "m_nWidth": 220,
+   "m_nHeight": 32
+  },
+  "kiss": {
+   "m_unID": 4,
+   "m_eType": "k_eParticle",
+   "m_szParticle": "particles/events/crownfall/artillery/artillery_attack.vpcf",
+   "m_bPlayEndcap": false
+  },
+  "explosion": {
+   "m_unID": 5,
+   "m_eType": "k_eParticle",
+   "m_szParticle": "particles/events/crownfall/artillery/artillery_explosion.vpcf"
+  },
+  "player": {
+   "m_unID": 6,
+   "m_eType": "k_eUnit",
+   "m_szUnit": "npc_dota_hero_snapfire",
+   "m_szModel": "models/heroes/snapfire/snapfire_crownfall.vmdl",
+   "m_vPosition": [
+    0,
+    -10,
+    0
+   ],
+   "m_flDefaultScale": 0.4
+  },
+  "explosive_barrel": {
+   "m_unID": 7,
+   "m_eType": "k_eUnit",
+   "m_szUnit": "npc_dota_building_generic",
+   "m_szModel": "models/heroes/techies/fx_techies_remotebomb_underhollow.vmdl",
+   "m_flDefaultScale": 0.8
+  },
+  "skeleton_melee": {
+   "m_unID": 8,
+   "m_eType": "k_eUnit",
+   "m_szUnit": "npc_dota_wraith_king_skeleton_warrior",
+   "m_szModel": "models/events/crownfall/artillery/artillery_skeleton/artillery_skeleton.vmdl",
+   "m_vCameraOffset": [
+    0,
+    0,
+    0
+   ],
+   "m_vPosition": [
+    0,
+    0,
+    0
+   ],
+   "m_flDefaultScale": 0.8
+  },
+  "ogre_med": {
+   "m_unID": 9,
+   "m_eType": "k_eUnit",
+   "m_szUnit": "npc_dota_neutral_ogre_mauler",
+   "m_szModel": "models/creeps/neutral_creeps/n_creep_ogre_med/n_creep_ogre_med.vmdl",
+   "m_vCameraOffset": [
+    0,
+    0,
+    0
+   ],
+   "m_vPosition": [
+    0,
+    0,
+    0
+   ],
+   "m_flDefaultScale": 0.65
+  },
+  "crownfall_melee": {
+   "m_unID": 10,
+   "m_eType": "k_eUnit",
+   "m_szUnit": "npc_dota_creep_badguys_melee",
+   "m_szModel": "models/creeps/lane_creeps/creep_bird_dire/creep_bird_dire_melee.vmdl",
+   "m_vCameraOffset": [
+    0,
+    0,
+    0
+   ],
+   "m_vPosition": [
+    0,
+    0,
+    0
+   ],
+   "m_flDefaultScale": 0.64
+  },
+  "crownfall_ranged": {
+   "m_unID": 11,
+   "m_eType": "k_eUnit",
+   "m_szUnit": "npc_dota_creep_badguys_ranged",
+   "m_szModel": "models/creeps/lane_creeps/creep_bird_dire/creep_bird_dire_ranged.vmdl",
+   "m_vCameraOffset": [
+    0,
+    0,
+    0
+   ],
+   "m_vPosition": [
+    0,
+    0,
+    0
+   ],
+   "m_flDefaultScale": 0.6
+  },
+  "skywrath_mage": {
+   "m_unID": 12,
+   "m_eType": "k_eHero",
+   "m_szUnit": "npc_dota_hero_skywrath_mage",
+   "m_szModel": "models/heroes/skywrath_mage/skywrath_mage.vmdl",
+   "m_vPosition": [
+    0,
+    0,
+    -75
+   ],
+   "m_flDefaultScale": 0.5
+  },
+  "grenade": {
+   "m_unID": 13,
+   "m_eType": "k_eParticle",
+   "m_szParticle": "particles/events/crownfall/artillery/artillery_grenade_attack.vpcf",
+   "m_bPlayEndcap": false
+  },
+  "bomblet": {
+   "m_unID": 14,
+   "m_eType": "k_eParticle",
+   "m_szParticle": "particles/events/crownfall/artillery/artillery_attack.vpcf",
+   "m_bPlayEndcap": false
+  },
+  "tunneler": {
+   "m_unID": 15,
+   "m_eType": "k_eParticle",
+   "m_szParticle": "particles/events/crownfall/artillery/artillery_tunneler_attack.vpcf",
+   "m_bPlayEndcap": false
+  },
+  "dropshot": {
+   "m_unID": 16,
+   "m_eType": "k_eParticle",
+   "m_szParticle": "particles/events/crownfall/artillery/artillery_dropshot_attack.vpcf",
+   "m_bPlayEndcap": false
+  },
+  "explosion_terrain_only": {
+   "m_unID": 17,
+   "m_eType": "k_eParticle",
+   "m_szParticle": "particles/events/crownfall/artillery/artillery_explosion_terrain_only.vpcf"
+  },
+  "undying_minion": {
+   "m_unID": 18,
+   "m_eType": "k_eUnit",
+   "m_szUnit": "npc_dota_unit_undying_zombie",
+   "m_szModel": "models/events/crownfall/survivors/undying_minion/undying_minion_enemy.vmdl",
+   "m_vCameraOffset": [
+    0,
+    0,
+    0
+   ],
+   "m_vPosition": [
+    0,
+    0,
+    0
+   ],
+   "m_flDefaultScale": 0.68
+  }
+ },
+ "levels": {
+  "generic_data_type": "ArtyLevelInfo_t",
+  "gatehouse": {
+   "m_unID": 1,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_gatehouse_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 4,
+   "m_nTimeBonusMaxTime": 30,
+   "m_aryStarPointThresholds": [
+    800,
+    1100,
+    1400
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     160,
+     180
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Enemy1",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1180,
+      380
+     ]
+    },
+    {
+     "m_szName": "Enemy2",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      955,
+      150
+     ],
+     "m_flTimeOffset": 4,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1325,
+      120
+     ]
+    },
+    {
+     "m_szName": "Enemy4",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1250,
+      380
+     ],
+     "m_flTimeOffset": 3,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 6,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      }
+     ]
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/gatehouse/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/gatehouse/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/gatehouse/foreground.png",
+   "m_flBackgroundOffsetX": 140,
+   "m_vecWeapons": [
+    {
+     "m_szName": "default",
+     "m_nReloads": 10
+    }
+   ]
+  },
+  "bridges": {
+   "m_unID": 2,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_bridges_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 5,
+   "m_nTimeBonusMaxTime": 30,
+   "m_aryStarPointThresholds": [
+    800,
+    900,
+    1000
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     100,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Enemy1",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      830,
+      160
+     ],
+     "m_flTimeOffset": 6.5,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy2",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      900,
+      160
+     ],
+     "m_flTimeOffset": 6.6,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      970,
+      160
+     ],
+     "m_flTimeOffset": 6.7,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy6",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1500,
+      120
+     ]
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "grenade",
+     "m_nReloads": 4
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/bridges/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/bridges/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/bridges/foreground.png",
+   "m_flBackgroundOffsetX": 180
+  },
+  "guardhouse": {
+   "m_unID": 3,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_guardhouse_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 30,
+   "m_nTimeBonusMaxTime": 90,
+   "m_aryStarPointThresholds": [
+    800,
+    1100,
+    1400
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Tables1",
+     "m_szGameObject": "skywrath",
+     "m_szLeftBorderObject": "0",
+     "m_flRightBorderWidthMult": 0,
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      730,
+      102
+     ],
+     "m_flLeftBorderWidthMult": 0,
+     "m_szRightBorderObject": "0",
+     "m_bRepositionToTerrain": false,
+     "m_bFacingLeft": false
+    },
+    {
+     "m_szName": "Tables2",
+     "m_vPosition": [
+      892,
+      102
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szGameObject": "skywrath",
+     "m_szRightBorderObject": "0",
+     "m_szLeftBorderObject": "0",
+     "m_bRepositionToTerrain": false
+    },
+    {
+     "m_szName": "Keg",
+     "m_vPosition": [
+      813,
+      134
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Attic1",
+     "m_vPosition": [
+      750,
+      475
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRepositionToTerrain": false,
+     "m_flTimeOffset": 4,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 1
+      },
+      {
+       "m_flDuration": 2,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 1
+      },
+      {
+       "m_flDuration": 2,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Bed1",
+     "m_vPosition": [
+      832,
+      285
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szGameObject": "crownfall_melee",
+     "m_szRightBorderObject": "0",
+     "m_szLeftBorderObject": "0",
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 1
+      },
+      {
+       "m_flDuration": 2,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 1
+      },
+      {
+       "m_flDuration": 2,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Grounds1",
+     "m_vPosition": [
+      1200,
+      102
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szGameObject": "ogre_med",
+     "m_szRightBorderObject": "0",
+     "m_szLeftBorderObject": "0",
+     "m_bRepositionToTerrain": false,
+     "m_bFacingLeft": true
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "dropshot",
+     "m_nReloads": 2
+    },
+    {
+     "m_szName": "grenade",
+     "m_nReloads": 9
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/guardhouse/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/guardhouse/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/guardhouse/foreground.png",
+   "m_flBackgroundOffsetX": 600
+  },
+  "two_towers": {
+   "m_unID": 4,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_two_towers_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 8,
+   "m_nTimeBonusMaxTime": 30,
+   "m_aryStarPointThresholds": [
+    800,
+    1000,
+    1200
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Enemy2",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1470,
+      380
+     ],
+     "m_bFacingLeft": true
+    },
+    {
+     "m_szName": "Enemy2",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1240,
+      200
+     ],
+     "m_bFacingLeft": false,
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 0.7,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_szGameObject": "skeleton_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1100,
+      220
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 0.51,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.8,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 0.52,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.8,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_szGameObject": "skeleton_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      800,
+      410
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 0.53,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 3.4,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 0.51,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 3.4,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_szGameObject": "skeleton_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1100,
+      605
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 0.52,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.8,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 0.49,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.8,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "tunneler",
+     "m_nReloads": 6
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/two_towers/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/two_towers/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/two_towers/foreground.png",
+   "m_flBackgroundOffsetX": 300
+  },
+  "opposing_walls": {
+   "m_unID": 5,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_opposing_walls_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 15,
+   "m_nTimeBonusMaxTime": 45,
+   "m_aryStarPointThresholds": [
+    800,
+    1400,
+    1600
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     150,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Enemy2",
+     "m_vPosition": [
+      800,
+      500
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szGameObject": "skeleton_melee",
+     "m_szRightBorderObject": "0",
+     "m_szLeftBorderObject": "0",
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 0.7,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 4.3,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 0.7,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 4.3,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy2",
+     "m_vPosition": [
+      1150,
+      500
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szGameObject": "skeleton_melee",
+     "m_szRightBorderObject": "0",
+     "m_szLeftBorderObject": "0",
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.8,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.8,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Barrel1",
+     "m_vPosition": [
+      1350,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Barrel1",
+     "m_vPosition": [
+      1450,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Barrel1",
+     "m_vPosition": [
+      1250,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Barrel1",
+     "m_vPosition": [
+      1150,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Barrel1",
+     "m_vPosition": [
+      1050,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_vPosition": [
+      950,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "undying_minion"
+    },
+    {
+     "m_szName": "Enemy1",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1340,
+      600
+     ]
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "default",
+     "m_nReloads": 5
+    },
+    {
+     "m_szName": "grenade",
+     "m_nReloads": 5
+    },
+    {
+     "m_szName": "tunneler",
+     "m_nReloads": 1
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/bunker/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/bunker/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/bunker/foreground.png",
+   "m_flBackgroundOffsetX": 500
+  },
+  "castle_outcrop": {
+   "m_unID": 6,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_castle_outcrop_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusMaxPoints": 500,
+   "m_nTimeBonusMaxTime": 60,
+   "m_aryStarPointThresholds": [
+    500,
+    1000,
+    2000
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Enemy1",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      780,
+      0
+     ]
+    },
+    {
+     "m_szName": "Enemy2",
+     "m_szGameObject": "skeleton_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1050,
+      0
+     ]
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1340,
+      0
+     ]
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "default",
+     "m_nReloads": 10
+    },
+    {
+     "m_szName": "tunneler",
+     "m_nReloads": 10
+    },
+    {
+     "m_szName": "grenade",
+     "m_nReloads": 10
+    },
+    {
+     "m_szName": "mirv",
+     "m_nReloads": 2
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/castle_outcrop.psd"
+  },
+  "supper_time": {
+   "m_unID": 7,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_supper_time_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 20,
+   "m_nTimeBonusMaxTime": 60,
+   "m_aryStarPointThresholds": [
+    800,
+    1200,
+    1400
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Chef",
+     "m_szGameObject": "skywrath",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1400,
+      90
+     ],
+     "m_bFacingLeft": false
+    },
+    {
+     "m_szName": "KitchenKeg",
+     "m_vPosition": [
+      1480,
+      235
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Chef2",
+     "m_szGameObject": "skywrath",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      883,
+      90
+     ],
+     "m_bFacingLeft": true
+    },
+    {
+     "m_szName": "KitchenKeg2",
+     "m_vPosition": [
+      750,
+      165
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Chef2",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      913,
+      450
+     ],
+     "m_bFacingLeft": false
+    },
+    {
+     "m_szName": "Chef2",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      993,
+      50
+     ],
+     "m_bFacingLeft": false,
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 0.3
+      },
+      {
+       "m_flDuration": 2.3,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 0.3
+      },
+      {
+       "m_flDuration": 2.3,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      }
+     ]
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "dropshot",
+     "m_nReloads": 10
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/supper_time/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/supper_time/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/supper_time/foreground.png",
+   "m_flBackgroundOffsetX": 700
+  },
+  "three_towers": {
+   "m_unID": 8,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_three_towers_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 20,
+   "m_nTimeBonusMaxTime": 60,
+   "m_aryStarPointThresholds": [
+    800,
+    1000,
+    1200
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Tower1EnemyOnTop",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      530,
+      440
+     ]
+    },
+    {
+     "m_szName": "Tower1BarrelInside",
+     "m_vPosition": [
+      540,
+      280
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Tower2EnemyOnTop",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      960,
+      560
+     ]
+    },
+    {
+     "m_szName": "Tower2BarrelInside",
+     "m_vPosition": [
+      980,
+      450
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Tower3EnemyOnTop",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1400,
+      680
+     ]
+    },
+    {
+     "m_szName": "Tower3BarrelInside",
+     "m_vPosition": [
+      1420,
+      560
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "GroundEnemy1",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      750,
+      60
+     ]
+    },
+    {
+     "m_szName": "GroundEnemy2",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1180,
+      60
+     ]
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "default",
+     "m_nReloads": 6
+    },
+    {
+     "m_szName": "grenade",
+     "m_nReloads": 3
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/three_towers/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/three_towers/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/three_towers/foreground.png",
+   "m_flBackgroundOffsetX": 200
+  },
+  "compound": {
+   "m_unID": 9,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_compound_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 20,
+   "m_nTimeBonusMaxTime": 60,
+   "m_aryStarPointThresholds": [
+    800,
+    1000,
+    1200
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Patrol1",
+     "m_szGameObject": "skeleton_melee",
+     "m_bFacingLeft": false,
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      980,
+      400
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      }
+     ]
+    },
+    {
+     "m_szName": "Patrol2",
+     "m_szGameObject": "skeleton_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1250,
+      400
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      }
+     ]
+    },
+    {
+     "m_szName": "Tower1EnemyOnBottom",
+     "m_szGameObject": "ogre_med",
+     "m_bFacingLeft": false,
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      660,
+      100
+     ]
+    },
+    {
+     "m_szName": "Tower2EnemyOnTop",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1450,
+      500
+     ]
+    },
+    {
+     "m_szName": "CourtyardEnemy1",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      900,
+      100
+     ]
+    },
+    {
+     "m_szName": "CourtyardEnemy2",
+     "m_szGameObject": "ogre_med",
+     "m_bFacingLeft": false,
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1200,
+      100
+     ]
+    },
+    {
+     "m_szName": "Tower1BarrelInside",
+     "m_vPosition": [
+      680,
+      300
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Tower2BarrelInside",
+     "m_vPosition": [
+      1440,
+      300
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Tower1BarrelBottom",
+     "m_vPosition": [
+      780,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Tower2BarrelBottom",
+     "m_vPosition": [
+      1360,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "grenade",
+     "m_nReloads": 7
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/compound/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/compound/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/compound/foreground.png",
+   "m_flBackgroundOffsetX": 400
+  },
+  "barracks": {
+   "m_unID": 10,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_barracks_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 4,
+   "m_nTimeBonusMaxTime": 20,
+   "m_aryStarPointThresholds": [
+    800,
+    1000,
+    1200
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     150,
+     95
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Door Guard",
+     "m_szGameObject": "skeleton_melee",
+     "m_vPosition": [
+      875,
+      95
+     ],
+     "m_bRandomPosition": false
+    },
+    {
+     "m_szName": "Left Sleeper",
+     "m_szGameObject": "ogre_med",
+     "m_vPosition": [
+      975,
+      95
+     ],
+     "m_bRandomPosition": false,
+     "m_bFacingLeft": false
+    },
+    {
+     "m_szName": "Right Sleeper",
+     "m_szGameObject": "ogre_med",
+     "m_vPosition": [
+      1075,
+      95
+     ],
+     "m_bRandomPosition": false
+    },
+    {
+     "m_szName": "Left Sleeper",
+     "m_szGameObject": "ogre_med",
+     "m_vPosition": [
+      1225,
+      95
+     ],
+     "m_bRandomPosition": false,
+     "m_bFacingLeft": false
+    },
+    {
+     "m_szName": "Right Sleeper",
+     "m_szGameObject": "ogre_med",
+     "m_vPosition": [
+      1325,
+      95
+     ],
+     "m_bRandomPosition": false
+    },
+    {
+     "m_szName": "Left Sleeper",
+     "m_szGameObject": "ogre_med",
+     "m_vPosition": [
+      1475,
+      95
+     ],
+     "m_bRandomPosition": false,
+     "m_bFacingLeft": false
+    },
+    {
+     "m_szName": "Right Sleeper",
+     "m_szGameObject": "ogre_med",
+     "m_vPosition": [
+      1575,
+      95
+     ],
+     "m_bRandomPosition": false
+    },
+    {
+     "m_szName": "Attic Barrel",
+     "m_szGameObject": "explosive_barrel",
+     "m_vPosition": [
+      1000,
+      470
+     ],
+     "m_bRandomPosition": false
+    },
+    {
+     "m_szName": "Attic Barrel",
+     "m_szGameObject": "explosive_barrel",
+     "m_vPosition": [
+      1120,
+      470
+     ],
+     "m_bRandomPosition": false
+    },
+    {
+     "m_szName": "Attic Barrel",
+     "m_szGameObject": "explosive_barrel",
+     "m_vPosition": [
+      1240,
+      470
+     ],
+     "m_bRandomPosition": false
+    },
+    {
+     "m_szName": "Attic Barrel",
+     "m_szGameObject": "explosive_barrel",
+     "m_vPosition": [
+      1360,
+      470
+     ],
+     "m_bRandomPosition": false
+    },
+    {
+     "m_szName": "Attic Barrel",
+     "m_szGameObject": "explosive_barrel",
+     "m_vPosition": [
+      1480,
+      470
+     ],
+     "m_bRandomPosition": false
+    },
+    {
+     "m_szName": "Roof Patrol",
+     "m_szGameObject": "skeleton_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1141,
+      616
+     ],
+     "m_flTimeOffset": 2.75,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 2,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 2,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      }
+     ]
+    },
+    {
+     "m_szName": "Roof Patrol",
+     "m_szGameObject": "skeleton_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1444,
+      616
+     ],
+     "m_flTimeOffset": 2.75,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "default",
+     "m_nReloads": 5
+    },
+    {
+     "m_szName": "mirv",
+     "m_nReloads": 1
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/barracks.psd"
+  },
+  "bastion": {
+   "m_unID": 11,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_bastion_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 20,
+   "m_nTimeBonusMaxTime": 60,
+   "m_aryStarPointThresholds": [
+    800,
+    1200,
+    1600
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Patrol1",
+     "m_szGameObject": "skeleton_melee",
+     "m_bFacingLeft": false,
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      750,
+      330
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      }
+     ]
+    },
+    {
+     "m_szName": "Patrol2",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1350,
+      330
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      }
+     ]
+    },
+    {
+     "m_szName": "PlatformEnemy",
+     "m_szGameObject": "undying_minion",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      550,
+      330
+     ]
+    },
+    {
+     "m_szName": "BackGuard",
+     "m_szGameObject": "skywrath",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1540,
+      50
+     ]
+    },
+    {
+     "m_szName": "BasementOgre",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1060,
+      110
+     ]
+    },
+    {
+     "m_szName": "BasementCreep",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bFacingLeft": false,
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1240,
+      50
+     ]
+    },
+    {
+     "m_szName": "LeftBarrel",
+     "m_vPosition": [
+      1000,
+      110
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "RightBarrel",
+     "m_vPosition": [
+      1300,
+      30
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "default",
+     "m_nReloads": 3
+    },
+    {
+     "m_szName": "grenade",
+     "m_nReloads": 4
+    },
+    {
+     "m_szName": "tunneler",
+     "m_nReloads": 3
+    },
+    {
+     "m_szName": "dropshot",
+     "m_nReloads": 3
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/bastion/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/bastion/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/bastion/foreground.png",
+   "m_flBackgroundOffsetX": 800
+  },
+  "h_gatehouse": {
+   "m_unID": 12,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_h_gatehouse_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 4,
+   "m_nTimeBonusMaxTime": 30,
+   "m_aryStarPointThresholds": [
+    800,
+    1000,
+    1100
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     160,
+     180
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Enemy1",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1180,
+      380
+     ]
+    },
+    {
+     "m_szName": "Enemy2",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      955,
+      150
+     ],
+     "m_flTimeOffset": 4,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1325,
+      120
+     ]
+    },
+    {
+     "m_szName": "Enemy4",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1250,
+      380
+     ],
+     "m_flTimeOffset": 3,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 6,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      }
+     ]
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/gatehouse/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/gatehouse/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/gatehouse/foreground.png",
+   "m_flBackgroundOffsetX": 140,
+   "m_vecWeapons": [
+    {
+     "m_szName": "grenade",
+     "m_nReloads": 6
+    }
+   ]
+  },
+  "h_bridges": {
+   "m_unID": 13,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_h_bridges_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 5,
+   "m_nTimeBonusMaxTime": 30,
+   "m_aryStarPointThresholds": [
+    800,
+    900,
+    1000
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     100,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Enemy1",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      830,
+      160
+     ],
+     "m_flTimeOffset": 6.5,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy2",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      900,
+      160
+     ],
+     "m_flTimeOffset": 6.6,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      970,
+      160
+     ],
+     "m_flTimeOffset": 6.7,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 4,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy6",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1500,
+      120
+     ]
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "default",
+     "m_nReloads": 4
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/bridges/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/bridges/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/bridges/foreground.png",
+   "m_flBackgroundOffsetX": 180
+  },
+  "h_guardhouse": {
+   "m_unID": 14,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_h_guardhouse_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 30,
+   "m_nTimeBonusMaxTime": 90,
+   "m_aryStarPointThresholds": [
+    800,
+    900,
+    1000
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Tables1",
+     "m_szGameObject": "skywrath",
+     "m_szLeftBorderObject": "0",
+     "m_flRightBorderWidthMult": 0,
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      730,
+      102
+     ],
+     "m_flLeftBorderWidthMult": 0,
+     "m_szRightBorderObject": "0",
+     "m_bRepositionToTerrain": false,
+     "m_bFacingLeft": false
+    },
+    {
+     "m_szName": "Tables2",
+     "m_vPosition": [
+      892,
+      102
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szGameObject": "skywrath",
+     "m_szRightBorderObject": "0",
+     "m_szLeftBorderObject": "0",
+     "m_bRepositionToTerrain": false
+    },
+    {
+     "m_szName": "Keg",
+     "m_vPosition": [
+      813,
+      134
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Attic1",
+     "m_vPosition": [
+      750,
+      475
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRepositionToTerrain": false,
+     "m_flTimeOffset": 4,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 1
+      },
+      {
+       "m_flDuration": 2,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 1
+      },
+      {
+       "m_flDuration": 2,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Bed1",
+     "m_vPosition": [
+      832,
+      285
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szGameObject": "crownfall_melee",
+     "m_szRightBorderObject": "0",
+     "m_szLeftBorderObject": "0",
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 1
+      },
+      {
+       "m_flDuration": 2,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 1
+      },
+      {
+       "m_flDuration": 2,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Grounds1",
+     "m_vPosition": [
+      1200,
+      102
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szGameObject": "ogre_med",
+     "m_szRightBorderObject": "0",
+     "m_szLeftBorderObject": "0",
+     "m_bRepositionToTerrain": false,
+     "m_bFacingLeft": true
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "default",
+     "m_nReloads": 2
+    },
+    {
+     "m_szName": "tunneler",
+     "m_nReloads": 3
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/guardhouse/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/guardhouse/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/guardhouse/foreground.png",
+   "m_flBackgroundOffsetX": 600
+  },
+  "h_two_towers": {
+   "m_unID": 15,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_h_two_towers_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 8,
+   "m_nTimeBonusMaxTime": 30,
+   "m_aryStarPointThresholds": [
+    800,
+    900,
+    1000
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Enemy2",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1470,
+      380
+     ],
+     "m_bFacingLeft": true
+    },
+    {
+     "m_szName": "Enemy2",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1240,
+      200
+     ],
+     "m_bFacingLeft": false,
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 0.7,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_szGameObject": "skeleton_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1100,
+      220
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 0.51,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.8,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 0.52,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.8,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_szGameObject": "skeleton_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      800,
+      410
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 0.53,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 3.4,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 0.51,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 3.4,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_szGameObject": "skeleton_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1100,
+      605
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 0.52,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.8,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 0.49,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.8,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "grenade",
+     "m_nReloads": 6
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/two_towers/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/two_towers/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/two_towers/foreground.png",
+   "m_flBackgroundOffsetX": 300
+  },
+  "h_opposing_walls": {
+   "m_unID": 16,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_h_opposing_walls_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 15,
+   "m_nTimeBonusMaxTime": 45,
+   "m_aryStarPointThresholds": [
+    800,
+    1000,
+    1100
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     150,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Enemy2",
+     "m_vPosition": [
+      800,
+      500
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szGameObject": "skeleton_melee",
+     "m_szRightBorderObject": "0",
+     "m_szLeftBorderObject": "0",
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 0.7,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 4.3,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 0.7,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 4.3,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      }
+     ]
+    },
+    {
+     "m_szName": "Enemy2",
+     "m_vPosition": [
+      1150,
+      500
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szGameObject": "skeleton_melee",
+     "m_szRightBorderObject": "0",
+     "m_szLeftBorderObject": "0",
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.8,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.8,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      }
+     ]
+    },
+    {
+     "m_szName": "Barrel1",
+     "m_vPosition": [
+      1350,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Barrel1",
+     "m_vPosition": [
+      1450,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Barrel1",
+     "m_vPosition": [
+      1250,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Barrel1",
+     "m_vPosition": [
+      1150,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Barrel1",
+     "m_vPosition": [
+      1050,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Enemy3",
+     "m_vPosition": [
+      950,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "undying_minion"
+    },
+    {
+     "m_szName": "Enemy1",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1340,
+      600
+     ]
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "default",
+     "m_nReloads": 2
+    },
+    {
+     "m_szName": "tunneler",
+     "m_nReloads": 4
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/bunker/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/bunker/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/bunker/foreground.png",
+   "m_flBackgroundOffsetX": 500
+  },
+  "h_supper_time": {
+   "m_unID": 17,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_h_supper_time_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 20,
+   "m_nTimeBonusMaxTime": 60,
+   "m_aryStarPointThresholds": [
+    800,
+    1000,
+    1100
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Chef",
+     "m_szGameObject": "skywrath",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1400,
+      90
+     ],
+     "m_bFacingLeft": false
+    },
+    {
+     "m_szName": "KitchenKeg",
+     "m_vPosition": [
+      1480,
+      235
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Chef2",
+     "m_szGameObject": "skywrath",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      883,
+      90
+     ],
+     "m_bFacingLeft": true
+    },
+    {
+     "m_szName": "KitchenKeg2",
+     "m_vPosition": [
+      750,
+      165
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Chef2",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      913,
+      450
+     ],
+     "m_bFacingLeft": false
+    },
+    {
+     "m_szName": "Chef2",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      993,
+      50
+     ],
+     "m_bFacingLeft": false,
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 0.3
+      },
+      {
+       "m_flDuration": 2.3,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 0.3
+      },
+      {
+       "m_flDuration": 2.3,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      }
+     ]
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "grenade",
+     "m_nReloads": 7
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/supper_time/h_midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/supper_time/h_level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/supper_time/foreground.png",
+   "m_flBackgroundOffsetX": 700
+  },
+  "h_three_towers": {
+   "m_unID": 18,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_h_three_towers_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 20,
+   "m_nTimeBonusMaxTime": 60,
+   "m_aryStarPointThresholds": [
+    800,
+    900,
+    1000
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Tower1EnemyOnTop",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      530,
+      440
+     ]
+    },
+    {
+     "m_szName": "Tower1BarrelInside",
+     "m_vPosition": [
+      540,
+      280
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Tower2EnemyOnTop",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      960,
+      560
+     ]
+    },
+    {
+     "m_szName": "Tower2BarrelInside",
+     "m_vPosition": [
+      980,
+      450
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Tower3EnemyOnTop",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1400,
+      680
+     ]
+    },
+    {
+     "m_szName": "Tower3BarrelInside",
+     "m_vPosition": [
+      1420,
+      560
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "GroundEnemy1",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      750,
+      60
+     ]
+    },
+    {
+     "m_szName": "GroundEnemy2",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1180,
+      60
+     ]
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "grenade",
+     "m_nReloads": 7
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/three_towers/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/three_towers/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/three_towers/foreground.png",
+   "m_flBackgroundOffsetX": 200
+  },
+  "h_compound": {
+   "m_unID": 19,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_h_compound_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 20,
+   "m_nTimeBonusMaxTime": 60,
+   "m_aryStarPointThresholds": [
+    800,
+    1000,
+    1100
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Patrol1",
+     "m_szGameObject": "skeleton_melee",
+     "m_bFacingLeft": false,
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      980,
+      400
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      }
+     ]
+    },
+    {
+     "m_szName": "Patrol2",
+     "m_szGameObject": "skeleton_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1250,
+      400
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 2.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      }
+     ]
+    },
+    {
+     "m_szName": "Tower1EnemyOnBottom",
+     "m_szGameObject": "ogre_med",
+     "m_bFacingLeft": false,
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      660,
+      100
+     ]
+    },
+    {
+     "m_szName": "Tower2EnemyOnTop",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1450,
+      500
+     ]
+    },
+    {
+     "m_szName": "CourtyardEnemy1",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      900,
+      100
+     ]
+    },
+    {
+     "m_szName": "CourtyardEnemy2",
+     "m_szGameObject": "ogre_med",
+     "m_bFacingLeft": false,
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1200,
+      100
+     ]
+    },
+    {
+     "m_szName": "Tower1BarrelInside",
+     "m_vPosition": [
+      680,
+      300
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Tower2BarrelInside",
+     "m_vPosition": [
+      1440,
+      300
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Tower1BarrelBottom",
+     "m_vPosition": [
+      780,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "Tower2BarrelBottom",
+     "m_vPosition": [
+      1360,
+      100
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "default",
+     "m_nReloads": 7
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/compound/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/compound/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/compound/foreground.png",
+   "m_flBackgroundOffsetX": 400
+  },
+  "h_bastion": {
+   "m_unID": 20,
+   "m_sLocLevelName": "#DOTA_VData_artillery_levels_h_bastion_LocLevelName",
+   "m_nLevelCompletePoints": 500,
+   "m_nTimeBonusBasePoints": 300,
+   "m_nTimeBonusMaxPoints": 400,
+   "m_nTimeBonusFastTime": 20,
+   "m_nTimeBonusMaxTime": 60,
+   "m_aryStarPointThresholds": [
+    800,
+    900,
+    1100
+   ],
+   "m_playerInfo": {
+    "m_szName": "Player",
+    "m_szGameObject": "player",
+    "m_bRandomPosition": false,
+    "m_vPosition": [
+     120,
+     0
+    ],
+    "m_bFacingLeft": false
+   },
+   "m_vecGameObjects": [
+    {
+     "m_szName": "Patrol1",
+     "m_szGameObject": "skeleton_melee",
+     "m_bFacingLeft": false,
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      750,
+      330
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      }
+     ]
+    },
+    {
+     "m_szName": "Patrol2",
+     "m_szGameObject": "crownfall_melee",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1350,
+      330
+     ],
+     "m_flTimeOffset": 0,
+     "m_vecCustomOrders": [
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveLeft"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      },
+      {
+       "m_flDuration": 1.5,
+       "m_unOrders": "k_EArtyOrderFlag_MoveRight"
+      },
+      {
+       "m_flDuration": 3,
+       "m_unOrders": "k_EArtyOrderFlag_None"
+      }
+     ]
+    },
+    {
+     "m_szName": "PlatformEnemy",
+     "m_szGameObject": "undying_minion",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      550,
+      330
+     ]
+    },
+    {
+     "m_szName": "BackGuard",
+     "m_szGameObject": "skywrath",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1540,
+      50
+     ]
+    },
+    {
+     "m_szName": "BasementOgre",
+     "m_szGameObject": "ogre_med",
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1060,
+      110
+     ]
+    },
+    {
+     "m_szName": "BasementCreep",
+     "m_szGameObject": "crownfall_ranged",
+     "m_bFacingLeft": false,
+     "m_bRandomPosition": false,
+     "m_vPosition": [
+      1240,
+      50
+     ]
+    },
+    {
+     "m_szName": "LeftBarrel",
+     "m_vPosition": [
+      1000,
+      110
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    },
+    {
+     "m_szName": "RightBarrel",
+     "m_vPosition": [
+      1300,
+      30
+     ],
+     "m_flLeftObjectOffset": 0,
+     "m_flRightObjectOffset": 0,
+     "m_bRandomPosition": false,
+     "m_flLeftBorderWidthMult": 0,
+     "m_flRightBorderWidthMult": 0,
+     "m_szLeftBorderObject": "0",
+     "m_szRightBorderObject": "0",
+     "m_szGameObject": "explosive_barrel"
+    }
+   ],
+   "m_vecWeapons": [
+    {
+     "m_szName": "grenade",
+     "m_nReloads": 9
+    }
+   ],
+   "m_sBackgroundImage": "file://{images}/events/crownfall/artillery/levels/background_extended.png",
+   "m_sTerrainBackgroundImage": "file://{images}/events/crownfall/artillery/levels/bastion/midground.png",
+   "m_sTerrainImage": "file://{images}/events/crownfall/artillery/levels/bastion/level.png",
+   "m_sTerrainForegroundImage": "file://{images}/events/crownfall/artillery/levels/bastion/foreground.png",
+   "m_flBackgroundOffsetX": 800
+  },
+  "_localization_path": "resource/localization/vdata/artillery_levels/artillery_levels_%language%.txt"
+ },
+ "weapons": {
+  "generic_data_type": "ArtyWeaponInfo_t",
+  "default": {
+   "m_unID": 1,
+   "m_sWeaponLocName": "#DOTA_VData_artillery_weapons_default_WeaponLocName",
+   "m_sWeaponLocDesc": "#DOTA_VData_artillery_weapons_default_WeaponLocDesc",
+   "m_sWeaponSwapSound": "crownfall.artillery.swap_weapon.default",
+   "m_sWeaponFireSound": "crownfall.artillery.shoot.default",
+   "m_sWeaponImage": "file://{images}/spellicons/snapfire_mortimer_kisses.png",
+   "m_bIsPlayerWeapon": true,
+   "m_strGraphicInfoName": "kiss",
+   "m_flReloadTime": 0.5,
+   "m_flMaxSpeed": 1600,
+   "m_flManaCost": 0,
+   "m_flDamageRadius": 60,
+   "m_flTerrainCarveRadius": 60,
+   "m_nMaxReloads": 99,
+   "m_nWeaponPoints": 100,
+   "m_weaponAttackActivity": "ACT_DOTA_ATTACK",
+   "m_flShotCreationTime": 0.13
+  },
+  "grenade": {
+   "m_unID": 2,
+   "m_sWeaponLocName": "#DOTA_VData_artillery_weapons_grenade_WeaponLocName",
+   "m_sWeaponLocDesc": "#DOTA_VData_artillery_weapons_grenade_WeaponLocDesc",
+   "m_sWeaponSwapSound": "crownfall.artillery.swap_weapon.grenade",
+   "m_sWeaponFireSound": "crownfall.artillery.shoot.grenade",
+   "m_sWeaponImage": "file://{images}/spellicons/sniper_concussive_grenade.png",
+   "m_bIsPlayerWeapon": true,
+   "m_strGraphicInfoName": "grenade",
+   "m_flReloadTime": 0.5,
+   "m_flMaxSpeed": 1500,
+   "m_flDamage": 2,
+   "m_flDamageRadius": 80,
+   "m_flTerrainCarveRadius": 80,
+   "m_bBounces": true,
+   "m_flFuseTime": 1.5,
+   "m_flBounceDrag": 0.5,
+   "m_bCollides": false,
+   "m_nMaxReloads": 99,
+   "m_nWeaponPoints": 100,
+   "m_bShowTrajectory": true,
+   "m_weaponAttackActivity": "ACT_DOTA_CAST_ABILITY_3",
+   "m_flShotCreationTime": 0.17
+  },
+  "plasma_beam": {
+   "m_unID": 3,
+   "m_sWeaponLocName": "#DOTA_VData_artillery_weapons_plasma_beam_WeaponLocName",
+   "m_sWeaponLocDesc": "#DOTA_VData_artillery_weapons_plasma_beam_WeaponLocDesc",
+   "m_sWeaponImage": "file://{images}/spellicons/tinker_laser.png",
+   "m_bIsPlayerWeapon": true,
+   "m_strGraphicInfoName": "kiss",
+   "m_flReloadTime": 0.5,
+   "m_flMaxSpeed": 1200,
+   "m_flDamage": 0,
+   "m_flLockedPower": 1,
+   "m_bIsRay": true,
+   "m_flTerrainCarveRadius": 20,
+   "m_nMaxReloads": 99,
+   "m_nRayDigTimes": 10,
+   "m_nWeaponPoints": 100,
+   "m_strWeaponActivityModifier": "weapon_cannon"
+  },
+  "tunneler": {
+   "m_unID": 4,
+   "m_sWeaponLocName": "#DOTA_VData_artillery_weapons_tunneler_WeaponLocName",
+   "m_sWeaponLocDesc": "#DOTA_VData_artillery_weapons_tunneler_WeaponLocDesc",
+   "m_sWeaponSwapSound": "crownfall.artillery.swap_weapon.tunneler",
+   "m_sWeaponFireSound": "crownfall.artillery.shoot.tunneler",
+   "m_sWeaponImage": "file://{images}/spellicons/meepo_petrify.png",
+   "m_bIsPlayerWeapon": true,
+   "m_strGraphicInfoName": "tunneler",
+   "m_flReloadTime": 0.5,
+   "m_flMaxSpeed": 1600,
+   "m_nInitialShotCount": 1,
+   "m_nInitialShotAngleDispersionPer": 0,
+   "m_flTerrainCarveRadius": 65,
+   "m_flHitRadius": 1,
+   "m_flDamageRadius": 65,
+   "m_flGravityMult": 1,
+   "m_nMaxReloads": 99,
+   "m_nWeaponPoints": 100,
+   "m_flDamage": 0,
+   "m_weaponAttackActivity": "ACT_DOTA_CAST_ABILITY_1",
+   "m_flShotCreationTime": 0.15,
+   "m_nExplodeTimes": 4,
+   "m_vVelocityMultOnExplode": [
+    0.03,
+    0.4
+   ],
+   "m_vVelocityOffsetOnExplode": [
+    0,
+    -100
+   ],
+   "m_flRadiusChangePerExplode": 0
+  },
+  "mirv": {
+   "m_unID": 5,
+   "m_sWeaponLocName": "#DOTA_VData_artillery_weapons_mirv_WeaponLocName",
+   "m_sWeaponLocDesc": "#DOTA_VData_artillery_weapons_mirv_WeaponLocDesc",
+   "m_sWeaponSwapSound": "crownfall.artillery.swap_weapon.mirv",
+   "m_sWeaponFireSound": "crownfall.artillery.shoot.default",
+   "m_sWeaponImage": "file://{images}/spellicons/sniper_shrapnel_muh_keen_gun.png",
+   "m_bIsPlayerWeapon": true,
+   "m_strGraphicInfoName": "kiss",
+   "m_flMaxSpeed": 1400,
+   "m_nSplitCount": 4,
+   "m_bSplitAtTop": true,
+   "m_bZeroXOnSplit": true,
+   "m_flSplitDispersion": 500,
+   "m_szSplitWeapon": "bomblet",
+   "m_flDamageRadius": 50,
+   "m_flTerrainCarveRadius": 50,
+   "m_flReloadTime": 0.5,
+   "m_nMaxReloads": 2,
+   "m_weaponAttackActivity": "ACT_DOTA_CAST_ABILITY_2"
+  },
+  "bomblet": {
+   "m_unID": 6,
+   "m_sWeaponLocName": "#DOTA_VData_artillery_weapons_bomblet_WeaponLocName",
+   "m_sWeaponLocDesc": "#DOTA_VData_artillery_weapons_bomblet_WeaponLocDesc",
+   "m_sWeaponImage": "file://{images}/spellicons/techies_land_mines.png",
+   "m_bIsPlayerWeapon": true,
+   "m_strGraphicInfoName": "kiss",
+   "m_flReloadTime": 0.6,
+   "m_flMaxSpeed": 1200,
+   "m_flDamage": 1,
+   "m_flDamageRadius": 50,
+   "m_flTerrainCarveRadius": 50,
+   "m_strWeaponActivityModifier": "weapon_cannon"
+  },
+  "dropshot": {
+   "m_unID": 7,
+   "m_sWeaponLocName": "#DOTA_VData_artillery_weapons_dropshot_WeaponLocName",
+   "m_sWeaponLocDesc": "#DOTA_VData_artillery_weapons_dropshot_WeaponLocDesc",
+   "m_sWeaponSwapSound": "crownfall.artillery.swap_weapon.dropshot",
+   "m_sWeaponFireSound": "crownfall.artillery.shoot.default",
+   "m_sWeaponImage": "file://{images}/spellicons/tinker_heat_seeking_missile.png",
+   "m_bIsPlayerWeapon": true,
+   "m_strGraphicInfoName": "dropshot",
+   "m_flReloadTime": 0.5,
+   "m_flMaxSpeed": 1600,
+   "m_flManaCost": 0,
+   "m_flDamageRadius": 60,
+   "m_flTerrainCarveRadius": 60,
+   "m_nMaxReloads": 99,
+   "m_nWeaponPoints": 100,
+   "m_bNoShootingWhileInAir": true,
+   "m_bListenForKeypress": true,
+   "m_vVelocityMultOnKeypress": [
+    0,
+    0
+   ],
+   "m_vVelocityOffsetOnKeypress": [
+    0,
+    0
+   ],
+   "m_flShotCreationTime": 0.13
+  },
+  "_localization_path": "resource/localization/vdata/artillery_weapons/artillery_weapons_%language%.txt"
+ }
+}

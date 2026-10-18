@@ -325,10 +325,12 @@ export function DrawingDialog({ editor, reference, canvasSize, recentSymbols }) 
     s.shift = e.shiftKey;
     if (s.type === 'move') {
       const next = C.clone(s.before);
+      // Past the edges too (2026-10-16), but never wholly out of this window's canvas, which shows no margin.
       moveItems(
         next.entities.filter((item) => s.ids.includes(item.id)),
         p.x - s.start.x,
-        p.y - s.start.y
+        p.y - s.start.y,
+        { x: 0, y: 0, w: board.w, h: board.h }
       );
       update(next);
     } else if (s.type === 'reference') {

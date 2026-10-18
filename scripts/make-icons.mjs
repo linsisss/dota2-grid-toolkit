@@ -44,6 +44,8 @@ const ICON_NAMES = {
   align: 'align-center-vertical', alignLeft: 'align-start-vertical', alignHCenter: 'align-center-vertical', alignRight: 'align-end-vertical',
   alignTop: 'align-start-horizontal', alignVMiddle: 'align-center-horizontal', alignBottom: 'align-end-horizontal',
   distributeX: 'align-horizontal-distribute-center', distributeY: 'align-vertical-distribute-center',
+  // «Мини-игры» (src/minigames/MinigamesApp.jsx): controls, phone, the hub's sections
+  keyboard: 'keyboard', mouse: 'mouse', phone: 'smartphone', gamepad: 'gamepad-2', zap: 'zap', brain: 'brain', swords: 'swords', dice: 'dices', timer: 'timer',
 };
 const body = (name) => {
   const icon = lucide.icons[name] || lucide.icons[lucide.aliases?.[name]?.parent];

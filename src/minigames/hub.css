@@ -1,0 +1,182 @@
+/* «Мини-игры» hub (src/minigames/MinigamesApp.jsx) in the site's language (src/site-kit.css: glass, a lilac
+   glow, cards lit at the edge) with Crownfall's gold as the second light. Each game brings its own --accent
+   (src/minigames/hub.mjs) to its card. The games' own popups: minigames.css. */
+.mg-hub { --mg-gold: #e8c98f; --mg-lilac: #c4b5ed; position: relative; isolation: isolate; overflow-x: clip; }
+.mg-hub::before { content: ''; position: absolute; inset: 0 0 auto; height: 980px; z-index: -1; pointer-events: none;
+  background: radial-gradient(42% 46% at 78% 30%, #c4b5ed1f, transparent 70%), radial-gradient(30% 34% at 64% 58%, #e8c98f14, transparent 70%), radial-gradient(40% 30% at 8% 0%, #c4b5ed12, transparent 70%); }
+.mg-hub .mg-main { flex: 1; display: block; margin-top: 8px; }
+
+/* --- hero --- */
+.mg-hero { display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr); align-items: center; gap: 40px; min-height: 560px; }
+.mg-hero-copy { position: relative; z-index: 2; max-width: 600px; }
+.mg-hub .mg-hero h1 { margin: 0; font-size: clamp(50px, 5.6vw, 88px); font-weight: 700; line-height: 0.98; letter-spacing: -.045em; text-wrap: balance; }
+.mg-hero-accent { display: block; background: linear-gradient(100deg, var(--mg-gold) 0%, #f3e3c3 30%, var(--mg-lilac) 85%); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .06em; }
+.mg-lead { margin: 22px 0 0; color: var(--cat-muted); font-size: 18px; line-height: 1.55; max-width: 34em !important; }
+.mg-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.mg-hub .mg-cta { min-height: 56px; padding: 10px 24px 10px 20px; gap: 12px; border-radius: 14px; font-size: 16px; }
+.mg-cta > span { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; font-weight: 500; font-size: 12px; opacity: .92; }
+.mg-cta > span b { font-size: 16px; font-weight: 650; opacity: 1; }
+.mg-cta svg { width: 22px; height: 22px; fill: currentColor; }
+.mg-hub .mg-random { min-height: 56px; padding: 10px 20px; border-radius: 14px; }
+.mg-random svg { transition: rotate .5s var(--win-spring, ease); }
+.mg-random:hover svg { rotate: 180deg; }
+.mg-hero-best { display: inline-flex; align-items: center; gap: 5px; color: var(--mg-gold); font-weight: 600; font-size: 13px; }
+.mg-hero-best svg { width: 14px; height: 14px; }
+.mg-link { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: var(--cat-ink); font: inherit; font-weight: 600; }
+.mg-link svg { width: 16px; height: 16px; color: var(--mg-lilac); transition: translate .25s var(--win-ease, ease); }
+.mg-link:hover svg { translate: 3px 0; }
+.mg-link:hover { color: var(--mg-lilac); }
+
+/* The wall: nine shots on a tilted plane, the middle column a little ahead, the featured one playing. */
+.mg-wall { position: relative; height: 680px; margin-block: -40px; margin-right: calc(-1 * clamp(20px, 6vw, 120px)); perspective: 1700px; pointer-events: none;
+  -webkit-mask: radial-gradient(farthest-side, #000 60%, transparent); mask: radial-gradient(farthest-side, #000 60%, transparent); }
+.mg-wall-plane { position: absolute; left: 50%; top: 50%; display: grid; grid-template-columns: repeat(3, 300px); gap: 18px;
+  transform: translate(-50%, -50%) rotateX(20deg) rotateY(-24deg) rotateZ(7deg); transform-style: preserve-3d; }
+.mg-wall-column { display: grid; gap: 18px; }
+.mg-wall-column-0 { margin-top: 70px; }
+.mg-wall-column-2 { margin-top: -50px; }
+.mg-wall-tile { position: relative; display: block; width: 300px; aspect-ratio: 16 / 10; padding: 0; overflow: hidden; border: 1px solid #ffffff1a; border-radius: 16px; background: #1b1922;
+  box-shadow: 0 30px 60px -30px #000c, 0 0 0 1px #0004; pointer-events: auto; cursor: pointer; transition: border-color .3s, box-shadow .35s, translate .5s var(--win-ease, ease); }
+.mg-wall-tile img, .mg-wall-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.mg-wall-tile img { filter: saturate(.85) brightness(.82); transition: filter .4s; }
+.mg-wall-video { opacity: 0; transition: opacity .6s; }
+.mg-wall-video.is-playing { opacity: 1; }
+.mg-wall-tile:hover { border-color: color-mix(in srgb, var(--accent) 70%, transparent); box-shadow: 0 30px 60px -26px color-mix(in srgb, var(--accent) 60%, #000); translate: 0 -6px; }
+.mg-wall-tile:hover img { filter: none; }
+.mg-wall-tile.is-featured { border-color: #ffffff38; box-shadow: 0 40px 80px -30px #000, 0 0 0 1px #0006, 0 0 60px -10px color-mix(in srgb, var(--accent) 45%, transparent); }
+.mg-wall-tile.is-featured img { filter: none; }
+.mg-wall-name { position: absolute; left: 10px; bottom: 10px; padding: 4px 10px; border-radius: 99px; background: #0d0b12b8; backdrop-filter: blur(6px); color: #efeaf5; font-size: 12px; font-weight: 600;
+  opacity: 0; translate: 0 4px; transition: opacity .25s, translate .25s; }
+.mg-wall-tile:hover .mg-wall-name, .mg-wall-tile.is-featured .mg-wall-name { opacity: 1; translate: 0 0; }
+
+/* --- library --- */
+.mg-library { margin-top: 56px; scroll-margin-top: 24px; }
+.mg-library-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px 40px; flex-wrap: wrap; padding-bottom: 20px; margin-bottom: 30px; border-bottom: 1px solid var(--cat-line); }
+.mg-hub .mg-library-head h2 { margin: 0; font-size: clamp(28px, 2.6vw, 38px); letter-spacing: -.035em; }
+.mg-library-head p { margin: 8px 0 0; color: var(--cat-muted); font-size: 16px; }
+.mg-library-tools { display: flex; align-items: center; gap: 12px; }
+.mg-kinds button { display: inline-flex; align-items: center; gap: 8px; }
+.mg-kinds button span { min-width: 20px; padding: 0 6px; border-radius: 99px; background: #ffffff0d; color: var(--cat-muted); font-size: 12px; line-height: 20px; text-align: center; transition: background-color .2s, color .2s; }
+.mg-kinds button[aria-pressed=true] span { background: #c4b5ed29; color: var(--cat-ink); }
+
+.mg-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px 24px; }
+.mg-card { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 10px 10px 18px; border: 1px solid #ffffff0d; border-radius: 22px;
+  background: radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 60%), #1b1922;
+  transition: border-color .3s, box-shadow .35s, translate .35s var(--win-ease, ease); }
+.mg-card:hover { border-color: color-mix(in srgb, var(--accent) 38%, transparent); box-shadow: 0 30px 56px -34px color-mix(in srgb, var(--accent) 75%, #000); translate: 0 -3px; }
+.mg-card-art { position: relative; display: block; width: 100%; aspect-ratio: 16 / 10; padding: 0; overflow: hidden; border: 0; border-radius: 14px; background: #121017; color: inherit; isolation: isolate; }
+.mg-card-art img, .mg-card-art video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.mg-card-art img { transition: scale .8s var(--win-ease, ease), filter .4s; }
+.mg-card-art video { opacity: 0; transition: opacity .35s; }
+.mg-card-art video.is-playing { opacity: 1; }
+.mg-card:hover .mg-card-art img { scale: 1.035; }
+.mg-card-art::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(180deg, #0b0a0f66 0%, transparent 26%, transparent 62%, #0b0a0f8c 100%); box-shadow: inset 0 0 0 1px #ffffff12; }
+.mg-card-genre, .mg-card-best { position: absolute; z-index: 2; top: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; background: #0d0b12b0; backdrop-filter: blur(8px); font-size: 12px; font-weight: 600; color: #efeaf5; }
+.mg-card-genre { left: 10px; }
+.mg-card-genre::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+.mg-card-best { right: 10px; color: var(--mg-gold); }
+.mg-card-best svg { width: 13px; height: 13px; }
+/* The place in the table of records next to this browser's best (core/leaderboard.jsx useRanks). */
+.mg-card-badges { position: absolute; z-index: 2; top: 10px; right: 10px; display: flex; gap: 6px; }
+.mg-card-badges .mg-card-best { position: static; }
+.mg-card-rank { color: #efeaf5; }
+.mg-card-play { position: absolute; z-index: 2; left: 50%; top: 50%; display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px 10px 14px; border-radius: 99px;
+  background: linear-gradient(180deg, #d4c8f5, #bba9ec); color: #231b35; font-weight: 650; font-size: 14px; box-shadow: 0 14px 30px -12px #000c, inset 0 1px 0 #ffffff66;
+  opacity: 0; translate: -50% -38%; scale: .94; transition: opacity .25s, translate .35s var(--win-spring, ease), scale .35s var(--win-spring, ease); }
+.mg-card-play svg { width: 16px; height: 16px; fill: currentColor; }
+@media (hover: hover) and (min-width: 761px) {
+  .mg-card:hover .mg-card-play, .mg-card-art:focus-visible .mg-card-play { opacity: 1; translate: -50% -50%; scale: 1; }
+  .mg-card.is-hovered .mg-card-play { opacity: 0; }
+  .mg-card.is-hovered:has(video:not(.is-playing)) .mg-card-play { opacity: 1; }
+}
+.mg-card-art:focus-visible { outline: 2px solid var(--mg-lilac); outline-offset: 3px; }
+.mg-card-body { display: flex; flex-direction: column; flex: 1; padding: 16px 8px 0; }
+.mg-hub .mg-card h3 { margin: 0; font-size: 21px; letter-spacing: -.02em; line-height: 1.2; }
+.mg-card h3 button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; }
+.mg-card h3 button:hover { color: color-mix(in srgb, var(--accent) 55%, #fff); }
+.mg-card-body p { margin: 8px 0 0; color: var(--cat-muted); font-size: 14.5px; line-height: 1.5; flex: 1; }
+.mg-card-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #ffffff0b; color: var(--cat-muted); font-size: 13px; }
+.mg-card-meta svg { width: 15px; height: 15px; flex: none; }
+.mg-card-length { display: inline-flex; align-items: center; gap: 6px; color: var(--cat-ink); }
+.mg-card-controls { display: inline-flex; gap: 2px; }
+.mg-card-controls span { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: #ffffff08; }
+.mg-card-phone { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; }
+.mg-card-phone:not(.is-any) svg { rotate: 90deg; }
+.mg-card-phone.is-any { color: color-mix(in srgb, var(--accent) 60%, #fff); }
+
+
+/* --- credits --- */
+.mg-credits { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 64px 0 0; color: var(--cat-muted); font-size: 13px; text-align: center; }
+.mg-credits svg { width: 16px; height: 16px; flex: none; color: var(--mg-gold); opacity: .8; }
+.mg-credits p { margin: 0; max-width: none; }
+.mg-credits span { opacity: .75; }
+.mg-credits-language { display: none; margin-left: 6px; }
+
+/* --- motion --- */
+@media (prefers-reduced-motion: no-preference) {
+  .mg-hero-copy > * { animation: win-rise .6s var(--win-ease, ease) both; }
+  .mg-hero-copy > :nth-child(2) { animation-delay: 60ms; }
+  .mg-hero-copy > :nth-child(3) { animation-delay: 120ms; }
+  .mg-hero-copy > :nth-child(4) { animation-delay: 180ms; }
+  .mg-hero-copy > :nth-child(5) { animation-delay: 240ms; }
+  .mg-wall-plane { animation: mg-wall-in 1.1s var(--win-ease, ease) both; }
+  .mg-wall-column-0 { animation: mg-drift 14s ease-in-out infinite alternate; }
+  .mg-wall-column-1 { animation: mg-drift 17s ease-in-out -6s infinite alternate-reverse; }
+  .mg-wall-column-2 { animation: mg-drift 15s ease-in-out -3s infinite alternate; }
+  .mg-card { animation: win-rise .55s calc(var(--i, 0) * 55ms) var(--win-ease, ease) both; }
+}
+@keyframes mg-wall-in { from { opacity: 0; transform: translate(-50%, -50%) rotateX(28deg) rotateY(-34deg) rotateZ(9deg) translateZ(-120px); } }
+@keyframes mg-drift { from { translate: 0 -14px; } to { translate: 0 14px; } }
+
+/* --- smaller screens --- */
+@media (max-width: 1280px) {
+  .mg-wall-plane { grid-template-columns: repeat(3, 260px); }
+  .mg-wall-tile { width: 260px; }
+  .mg-wall { height: 600px; }
+}
+@media (max-width: 1050px) {
+  .mg-hero { grid-template-columns: 1fr; gap: 0; min-height: 0; }
+  .mg-hero-copy { max-width: 680px; }
+  .mg-wall { height: 420px; margin: 8px -28px 0; }
+  .mg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .mg-hub .mg-main { margin-top: 0; }
+  .mg-hub .mg-hero h1 { font-size: clamp(40px, 12.5vw, 56px); }
+  .mg-lead { font-size: 16px; margin-top: 16px; }
+  .mg-hero-actions { margin-top: 24px; }
+  .mg-hero-actions > * { flex: 1 1 auto; }
+  .mg-wall { height: 300px; margin: 0 -20px; -webkit-mask: linear-gradient(180deg, transparent, #000 18%, #000 80%, transparent); mask: linear-gradient(180deg, transparent, #000 18%, #000 80%, transparent); }
+  .mg-wall-plane { grid-template-columns: repeat(3, 190px); gap: 12px; }
+  .mg-wall-column { gap: 12px; }
+  .mg-wall-tile { width: 190px; border-radius: 12px; }
+  .mg-wall-name { display: none; }
+  .mg-library { margin-top: 26px; }
+  .mg-library-head { margin-bottom: 22px; }
+  .mg-library-tools, .mg-kinds { width: 100%; }
+  .mg-kinds { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px; }
+  .mg-kinds button { flex: none; }
+  .mg-grid { grid-template-columns: 1fr; gap: 18px; }
+  .mg-card { padding: 8px 8px 16px; border-radius: 20px; }
+  .mg-card-play { opacity: 1; scale: 1; padding: 8px 14px 8px 11px; font-size: 13px; left: auto; right: 10px; top: auto; bottom: 10px; translate: 0 0; }
+  .mg-card-body { padding: 14px 6px 0; }
+  .mg-credits { margin-top: 44px; align-items: flex-start; text-align: left; flex-wrap: wrap; }
+  .mg-hub .mg-nav-language { display: none; }
+  .mg-credits-language { display: inline-grid; margin: 4px 0 0 26px; }
+}
+@media (hover: none) {
+  .mg-card-play { opacity: 1; left: auto; right: 10px; top: auto; bottom: 10px; translate: 0 0; scale: 1; }
+}
+
+/* --- The look the owner chose (2026-10-17, «look 1» of the variants): .hub-look-1 is always on the page. --- */
+
+/* Look 1: one solid colour instead of the gradient, no accent glows, the genre as plain text. */
+.hub-look-1 .mg-hero-accent { background: none; color: var(--mg-gold); }
+.hub-look-1 .mg-card { background: #1b1922; }
+.hub-look-1 .mg-card:hover { border-color: #ffffff24; box-shadow: 0 24px 48px -32px #000; }
+.hub-look-1 .mg-card h3 button:hover { color: var(--cat-ink); text-decoration: underline; text-decoration-color: #ffffff4d; text-underline-offset: 4px; }
+.hub-look-1 .mg-wall-tile.is-featured { box-shadow: 0 40px 80px -30px #000, 0 0 0 1px #0006; }
+.hub-look-1 .mg-wall-tile:hover { border-color: #ffffff38; box-shadow: 0 30px 60px -26px #000; }
+.hub-look-1 .mg-card-genre-text { color: var(--cat-ink); }
+.hub-look-1 .mg-card-genre-text + .mg-card-length { color: var(--cat-muted); }

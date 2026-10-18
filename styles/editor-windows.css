@@ -45,6 +45,9 @@
 #modal .modal-loading { color: var(--win-muted); animation: win-breathe 1.4s ease-in-out infinite; }
 @keyframes win-breathe { 50% { opacity: .45; } }
 #modal .text-mode.choice-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 14px 0 6px; }
+/* Text in a box (app.mjs openText): its two fields and what did not fit. */
+#modal .text-box-fields { margin-bottom: 4px; }
+.text-box-note { margin: 6px 0 0; color: #f4cca7; font-size: 12px; }
 #modal .grid-import-modes.choice-cards { margin: 16px 0 6px; }
 #modal .grid-import-option.choice-card { display: grid; }
 #modal .grid-import-files { display: grid; gap: 6px; margin: 0 0 6px; padding: 0; list-style: none; }
@@ -201,3 +204,36 @@
 #modal .canvas-font-option b { font-size: 20px; font-weight: 600; line-height: 1.2; }
 #modal .canvas-font-option[data-canvas-font=''] b { font-family: StudioRadiance, sans-serif; }
 #modal .canvas-font-option small { color: var(--win-muted, #afa7bf); font-size: 12px; }
+
+/* «Экспортировать PNG» (app.mjs openPngExport): the picture on top — on a checkerboard when it is
+   transparent — then the look as cards and the options as small chips. In the download window the
+   button sits with «Опубликовать в мастерскую». */
+#modal[data-view='png'] { width: min(760px, calc(100vw - 24px)); }
+#modal .png-preview { display: grid; place-items: center; min-height: 120px; max-height: 42vh; padding: 10px; border-radius: 14px; background: #0d0b12; box-shadow: inset 0 0 0 1px #ffffff12; overflow: hidden; }
+#modal .png-preview[data-look='transparent'] { background: repeating-conic-gradient(#2a2633 0 25%, #1c1923 0 50%) 0 0 / 16px 16px; }
+#modal .png-preview[data-look='sketch'] { background: #d9d7df; }
+#modal .png-preview canvas { display: block; max-width: 100%; max-height: calc(42vh - 20px); width: auto; height: auto; border-radius: 4px; box-shadow: 0 10px 30px -12px #000; }
+#modal .png-looks { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 16px 0 4px; }
+#modal .png-looks > legend { grid-column: 1 / -1; }
+#modal .png-options { display: flex; flex-wrap: wrap; gap: 4px 22px; }
+#modal .png-option[hidden] { display: none; }
+#modal .png-option .field-label { margin-top: 14px; }
+#modal .png-chips { display: inline-flex; gap: 3px; padding: 3px; border-radius: 11px; background: var(--win-field); box-shadow: inset 0 0 0 1px #ffffff14; }
+#modal .png-chip { position: relative; }
+#modal .png-chip input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+#modal .png-chip input:disabled { cursor: not-allowed; }
+#modal .png-chip span { display: grid; place-items: center; min-width: 44px; min-height: 32px; padding: 0 12px; border-radius: 8px; color: var(--win-text); font-size: 13px; font-weight: 600; transition: background-color .2s, color .2s; }
+#modal .png-chip:hover span { color: var(--win-ink); background: #ffffff0a; }
+#modal .png-chip input:checked + span { background: linear-gradient(180deg, #d4c8f5, #bba9ec); color: #231b35; }
+#modal .png-chip input:focus-visible + span { box-shadow: 0 0 0 3px #c4b5ed66; }
+#modal .png-chip input:disabled + span { opacity: .4; }
+#modal .png-size { margin: 14px 0 4px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+#modal .export-footer-side { display: flex; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 700px) {
+  #modal .png-looks { grid-template-columns: 1fr; }
+  #modal .png-options { display: grid; gap: 0; }
+  #modal .png-chips { display: flex; }
+  #modal .png-chip { flex: 1; }
+  #modal[data-view='export'] .export-footer-side { flex-direction: column; }
+  #modal[data-view='png'] .modal-footer { flex-direction: column-reverse; align-items: stretch; }
+}

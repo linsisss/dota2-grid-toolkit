@@ -1,0 +1,257 @@
+{
+  "version": "2.0.0",
+  "date": "2026-10-18",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v2.0.0",
+  "sections": [
+    {
+      "title": "Твоя Dota",
+      "changes": [
+        {
+          "text": "Фон, интерфейс, курсор, шрифт и тексты — на одной странице gridstudio.me/customize",
+          "children": [
+            "Всё ставится одним файлом или одной командой PowerShell; старые ссылки на конструктор ведут сюда"
+          ]
+        },
+        {
+          "text": "Сцены сверху: главное меню, сетка героев, за героем, загрузка, матч — превью само показывает нужный экран"
+        },
+        {
+          "text": "«Что внутри»: что попадёт в файл и сколько весит каждая часть"
+        },
+        {
+          "text": "Фон из мастерской можно оставить для сетки героев или «за героем», а в меню поставить свой"
+        },
+        {
+          "text": "Свой экран загрузки — картинка или видео"
+        },
+        {
+          "text": "Можно спрятать лишние кнопки и вкладки главного меню"
+        },
+        {
+          "text": "Вид HUD: прозрачность и оттенок подложек, без лишних украшений, размер нижней и верхней панели",
+          "children": [
+            "Превью собрано из настоящего HUD, снятого в Dota"
+          ]
+        },
+        {
+          "text": "Чат в матче: перетащи его на превью — место и ширина"
+        },
+        {
+          "text": "Тексты: свои названия вкладок, кнопок и героев"
+        },
+        {
+          "text": "Курсор: свой для каждого из 23 курсоров Dota или готовый пак с Dota2PornFX",
+          "children": [
+            "На превью матча курсор водится и кликает как в игре"
+          ]
+        },
+        {
+          "text": "Моды с Dota2PornFX: HUD-скины прямо в превью, цвет клика, пинги, денаи, иконка голоса, детали меню и HUD — у каждого указан автор"
+        },
+        {
+          "text": "Шрифт: «Рисунки в сетке героев не съедут» — символы в рисунках остаются на месте со шрифтом-приколом"
+        }
+      ]
+    },
+    {
+      "title": "Мини-игры",
+      "changes": [
+        {
+          "text": "Новая страница gridstudio.me/minigames — 9 мини-игр события Crownfall из Dota 2 прямо в браузере",
+          "children": [
+            "Сапёр Сплин, Крылатые гонки, Подрывник Спун, Рыбалка, Замкобой, Логово Зауга, Драконьи шахматы, Терновый трон, Сосулечный боец"
+          ]
+        },
+        {
+          "text": "Графика и звуки оригинала, правила и счёт — из кода самой Dota"
+        },
+        {
+          "text": "Общие таблицы рекордов за всё время и за неделю — войди, и лучший результат попадёт в таблицу",
+          "children": [
+            "Место видно в меню игры, на карточке и в профиле"
+          ]
+        },
+        {
+          "text": "Громкость регулируется ползунком, на телефоне — управление касанием"
+        }
+      ]
+    },
+    {
+      "title": "Редактор",
+      "changes": [
+        {
+          "text": "«Экспортировать PNG»: сетка картинкой в 1×, 2× или 4× — как в Dota, на прозрачном фоне или эскизом"
+        },
+        {
+          "text": "«Режим эскиза» в настройках холста: белое поле и чёрные символы — для эскиза тату или печати"
+        },
+        {
+          "text": "Рисунки и символы можно выносить за рамку: в редакторе видно, при скачивании обрезается"
+        },
+        {
+          "text": "Текст в рамке: задаёшь прямоугольник — текст переносится по словам и не выходит за него"
+        },
+        {
+          "text": "Ластик и «Рассыпать» работают только на выбранном слое"
+        }
+      ]
+    },
+    {
+      "title": "Мастерская",
+      "changes": [
+        {
+          "text": "Сортировка по скачиваниям и по категориям — по возрастанию и убыванию"
+        },
+        {
+          "text": "Картинки больше не публикуются как фон — только GIF и видео"
+        }
+      ]
+    },
+    {
+      "title": "Профили",
+      "changes": [
+        {
+          "text": "Новые значки — медали в духе Dota: у каждого свой рисунок, редкие видно сразу",
+          "children": [
+            "В подсказке точные цифры, все значки — в списке «Все значки»"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Сайт",
+      "changes": [
+        {
+          "text": "На главной — «Фон и интерфейс» вместо «Фон меню» и «Мини-игры» под Dotadle"
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Your Dota",
+        "changes": [
+          {
+            "text": "Background, interface, cursor, font and texts on one page: gridstudio.me/customize",
+            "children": [
+              "Everything installs as one file or one PowerShell command; old builder links lead here"
+            ]
+          },
+          {
+            "text": "Scenes on top: main menu, hero grid, behind the hero, loading, match — the preview shows the right screen by itself"
+          },
+          {
+            "text": "«What's inside»: what goes into the file and how much each part weighs"
+          },
+          {
+            "text": "Keep a workshop background for the hero grid or behind the hero and use your own in the menu"
+          },
+          {
+            "text": "Your own loading screen — a picture or a video"
+          },
+          {
+            "text": "Hide extra buttons and tabs of the main menu"
+          },
+          {
+            "text": "HUD look: backdrop opacity and tint, no extra decorations, size of the lower and top panels",
+            "children": [
+              "The preview is made from Dota's real HUD captured in the game"
+            ]
+          },
+          {
+            "text": "Match chat: drag it on the preview to set its place and width"
+          },
+          {
+            "text": "Texts: your own names for tabs, buttons and heroes"
+          },
+          {
+            "text": "Cursor: your own for each of Dota's 23 cursors or a ready pack from Dota2PornFX",
+            "children": [
+              "On the match preview the cursor moves and clicks as in the game"
+            ]
+          },
+          {
+            "text": "Dota2PornFX mods: HUD skins right in the preview, click colour, pings, denies, voice icon, menu and HUD parts — each with its author"
+          },
+          {
+            "text": "Font: «Hero grid drawings won't shift» keeps symbols in drawings in place with a joke font"
+          }
+        ]
+      },
+      {
+        "title": "Minigames",
+        "changes": [
+          {
+            "text": "New page gridstudio.me/minigames — 9 Crownfall minigames from Dota 2 right in the browser",
+            "children": [
+              "Sweeper Spleen, Winged Race, Spoon Bomber, Fishing, Castle Carnage, Zaug's Lair, Dragon Chess, Nest of Thorns, Sleet Fighter"
+            ]
+          },
+          {
+            "text": "Original graphics and sounds; rules and scoring from Dota's own code"
+          },
+          {
+            "text": "Shared leaderboards, all-time and weekly — sign in and your best goes into the table",
+            "children": [
+              "Your place shows in the game menu, on the card and in your profile"
+            ]
+          },
+          {
+            "text": "Volume slider; touch controls on phones"
+          }
+        ]
+      },
+      {
+        "title": "Editor",
+        "changes": [
+          {
+            "text": "«Export PNG»: the grid as a picture at 1×, 2× or 4× — as in Dota, transparent or as a sketch"
+          },
+          {
+            "text": "«Sketch mode» in canvas settings: white field and black symbols — for tattoo sketches or printing"
+          },
+          {
+            "text": "Drawings and symbols can go past the frame: visible in the editor, cropped on download"
+          },
+          {
+            "text": "Text in a box: set a rectangle and the text wraps by words inside it"
+          },
+          {
+            "text": "The eraser and «Scatter» work on the chosen layer only"
+          }
+        ]
+      },
+      {
+        "title": "Workshop",
+        "changes": [
+          {
+            "text": "Sort by downloads and by categories, ascending or descending"
+          },
+          {
+            "text": "Still pictures are no longer published as backgrounds — only GIF and video"
+          }
+        ]
+      },
+      {
+        "title": "Profiles",
+        "changes": [
+          {
+            "text": "New badges — Dota-style medals, each drawn on its own; rare ones stand out",
+            "children": [
+              "Exact numbers in the tooltip; all badges in the «All badges» list"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Site",
+        "changes": [
+          {
+            "text": "Home page: «Background & interface» instead of «Menu background», and «Minigames» under Dotadle"
+          }
+        ]
+      }
+    ]
+  }
+}

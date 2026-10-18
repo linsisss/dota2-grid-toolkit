@@ -72,10 +72,12 @@ export const menuBitrate = (seconds) => Math.min(MENU_LIMITS.bitrate, Math.floor
 export function mediaKind(bytes) {
   const has = (at, ...values) => values.every((value, i) => bytes[at + i] === value);
   const ascii = (at, text) => [...text].every((ch, i) => bytes[at + i] === ch.charCodeAt(0));
-  if (has(0, 0x89, 0x50, 0x4e, 0x47)) return { type: 'image', mime: 'image/png', label: 'PNG' };
-  if (has(0, 0xff, 0xd8, 0xff)) return { type: 'image', mime: 'image/jpeg', label: 'JPEG' };
-  if (ascii(0, 'GIF8')) return { type: 'image', mime: 'image/gif', label: 'GIF' };
-  if (ascii(0, 'RIFF') && ascii(8, 'WEBP')) return { type: 'image', mime: 'image/webp', label: 'WebP' };
+  // `still`: one picture, no motion (2026-10-16: the workshop takes no still pictures as backgrounds).
+  // A GIF counts as moving; a WebP is moving when its VP8X header says «animation» (needs 21 bytes).
+  if (has(0, 0x89, 0x50, 0x4e, 0x47)) return { type: 'image', mime: 'image/png', label: 'PNG', still: true };
+  if (has(0, 0xff, 0xd8, 0xff)) return { type: 'image', mime: 'image/jpeg', label: 'JPEG', still: true };
+  if (ascii(0, 'GIF8')) return { type: 'image', mime: 'image/gif', label: 'GIF', still: false };
+  if (ascii(0, 'RIFF') && ascii(8, 'WEBP')) return { type: 'image', mime: 'image/webp', label: 'WebP', still: !(ascii(12, 'VP8X') && (bytes[20] & 0x02)) };
   if (has(0, 0x1a, 0x45, 0xdf, 0xa3)) return { type: 'video', mime: 'video/webm', label: 'WebM' };
   if (ascii(4, 'ftyp')) return { type: 'video', mime: 'video/mp4', label: 'MP4' };
   return null;
@@ -151,6 +153,8 @@ ${event ? `
 // localization tokens. assets/dota-menu/event.json names the event: its layout (Valve's
 // override-background when it was written), its title token and logo. When Valve moves on to the
 // next event, the names no longer match and the pack has no button until the file is updated.
+// The menu style's text, for scripts/make-interface-test.mjs (which pack wins on a shared file).
+export const menuStyleText = (event = null) => STYLE(event);
 export const MENU_UI_STYLE = 'panorama/styles/gridstudio_menu.vcss_c';
 export function menuEvent(dashboard, event) {
   const override = /<DOTADashboardBackgroundManager\b[^>]*\boverride-background="([^"]*)"/.exec(dashboard)?.[1];
@@ -551,11 +555,60 @@ const PROFILE_STYLE_TEXT = `/* GridStudio: buttons to the player's Stratz and Do
 }
 `;
 
+// The loading screen of a match (2026-10-16, «Интерфейс»: the first module of the interface builder,
+// built into this pack, since it is a background too). Valve's loading_screen_background_image.xml
+// (559 bytes, changed once in a year) shows the Dota logo, or the loading screen the user equipped;
+// our copy plays a video over them: the menu's own WebM, or one of its own. Not yet checked in game
+// (docs/customize.md «Экран загрузки»; scripts/make-interface-test.mjs has the test).
+export const LOADING_PAGE = 'panorama/layout/loading_screen_background_image.vxml_c';
+export const LOADING_STYLE = 'panorama/styles/gridstudio_loading.vcss_c';
+export const LOADING_VIDEO = 'panorama/videos/gridstudio_loading.webm';
+const LOADING_INCLUDE = '<include src="s2r://panorama/styles/loading_screen_background_image.vcss_c" />';
+const LOADING_LAST = '<Panel id="LoadPanel" />';
+const LOADING_STYLE_TEXT = `/* GridStudio: a video on the loading screen. */
+#GridStudioLoadingMovie
+{
+	width: 100%;
+	height: 100%;
+}
+`;
+// Valve's layout with our style after theirs and the movie last (over the logo and the equipped
+// picture, which Valve shows by classes on the root).
+export function loadingPage(page, video) {
+  if (page.split(LOADING_INCLUDE).length !== 2 || page.split(LOADING_LAST).length !== 2) throw new Error('В loading_screen_background_image.xml не найден экран загрузки.');
+  return page.replace(LOADING_INCLUDE, () => `${LOADING_INCLUDE}\n\t\t<include src="s2r://${LOADING_STYLE}" />`)
+    .replace(LOADING_LAST, () => `${LOADING_LAST}\n\t\t<MoviePanel id="GridStudioLoadingMovie" src="s2r://${video}" repeat="true" autoplay="onload" hittest="false" />`);
+}
+
+// Buttons of the main menu's top bar the user can hide (2026-10-16, «Интерфейс» → «Главное меню»):
+// tabs and the right-hand buttons, never «Играть», the settings, the party, the mail or the exit.
+// Valve's dashboard.css sets no visibility on them, so our style after it collapses them and the bar
+// closes up: the tabs flow left, the right-hand buttons right (#TopBarRightButtons). The ids are
+// Valve's (dashboard.xml); check-dota-menu.mjs watches the file.
+export const MENU_HIDE = Object.freeze({
+  collection: ['#TopBarCollection'], watch: ['#TopBarWatch'], learn: ['#TopBarLearn'], mods: ['#TopBarMods'],
+  shards: ['#ShardsButton'], armory: ['#TopBarArmory'], plus: ['#TopBarPlus', '#PlusButtonParticlesOverlay']
+});
+export const MENU_HIDE_STYLE = 'panorama/styles/gridstudio_menu_hide.vcss_c';
+const MENU_HIDE_TEXT = (hide) => `/* GridStudio: top bar buttons the user hid. */
+${hide.flatMap((key) => MENU_HIDE[key]).join(',\n')}
+{
+	visibility: collapse;
+}
+`;
+const DASHBOARD_STYLES_END = /(\n\t<\/styles>)/;
+export function hideDashboard(dashboard) {
+  if (!DASHBOARD_STYLES_END.test(dashboard)) throw new Error('В dashboard.xml не найдены стили.');
+  for (const ids of Object.values(MENU_HIDE)) for (const id of ids) if (!dashboard.includes(`id="${id.slice(1)}"`)) throw new Error(`В dashboard.xml нет ${id}.`);
+  return dashboard.replace(DASHBOARD_STYLES_END, `\n\t\t<include src="s2r://${MENU_HIDE_STYLE}" />$1`);
+}
+
 // Every file menuBackgroundPack may write: the server takes a pack for the PowerShell command only with
 // these (server/install-packs.mjs), so nobody can hand out anything else under gridstudio.me.
 export const MENU_PACK_PATHS = Object.freeze(['panorama/layout/dashboard.vxml_c', 'panorama/layout/dashboard_page_home.vxml_c', HOME_STYLE, MENU_LAYOUT, MENU_STYLE, MENU_UI_STYLE,
-  MENU_VIDEO, HERO_PAGE, HERO_STYLE, HERO_VIDEO, GRID_PAGE, GRID_STYLE, GRID_VIDEO, PROFILE_PAGE, PROFILE_STYLE, ...Object.values(PROFILE_ICONS)]);
-export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDEO]);
+  MENU_VIDEO, HERO_PAGE, HERO_STYLE, HERO_VIDEO, GRID_PAGE, GRID_STYLE, GRID_VIDEO, PROFILE_PAGE, PROFILE_STYLE, ...Object.values(PROFILE_ICONS),
+  LOADING_PAGE, LOADING_STYLE, LOADING_VIDEO, MENU_HIDE_STYLE]);
+export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDEO, LOADING_VIDEO]);
 
 // video: WebM bytes (VP8/VP9, no Opus audio); dashboard/home/hero.page: Valve's current layouts as
 // text. hero: null keeps Valve's picture behind the hero; { page } shows the menu video there;
@@ -566,16 +619,23 @@ export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDE
 // { page, video } shows a video of its own.
 // news: { carnival, season } — which news cards stay on the home page (needs `home`); without it, a given
 // `home` hides the whole column, as before 2026-10-08.
-export function menuBackgroundPack({ video, dashboard, home = null, news = null, hero = null, event = null, profile = null, grid = null, md5 }) {
+// loading: null keeps Valve's loading screen; { page } plays the menu video there, { page, video } its own.
+// hide: keys of MENU_HIDE, top bar buttons to hide.
+// video: null (the one-page customization, 2026-10-17) keeps Valve's own menu background: the pack then
+// carries only the other parts (hidden buttons and news cards, profiles, a page's own video, the darker
+// grid page); the dashboard is written only to hide buttons, and nothing may play the menu's video.
+export function menuBackgroundPack({ video, dashboard, home = null, news = null, hero = null, event = null, profile = null, grid = null, loading = null, hide = [], md5 }) {
   const hidden = home ? (news ? Object.keys(NEWS_CELLS).filter((cell) => news[cell] === false) : Object.keys(NEWS_CELLS)) : [];
   const clean = hidden.length === Object.keys(NEWS_CELLS).length;
-  const season = menuEvent(dashboard, event), board = menuDashboard(season ? eventDashboard(dashboard, season) : dashboard);
-  const files = [
+  const off = Object.keys(MENU_HIDE).filter((key) => hide.includes(key));
+  if (!video && ((hero && !hero.video) || (loading && !loading.video))) throw new Error('Без фона меню видео меню негде взять.');
+  const season = video ? menuEvent(dashboard, event) : null, menu = video ? menuDashboard(season ? eventDashboard(dashboard, season) : dashboard) : dashboard, board = off.length ? hideDashboard(menu) : menu;
+  const files = video ? [
     panoramaFile('panorama/layout/dashboard.vxml_c', board, true),
     panoramaFile(MENU_LAYOUT, LAYOUT(season)),
     panoramaFile(MENU_STYLE, STYLE(season)),
     { path: MENU_VIDEO, data: video }
-  ];
+  ] : off.length ? [panoramaFile('panorama/layout/dashboard.vxml_c', board, true)] : [];
   if (season) files.splice(3, 0, panoramaFile(MENU_UI_STYLE, MENU_UI(season, clean)));
   if (clean) files.splice(1, 0, panoramaFile('panorama/layout/dashboard_page_home.vxml_c', cleanHomePage(home), true));
   else if (hidden.length) files.splice(1, 0, panoramaFile('panorama/layout/dashboard_page_home.vxml_c', newsHomePage(home), true), panoramaFile(HOME_STYLE, HOME_STYLE_TEXT(hidden)));
@@ -589,5 +649,11 @@ export function menuBackgroundPack({ video, dashboard, home = null, news = null,
   }
   if (profile) files.push(panoramaFile(PROFILE_PAGE, profilePage(profile.page), true), panoramaFile(PROFILE_STYLE, PROFILE_STYLE_TEXT),
     ...Object.entries(PROFILE_ICONS).map(([name, path]) => panoramaFile(path, profile.icons[name])));
+  if (loading) {
+    files.push(panoramaFile(LOADING_PAGE, loadingPage(loading.page, loading.video ? LOADING_VIDEO : MENU_VIDEO), true), panoramaFile(LOADING_STYLE, LOADING_STYLE_TEXT));
+    if (loading.video) files.push({ path: LOADING_VIDEO, data: loading.video });
+  }
+  if (off.length) files.push(panoramaFile(MENU_HIDE_STYLE, MENU_HIDE_TEXT(off)));
+  if (!files.length) return null;
   return buildVPK(files, { version: 2, md5 });
 }

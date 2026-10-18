@@ -1,0 +1,346 @@
+/* GridStudio HUD capture F-scale 80/80 (not for play). */
+
+DOTAHud #HUDElements #ContextualTips,
+DOTAHud #HUDElements #FightRecap,
+DOTAHud #HUDElements #combat_log,
+DOTAHud #HUDElements #KillCam,
+DOTAHud #HUDElements #shop,
+DOTAHud #HUDElements #neutral_item_picker,
+DOTAHud #HUDElements #inspect,
+DOTAHud #HUDElements #CursorCooldown,
+DOTAHud #HUDElements #GiveItemIndicator,
+DOTAHud #HUDElements #DeityBlessingPicker,
+DOTAHud #HUDElements #AghanimUpgradePicker,
+DOTAHud #HUDElements #ImbueAbilityPicker,
+DOTAHud #HUDElements #overlaymap_container,
+DOTAHud #HUDElements #NetGraph,
+DOTAHud #HUDElements #NetDisconnect,
+DOTAHud #HUDElements #QueryUnit,
+DOTAHud #HUDElements #scoreboard,
+DOTAHud #HUDElements #GG,
+DOTAHud #predictions_button,
+DOTAHud #BigHealthBar,
+DOTAHud #OrdersContainer,
+DOTAHud #spectator_game_stats,
+DOTAHud #SpectatorGraph,
+DOTAHud #CoachingControls,
+DOTAHud #spectator_quickstats,
+DOTAHud #HeroIndicators,
+DOTAHud #PreGame,
+DOTAHud #CustomUIRoot,
+DOTAHud #VoiceChat,
+DOTAHud #KillGraph,
+DOTAHud #player_performance_container,
+DOTAHud #WKArcana,
+DOTAHud #ErrorMessages,
+DOTAHud #ChatWheel,
+DOTAHud #PingWheel,
+DOTAHud #SpectatorItems,
+DOTAHud #PausedInfo,
+DOTAHud #GuideBrowser,
+DOTAHud #Charms,
+DOTAHud #Cameraman,
+DOTAHud #BotDebug,
+DOTAHud #BroadcasterSelection,
+DOTAHud #spectator_options,
+DOTAHud #spectator_overwatch,
+DOTAHud #ProjectionDebug,
+DOTAHud #LargoUltimateRhythmOverhead,
+DOTAHud #GameEndContainer,
+DOTAHud #MonsterHunterInvestigationsContainer,
+DOTAHud #HelpTipsManager,
+DOTAHud #SpectatorToastManager,
+DOTAHud #Tooltips,
+DOTAHud #IngamePredictionsContainer,
+DOTAHud #PredictionToastManager,
+DOTAHud #BroadcastToastManager,
+DOTAHud #BroadcastToastManagerAlpha,
+DOTAHud #BountyToastManager
+{
+	opacity: 0;
+}
+
+DOTAHud #HUDElements #LevelUpGlow
+{
+	animation-name: none;
+	opacity: 1;
+}
+
+DOTAHud #HUDElements #levelup #LevelUpButton
+{
+	animation-name: none;
+	box-shadow: #9f9037ff 0px 0px 10px 0px;
+}
+
+DOTAHud #HUDElements #RecommendedUpgradeOverlay .BorderEdge
+{
+	animation-name: none;
+	box-shadow: fill #e38f12 0px 0px 1px 0px;
+}
+
+DOTAHud #HUDElements .ConsumeItemPropmt .ConsumeItemPropmtGlow,
+DOTAHud #HUDElements #inventory_neutral_level_up .NeutralLevelUpAvailableGlow,
+DOTAHud #HUDElements .StashItemAvailable #inventory_neutral_slot,
+DOTAHud #HUDElements #SilenceIcon,
+DOTAHud #HUDElements #MutedIcon,
+DOTAHud #HUDElements .PlayerHoldingAegis #PlayerModifierItemImage,
+DOTAHud #HUDElements #Spinner
+{
+	animation-name: none;
+}
+
+DOTAHud #HUDElements #lower_hud,
+DOTAHud #HUDElements #minimap_container
+{
+	ui-scale: 80%;
+}
+
+DOTAHud #HUDElements #topbar
+{
+	ui-scale: 80%;
+}
+
+DOTAHud #HUDElements DOTAChat#HudChat
+{
+	opacity: 0;
+}
+
+DOTAHud #HUDElements #minimap_container
+{
+	z-index: 3;
+}
+
+DOTAHud #HUDElements
+{
+	background-color: #000000ff;
+	animation-name: GSGlobal;
+	animation-duration: 4.5s;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+}
+
+@keyframes 'GSGlobal'
+{
+	0% { background-color: #000000ff; }
+	33.1111% { background-color: #000000ff; }
+	33.3333% { background-color: #ffffffff; }
+	66.4444% { background-color: #ffffffff; }
+	66.6667% { background-color: #00000000; }
+	100% { background-color: #00000000; }
+}
+
+DOTAHud #HUDElements #lower_hud
+{
+	animation-name: GSLowerBg, GSLowerMark, GSLowerOp;
+	animation-duration: 57s, 57s, 57s;
+	animation-timing-function: linear, linear, linear;
+	animation-iteration-count: infinite, infinite, infinite;
+}
+
+@keyframes 'GSLowerBg'
+{
+	0% { background-color: #000000ff; }
+	2.614% { background-color: #000000ff; }
+	2.6316% { background-color: #ffffffff; }
+	5.2456% { background-color: #ffffffff; }
+	5.2632% { background-color: #000000ff; }
+	7.8772% { background-color: #000000ff; }
+	7.8947% { background-color: #ffffffff; }
+	10.5088% { background-color: #ffffffff; }
+	10.5263% { background-color: #808080ff; }
+	13.1404% { background-color: #808080ff; }
+	13.1579% { background-color: #000000ff; }
+	15.7719% { background-color: #000000ff; }
+	15.7895% { background-color: #ffffffff; }
+	18.4035% { background-color: #ffffffff; }
+	18.4211% { background-color: #808080ff; }
+	21.0351% { background-color: #808080ff; }
+	21.0526% { background-color: #000000ff; }
+	23.6667% { background-color: #000000ff; }
+	23.6842% { background-color: #ffffffff; }
+	26.2982% { background-color: #ffffffff; }
+	26.3158% { background-color: #000000ff; }
+	28.9298% { background-color: #000000ff; }
+	28.9474% { background-color: #ffffffff; }
+	31.5614% { background-color: #ffffffff; }
+	31.5789% { background-color: #000000ff; }
+	34.193% { background-color: #000000ff; }
+	34.2105% { background-color: #ffffffff; }
+	36.8246% { background-color: #ffffffff; }
+	36.8421% { background-color: #000000ff; }
+	39.4561% { background-color: #000000ff; }
+	39.4737% { background-color: #ffffffff; }
+	42.0877% { background-color: #ffffffff; }
+	42.1053% { background-color: #000000ff; }
+	44.7193% { background-color: #000000ff; }
+	44.7368% { background-color: #ffffffff; }
+	47.3509% { background-color: #ffffffff; }
+	47.3684% { background-color: #000000ff; }
+	49.9825% { background-color: #000000ff; }
+	50% { background-color: #ffffffff; }
+	52.614% { background-color: #ffffffff; }
+	52.6316% { background-color: #000000ff; }
+	55.2456% { background-color: #000000ff; }
+	55.2632% { background-color: #ffffffff; }
+	57.8772% { background-color: #ffffffff; }
+	57.8947% { background-color: #000000ff; }
+	60.5088% { background-color: #000000ff; }
+	60.5263% { background-color: #ffffffff; }
+	63.1404% { background-color: #ffffffff; }
+	63.1579% { background-color: #000000ff; }
+	65.7719% { background-color: #000000ff; }
+	65.7895% { background-color: #ffffffff; }
+	68.4035% { background-color: #ffffffff; }
+	68.4211% { background-color: #000000ff; }
+	71.0351% { background-color: #000000ff; }
+	71.0526% { background-color: #ffffffff; }
+	73.6667% { background-color: #ffffffff; }
+	73.6842% { background-color: #000000ff; }
+	76.2982% { background-color: #000000ff; }
+	76.3158% { background-color: #ffffffff; }
+	78.9298% { background-color: #ffffffff; }
+	78.9474% { background-color: #000000ff; }
+	81.5614% { background-color: #000000ff; }
+	81.5789% { background-color: #ffffffff; }
+	84.193% { background-color: #ffffffff; }
+	84.2105% { background-color: #000000ff; }
+	86.8246% { background-color: #000000ff; }
+	86.8421% { background-color: #ffffffff; }
+	89.4561% { background-color: #ffffffff; }
+	89.4737% { background-color: #00000000; }
+	100% { background-color: #00000000; }
+}
+
+@keyframes 'GSLowerMark'
+{
+	0% { box-shadow: #ff1478ff 0px 0px 0px 6px; }
+	5.2456% { box-shadow: #ff1478ff 0px 0px 0px 6px; }
+	5.2632% { box-shadow: #ff1400ff 0px 0px 0px 6px; }
+	21.0351% { box-shadow: #ff1400ff 0px 0px 0px 6px; }
+	21.0526% { box-shadow: #ff14f0ff 0px 0px 0px 6px; }
+	26.2982% { box-shadow: #ff14f0ff 0px 0px 0px 6px; }
+	26.3158% { box-shadow: #ff2878ff 0px 0px 0px 6px; }
+	31.5614% { box-shadow: #ff2878ff 0px 0px 0px 6px; }
+	31.5789% { box-shadow: #ff2800ff 0px 0px 0px 6px; }
+	42.0877% { box-shadow: #ff2800ff 0px 0px 0px 6px; }
+	42.1053% { box-shadow: #ff28f0ff 0px 0px 0px 6px; }
+	47.3509% { box-shadow: #ff28f0ff 0px 0px 0px 6px; }
+	47.3684% { box-shadow: #ff3c78ff 0px 0px 0px 6px; }
+	52.614% { box-shadow: #ff3c78ff 0px 0px 0px 6px; }
+	52.6316% { box-shadow: #ff3c00ff 0px 0px 0px 6px; }
+	63.1404% { box-shadow: #ff3c00ff 0px 0px 0px 6px; }
+	63.1579% { box-shadow: #ff3cf0ff 0px 0px 0px 6px; }
+	68.4035% { box-shadow: #ff3cf0ff 0px 0px 0px 6px; }
+	68.4211% { box-shadow: #ff5078ff 0px 0px 0px 6px; }
+	73.6667% { box-shadow: #ff5078ff 0px 0px 0px 6px; }
+	73.6842% { box-shadow: #ff5000ff 0px 0px 0px 6px; }
+	84.193% { box-shadow: #ff5000ff 0px 0px 0px 6px; }
+	84.2105% { box-shadow: #ff50f0ff 0px 0px 0px 6px; }
+	89.4561% { box-shadow: #ff50f0ff 0px 0px 0px 6px; }
+	89.4737% { box-shadow: #00000000 0px 0px 0px 6px; }
+	100% { box-shadow: #00000000 0px 0px 0px 6px; }
+}
+
+@keyframes 'GSLowerOp'
+{
+	0% { opacity: 1; }
+	89.4561% { opacity: 1; }
+	89.4737% { opacity: 0; }
+	100% { opacity: 0; }
+}
+
+DOTAHud #HUDElements #minimap_container
+{
+	animation-name: GSLowerOp;
+	animation-duration: 57s;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+}
+
+DOTAHud #HUDElements #center_bg
+{
+	animation-name: GSCenterBgOp;
+	animation-duration: 57s;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+}
+
+@keyframes 'GSCenterBgOp'
+{
+	0% { opacity: 1; }
+	26.2982% { opacity: 1; }
+	26.3158% { opacity: 0; }
+	68.4035% { opacity: 0; }
+	68.4211% { opacity: 1; }
+	100% { opacity: 1; }
+}
+
+DOTAHud #HUDElements #left_flare,
+DOTAHud #HUDElements #right_flare
+{
+	animation-name: GSFlare;
+	animation-duration: 57s;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+}
+
+@keyframes 'GSFlare'
+{
+	0% { opacity: 1; }
+	47.3509% { opacity: 1; }
+	47.3684% { opacity: 0; }
+	89.4561% { opacity: 0; }
+	89.4737% { opacity: 1; }
+	100% { opacity: 1; }
+}
+
+DOTAHud #HUDElements .AbilityInsetShadowLeft,
+DOTAHud #HUDElements .AbilityInsetShadowRight
+{
+	animation-name: GSInset;
+	animation-duration: 57s;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+}
+
+@keyframes 'GSInset'
+{
+	0% { opacity: 1; }
+	47.3509% { opacity: 1; }
+	47.3684% { opacity: 0; }
+	89.4561% { opacity: 0; }
+	89.4737% { opacity: 1; }
+	100% { opacity: 1; }
+}
+
+DOTAHud #HUDElements #AbilityBevel
+{
+	animation-name: GSBevel;
+	animation-duration: 16s;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+}
+
+@keyframes 'GSBevel'
+{
+	0% { opacity: 1; }
+	49.9375% { opacity: 1; }
+	50% { opacity: 0; }
+	100% { opacity: 0; }
+}
+
+DOTAHud #HUDElements #topbar #DayGlow
+{
+	animation-name: GSDayGlow;
+	animation-duration: 12s;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+}
+
+@keyframes 'GSDayGlow'
+{
+	0% { opacity: 0.1; }
+	49.9167% { opacity: 0.1; }
+	50% { opacity: 0.3; }
+	100% { opacity: 0.3; }
+}

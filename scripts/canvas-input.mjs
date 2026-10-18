@@ -71,10 +71,11 @@ export function selectionOnClick(current, id, additive = false) {
   if (next.has(id)) next.delete(id); else next.add(id);
   return next;
 }
+// The glyph's ink centred on the brush point. Past the canvas edges too since 2026-10-16: what is
+// drawn there stays in the document, dimmed in the editor and cropped from every export.
 export function centerBrushPoints(points, measure) {
   return points.map((p) => {
     const ink = measure(p.ch);
-    return { ...p, x: Math.max(0, p.x - ink.x - ink.w / 2),
-      y: Math.max(0, p.y - ink.y - ink.h / 2) };
+    return { ...p, x: p.x - ink.x - ink.w / 2, y: p.y - ink.y - ink.h / 2 };
   });
 }

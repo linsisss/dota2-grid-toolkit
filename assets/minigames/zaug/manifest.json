@@ -1,0 +1,385 @@
+{
+ "about": "Made by scripts/make-minigame-assets.mjs from Valve’s Dota 2 files; see docs/minigames.md.",
+ "files": {
+  "data.json": {
+   "from": "scripts/events/crownfall/shmup/game.vdata, scripts/events/crownfall/shmup/enemies.vdata, scripts/events/crownfall/shmup/events.vdata, scripts/events/crownfall/shmup/paths.vdata, scripts/events/crownfall/shmup/track0.vdata, panorama/styles/battle_pass/crownfall/bp_popup_crownfall_encounter_shmup.css",
+   "bytes": 45376
+  },
+  "data/shmup_act3_map.json": {
+   "from": "data/shmup_act3_map.json",
+   "stamp": "3e70cd78a255a366",
+   "bytes": 36676
+  },
+  "images/bluebullet.webp": {
+   "from": "panorama/images/events/crownfall/shmup/bluebullet_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "d023301c11ffc800",
+   "bytes": 1388
+  },
+  "images/blueheart.webp": {
+   "from": "panorama/images/events/crownfall/shmup/blueheart_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "ce49768914b6771a",
+   "bytes": 452
+  },
+  "images/heroes/npc_dota_hero_vengefulspirit.webp": {
+   "from": "panorama/images/heroes/npc_dota_hero_vengefulspirit_png.png",
+   "width": 128,
+   "height": 72,
+   "quality": 90,
+   "stamp": "663863d01aed685d",
+   "bytes": 4010
+  },
+  "images/redbullet.webp": {
+   "from": "panorama/images/events/crownfall/shmup/redbullet_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "08b84f93bcbb6af8",
+   "bytes": 1428
+  },
+  "images/redheart.webp": {
+   "from": "panorama/images/events/crownfall/shmup/redheart_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "d00d074ffa89fda5",
+   "bytes": 452
+  },
+  "images/score_glow.webp": {
+   "from": "panorama/images/events/crownfall/shmup/score_glow_png.png",
+   "width": 400,
+   "height": 200,
+   "lossless": true,
+   "stamp": "7939b548640d7f73",
+   "bytes": 14626
+  },
+  "images/score_wing.webp": {
+   "from": "panorama/images/events/crownfall/shmup/score_wing_png.png",
+   "width": 160,
+   "height": 80,
+   "lossless": true,
+   "stamp": "4550fcb0b8320341",
+   "bytes": 138
+  },
+  "images/score_wing_double.webp": {
+   "from": "panorama/images/events/crownfall/shmup/score_wing_double_png.png",
+   "width": 160,
+   "height": 80,
+   "lossless": true,
+   "stamp": "c4681188b0ff0b83",
+   "bytes": 166
+  },
+  "images/shmup-chevron-sharp-left.webp": {
+   "from": "panorama/images/events/crownfall/shmup/shmup-chevron-sharp-left_png.png",
+   "width": 80,
+   "height": 80,
+   "lossless": true,
+   "stamp": "3401986a23c5fd07",
+   "bytes": 316
+  },
+  "images/shmup-chevron-sharp-right.webp": {
+   "from": "panorama/images/events/crownfall/shmup/shmup-chevron-sharp-right_png.png",
+   "width": 80,
+   "height": 80,
+   "lossless": true,
+   "stamp": "0b0045d7228806f1",
+   "bytes": 328
+  },
+  "images/shmup_logotitling_01.webp": {
+   "from": "panorama/images/events/crownfall/shmup/shmup_logotitling_01_png.png",
+   "width": 1527,
+   "height": 421,
+   "quality": 90,
+   "stamp": "dea535584db01356",
+   "bytes": 166296
+  },
+  "images/shmup_warning_bar.webp": {
+   "from": "panorama/images/events/crownfall/shmup/shmup_warning_bar_png.png",
+   "width": 1920,
+   "height": 200,
+   "quality": 90,
+   "stamp": "8b031c2114f82aa6",
+   "bytes": 33518
+  },
+  "sounds.json": {
+   "from": "soundevents/soundevents_crownfall.vsndevts",
+   "bytes": 8230
+  },
+  "sounds/ambient/newyear/rocket_explode01.mp3": {
+   "from": "sounds/ambient/newyear/rocket_explode01.wav",
+   "stamp": "8267a538d3a4880e",
+   "bytes": 18320
+  },
+  "sounds/ambient/newyear/rocket_explode02.mp3": {
+   "from": "sounds/ambient/newyear/rocket_explode02.wav",
+   "stamp": "0206a30fe47efad1",
+   "bytes": 19261
+  },
+  "sounds/misc/crownfall/boss_warn.mp3": {
+   "from": "sounds/misc/crownfall/boss_warn.wav",
+   "stamp": "8be7353b767b6163",
+   "bytes": 21309
+  },
+  "sounds/misc/crownfall/charge_gained.mp3": {
+   "from": "sounds/misc/crownfall/charge_gained.wav",
+   "stamp": "1a58ebcc3e85bb1f",
+   "bytes": 17314
+  },
+  "sounds/misc/crownfall/charge_max.mp3": {
+   "from": "sounds/misc/crownfall/charge_max.wav",
+   "stamp": "1378eeb57d470b36",
+   "bytes": 9803
+  },
+  "sounds/misc/crownfall/combo_break.mp3": {
+   "from": "sounds/misc/crownfall/combo_break.wav",
+   "stamp": "64c415642f7a95a8",
+   "bytes": 8805
+  },
+  "sounds/misc/crownfall/combo_success.mp3": {
+   "from": "sounds/misc/crownfall/combo_success.wav",
+   "stamp": "0b89107ac16ef70f",
+   "bytes": 11637
+  },
+  "sounds/misc/crownfall/music/fighting_main.mp3": {
+   "from": "sounds/misc/crownfall/music/fighting_main.mp3",
+   "stamp": "accd6bfcbb3fa678",
+   "bytes": 558467
+  },
+  "sounds/misc/crownfall/music/match3_main.mp3": {
+   "from": "sounds/misc/crownfall/music/match3_main.mp3",
+   "stamp": "9f6a3e03239c53b4",
+   "bytes": 521823
+  },
+  "sounds/misc/crownfall/music/shmup_main.mp3": {
+   "from": "sounds/misc/crownfall/music/shmup_main.mp3",
+   "stamp": "4bbd2f3d4f134c51",
+   "bytes": 579139
+  },
+  "sounds/misc/crownfall/player_shoot.mp3": {
+   "from": "sounds/misc/crownfall/player_shoot.wav",
+   "stamp": "c64733155a4c089d",
+   "bytes": 5514
+  },
+  "sounds/misc/crownfall/shmup_explode.mp3": {
+   "from": "sounds/misc/crownfall/shmup_explode.wav",
+   "stamp": "6be96e01e12a8d93",
+   "bytes": 34212
+  },
+  "sounds/misc/crownfall/zaug_attack.mp3": {
+   "from": "sounds/misc/crownfall/zaug_attack.wav",
+   "stamp": "73850225609aaa0c",
+   "bytes": 35774
+  },
+  "sounds/misc/crownfall/zaug_heal.mp3": {
+   "from": "sounds/misc/crownfall/zaug_heal.wav",
+   "stamp": "23916b70a743eebe",
+   "bytes": 95712
+  },
+  "sounds/misc/crownfall/zaug_roar.mp3": {
+   "from": "sounds/misc/crownfall/zaug_roar.wav",
+   "stamp": "46f5f17e6b19c4f6",
+   "bytes": 67238
+  },
+  "sounds/music/valve_dota_001/stingers/radiant_lose.mp3": {
+   "from": "sounds/music/valve_dota_001/stingers/radiant_lose.mp3",
+   "stamp": "e8bc14e91ae1f21c",
+   "bytes": 305583
+  },
+  "sounds/music/valve_dota_001/stingers/radiant_win.mp3": {
+   "from": "sounds/music/valve_dota_001/stingers/radiant_win.mp3",
+   "stamp": "220cb251f1d14d3c",
+   "bytes": 553812
+  },
+  "sounds/null_lp.mp3": {
+   "from": "sounds/null_lp.wav",
+   "stamp": "6bdb36d6b02d8e0e",
+   "bytes": 461
+  },
+  "sounds/physics/movement/wings/wingflaps_heavy_01.mp3": {
+   "from": "sounds/physics/movement/wings/wingflaps_heavy_01.wav",
+   "stamp": "ff2542c37f09da54",
+   "bytes": 7269
+  },
+  "sounds/physics/movement/wings/wingflaps_heavy_02.mp3": {
+   "from": "sounds/physics/movement/wings/wingflaps_heavy_02.wav",
+   "stamp": "2c9a1164aa1dd6f2",
+   "bytes": 6537
+  },
+  "sounds/physics/movement/wings/wingflaps_heavy_03.mp3": {
+   "from": "sounds/physics/movement/wings/wingflaps_heavy_03.wav",
+   "stamp": "dd49892856dd0f2c",
+   "bytes": 6067
+  },
+  "sounds/physics/movement/wings/wingflaps_heavy_04.mp3": {
+   "from": "sounds/physics/movement/wings/wingflaps_heavy_04.wav",
+   "stamp": "8edc1c2d5aa85977",
+   "bytes": 5078
+  },
+  "sounds/physics/movement/wings/wingflaps_heavy_05.mp3": {
+   "from": "sounds/physics/movement/wings/wingflaps_heavy_05.wav",
+   "stamp": "ff01daf2e55c634a",
+   "bytes": 5808
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3",
+   "stamp": "3b143b305919a719",
+   "bytes": 11905
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3",
+   "stamp": "4b68c676862eb9ab",
+   "bytes": 15427
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_03.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_03.mp3",
+   "stamp": "c467b696470c7391",
+   "bytes": 13992
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_04.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_04.mp3",
+   "stamp": "783b4f95c0cf44d2",
+   "bytes": 13241
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_05.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_05.mp3",
+   "stamp": "892f8af6ba1456f3",
+   "bytes": 20121
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_06.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_06.mp3",
+   "stamp": "324578ecb3c9c4fc",
+   "bytes": 18139
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_07.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_07.mp3",
+   "stamp": "883b38e096b1a9c2",
+   "bytes": 16106
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_08.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_08.mp3",
+   "stamp": "5db03b048f098c27",
+   "bytes": 19808
+  },
+  "sounds/vo/vengefulspirit/venge_crown_anger_09.mp3": {
+   "from": "sounds/vo/vengefulspirit/venge_crown_anger_09.mp3",
+   "stamp": "b1d455a42e497121",
+   "bytes": 19806
+  },
+  "sounds/weapons/creep/bad/range_projectile_launch4.mp3": {
+   "from": "sounds/weapons/creep/bad/range_projectile_launch4.wav",
+   "stamp": "38b4697fe1f338ed",
+   "bytes": 6070
+  },
+  "sounds/weapons/hero/shredder/armor_cast.mp3": {
+   "from": "sounds/weapons/hero/shredder/armor_cast.wav",
+   "stamp": "a57025d8e68d4e6c",
+   "bytes": 24927
+  },
+  "sounds/weapons/hero/skywrath/mystic_flare_target.mp3": {
+   "from": "sounds/weapons/hero/skywrath/mystic_flare_target.wav",
+   "stamp": "38164c41b89ff45a",
+   "bytes": 10242
+  },
+  "sounds/weapons/hero/skywrath/projectile_impact01.mp3": {
+   "from": "sounds/weapons/hero/skywrath/projectile_impact01.wav",
+   "stamp": "b33646ca1a908b03",
+   "bytes": 9291
+  },
+  "sounds/weapons/hero/skywrath/projectile_impact02.mp3": {
+   "from": "sounds/weapons/hero/skywrath/projectile_impact02.wav",
+   "stamp": "83079898bbecbdf9",
+   "bytes": 8671
+  },
+  "sounds/weapons/hero/skywrath/projectile_impact03.mp3": {
+   "from": "sounds/weapons/hero/skywrath/projectile_impact03.wav",
+   "stamp": "3e773347470b5173",
+   "bytes": 9089
+  },
+  "sounds/weapons/hero/vengeful_spirit/nether_swap.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/nether_swap.wav",
+   "stamp": "753469079c617f49",
+   "bytes": 24100
+  },
+  "sounds/weapons/hero/winter_wyvern/splinter_blast_cast.mp3": {
+   "from": "sounds/weapons/hero/winter_wyvern/splinter_blast_cast.wav",
+   "stamp": "ce8408439d1f60ab",
+   "bytes": 33821
+  },
+  "sounds/weapons/hero/winter_wyvern/splinter_blast_projectile.mp3": {
+   "from": "sounds/weapons/hero/winter_wyvern/splinter_blast_projectile.wav",
+   "stamp": "994ffcc3877d759c",
+   "bytes": 59346
+  },
+  "strings.en.json": {
+   "from": "resource/localization/dota_english.txt, resource/localization/novels/crownfall_english.txt",
+   "count": 78,
+   "bytes": 5722
+  },
+  "strings.ru.json": {
+   "from": "resource/localization/dota_russian.txt, resource/localization/novels/crownfall_russian.txt",
+   "count": 77,
+   "bytes": 7556
+  }
+ },
+ "valve": {
+  "data/shmup_act3_map": "data/shmup_act3_map.json",
+  "panorama/images/events/crownfall/shmup/bluebullet_png": "images/bluebullet.webp",
+  "panorama/images/events/crownfall/shmup/blueheart_png": "images/blueheart.webp",
+  "panorama/images/events/crownfall/shmup/redbullet_png": "images/redbullet.webp",
+  "panorama/images/events/crownfall/shmup/redheart_png": "images/redheart.webp",
+  "panorama/images/events/crownfall/shmup/score_glow_png": "images/score_glow.webp",
+  "panorama/images/events/crownfall/shmup/score_wing_double_png": "images/score_wing_double.webp",
+  "panorama/images/events/crownfall/shmup/score_wing_png": "images/score_wing.webp",
+  "panorama/images/events/crownfall/shmup/shmup-chevron-sharp-left_png": "images/shmup-chevron-sharp-left.webp",
+  "panorama/images/events/crownfall/shmup/shmup-chevron-sharp-right_png": "images/shmup-chevron-sharp-right.webp",
+  "panorama/images/events/crownfall/shmup/shmup_logotitling_01_png": "images/shmup_logotitling_01.webp",
+  "panorama/images/events/crownfall/shmup/shmup_warning_bar_png": "images/shmup_warning_bar.webp",
+  "panorama/images/heroes/npc_dota_hero_vengefulspirit_png": "images/heroes/npc_dota_hero_vengefulspirit.webp",
+  "sounds/ambient/newyear/rocket_explode01": "sounds/ambient/newyear/rocket_explode01.mp3",
+  "sounds/ambient/newyear/rocket_explode02": "sounds/ambient/newyear/rocket_explode02.mp3",
+  "sounds/misc/crownfall/boss_warn": "sounds/misc/crownfall/boss_warn.mp3",
+  "sounds/misc/crownfall/charge_gained": "sounds/misc/crownfall/charge_gained.mp3",
+  "sounds/misc/crownfall/charge_max": "sounds/misc/crownfall/charge_max.mp3",
+  "sounds/misc/crownfall/combo_break": "sounds/misc/crownfall/combo_break.mp3",
+  "sounds/misc/crownfall/combo_success": "sounds/misc/crownfall/combo_success.mp3",
+  "sounds/misc/crownfall/music/fighting_main": "sounds/misc/crownfall/music/fighting_main.mp3",
+  "sounds/misc/crownfall/music/match3_main": "sounds/misc/crownfall/music/match3_main.mp3",
+  "sounds/misc/crownfall/music/shmup_main": "sounds/misc/crownfall/music/shmup_main.mp3",
+  "sounds/misc/crownfall/player_shoot": "sounds/misc/crownfall/player_shoot.mp3",
+  "sounds/misc/crownfall/shmup_explode": "sounds/misc/crownfall/shmup_explode.mp3",
+  "sounds/misc/crownfall/zaug_attack": "sounds/misc/crownfall/zaug_attack.mp3",
+  "sounds/misc/crownfall/zaug_heal": "sounds/misc/crownfall/zaug_heal.mp3",
+  "sounds/misc/crownfall/zaug_roar": "sounds/misc/crownfall/zaug_roar.mp3",
+  "sounds/music/valve_dota_001/stingers/radiant_lose": "sounds/music/valve_dota_001/stingers/radiant_lose.mp3",
+  "sounds/music/valve_dota_001/stingers/radiant_win": "sounds/music/valve_dota_001/stingers/radiant_win.mp3",
+  "sounds/null_lp": "sounds/null_lp.mp3",
+  "sounds/physics/movement/wings/wingflaps_heavy_01": "sounds/physics/movement/wings/wingflaps_heavy_01.mp3",
+  "sounds/physics/movement/wings/wingflaps_heavy_02": "sounds/physics/movement/wings/wingflaps_heavy_02.mp3",
+  "sounds/physics/movement/wings/wingflaps_heavy_03": "sounds/physics/movement/wings/wingflaps_heavy_03.mp3",
+  "sounds/physics/movement/wings/wingflaps_heavy_04": "sounds/physics/movement/wings/wingflaps_heavy_04.mp3",
+  "sounds/physics/movement/wings/wingflaps_heavy_05": "sounds/physics/movement/wings/wingflaps_heavy_05.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_01": "sounds/vo/vengefulspirit/venge_crown_anger_01.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_02": "sounds/vo/vengefulspirit/venge_crown_anger_02.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_03": "sounds/vo/vengefulspirit/venge_crown_anger_03.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_04": "sounds/vo/vengefulspirit/venge_crown_anger_04.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_05": "sounds/vo/vengefulspirit/venge_crown_anger_05.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_06": "sounds/vo/vengefulspirit/venge_crown_anger_06.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_07": "sounds/vo/vengefulspirit/venge_crown_anger_07.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_08": "sounds/vo/vengefulspirit/venge_crown_anger_08.mp3",
+  "sounds/vo/vengefulspirit/venge_crown_anger_09": "sounds/vo/vengefulspirit/venge_crown_anger_09.mp3",
+  "sounds/weapons/creep/bad/range_projectile_launch4": "sounds/weapons/creep/bad/range_projectile_launch4.mp3",
+  "sounds/weapons/hero/shredder/armor_cast": "sounds/weapons/hero/shredder/armor_cast.mp3",
+  "sounds/weapons/hero/skywrath/mystic_flare_target": "sounds/weapons/hero/skywrath/mystic_flare_target.mp3",
+  "sounds/weapons/hero/skywrath/projectile_impact01": "sounds/weapons/hero/skywrath/projectile_impact01.mp3",
+  "sounds/weapons/hero/skywrath/projectile_impact02": "sounds/weapons/hero/skywrath/projectile_impact02.mp3",
+  "sounds/weapons/hero/skywrath/projectile_impact03": "sounds/weapons/hero/skywrath/projectile_impact03.mp3",
+  "sounds/weapons/hero/vengeful_spirit/nether_swap": "sounds/weapons/hero/vengeful_spirit/nether_swap.mp3",
+  "sounds/weapons/hero/winter_wyvern/splinter_blast_cast": "sounds/weapons/hero/winter_wyvern/splinter_blast_cast.mp3",
+  "sounds/weapons/hero/winter_wyvern/splinter_blast_projectile": "sounds/weapons/hero/winter_wyvern/splinter_blast_projectile.mp3"
+ }
+}

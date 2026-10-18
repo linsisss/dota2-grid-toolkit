@@ -127,7 +127,7 @@ const REASON_KINDS = { submission: 'works', background: 'backgrounds', art: 'art
 // The reasons of a card's rejection: the published work it repeats is linked in «Уже есть в мастерской».
 export function cardReasons(job, config) {
   const s = JSON.parse(job.summary || '{}'), near = s.similar?.[0];
-  const original = near ? (near.work ? `${config.origin}/workshop?id=${near.work}` : near.id ? `${config.origin}/background?background=${near.id}` : '') : '';
+  const original = near ? (near.work ? `${config.origin}/workshop?id=${near.work}` : near.id ? `${config.origin}/customize?background=${near.id}` : '') : '';
   return rejectReasons(REASON_KINDS[job.kind], { original });
 }
 // «Отклонить» on a card shows the reasons instead of the decision buttons; «Назад» brings them back.
@@ -285,7 +285,7 @@ export class CatalogTelegram {
     const origin = this.config.origin, has = (name) => !!this.store.get('SELECT 1 x FROM sqlite_master WHERE name=?', name);
     if (key.startsWith('bg:')) {
       const row = has('backgrounds') && this.store.get("SELECT id, account, title FROM backgrounds WHERE id=? AND status='approved'", Number(key.slice(3)));
-      return row && { account: row.account, title: row.title, what: 'Новый фон главного меню', open: 'Открыть фон', url: `${origin}/background?background=${row.id}` };
+      return row && { account: row.account, title: row.title, what: 'Новый фон главного меню', open: 'Открыть фон', url: `${origin}/customize?background=${row.id}` };
     }
     if (key.startsWith('guide:')) {
       const row = has('guides') && this.store.get("SELECT g.id, g.account, r.title FROM guides g JOIN guide_revisions r ON r.id=g.public_revision WHERE g.id=? AND g.status='approved'", key.slice(6));

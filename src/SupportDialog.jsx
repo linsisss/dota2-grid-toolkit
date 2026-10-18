@@ -4,6 +4,8 @@ import { Icon, Modal, rich } from './catalog/Common.jsx';
 import { COIN_ICONS } from '../scripts/coin-icons.mjs';
 import { t } from '../scripts/i18n.mjs';
 import { SUPPORT } from './support.js';
+import { BadgeMark } from './catalog/BadgeMark.jsx';
+import { badgeOf } from '../scripts/profile-badges.mjs';
 import './catalog/catalog.css';
 import './support.css';
 
@@ -89,7 +91,7 @@ export default function SupportDialog({ onClose }) {
       </section>
       {/* The «Поддержавший» profile badge (scripts/profile-badges.mjs): an admin gives it on request. */}
       <a className="support-badge" href={SUPPORT.badgeContact} target="_blank" rel="noreferrer">
-        <span className="profile-badge is-sponsor"><Icon name="badgeSponsor" size={15}/>{t('Поддержавший')}</span>
+        <span className="profile-badge is-rare"><BadgeMark badge={badgeOf('sponsor')}/>{t('Поддержавший')}</span>
         <span>{rich(t('После доната напиши {contact} в Telegram — получишь значок на аккаунт GridStudio.'), { contact: <b>@dissonance</b> })}</span>
         <Icon name="external" size={16}/>
       </a>

@@ -9,6 +9,7 @@ import heroPage from '../../assets/dota-menu/dashboard_page_hero_new_v2.xml?raw'
 import season from '../../assets/dota-menu/event.json';
 import showcase from '../../assets/dota-menu/dashboard_page_showcase.xml?raw';
 import heroesPage from '../../assets/dota-menu/dashboard_page_heroes.xml?raw';
+import loadingPage from '../../assets/dota-menu/loading_screen_background_image.xml?raw';
 import stratz from '../../assets/dota-menu/icons/stratz.svg?raw';
 import dotabuff from '../../assets/dota-menu/icons/dotabuff.svg?raw';
 
@@ -41,11 +42,17 @@ export const SEASON_EVENT = menuEvent(dashboard, season);
 const gridOption = (grid, gridVideo) => grid?.mode === 'dim' ? { page: heroesPage, dim: (grid.dim / 100) * GRID_DIM.max }
   : grid?.mode === 'own' && gridVideo ? { page: heroesPage, video: gridVideo } : null;
 // news: { carnival, season } — the home page's news cards that stay (2026-10-08); `clean` (before it)
-// hides both.
-export const packBackground = (video, { clean, news = null, hero = { mode: 'menu' }, event = true, profile = true, grid = { mode: 'menu' } }, heroVideo = null, gridVideo = null) => new Blob([menuBackgroundPack({ video, dashboard, home,
+// hides both. recipe.loading (2026-10-16): Valve's loading screen ('off', the default and for recipes
+// before it), the menu video ('menu') or `loadingVideo` ('own'; without it, the menu video).
+// recipe.hide: top bar buttons to hide (MENU_HIDE).
+const loadingOption = (loading, loadingVideo) => loading?.mode === 'menu' || loading?.mode === 'own' ? { page: loadingPage, video: loading.mode === 'own' ? loadingVideo : null } : null;
+// `video` null: no menu background of ours (the one-page customization); the pack is then null when
+// nothing else in it differs from Dota.
+export const packBackground = (video, { clean, news = null, hero = { mode: 'menu' }, event = true, profile = true, grid = { mode: 'menu' }, loading = { mode: 'off' }, hide = [] }, heroVideo = null, gridVideo = null, loadingVideo = null) => blobOf(menuBackgroundPack({ video, dashboard, home,
   news: clean ? { carnival: false, season: false } : { carnival: news?.carnival !== false, season: news?.season !== false },
   hero: hero?.mode === 'off' ? null : { page: heroPage, video: hero?.mode === 'own' ? heroVideo : null }, event: event ? season : null,
-  profile: profile ? { page: showcase, icons: { stratz, dotabuff } } : null, grid: gridOption(grid, gridVideo), md5 })], { type: 'application/octet-stream' });
+  profile: profile ? { page: showcase, icons: { stratz, dotabuff } } : null, grid: gridOption(grid, gridVideo), loading: loadingOption(loading, loadingVideo), hide, md5 }));
+const blobOf = (bytes) => bytes && new Blob([bytes], { type: 'application/octet-stream' });
 // «Командой PowerShell» (and the .bat installer's 'installer' of before): the pack goes to the site and
 // the command downloads exactly it (src/install-pack.js, scripts/installer.mjs backgroundScript) →
 // { command, remove }; `onProgress`: the share sent. The bare pack is saved as a file → null.

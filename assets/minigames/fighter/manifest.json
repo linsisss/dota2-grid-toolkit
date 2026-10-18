@@ -1,0 +1,982 @@
+{
+ "about": "Made by scripts/make-minigame-assets.mjs from Valve’s Dota 2 files; see docs/minigames.md.",
+ "files": {
+  "data.json": {
+   "from": "scripts/events/crownfall/fighting_game_hero_bristleback.vdata, scripts/events/crownfall/fighting_game_hero_dawnbreaker.vdata, scripts/events/crownfall/fighting_game_hero_marci.vdata, scripts/events/crownfall/fighting_game_hero_tusk.vdata, scripts/events/crownfall/fighting_game_hero_vengeful.vdata, scripts/events/crownfall/fighting_game_hero_fallback.vdata",
+   "bytes": 92930
+  },
+  "images/crownfall_fighting_title_screen.webp": {
+   "from": "panorama/images/events/crownfall/fight/crownfall_fighting_title_screen_psd.png",
+   "width": 1786,
+   "height": 1004,
+   "quality": 88,
+   "stamp": "5fec0ca6e5e654ec",
+   "bytes": 217914
+  },
+  "images/heroes/npc_dota_hero_bristleback.webp": {
+   "from": "panorama/images/heroes/npc_dota_hero_bristleback_png.png",
+   "width": 128,
+   "height": 72,
+   "quality": 90,
+   "stamp": "d20cbc6a3fb0177c",
+   "bytes": 3444
+  },
+  "images/heroes/npc_dota_hero_dawnbreaker.webp": {
+   "from": "panorama/images/heroes/npc_dota_hero_dawnbreaker_png.png",
+   "width": 128,
+   "height": 72,
+   "quality": 90,
+   "stamp": "b2f1b5ce4ec2e246",
+   "bytes": 5102
+  },
+  "images/heroes/npc_dota_hero_marci.webp": {
+   "from": "panorama/images/heroes/npc_dota_hero_marci_png.png",
+   "width": 128,
+   "height": 72,
+   "quality": 90,
+   "stamp": "fbb38c5ef2451fb4",
+   "bytes": 3678
+  },
+  "images/heroes/npc_dota_hero_tusk.webp": {
+   "from": "panorama/images/heroes/npc_dota_hero_tusk_png.png",
+   "width": 128,
+   "height": 72,
+   "quality": 90,
+   "stamp": "8a54057c69eccf16",
+   "bytes": 3372
+  },
+  "images/heroes/npc_dota_hero_vengefulspirit.webp": {
+   "from": "panorama/images/heroes/npc_dota_hero_vengefulspirit_png.png",
+   "width": 128,
+   "height": 72,
+   "quality": 90,
+   "stamp": "bfbc923c2b7c4c4c",
+   "bytes": 4010
+  },
+  "images/heroes/selection/npc_dota_hero_bristleback.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_bristleback_png.png",
+   "width": 142,
+   "height": 188,
+   "quality": 88,
+   "stamp": "0c6420b91abaff1b",
+   "bytes": 7726
+  },
+  "images/heroes/selection/npc_dota_hero_dawnbreaker.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_dawnbreaker_png.png",
+   "width": 71,
+   "height": 94,
+   "quality": 88,
+   "stamp": "79fb00f7b38bfba8",
+   "bytes": 3718
+  },
+  "images/heroes/selection/npc_dota_hero_marci.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_marci_png.png",
+   "width": 71,
+   "height": 94,
+   "quality": 88,
+   "stamp": "cf2e350aec60e288",
+   "bytes": 2578
+  },
+  "images/heroes/selection/npc_dota_hero_tusk.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_tusk_png.png",
+   "width": 142,
+   "height": 188,
+   "quality": 88,
+   "stamp": "464f6415ee6710e3",
+   "bytes": 6082
+  },
+  "images/heroes/selection/npc_dota_hero_vengefulspirit.webp": {
+   "from": "panorama/images/heroes/selection/npc_dota_hero_vengefulspirit_png.png",
+   "width": 142,
+   "height": 188,
+   "quality": 88,
+   "stamp": "5db704f7f32d7548",
+   "bytes": 7054
+  },
+  "images/hud/hud_background.webp": {
+   "from": "panorama/images/events/crownfall/fight/hud/hud_background_png.png",
+   "width": 1920,
+   "height": 144,
+   "quality": 88,
+   "stamp": "425197dc80d2ff3a",
+   "bytes": 73022
+  },
+  "images/hud/shield_icon.webp": {
+   "from": "panorama/images/events/crownfall/fight/hud/shield_icon_png.png",
+   "width": 65,
+   "height": 65,
+   "lossless": true,
+   "stamp": "1ec808643eb41ffe",
+   "bytes": 3070
+  },
+  "images/hud/shield_icon_broken.webp": {
+   "from": "panorama/images/events/crownfall/fight/hud/shield_icon_broken_png.png",
+   "width": 65,
+   "height": 65,
+   "lossless": true,
+   "stamp": "12f9c9ca8e4ddfd5",
+   "bytes": 3208
+  },
+  "images/hud/timer_background_image.webp": {
+   "from": "panorama/images/events/crownfall/fight/hud/timer_background_image_png.png",
+   "width": 560,
+   "height": 360,
+   "lossless": true,
+   "stamp": "4eab3ae89f0a049c",
+   "bytes": 128294
+  },
+  "images/hud/timer_border.webp": {
+   "from": "panorama/images/events/crownfall/fight/hud/timer_border_png.png",
+   "width": 560,
+   "height": 360,
+   "lossless": true,
+   "stamp": "564b604c5dbee5f8",
+   "bytes": 5298
+  },
+  "images/hud/timer_mask.webp": {
+   "from": "panorama/images/events/crownfall/fight/hud/timer_mask_png.png",
+   "width": 560,
+   "height": 360,
+   "lossless": true,
+   "stamp": "f7a72153c28cde4d",
+   "bytes": 1090
+  },
+  "images/hud/timer_shadow.webp": {
+   "from": "panorama/images/events/crownfall/fight/hud/timer_shadow_png.png",
+   "width": 560,
+   "height": 360,
+   "lossless": true,
+   "stamp": "6489b3e065ab5181",
+   "bytes": 40030
+  },
+  "images/hud/win_icon.webp": {
+   "from": "panorama/images/events/crownfall/fight/hud/win_icon_png.png",
+   "width": 64,
+   "height": 64,
+   "lossless": true,
+   "stamp": "f23700f79f630a4d",
+   "bytes": 2712
+  },
+  "images/portrait_backgrounds/clinkz.webp": {
+   "from": "materials/portraits_card/portrait_backgrounds/clinkz_psd.png",
+   "width": 256,
+   "height": 256,
+   "quality": 84,
+   "stamp": "e126a8312d7ad646",
+   "bytes": 1384
+  },
+  "images/portrait_backgrounds/tinker.webp": {
+   "from": "materials/portraits_card/portrait_backgrounds/tinker_psd.png",
+   "width": 256,
+   "height": 256,
+   "quality": 84,
+   "stamp": "fdedf0a841945dea",
+   "bytes": 1300
+  },
+  "images/portrait_backgrounds/vengeful_spirit.webp": {
+   "from": "materials/portraits_card/portrait_backgrounds/vengeful_spirit_psd.png",
+   "width": 256,
+   "height": 256,
+   "quality": 84,
+   "stamp": "4b6774ec6b498b02",
+   "bytes": 1286
+  },
+  "images/portrait_backgrounds/witch_doctor.webp": {
+   "from": "materials/portraits_card/portrait_backgrounds/witch_doctor_psd.png",
+   "width": 256,
+   "height": 256,
+   "quality": 84,
+   "stamp": "a90de4b1fcd06216",
+   "bytes": 1016
+  },
+  "images/score_background.webp": {
+   "from": "panorama/images/events/crownfall/fight/score_background_png.png",
+   "width": 920,
+   "height": 500,
+   "quality": 84,
+   "stamp": "3d80dba4d4ad4386",
+   "bytes": 72352
+  },
+  "images/sleetfighter_titlescreen_art.webp": {
+   "from": "panorama/images/events/crownfall/fight/sleetfighter_titlescreen_art_png.png",
+   "width": 1920,
+   "height": 1080,
+   "quality": 84,
+   "stamp": "80d0df21ca398b60",
+   "bytes": 292560
+  },
+  "images/spellicons/marci_unleash.webp": {
+   "from": "panorama/images/spellicons/marci_unleash_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "58849c9df039ce5e",
+   "bytes": 19636
+  },
+  "images/spellicons/vengefulspirit_nether_swap.webp": {
+   "from": "panorama/images/spellicons/vengefulspirit_nether_swap_png.png",
+   "width": 128,
+   "height": 128,
+   "lossless": true,
+   "stamp": "752e6044b876b688",
+   "bytes": 16756
+  },
+  "images/tab_background.webp": {
+   "from": "panorama/images/events/crownfall/buttons/tab_background_png.png",
+   "width": 441,
+   "height": 84,
+   "lossless": true,
+   "stamp": "baf76473f166361f",
+   "bytes": 12512
+  },
+  "images/tabs_background.webp": {
+   "from": "panorama/images/events/crownfall/buttons/tabs_background_png.png",
+   "width": 280,
+   "height": 112,
+   "lossless": true,
+   "stamp": "7ba2d3675b00fa5c",
+   "bytes": 15232
+  },
+  "images/tavern_map/footprint.webp": {
+   "from": "panorama/images/events/crownfall/fight/tavern_map/footprint_png.png",
+   "width": 314,
+   "height": 314,
+   "lossless": true,
+   "stamp": "f9a28f3a1f479800",
+   "bytes": 1094
+  },
+  "images/tavern_map/slash.webp": {
+   "from": "panorama/images/events/crownfall/fight/tavern_map/slash_png.png",
+   "width": 434,
+   "height": 453,
+   "lossless": true,
+   "stamp": "7ee93dcf21e26ce8",
+   "bytes": 61870
+  },
+  "images/tavern_map/tavern_floorplan.webp": {
+   "from": "panorama/images/events/crownfall/fight/tavern_map/tavern_floorplan_png.png",
+   "width": 1920,
+   "height": 1080,
+   "quality": 84,
+   "stamp": "2ea18ee3866676ae",
+   "bytes": 64524
+  },
+  "images/text_dust.webp": {
+   "from": "panorama/images/events/crownfall/fight/text_dust_png.png",
+   "width": 1120,
+   "height": 880,
+   "quality": 90,
+   "stamp": "b77430c5ae5fc616",
+   "bytes": 11596
+  },
+  "images/timer_background.webp": {
+   "from": "panorama/images/events/crownfall/fight/timer_background_png.png",
+   "width": 920,
+   "height": 305,
+   "lossless": true,
+   "stamp": "f42386bc85b68ea4",
+   "bytes": 130490
+  },
+  "models/bristleback.glb": {
+   "from": "models/bristleback.glb",
+   "stamp": "8ba4eebd4a91e025",
+   "bytes": 598788
+  },
+  "models/bristleback_back.glb": {
+   "from": "models/bristleback_back.glb",
+   "stamp": "32f5396d07c9802d",
+   "bytes": 50820
+  },
+  "models/bristleback_bracer.glb": {
+   "from": "models/bristleback_bracer.glb",
+   "stamp": "7fc4bb3b7254b59a",
+   "bytes": 28256
+  },
+  "models/bristleback_hairball.glb": {
+   "from": "models/bristleback_hairball.glb",
+   "stamp": "a393b819ca0ef022",
+   "bytes": 15544
+  },
+  "models/bristleback_head.glb": {
+   "from": "models/bristleback_head.glb",
+   "stamp": "ae5207a812740281",
+   "bytes": 21824
+  },
+  "models/bristleback_necklace.glb": {
+   "from": "models/bristleback_necklace.glb",
+   "stamp": "9702089bc0100a7d",
+   "bytes": 22524
+  },
+  "models/bristleback_offhand_weapon.glb": {
+   "from": "models/bristleback_offhand_weapon.glb",
+   "stamp": "31253ab0edaddf5b",
+   "bytes": 18652
+  },
+  "models/bristleback_weapon.glb": {
+   "from": "models/bristleback_weapon.glb",
+   "stamp": "6ff41347c43c3dc4",
+   "bytes": 29332
+  },
+  "models/dawnbreaker.glb": {
+   "from": "models/dawnbreaker.glb",
+   "stamp": "3948e2f456249522",
+   "bytes": 1084276
+  },
+  "models/dawnbreaker_armor.glb": {
+   "from": "models/dawnbreaker_armor.glb",
+   "stamp": "947e2a8bac4086b9",
+   "bytes": 179816
+  },
+  "models/dawnbreaker_arms.glb": {
+   "from": "models/dawnbreaker_arms.glb",
+   "stamp": "d0e263b0c13b009a",
+   "bytes": 83756
+  },
+  "models/dawnbreaker_head.glb": {
+   "from": "models/dawnbreaker_head.glb",
+   "stamp": "247b51d31a226caf",
+   "bytes": 202740
+  },
+  "models/dawnbreaker_weapon.glb": {
+   "from": "models/dawnbreaker_weapon.glb",
+   "stamp": "779ca5451508a315",
+   "bytes": 105708
+  },
+  "models/marci_back.glb": {
+   "from": "models/marci_back.glb",
+   "stamp": "535f1318957c1309",
+   "bytes": 121892
+  },
+  "models/marci_base.glb": {
+   "from": "models/marci_base.glb",
+   "stamp": "ff8b3e8ed8104ed8",
+   "bytes": 1653052
+  },
+  "models/marci_costume.glb": {
+   "from": "models/marci_costume.glb",
+   "stamp": "9681426ae1d49a36",
+   "bytes": 318728
+  },
+  "models/marci_head.glb": {
+   "from": "models/marci_head.glb",
+   "stamp": "1b62c8f626ea9dcd",
+   "bytes": 192440
+  },
+  "models/marci_shoulders.glb": {
+   "from": "models/marci_shoulders.glb",
+   "stamp": "4ea738cb00fcd743",
+   "bytes": 84904
+  },
+  "models/tusk_armor_glove.glb": {
+   "from": "models/tusk_armor_glove.glb",
+   "stamp": "b36887fc7b6fa457",
+   "bytes": 45492
+  },
+  "models/tusk_cowl.glb": {
+   "from": "models/tusk_cowl.glb",
+   "stamp": "9eb1bf5ff53828e0",
+   "bytes": 30288
+  },
+  "models/tusk_hat.glb": {
+   "from": "models/tusk_hat.glb",
+   "stamp": "9751ebc4df9b5e41",
+   "bytes": 26548
+  },
+  "models/tusk_horns.glb": {
+   "from": "models/tusk_horns.glb",
+   "stamp": "c78cb5d8bf56481e",
+   "bytes": 14728
+  },
+  "models/tusk_weapon.glb": {
+   "from": "models/tusk_weapon.glb",
+   "stamp": "8e9d5c7f1524dabd",
+   "bytes": 22120
+  },
+  "models/tuskarr.glb": {
+   "from": "models/tuskarr.glb",
+   "stamp": "5814347a3619cb96",
+   "bytes": 448572
+  },
+  "models/venge_arcana.glb": {
+   "from": "models/venge_arcana.glb",
+   "stamp": "006ac29d938c04c8",
+   "bytes": 1462204
+  },
+  "models/venge_arcana_head.glb": {
+   "from": "models/venge_arcana_head.glb",
+   "stamp": "a51ebad013d0e342",
+   "bytes": 323580
+  },
+  "models/venge_arcana_legs.glb": {
+   "from": "models/venge_arcana_legs.glb",
+   "stamp": "17709623ac81e4a0",
+   "bytes": 299428
+  },
+  "models/venge_arcana_shoulders.glb": {
+   "from": "models/venge_arcana_shoulders.glb",
+   "stamp": "cdf126c9e87ce222",
+   "bytes": 553228
+  },
+  "models/venge_arcana_weapon.glb": {
+   "from": "models/venge_arcana_weapon.glb",
+   "stamp": "089c8c55ef4ee3a2",
+   "bytes": 174116
+  },
+  "sounds.json": {
+   "from": "soundevents/game_sounds_heroes/game_sounds_bristleback.vsndevts, soundevents/game_sounds_heroes/game_sounds_dawnbreaker.vsndevts, soundevents/game_sounds_heroes/game_sounds_marci.vsndevts, soundevents/game_sounds_heroes/game_sounds_tusk.vsndevts, soundevents/game_sounds_heroes/game_sounds_vengefulspirit.vsndevts, soundevents/voscripts/game_sounds_vo_announcer_dota_fighter.vsndevts, soundevents/soundevents_fighting_game.vsndevts",
+   "bytes": 15012
+  },
+  "sounds/misc/crownfall/music/fighting_main.mp3": {
+   "from": "sounds/misc/crownfall/music/fighting_main.mp3",
+   "stamp": "824f351befed04ba",
+   "bytes": 558467
+  },
+  "sounds/misc/crownfall/music/fighting_menu.mp3": {
+   "from": "sounds/misc/crownfall/music/fighting_menu.mp3",
+   "stamp": "63764bbe03bb9f33",
+   "bytes": 1384591
+  },
+  "sounds/misc/crownfall/plane.mp3": {
+   "from": "sounds/misc/crownfall/plane.wav",
+   "stamp": "cfa1b154cb3f6a4c",
+   "bytes": 27862
+  },
+  "sounds/misc/spectator/crowd_client01.mp3": {
+   "from": "sounds/misc/spectator/crowd_client01.mp3",
+   "stamp": "0e38d39255815e1f",
+   "bytes": 124524
+  },
+  "sounds/misc/spectator/crowd_client02.mp3": {
+   "from": "sounds/misc/spectator/crowd_client02.mp3",
+   "stamp": "9eac6ad6d591e914",
+   "bytes": 110535
+  },
+  "sounds/misc/spectator/crowd_client03.mp3": {
+   "from": "sounds/misc/spectator/crowd_client03.mp3",
+   "stamp": "aaa109e72e4583c1",
+   "bytes": 121974
+  },
+  "sounds/misc/spectator/crowd_client04.mp3": {
+   "from": "sounds/misc/spectator/crowd_client04.mp3",
+   "stamp": "d5b5af771d8b904e",
+   "bytes": 119417
+  },
+  "sounds/misc/spectator/crowd_client05.mp3": {
+   "from": "sounds/misc/spectator/crowd_client05.mp3",
+   "stamp": "630950ab5e47ba24",
+   "bytes": 111074
+  },
+  "sounds/music/valve_dota_001/music/countdown.mp3": {
+   "from": "sounds/music/valve_dota_001/music/countdown.mp3",
+   "stamp": "e89e7bc6f1edb272",
+   "bytes": 338939
+  },
+  "sounds/music/valve_dota_001/stingers/radiant_win.mp3": {
+   "from": "sounds/music/valve_dota_001/stingers/radiant_win.mp3",
+   "stamp": "d7cfebf304523fd2",
+   "bytes": 553812
+  },
+  "sounds/ui/treasure_01.mp3": {
+   "from": "sounds/ui/treasure_01.wav",
+   "stamp": "8bd97aea26836f53",
+   "bytes": 61760
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_challenger_01.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_challenger_01.wav",
+   "stamp": "e9619d252d854535",
+   "bytes": 63270
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_fight_01.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_fight_01.wav",
+   "stamp": "d436a57613f63750",
+   "bytes": 17184
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_013_bristleback.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_hero_013_bristleback.wav",
+   "stamp": "48f2b0bf559634ba",
+   "bytes": 24665
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_023_dawnbreaker.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_hero_023_dawnbreaker.wav",
+   "stamp": "770c111c9d8736d5",
+   "bytes": 33332
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_057_marci.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_hero_057_marci.wav",
+   "stamp": "2f35d4e20d00b801",
+   "bytes": 32502
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_110_tusk.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_hero_110_tusk.wav",
+   "stamp": "6b96c29daa5885c2",
+   "bytes": 20549
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_114_vengeful_spirit.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_hero_114_vengeful_spirit.wav",
+   "stamp": "9d6c86436a1d1257",
+   "bytes": 42569
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_ko_01.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_ko_01.wav",
+   "stamp": "84d3fac174f2e9cc",
+   "bytes": 27070
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_lose_01.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_lose_01.wav",
+   "stamp": "1672d4445b55945a",
+   "bytes": 35269
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_round_01.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_round_01.wav",
+   "stamp": "7f656bc518680893",
+   "bytes": 25763
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_round_02.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_round_02.wav",
+   "stamp": "6c30fe00e5409f78",
+   "bytes": 32261
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_round_03.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_round_03.wav",
+   "stamp": "0cbbac7e0f65dc1c",
+   "bytes": 36676
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_round_final.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_round_final.wav",
+   "stamp": "fe2a1382e581a73b",
+   "bytes": 45647
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_versus.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_versus.wav",
+   "stamp": "2ec545c0a671cc82",
+   "bytes": 21515
+  },
+  "sounds/vo/announcer_dota_fighter/dota_fighter_victory_01.mp3": {
+   "from": "sounds/vo/announcer_dota_fighter/dota_fighter_victory_01.wav",
+   "stamp": "28ed0d76596e8716",
+   "bytes": 29315
+  },
+  "sounds/weapons/hero/axe/preattack01.mp3": {
+   "from": "sounds/weapons/hero/axe/preattack01.wav",
+   "stamp": "4c6f598ff4c19dab",
+   "bytes": 16814
+  },
+  "sounds/weapons/hero/axe/preattack02.mp3": {
+   "from": "sounds/weapons/hero/axe/preattack02.wav",
+   "stamp": "3fc1b1b9114bbfc9",
+   "bytes": 15770
+  },
+  "sounds/weapons/hero/axe/preattack03.mp3": {
+   "from": "sounds/weapons/hero/axe/preattack03.wav",
+   "stamp": "3f6e89204ba3e584",
+   "bytes": 17022
+  },
+  "sounds/weapons/hero/beastmaster/attack01.mp3": {
+   "from": "sounds/weapons/hero/beastmaster/attack01.wav",
+   "stamp": "2cb75139f7662c90",
+   "bytes": 6251
+  },
+  "sounds/weapons/hero/beastmaster/attack02.mp3": {
+   "from": "sounds/weapons/hero/beastmaster/attack02.wav",
+   "stamp": "a4993b42f04720df",
+   "bytes": 5677
+  },
+  "sounds/weapons/hero/beastmaster/attack03.mp3": {
+   "from": "sounds/weapons/hero/beastmaster/attack03.wav",
+   "stamp": "61a17c9d80dd4c1f",
+   "bytes": 6096
+  },
+  "sounds/weapons/hero/bristlebog/goo_cast.mp3": {
+   "from": "sounds/weapons/hero/bristlebog/goo_cast.wav",
+   "stamp": "94d599323533f5bd",
+   "bytes": 30429
+  },
+  "sounds/weapons/hero/bristlebog/goo_target.mp3": {
+   "from": "sounds/weapons/hero/bristlebog/goo_target.wav",
+   "stamp": "40a9816614ca94d6",
+   "bytes": 58650
+  },
+  "sounds/weapons/hero/bristlebog/quill_cast.mp3": {
+   "from": "sounds/weapons/hero/bristlebog/quill_cast.wav",
+   "stamp": "2e91cbf1a53ae136",
+   "bytes": 11833
+  },
+  "sounds/weapons/hero/bristlebog/quill_target01.mp3": {
+   "from": "sounds/weapons/hero/bristlebog/quill_target01.wav",
+   "stamp": "13d6a20f13f1b367",
+   "bytes": 4139
+  },
+  "sounds/weapons/hero/bristlebog/quill_target02.mp3": {
+   "from": "sounds/weapons/hero/bristlebog/quill_target02.wav",
+   "stamp": "b2f71089e4b2f617",
+   "bytes": 4451
+  },
+  "sounds/weapons/hero/bristlebog/quill_target03.mp3": {
+   "from": "sounds/weapons/hero/bristlebog/quill_target03.wav",
+   "stamp": "987a8964f7b51a75",
+   "bytes": 5236
+  },
+  "sounds/weapons/hero/bristlebog/quill_target04.mp3": {
+   "from": "sounds/weapons/hero/bristlebog/quill_target04.wav",
+   "stamp": "fe21c6d0fc386775",
+   "bytes": 6174
+  },
+  "sounds/weapons/hero/dawnbreaker/attack01.mp3": {
+   "from": "sounds/weapons/hero/dawnbreaker/attack01.wav",
+   "stamp": "d1f7026d4f17640f",
+   "bytes": 17777
+  },
+  "sounds/weapons/hero/dawnbreaker/attack02.mp3": {
+   "from": "sounds/weapons/hero/dawnbreaker/attack02.wav",
+   "stamp": "abf52150cecc9c4a",
+   "bytes": 15375
+  },
+  "sounds/weapons/hero/dawnbreaker/attack03.mp3": {
+   "from": "sounds/weapons/hero/dawnbreaker/attack03.wav",
+   "stamp": "001577267566bbbb",
+   "bytes": 12199
+  },
+  "sounds/weapons/hero/dawnbreaker/elated_stun.mp3": {
+   "from": "sounds/weapons/hero/dawnbreaker/elated_stun.wav",
+   "stamp": "e4a4c6fe635e9395",
+   "bytes": 32227
+  },
+  "sounds/weapons/hero/dawnbreaker/fire_wreath_smash.mp3": {
+   "from": "sounds/weapons/hero/dawnbreaker/fire_wreath_smash.wav",
+   "stamp": "97099bf549edbb55",
+   "bytes": 41994
+  },
+  "sounds/weapons/hero/dawnbreaker/fire_wreath_sweep.mp3": {
+   "from": "sounds/weapons/hero/dawnbreaker/fire_wreath_sweep.wav",
+   "stamp": "051879f5e24571cd",
+   "bytes": 16494
+  },
+  "sounds/weapons/hero/marci/attack01.mp3": {
+   "from": "sounds/weapons/hero/marci/attack01.wav",
+   "stamp": "1476c67ecc3364e2",
+   "bytes": 8915
+  },
+  "sounds/weapons/hero/marci/attack02.mp3": {
+   "from": "sounds/weapons/hero/marci/attack02.wav",
+   "stamp": "31a734d9ca607611",
+   "bytes": 7974
+  },
+  "sounds/weapons/hero/marci/attack03.mp3": {
+   "from": "sounds/weapons/hero/marci/attack03.wav",
+   "stamp": "16b1272b5ff021b2",
+   "bytes": 8078
+  },
+  "sounds/weapons/hero/marci/preattack01.mp3": {
+   "from": "sounds/weapons/hero/marci/preattack01.wav",
+   "stamp": "0e4f86176fcbe500",
+   "bytes": 8130
+  },
+  "sounds/weapons/hero/marci/preattack02.mp3": {
+   "from": "sounds/weapons/hero/marci/preattack02.wav",
+   "stamp": "87a8b880ebd7a071",
+   "bytes": 6722
+  },
+  "sounds/weapons/hero/marci/preattack03.mp3": {
+   "from": "sounds/weapons/hero/marci/preattack03.wav",
+   "stamp": "dac2ea8816b1808b",
+   "bytes": 9226
+  },
+  "sounds/weapons/hero/marci/rebound_cast.mp3": {
+   "from": "sounds/weapons/hero/marci/rebound_cast.wav",
+   "stamp": "1d0f9d2a5c208666",
+   "bytes": 25342
+  },
+  "sounds/weapons/hero/marci/unleash_cast.mp3": {
+   "from": "sounds/weapons/hero/marci/unleash_cast.wav",
+   "stamp": "1037a710ebb781f4",
+   "bytes": 55238
+  },
+  "sounds/weapons/hero/marci/unleash_charged_3d.mp3": {
+   "from": "sounds/weapons/hero/marci/unleash_charged_3d.wav",
+   "stamp": "51759cf5cefc263b",
+   "bytes": 21370
+  },
+  "sounds/weapons/hero/marci/unleash_pulse.mp3": {
+   "from": "sounds/weapons/hero/marci/unleash_pulse.wav",
+   "stamp": "96419a3eb4e7df7c",
+   "bytes": 44300
+  },
+  "sounds/weapons/hero/phantom_assassin/phantom_assassin_swing1.mp3": {
+   "from": "sounds/weapons/hero/phantom_assassin/phantom_assassin_swing1.wav",
+   "stamp": "f4e3719830a732c4",
+   "bytes": 6036
+  },
+  "sounds/weapons/hero/shared/large_blade/whoosh01.mp3": {
+   "from": "sounds/weapons/hero/shared/large_blade/whoosh01.wav",
+   "stamp": "c405998e3cfdc346",
+   "bytes": 13604
+  },
+  "sounds/weapons/hero/shared/large_blade/whoosh02.mp3": {
+   "from": "sounds/weapons/hero/shared/large_blade/whoosh02.wav",
+   "stamp": "50179783da3d9703",
+   "bytes": 12377
+  },
+  "sounds/weapons/hero/shared/large_blade/whoosh03.mp3": {
+   "from": "sounds/weapons/hero/shared/large_blade/whoosh03.wav",
+   "stamp": "5dfcf49ce1ed9abd",
+   "bytes": 13082
+  },
+  "sounds/weapons/hero/shared/small_blade/attack_long01.mp3": {
+   "from": "sounds/weapons/hero/shared/small_blade/attack_long01.wav",
+   "stamp": "a4ac6103613afa58",
+   "bytes": 8341
+  },
+  "sounds/weapons/hero/shared/small_blade/attack_long02.mp3": {
+   "from": "sounds/weapons/hero/shared/small_blade/attack_long02.wav",
+   "stamp": "fb8dfe652ab0cf16",
+   "bytes": 5470
+  },
+  "sounds/weapons/hero/shared/small_blade/attack_long03.mp3": {
+   "from": "sounds/weapons/hero/shared/small_blade/attack_long03.wav",
+   "stamp": "8ac7737987678048",
+   "bytes": 5052
+  },
+  "sounds/weapons/hero/spirit_breaker/attack01.mp3": {
+   "from": "sounds/weapons/hero/spirit_breaker/attack01.wav",
+   "stamp": "3a23707f040bbe26",
+   "bytes": 14076
+  },
+  "sounds/weapons/hero/spirit_breaker/attack02.mp3": {
+   "from": "sounds/weapons/hero/spirit_breaker/attack02.wav",
+   "stamp": "1737a41d38b7ad5b",
+   "bytes": 17366
+  },
+  "sounds/weapons/hero/spirit_breaker/attack03.mp3": {
+   "from": "sounds/weapons/hero/spirit_breaker/attack03.wav",
+   "stamp": "e18b1f7b8aaee5de",
+   "bytes": 9956
+  },
+  "sounds/weapons/hero/techies/suicide.mp3": {
+   "from": "sounds/weapons/hero/techies/suicide.wav",
+   "stamp": "0a536407f63ba38d",
+   "bytes": 78381
+  },
+  "sounds/weapons/hero/tusk/penguin01.mp3": {
+   "from": "sounds/weapons/hero/tusk/penguin01.wav",
+   "stamp": "4d344ca24cb61fc7",
+   "bytes": 10973
+  },
+  "sounds/weapons/hero/tusk/penguin02.mp3": {
+   "from": "sounds/weapons/hero/tusk/penguin02.wav",
+   "stamp": "5e5b7e65a03a37a6",
+   "bytes": 11544
+  },
+  "sounds/weapons/hero/tusk/penguin03.mp3": {
+   "from": "sounds/weapons/hero/tusk/penguin03.wav",
+   "stamp": "a1557b59c27426c5",
+   "bytes": 14983
+  },
+  "sounds/weapons/hero/tusk/punch_target.mp3": {
+   "from": "sounds/weapons/hero/tusk/punch_target.wav",
+   "stamp": "3d353d5ec0bdbfc2",
+   "bytes": 34208
+  },
+  "sounds/weapons/hero/tusk/snowball_stun01.mp3": {
+   "from": "sounds/weapons/hero/tusk/snowball_stun01.wav",
+   "stamp": "2a30e69585a88a51",
+   "bytes": 10659
+  },
+  "sounds/weapons/hero/tusk/snowball_stun02.mp3": {
+   "from": "sounds/weapons/hero/tusk/snowball_stun02.wav",
+   "stamp": "bc00ded2deb8528b",
+   "bytes": 11440
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile1.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile1.wav",
+   "stamp": "0235405e74f2e403",
+   "bytes": 20806
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile2.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile2.wav",
+   "stamp": "5e3bda0870d09dfa",
+   "bytes": 22318
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile3.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile3.wav",
+   "stamp": "2e0f5c6662397fdf",
+   "bytes": 21353
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile4.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile4.wav",
+   "stamp": "5e3bda0870d09dfa",
+   "bytes": 22161
+  },
+  "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.wav",
+   "stamp": "2a8e490a4f6096be",
+   "bytes": 18064
+  },
+  "sounds/weapons/hero/vengeful_spirit/nether_swap.mp3": {
+   "from": "sounds/weapons/hero/vengeful_spirit/nether_swap.wav",
+   "stamp": "ee35b41ba85d2e06",
+   "bytes": 24100
+  },
+  "strings.en.json": {
+   "from": "resource/localization/dota_english.txt, resource/localization/novels/crownfall_english.txt",
+   "count": 149,
+   "bytes": 10480
+  },
+  "strings.ru.json": {
+   "from": "resource/localization/dota_russian.txt, resource/localization/novels/crownfall_russian.txt",
+   "count": 149,
+   "bytes": 12977
+  }
+ },
+ "valve": {
+  "materials/portraits_card/portrait_backgrounds/clinkz_psd": "images/portrait_backgrounds/clinkz.webp",
+  "materials/portraits_card/portrait_backgrounds/tinker_psd": "images/portrait_backgrounds/tinker.webp",
+  "materials/portraits_card/portrait_backgrounds/vengeful_spirit_psd": "images/portrait_backgrounds/vengeful_spirit.webp",
+  "materials/portraits_card/portrait_backgrounds/witch_doctor_psd": "images/portrait_backgrounds/witch_doctor.webp",
+  "models/bristleback": "models/bristleback.glb",
+  "models/bristleback_back": "models/bristleback_back.glb",
+  "models/bristleback_bracer": "models/bristleback_bracer.glb",
+  "models/bristleback_hairball": "models/bristleback_hairball.glb",
+  "models/bristleback_head": "models/bristleback_head.glb",
+  "models/bristleback_necklace": "models/bristleback_necklace.glb",
+  "models/bristleback_offhand_weapon": "models/bristleback_offhand_weapon.glb",
+  "models/bristleback_weapon": "models/bristleback_weapon.glb",
+  "models/dawnbreaker": "models/dawnbreaker.glb",
+  "models/dawnbreaker_armor": "models/dawnbreaker_armor.glb",
+  "models/dawnbreaker_arms": "models/dawnbreaker_arms.glb",
+  "models/dawnbreaker_head": "models/dawnbreaker_head.glb",
+  "models/dawnbreaker_weapon": "models/dawnbreaker_weapon.glb",
+  "models/marci_back": "models/marci_back.glb",
+  "models/marci_base": "models/marci_base.glb",
+  "models/marci_costume": "models/marci_costume.glb",
+  "models/marci_head": "models/marci_head.glb",
+  "models/marci_shoulders": "models/marci_shoulders.glb",
+  "models/tusk_armor_glove": "models/tusk_armor_glove.glb",
+  "models/tusk_cowl": "models/tusk_cowl.glb",
+  "models/tusk_hat": "models/tusk_hat.glb",
+  "models/tusk_horns": "models/tusk_horns.glb",
+  "models/tusk_weapon": "models/tusk_weapon.glb",
+  "models/tuskarr": "models/tuskarr.glb",
+  "models/venge_arcana": "models/venge_arcana.glb",
+  "models/venge_arcana_head": "models/venge_arcana_head.glb",
+  "models/venge_arcana_legs": "models/venge_arcana_legs.glb",
+  "models/venge_arcana_shoulders": "models/venge_arcana_shoulders.glb",
+  "models/venge_arcana_weapon": "models/venge_arcana_weapon.glb",
+  "panorama/images/events/crownfall/buttons/tab_background_png": "images/tab_background.webp",
+  "panorama/images/events/crownfall/buttons/tabs_background_png": "images/tabs_background.webp",
+  "panorama/images/events/crownfall/fight/accept_fight_popup_background_png": "images/accept_fight_popup_background.webp",
+  "panorama/images/events/crownfall/fight/crownfall_fighting_title_screen_psd": "images/crownfall_fighting_title_screen.webp",
+  "panorama/images/events/crownfall/fight/grain_mask_png": "images/grain_mask.webp",
+  "panorama/images/events/crownfall/fight/hud/hud_background_png": "images/hud/hud_background.webp",
+  "panorama/images/events/crownfall/fight/hud/shield_icon_broken_png": "images/hud/shield_icon_broken.webp",
+  "panorama/images/events/crownfall/fight/hud/shield_icon_png": "images/hud/shield_icon.webp",
+  "panorama/images/events/crownfall/fight/hud/timer_background_image_png": "images/hud/timer_background_image.webp",
+  "panorama/images/events/crownfall/fight/hud/timer_border_png": "images/hud/timer_border.webp",
+  "panorama/images/events/crownfall/fight/hud/timer_mask_png": "images/hud/timer_mask.webp",
+  "panorama/images/events/crownfall/fight/hud/timer_shadow_png": "images/hud/timer_shadow.webp",
+  "panorama/images/events/crownfall/fight/hud/win_icon_png": "images/hud/win_icon.webp",
+  "panorama/images/events/crownfall/fight/score_background_png": "images/score_background.webp",
+  "panorama/images/events/crownfall/fight/sleetfighter_titlescreen_art_png": "images/sleetfighter_titlescreen_art.webp",
+  "panorama/images/events/crownfall/fight/tavern_map/footprint_png": "images/tavern_map/footprint.webp",
+  "panorama/images/events/crownfall/fight/tavern_map/slash_png": "images/tavern_map/slash.webp",
+  "panorama/images/events/crownfall/fight/tavern_map/tavern_floorplan_png": "images/tavern_map/tavern_floorplan.webp",
+  "panorama/images/events/crownfall/fight/text_dust_png": "images/text_dust.webp",
+  "panorama/images/events/crownfall/fight/timer_background_png": "images/timer_background.webp",
+  "panorama/images/heroes/icons/npc_dota_hero_bristleback_png": "images/heroes/icons/npc_dota_hero_bristleback.webp",
+  "panorama/images/heroes/icons/npc_dota_hero_dawnbreaker_png": "images/heroes/icons/npc_dota_hero_dawnbreaker.webp",
+  "panorama/images/heroes/icons/npc_dota_hero_marci_png": "images/heroes/icons/npc_dota_hero_marci.webp",
+  "panorama/images/heroes/icons/npc_dota_hero_tusk_png": "images/heroes/icons/npc_dota_hero_tusk.webp",
+  "panorama/images/heroes/icons/npc_dota_hero_vengefulspirit_png": "images/heroes/icons/npc_dota_hero_vengefulspirit.webp",
+  "panorama/images/heroes/npc_dota_hero_bristleback_png": "images/heroes/npc_dota_hero_bristleback.webp",
+  "panorama/images/heroes/npc_dota_hero_dawnbreaker_png": "images/heroes/npc_dota_hero_dawnbreaker.webp",
+  "panorama/images/heroes/npc_dota_hero_marci_png": "images/heroes/npc_dota_hero_marci.webp",
+  "panorama/images/heroes/npc_dota_hero_tusk_png": "images/heroes/npc_dota_hero_tusk.webp",
+  "panorama/images/heroes/npc_dota_hero_vengefulspirit_png": "images/heroes/npc_dota_hero_vengefulspirit.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_bristleback_png": "images/heroes/selection/npc_dota_hero_bristleback.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_dawnbreaker_png": "images/heroes/selection/npc_dota_hero_dawnbreaker.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_marci_png": "images/heroes/selection/npc_dota_hero_marci.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_tusk_png": "images/heroes/selection/npc_dota_hero_tusk.webp",
+  "panorama/images/heroes/selection/npc_dota_hero_vengefulspirit_png": "images/heroes/selection/npc_dota_hero_vengefulspirit.webp",
+  "panorama/images/masks/halftone_gradient_psd": "images/halftone_gradient.webp",
+  "panorama/images/masks/sun_burst_png": "images/sun_burst.webp",
+  "panorama/images/spellicons/marci_unleash_png": "images/spellicons/marci_unleash.webp",
+  "panorama/images/spellicons/vengefulspirit_nether_swap_png": "images/spellicons/vengefulspirit_nether_swap.webp",
+  "sounds/misc/crownfall/music/fighting_main": "sounds/misc/crownfall/music/fighting_main.mp3",
+  "sounds/misc/crownfall/music/fighting_menu": "sounds/misc/crownfall/music/fighting_menu.mp3",
+  "sounds/misc/crownfall/plane": "sounds/misc/crownfall/plane.mp3",
+  "sounds/misc/spectator/crowd_client01": "sounds/misc/spectator/crowd_client01.mp3",
+  "sounds/misc/spectator/crowd_client02": "sounds/misc/spectator/crowd_client02.mp3",
+  "sounds/misc/spectator/crowd_client03": "sounds/misc/spectator/crowd_client03.mp3",
+  "sounds/misc/spectator/crowd_client04": "sounds/misc/spectator/crowd_client04.mp3",
+  "sounds/misc/spectator/crowd_client05": "sounds/misc/spectator/crowd_client05.mp3",
+  "sounds/music/valve_dota_001/music/countdown": "sounds/music/valve_dota_001/music/countdown.mp3",
+  "sounds/music/valve_dota_001/stingers/radiant_win": "sounds/music/valve_dota_001/stingers/radiant_win.mp3",
+  "sounds/ui/treasure_01": "sounds/ui/treasure_01.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_challenger_01": "sounds/vo/announcer_dota_fighter/dota_fighter_challenger_01.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_fight_01": "sounds/vo/announcer_dota_fighter/dota_fighter_fight_01.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_013_bristleback": "sounds/vo/announcer_dota_fighter/dota_fighter_hero_013_bristleback.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_023_dawnbreaker": "sounds/vo/announcer_dota_fighter/dota_fighter_hero_023_dawnbreaker.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_057_marci": "sounds/vo/announcer_dota_fighter/dota_fighter_hero_057_marci.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_110_tusk": "sounds/vo/announcer_dota_fighter/dota_fighter_hero_110_tusk.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_hero_114_vengeful_spirit": "sounds/vo/announcer_dota_fighter/dota_fighter_hero_114_vengeful_spirit.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_ko_01": "sounds/vo/announcer_dota_fighter/dota_fighter_ko_01.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_lose_01": "sounds/vo/announcer_dota_fighter/dota_fighter_lose_01.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_round_01": "sounds/vo/announcer_dota_fighter/dota_fighter_round_01.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_round_02": "sounds/vo/announcer_dota_fighter/dota_fighter_round_02.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_round_03": "sounds/vo/announcer_dota_fighter/dota_fighter_round_03.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_round_final": "sounds/vo/announcer_dota_fighter/dota_fighter_round_final.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_versus": "sounds/vo/announcer_dota_fighter/dota_fighter_versus.mp3",
+  "sounds/vo/announcer_dota_fighter/dota_fighter_victory_01": "sounds/vo/announcer_dota_fighter/dota_fighter_victory_01.mp3",
+  "sounds/weapons/hero/axe/preattack01": "sounds/weapons/hero/axe/preattack01.mp3",
+  "sounds/weapons/hero/axe/preattack02": "sounds/weapons/hero/axe/preattack02.mp3",
+  "sounds/weapons/hero/axe/preattack03": "sounds/weapons/hero/axe/preattack03.mp3",
+  "sounds/weapons/hero/beastmaster/attack01": "sounds/weapons/hero/beastmaster/attack01.mp3",
+  "sounds/weapons/hero/beastmaster/attack02": "sounds/weapons/hero/beastmaster/attack02.mp3",
+  "sounds/weapons/hero/beastmaster/attack03": "sounds/weapons/hero/beastmaster/attack03.mp3",
+  "sounds/weapons/hero/bristlebog/goo_cast": "sounds/weapons/hero/bristlebog/goo_cast.mp3",
+  "sounds/weapons/hero/bristlebog/goo_target": "sounds/weapons/hero/bristlebog/goo_target.mp3",
+  "sounds/weapons/hero/bristlebog/quill_cast": "sounds/weapons/hero/bristlebog/quill_cast.mp3",
+  "sounds/weapons/hero/bristlebog/quill_target01": "sounds/weapons/hero/bristlebog/quill_target01.mp3",
+  "sounds/weapons/hero/bristlebog/quill_target02": "sounds/weapons/hero/bristlebog/quill_target02.mp3",
+  "sounds/weapons/hero/bristlebog/quill_target03": "sounds/weapons/hero/bristlebog/quill_target03.mp3",
+  "sounds/weapons/hero/bristlebog/quill_target04": "sounds/weapons/hero/bristlebog/quill_target04.mp3",
+  "sounds/weapons/hero/dawnbreaker/attack01": "sounds/weapons/hero/dawnbreaker/attack01.mp3",
+  "sounds/weapons/hero/dawnbreaker/attack02": "sounds/weapons/hero/dawnbreaker/attack02.mp3",
+  "sounds/weapons/hero/dawnbreaker/attack03": "sounds/weapons/hero/dawnbreaker/attack03.mp3",
+  "sounds/weapons/hero/dawnbreaker/elated_stun": "sounds/weapons/hero/dawnbreaker/elated_stun.mp3",
+  "sounds/weapons/hero/dawnbreaker/fire_wreath_smash": "sounds/weapons/hero/dawnbreaker/fire_wreath_smash.mp3",
+  "sounds/weapons/hero/dawnbreaker/fire_wreath_sweep": "sounds/weapons/hero/dawnbreaker/fire_wreath_sweep.mp3",
+  "sounds/weapons/hero/marci/attack01": "sounds/weapons/hero/marci/attack01.mp3",
+  "sounds/weapons/hero/marci/attack02": "sounds/weapons/hero/marci/attack02.mp3",
+  "sounds/weapons/hero/marci/attack03": "sounds/weapons/hero/marci/attack03.mp3",
+  "sounds/weapons/hero/marci/preattack01": "sounds/weapons/hero/marci/preattack01.mp3",
+  "sounds/weapons/hero/marci/preattack02": "sounds/weapons/hero/marci/preattack02.mp3",
+  "sounds/weapons/hero/marci/preattack03": "sounds/weapons/hero/marci/preattack03.mp3",
+  "sounds/weapons/hero/marci/rebound_cast": "sounds/weapons/hero/marci/rebound_cast.mp3",
+  "sounds/weapons/hero/marci/unleash_cast": "sounds/weapons/hero/marci/unleash_cast.mp3",
+  "sounds/weapons/hero/marci/unleash_charged_3d": "sounds/weapons/hero/marci/unleash_charged_3d.mp3",
+  "sounds/weapons/hero/marci/unleash_pulse": "sounds/weapons/hero/marci/unleash_pulse.mp3",
+  "sounds/weapons/hero/phantom_assassin/phantom_assassin_swing1": "sounds/weapons/hero/phantom_assassin/phantom_assassin_swing1.mp3",
+  "sounds/weapons/hero/shared/large_blade/whoosh01": "sounds/weapons/hero/shared/large_blade/whoosh01.mp3",
+  "sounds/weapons/hero/shared/large_blade/whoosh02": "sounds/weapons/hero/shared/large_blade/whoosh02.mp3",
+  "sounds/weapons/hero/shared/large_blade/whoosh03": "sounds/weapons/hero/shared/large_blade/whoosh03.mp3",
+  "sounds/weapons/hero/shared/small_blade/attack_long01": "sounds/weapons/hero/shared/small_blade/attack_long01.mp3",
+  "sounds/weapons/hero/shared/small_blade/attack_long02": "sounds/weapons/hero/shared/small_blade/attack_long02.mp3",
+  "sounds/weapons/hero/shared/small_blade/attack_long03": "sounds/weapons/hero/shared/small_blade/attack_long03.mp3",
+  "sounds/weapons/hero/spirit_breaker/attack01": "sounds/weapons/hero/spirit_breaker/attack01.mp3",
+  "sounds/weapons/hero/spirit_breaker/attack02": "sounds/weapons/hero/spirit_breaker/attack02.mp3",
+  "sounds/weapons/hero/spirit_breaker/attack03": "sounds/weapons/hero/spirit_breaker/attack03.mp3",
+  "sounds/weapons/hero/techies/suicide": "sounds/weapons/hero/techies/suicide.mp3",
+  "sounds/weapons/hero/tusk/penguin01": "sounds/weapons/hero/tusk/penguin01.mp3",
+  "sounds/weapons/hero/tusk/penguin02": "sounds/weapons/hero/tusk/penguin02.mp3",
+  "sounds/weapons/hero/tusk/penguin03": "sounds/weapons/hero/tusk/penguin03.mp3",
+  "sounds/weapons/hero/tusk/punch_target": "sounds/weapons/hero/tusk/punch_target.mp3",
+  "sounds/weapons/hero/tusk/snowball_stun01": "sounds/weapons/hero/tusk/snowball_stun01.mp3",
+  "sounds/weapons/hero/tusk/snowball_stun02": "sounds/weapons/hero/tusk/snowball_stun02.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile1": "sounds/weapons/hero/vengeful_spirit/magic_missile1.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile2": "sounds/weapons/hero/vengeful_spirit/magic_missile2.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile3": "sounds/weapons/hero/vengeful_spirit/magic_missile3.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile4": "sounds/weapons/hero/vengeful_spirit/magic_missile4.mp3",
+  "sounds/weapons/hero/vengeful_spirit/magic_missile_impact": "sounds/weapons/hero/vengeful_spirit/magic_missile_impact.mp3",
+  "sounds/weapons/hero/vengeful_spirit/nether_swap": "sounds/weapons/hero/vengeful_spirit/nether_swap.mp3"
+ }
+}

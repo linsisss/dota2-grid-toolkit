@@ -1,0 +1,429 @@
+/* «Сосулечный боец»: Valve's bp_popup_crownfall_encounter_fighting.css (the panel, HUD, announcements, move list)
+   and bp_crownfall_fighting_game_menu.css (front page, character select, arcade map, outcomes), at the layout size
+   of the game: 1920 × 1080 (the popup is 1536 × 864 with ui-scale 80 %); Fit scales it to the window.
+   Panorama → CSS: titleFont/underlordsTitleFont → Reaver, the rest Radiance; wash-color → filters. */
+.fg-fit { flex: 1; min-height: min(560px, 80vh); }
+.fg-popup { --gold1: #efd4ac; --gold2: #dcb25e; --gold3: #977628; position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #000;
+  font-family: 'MGRadiance', sans-serif; color: #dae2e5; user-select: none; -webkit-user-select: none; touch-action: none; box-shadow: 0 12px 80px -4px rgba(0, 0, 0, 0.6); }
+.fg-popup button { font: inherit; color: inherit; }
+.fg-state { position: absolute; inset: 0; }
+.fg-panel, .fg-stage { position: absolute; inset: 0; }
+.fg-stage { overflow: hidden; }
+.fg-background { position: absolute; left: 0; top: 0; width: 2400px; height: 1080px; max-width: none; will-change: transform; }
+.fg-heroes, .fg-fx { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none; }
+.fg-heroes { z-index: 1; }
+.fg-stage-front { z-index: 2; pointer-events: none; }
+/* #ForegroundScene: blur 2px, contrast 1.1, washed #98afe7 (and Valve's screen-blended halftone copies). */
+.fg-foreground { position: absolute; max-width: none; filter: blur(2px) contrast(1.1) brightness(0.85) sepia(0.5) hue-rotate(185deg) saturate(1.4); will-change: transform; }
+.fg-fx { z-index: 3; }
+.fg-popup:not(.fg-fighting) .fg-stage-front, .fg-popup:not(.fg-fighting) .fg-fx { visibility: hidden; }
+.Paused .fg-stage, .Paused .fg-heroes, .Paused .HUDContainer { filter: saturate(0.2) brightness(0.7); }
+.MatchStateMatchEnd .fg-stage, .MatchStateMatchEnd .fg-heroes, .MatchStateMatchEnd .HUDContainer, .TimeOutHappening .fg-stage, .TimeOutHappening .fg-heroes { filter: blur(3px); transition: filter 0.3s; }
+.MatchStateIntro .fg-heroes { filter: brightness(0.55); }
+
+/* ---- the menu ---------------------------------------------------------------------------------------------- */
+.fg-menu-bg { position: absolute; inset: 0; z-index: 10; overflow: hidden; background: #000; }
+#MenuBackgroundScene { position: absolute; inset: 0; background: url('../../../../assets/minigames/fighter/images/stage/background.webp') -240px 0 / 2400px 1080px no-repeat;
+  filter: blur(24px) brightness(0.3); transform: scale(1.6) translateY(-140px) translateX(40px); transition: transform 0.6s cubic-bezier(0, 1, 0, 1); }
+#MenuBackgroundScene::after { content: ''; position: absolute; inset: 0; background: rgba(51, 78, 214, 0.2); mix-blend-mode: color; }
+.CharacterSelect #MenuBackgroundScene { transform: scale(1.6) translateY(-140px) translateX(-40px); }
+.KeyArt { position: absolute; inset: 0; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0, 1, 0, 1), opacity 0.2s; }
+.CharacterSelect .KeyArt, .ArcadeMapScreen .KeyArt { transform: translateX(-80px); opacity: 0; }
+
+.FrontPageContents { position: absolute; z-index: 12; left: 1090px; top: 50px; width: 660px; height: 960px; display: flex; flex-direction: column; animation: fg-in 0.4s cubic-bezier(0, 1, 0, 1); }
+@keyframes fg-in { from { opacity: 0; transform: translateX(40px); } }
+.IntroLogo { width: 640px; margin: -40px auto; align-self: center; position: relative; z-index: 1; }
+.FightingGameTabs { position: relative; align-self: center; height: 56px; display: flex; align-items: center; z-index: 1; }
+.FightingGameTabsBackground { position: absolute; inset: 0; border-style: solid; border-width: 56px 56px 0 56px; border-image: url('../../../../assets/minigames/fighter/images/tabs_background.webp') 100% 112 0 112 fill / 56px 56px 0 56px stretch; }
+.TabsContainer { position: relative; display: flex; margin: 0 9.5px; }
+.TabItem { position: relative; min-width: 220px; height: 42px; margin: 0 -4px; padding: 0 30px; border: 0; background: none; cursor: pointer; transition: filter 0.1s, transform 0.1s; }
+.TabItem:hover { filter: brightness(2); }
+.TabItem:active { transform: scale(0.98); }
+.TabItem > span:last-child { position: relative; text-transform: uppercase; letter-spacing: 1.5px; font-size: 18px; background: linear-gradient(#fff, #b0bcc2); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)); }
+.TabItemBg { position: absolute; inset: 0; border-style: solid; border-width: 42px 42px 0 42px; border-image: url('../../../../assets/minigames/fighter/images/tab_background.webp') 100% 84 0 84 fill / 42px 42px 0 42px stretch; opacity: 0; transform: scale(0.95); transition: opacity 0.15s, transform 0.15s cubic-bezier(0, 0.9, 0, 0.9); }
+.SelectedTab0 #OfflineTab .TabItemBg, .SelectedTab1 #OnlineTab .TabItemBg { opacity: 1; transform: none; }
+.FrontPageSectionsContainer { position: relative; flex: 1; margin: -28px 0 62px; background: linear-gradient(#253242, #0b111a); border: 1px solid rgba(255, 255, 255, 0.02); }
+.TopGoldDash { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold1) 30%, var(--gold2) 70%, transparent); opacity: 0.7; }
+.TopGoldDash.Top { top: 0; } .TopGoldDash.Bottom { bottom: 0; }
+.PlayOfflineSection, .PlayOnlineSection { position: absolute; inset: 0; padding: 56px 40px; display: flex; flex-direction: column; transition: transform 0.3s cubic-bezier(0, 1, 0, 1), opacity 0.3s; opacity: 0; pointer-events: none; }
+.PlayOfflineSection { transform: translateX(-30px); }
+.PlayOnlineSection { transform: translateX(30px); padding-bottom: 0; align-items: center; }
+.SelectedTab0 .PlayOfflineSection, .SelectedTab1 .PlayOnlineSection { opacity: 1; transform: none; pointer-events: auto; }
+.IntroText { margin: 0 0 24px; text-align: center; font-size: 26px; line-height: 1.25; color: #fff; text-shadow: 0 4px 16px #000; max-height: 100px; }
+.Columns { display: flex; gap: 24px; flex: 1; }
+.ColumnLeft, .ColumnRight { flex: 1; display: flex; flex-direction: column; }
+.Columns h3 { margin: 12px 0 6px; font: 600 22px 'MGRadiance', sans-serif; text-transform: uppercase; letter-spacing: 1px; color: var(--gold2); text-shadow: 0 4px 16px #000; }
+.fg-controls-text { margin: 0; font-size: 18px; line-height: 1.45; color: #dae2e5; }
+.fg-line { display: block; }
+.fg-controls-more { margin: 10px 0 0; font-size: 15px; line-height: 1.35; color: #8b989e; }
+.RewardsSection { display: flex; flex-direction: column; gap: 2px; }
+.RewardRow { display: flex; align-items: center; height: 32px; padding: 0 10px; background: #b7e3ff08; font-size: 20px; color: #fff; text-shadow: 0 2px 8px #000; }
+.RewardRow .RewardScore { flex: 1; }
+.RewardRow .RewardValue { color: var(--gold1); }
+.RewardRow.Unlocked { opacity: 0.45; }
+.fg-stats { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin-top: 18px; font-size: 16px; color: #8b989e; }
+.fg-stats b { color: #fff; font-weight: 600; }
+/* The table of records under the rewards (core/leaderboard.jsx); this popup is drawn at 1920 px. */
+.fg-board { --mg-lb-row: 30px; margin-top: 6px; }
+/* Room for it: the story section starts higher and the rewards' rows are lower. */
+.PlayOfflineSection { padding-top: 40px; }
+.ColumnRight .RewardRow { height: 24px; font-size: 18px; }
+.fg-board .mg-lb-head { font-size: 16px; }
+.fg-board .mg-lb-row, .fg-board .mg-lb-login, .fg-board .mg-lb-note { font-size: 18px; }
+.fg-board .mg-lb-name img { width: 24px; height: 24px; }
+.MyHighScore { margin-top: 12px; display: flex; flex-direction: column; align-items: center; }
+.TitleContainer { display: flex; align-items: center; width: 100%; gap: 12px; }
+.TitleContainer .Dash { flex: 1; height: 1px; opacity: 0.6; }
+.TitleContainer .Dash.Left { background: linear-gradient(270deg, var(--gold1), rgba(220, 178, 94, 0.4), transparent); }
+.TitleContainer .Dash.Right { background: linear-gradient(90deg, var(--gold1), rgba(220, 178, 94, 0.4), transparent); }
+.fg-gold { font: 600 22px 'MGRadiance', sans-serif; text-transform: uppercase; letter-spacing: 1px; color: var(--gold2); text-shadow: 0 4px 16px #000; }
+.MyHighScore .HighScore { margin-top: -2px; font: 700 48px 'MGReaver', serif; color: #fff; }
+.PlayButton { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%) scale(1.2); min-width: 320px; }
+.SelectedTab1 .PlayButton { opacity: 0; pointer-events: none; }
+.PlayButton:active { transform: translateX(-50%) scale(1.17); }
+.ChallengeFriendsLabel { font: 700 34px 'MGReaver', serif; color: #fff; text-shadow: 0 4px 16px #000; text-align: center; margin-bottom: 12px; }
+.ChallengeListContainer { flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 18px; padding-top: 30px; }
+.NoPeersLabel { font-size: 20px; color: #8b989e; }
+.fg-local-note { max-width: 520px; text-align: center; font-size: 17px; line-height: 1.4; color: #b0bcc2; }
+.PlayLocalMultiplayer { margin: 8px 0 40px; }
+
+/* Character select. */
+.CharacterSelectContents { position: absolute; inset: 0; z-index: 12; display: flex; flex-direction: column; align-items: center; }
+.CharacterSelectContents .Background { position: absolute; inset: 0; pointer-events: none; }
+.HeroPreview { position: absolute; bottom: 0; width: 50%; height: 100%; }
+.HeroPreview.Left { left: 0; background: radial-gradient(70% 70% at 0% 100%, rgba(135, 166, 216, 0.2), transparent); }
+.HeroPreview.Right { right: 0; background: radial-gradient(70% 70% at 100% 100%, rgba(135, 166, 216, 0.2), transparent); }
+.HeroPreview span { position: absolute; bottom: 300px; font: 700 54px 'MGReaver', serif; text-transform: uppercase; color: #fff; text-shadow: 0 4px 24px #000, 0 0 2px #000; letter-spacing: 1px; }
+.HeroPreview.Left span { left: 60px; } .HeroPreview.Right span { right: 60px; }
+.fg-confirmed-flash .ConfirmedHero .HeroPreview.Left, .ConfirmedHero.fg-confirmed-flash .HeroPreview.Left { animation: fg-flash-hero 0.8s; }
+@keyframes fg-flash-hero { 15% { filter: brightness(6); } }
+.CharacterSelect.ConfirmedHero .fg-heroes { animation: fg-flash-canvas 0.8s; }
+@keyframes fg-flash-canvas { 15% { filter: brightness(2.2); } }
+.StyleSelector { position: absolute; bottom: 0; width: 560px; height: 236px; padding-top: 24px; display: flex; flex-direction: column; align-items: center; pointer-events: auto;
+  border-top: 1px solid; border-image: linear-gradient(90deg, transparent, #fff, transparent) 1;
+  background: radial-gradient(100% 100% at 50% 0%, rgba(78, 92, 114, 0.9), rgba(78, 92, 114, 0.5) 50%, rgba(44, 58, 65, 0));
+  opacity: 0; transform: translateY(20px) scale(2); visibility: hidden; transition: transform 0.3s cubic-bezier(0, 1, 0, 1) 0.3s, opacity 0.3s 0.3s, visibility 0s 0.6s; }
+.StyleSelector.Left { left: 0; } .StyleSelector.Right { right: 0; }
+.ShowStyleSelectLeft .StyleSelector.Left, .ShowStyleSelectRight .StyleSelector.Right { visibility: visible; opacity: 1; transform: none; transition-delay: 0.3s, 0.3s, 0s; }
+.StyleSelectorTitle { font: 600 26px 'MGRadiance', sans-serif; text-transform: uppercase; color: var(--gold2); text-shadow: 0 4px 16px #000; margin-bottom: 8px; }
+.RadioGroupContainer { display: flex; gap: 8px; margin-bottom: 6px; }
+.fg-radio { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #b0bcc2; background: #0b111a; cursor: pointer; padding: 0; }
+.fg-radio.on { background: radial-gradient(circle, #fff 35%, #0b111a 40%); border-color: #fff; }
+.fg-style-name { font-size: 26px; color: whitesmoke; text-shadow: 0 2px 12px #000; }
+.TitleLogo { height: 230px; margin-top: 0; opacity: 1; transition: opacity 0.15s; position: absolute; top: 0; }
+.CharacterSelectContents .Top { position: relative; margin-top: 210px; margin-bottom: 70px; display: flex; justify-content: center; }
+.TimerBackground { position: absolute; width: 460px; top: -24px; left: 50%; transform: translateX(-50%); }
+.ChooseFighterText { position: relative; font: 700 56px 'MGReaver', serif; text-transform: uppercase; background: linear-gradient(#b0bcc2, #fff); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4)); }
+#CharacterSelectList { display: flex; gap: 6px; position: relative; z-index: 1; }
+.CharacterSelectButton { position: relative; width: 172px; height: 300px; padding: 0 0 20px; border: 0; background: none; cursor: pointer; animation: fg-card-in 0.3s cubic-bezier(0, 1, 0, 1) backwards; animation-delay: inherit; }
+@keyframes fg-card-in { from { opacity: 0; transform: scale(0.8); } }
+.CharacterBackground { position: absolute; inset: 0 0 20px; box-shadow: 0 8px 48px -6px rgba(0, 0, 0, 0.4); background: rgba(0, 0, 0, 0.6); }
+.Portrait { position: absolute; inset: 7px 7px 27px; background-size: cover; background-position: center; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03); transition: filter 0.3s, opacity 0.3s; }
+.Portrait img { position: absolute; left: 50%; bottom: 0; height: 100%; transform: translateX(-50%); image-rendering: auto; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5)); }
+.CharacterSelectButton:hover .Portrait { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); filter: brightness(1.15); }
+.fg-card-name { position: absolute; left: 7px; right: 7px; bottom: 27px; padding: 4px 0; background: linear-gradient(transparent, rgba(0, 0, 0, 0.85)); font: 600 17px 'MGRadiance', sans-serif; text-transform: uppercase; letter-spacing: 1px; color: #fff; }
+.SelectedBorder { position: absolute; inset: 0 0 20px; border: 0 solid transparent; transition: border 0.2s; }
+.Player1 .SelectedBorder, .Player2 .SelectedBorder { border: 4px solid; animation: fg-glow 0.8s infinite alternate-reverse; }
+.Player1 .SelectedBorder { border-image: linear-gradient(#ff5757, #f03737 48%, #9b1313 52%, #7c1010) 1; }
+.Player2 .SelectedBorder { border-image: linear-gradient(#77cbff, #3b6fa5 48%, #19385c 52%, #1b4388) 1; }
+.Player1.Player2 .SelectedBorder { border-image: linear-gradient(#ff5757, #f03737 48%, #77cbff 52%, #3b6fa5) 1; }
+@keyframes fg-glow { to { filter: brightness(2); } }
+.SelectedShimmer { position: absolute; inset: 0 0 20px; mix-blend-mode: screen; opacity: 0.3; }
+.Player1 .SelectedShimmer { animation: fg-shimmer 0.6s ease-out; background: linear-gradient(135deg, transparent 40%, #fff 50%, transparent 60%) -200% 0 / 300% 100% no-repeat; }
+@keyframes fg-shimmer { to { background-position: 200% 0; } }
+.P1Label, .P2Label { position: absolute; bottom: 0; left: 50%; width: 56px; height: 40px; margin-left: -28px; display: none; place-items: center; border-radius: 3px; border: 4px solid; background: #0b111a; font: 700 18px 'MGRadiance', sans-serif; color: #fff; box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.4); }
+.P1Label { border-image: linear-gradient(#ff5757, #f03737 48%, #9b1313 52%, #7c1010) 1; }
+.P2Label { border-image: linear-gradient(#77cbff, #3b6fa5 48%, #19385c 52%, #1b4388) 1; }
+.Player1 .P1Label, .Player2 .P2Label { display: grid; }
+.Player1.Player2 .P1Label { margin-left: -64px; } .Player1.Player2 .P2Label { margin-left: 8px; }
+.ConfirmedHero:not(.LocalMultiplayer) .CharacterSelectButton:not(.Player1) .Portrait, .LocalMultiplayer.ConfirmedHero.ConfirmedHero2 .CharacterSelectButton:not(.Player1):not(.Player2) .Portrait { filter: saturate(0.1) brightness(0.2); opacity: 0.6; }
+.CharacterSelectContents .Bottom { position: relative; z-index: 1; margin-top: 32px; padding: 48px; display: flex; align-items: center; gap: 24px; }
+.BackArrowButton { width: 54px; height: 54px; display: grid; place-items: center; border: 1px solid; border-image: none; border-color: var(--gold2); border-radius: 50%; background: rgba(0, 0, 0, 0.4); cursor: pointer; transition: transform 0.1s, background 0.1s; }
+.BackArrowButton:hover { transform: scale(1.1); background: rgba(0, 0, 0, 0.6); }
+.BackArrowButton img { width: 28px; filter: drop-shadow(0 2px 6px #000); }
+.ConfirmCharacterButtonContainer { width: 430px; display: flex; flex-direction: column; align-items: center; }
+.ConfirmCharacterButtonContainer .mg-button { transform: scale(1.2); min-width: 320px; }
+.LockedInText1, .LockedInText2 { font-size: 26px; letter-spacing: 2px; color: #fff; text-shadow: 0 2px 10px #000; }
+.GlowButton { animation: fg-btn-glow 1.2s ease-in-out infinite alternate; }
+@keyframes fg-btn-glow { to { filter: brightness(1.25) drop-shadow(0 0 12px rgba(120, 170, 255, 0.6)); } }
+.fg-loading-models { position: absolute; left: 50%; top: 660px; transform: translateX(-50%); font-size: 18px; color: #b0bcc2; }
+.fg-select-hint { position: absolute; bottom: 14px; left: 0; right: 0; margin: 0; text-align: center; font-size: 17px; color: #8b989e; }
+.CharacterSelect .fg-heroes { z-index: 11; }
+
+/* The arcade map. */
+.ArcadeMap { position: absolute; inset: 0; z-index: 12; background: #000; overflow: hidden; animation: fg-map-in 0.3s cubic-bezier(0, 1, 0, 1) 0.2s backwards; }
+@keyframes fg-map-in { from { opacity: 0; transform: scale(1.2); } }
+.FloorplanImage { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ArcadeMapTitle { position: relative; margin-top: 80px; text-align: center; font: 700 56px 'MGReaver', serif; text-transform: uppercase; background: linear-gradient(#b0bcc2, #fff); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6)); }
+.ArcadeMapDestination { position: absolute; width: 220px; display: flex; flex-direction: column; align-items: center; transition: transform 0.4s cubic-bezier(0, 0.9, 0, 0.9); }
+.ArcadeMapDestination .HeroPortraitContainer { position: relative; width: 132px; height: 192px; }
+.ArcadeMapDestination .fg-map-portrait { position: absolute; inset: 6px; width: 120px; height: 180px; object-fit: cover; object-position: center top; background: linear-gradient(#0f1417, #3c3547); box-shadow: 0 12px 64px -4px rgba(0, 0, 0, 0.55); }
+.HeroBorder { position: absolute; inset: 4px; border: 2px solid; border-image: linear-gradient(#c2ced4, #6d777b) 1; }
+.ArcadeMapDestination .HeroName { margin-top: 8px; font-size: 24px; color: rgba(245, 245, 245, 0.95); text-shadow: 0 2px 12px #000; }
+.Strikethrough { position: absolute; top: 20px; width: 180px; left: 20px; visibility: hidden; }
+.ArcadeMapDestination.Defeated .HeroPortraitContainer { filter: saturate(0) brightness(0.3); }
+.ArcadeMapDestination.Defeated .Strikethrough { visibility: visible; }
+.ArcadeMapDestination.Defeated .HeroName { opacity: 0.2; }
+.ArcadeMapDestination.UpNext { transform: scale(1.2); animation: fg-upnext 0.4s ease-in-out infinite alternate-reverse; }
+.ArcadeMapDestination.UpNext .HeroBorder { inset: 0; border: 6px solid; border-image: linear-gradient(#fff2df, #ddaf6b 49%, #ba8c47 51%, #785c32) 1; }
+@keyframes fg-upnext { to { transform: scale(1.2) translateY(-8px); } }
+.Footprint { position: absolute; width: 40px; height: 40px; opacity: 0; animation: fg-step 0.2s ease-out forwards; }
+@keyframes fg-step { from { opacity: 0; transform-origin: center; } to { opacity: 0.9; } }
+.fg-map-credits { position: absolute; bottom: 30px; left: 0; right: 0; text-align: center; font: 700 30px 'MGReaver', serif; color: whitesmoke; text-shadow: 0 4px 12px #000; }
+
+/* Arcade outcomes. */
+.fg-outcome { position: absolute; z-index: 20; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 56px 220px; display: flex; flex-direction: column; align-items: center;
+  background: linear-gradient(90deg, #0c111c00, #151d2ef3 25%, #0c111cfa 50%, #151d2ef3 75%, #0c111c00);
+  border-block: 1px solid; border-image: linear-gradient(90deg, #ffffff00, #a9b5cffa 25%, #fff 50%, #a9b5cffa 75%, #ffffff00) 1; animation: fg-outcome 0.3s cubic-bezier(0, 0.9, 0, 0.9); }
+@keyframes fg-outcome { from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); } }
+.ArcadeOutcomeLabel { margin-bottom: 8px; font: 700 56px 'MGReaver', serif; color: whitesmoke; text-shadow: 0 4px 12px #000; }
+.ArcadeContinueOptionButtons, .fg-outcome .ButtonRow { margin-top: 10px; display: flex; gap: 8px; }
+.fg-outcome .mg-button { min-width: 260px; }
+.RemainingCredits { margin-top: 16px; font: 700 30px 'MGReaver', serif; color: whitesmoke; text-shadow: 0 4px 12px #000; }
+.NewHighScore { opacity: 0; height: 0; margin-top: -8px; font: 600 32px 'MGReaver', serif; background: linear-gradient(#fff2df 35%, #ebc386 60%, #ba8c47 64%, #8d6c3a); -webkit-background-clip: text; background-clip: text; color: transparent; transition: opacity 0.2s, height 0.2s; }
+.NewHighScoreEarned .NewHighScore { opacity: 1; height: 42px; animation: fg-glow-high 0.4s infinite alternate-reverse; }
+@keyframes fg-glow-high { to { filter: brightness(2); transform: scale(1.06); } }
+.ArcadeOutcomeRow { width: 100%; min-width: 420px; display: flex; justify-content: space-between; margin: 8px 0 10px; font-size: 26px; color: #fff; }
+.ArcadeVictoryOptions .TitleContainer { width: 480px; font-size: 24px; color: #fff; }
+.ArcadeVictoryOptions .HighScore { font: 700 64px 'MGReaver', serif; margin-top: -6px; color: var(--gold1); text-shadow: 0 4px 16px #000; }
+.ArcadeVictoryOptions .mg-button { margin-top: 24px; transform: scale(1.2); }
+
+/* ---- the HUD ----------------------------------------------------------------------------------------------- */
+.HUDContainer { position: absolute; z-index: 4; left: 0; right: 0; top: 0; padding: 12px 48px; display: flex; pointer-events: none; animation: fg-fade 0.4s; }
+@keyframes fg-fade { from { opacity: 0; } }
+.MatchStateIntro .HUDContainer { opacity: 0; }
+.HUDBackground { position: absolute; left: 160px; top: 40px; width: 1600px; }
+.RedGlow { position: absolute; top: -280px; width: 900px; height: 600px; background: radial-gradient(closest-side, red, red 20%, rgba(255, 0, 0, 0)); filter: blur(24px); opacity: 0; }
+.RedGlow.Left { left: -40px; } .RedGlow.Right { right: -40px; }
+.P1HealthLow .RedGlow.Left, .P2HealthLow .RedGlow.Right { animation: fg-red-glow 1.5s 1; }
+@keyframes fg-red-glow { 0% { opacity: 0; } 1% { opacity: 0.5; } 100% { opacity: 0; } }
+.HUDHeroContainer { position: relative; flex: 1; margin-top: 52px; display: flex; align-items: flex-start; }
+.HUDHeroContainer.Right { flex-direction: row-reverse; }
+.PortraitAndSheildContainer { display: flex; flex-direction: column; padding: 0 8px; }
+.HUDHeroContainer.Left .PortraitAndSheildContainer { padding-right: 24px; margin-right: -16px; }
+.HUDHeroContainer.Right .PortraitAndSheildContainer { padding-left: 24px; margin-left: -16px; }
+.HUDContainer .HeroPortraitContainer { margin: 0 16px; border: 2px solid; border-image: linear-gradient(#fff, #a8b0bc 48%, #444950 52%, #70767e) 1; box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.6); overflow: hidden; width: 168px; height: 92px; }
+.HUDContainer .HeroPortraitContainer { position: relative; }
+.HeroPortrait { width: 200px; height: 112px; margin: -10px -16px -12px; object-fit: cover; }
+.HUDHeroContainer.Left .HeroPortraitContainer { transform: skewX(15deg); }
+.HUDHeroContainer.Left .HeroPortrait { transform: scaleX(-1) skewX(-15deg); }
+.HUDHeroContainer.Right .HeroPortraitContainer { transform: skewX(-15deg); }
+.HUDHeroContainer.Right .HeroPortrait { transform: skewX(15deg); }
+.ShieldContainer { display: flex; align-items: center; margin-top: 8px; padding-bottom: 24px; gap: 12px; }
+.HUDHeroContainer.Left .ShieldContainer { margin: 8px -24px 0 -6px; padding-right: 24px; }
+.HUDHeroContainer.Right .ShieldContainer { flex-direction: row-reverse; margin: 8px -6px 0 -24px; padding-left: 24px; }
+.ShieldIconContainer { position: relative; width: 28px; height: 28px; }
+.ShieldIcon, .ShieldIconBroken { position: absolute; inset: 0; width: 28px; filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4)); }
+.ShieldIconBroken { visibility: hidden; }
+.ShieldBarContainer { position: relative; flex: 1; height: 20px; margin-top: 4px; box-shadow: 0 4px 48px -2px rgba(0, 0, 0, 0.6); }
+.HUDHeroContainer.Left .ShieldBarContainer { transform: skewX(15deg); }
+.HUDHeroContainer.Right .ShieldBarContainer { transform: skewX(-15deg); }
+.ShieldBarBackground { position: absolute; inset: 0; background: linear-gradient(#010307, #152131); border: 1px solid rgba(220, 243, 255, 0.2); }
+.ShieldBar { position: absolute; top: 0; bottom: 0; width: 100%; background: linear-gradient(#98d8ff, #5694d6 48%, #3660a8 52%, #1b4372); transition: width 0.08s; }
+.HUDHeroContainer.Left .ShieldBar { left: 0; } .HUDHeroContainer.Right .ShieldBar { right: 0; }
+.P1ShieldBroken .HUDHeroContainer.Left, .P2ShieldBroken .HUDHeroContainer.Right { animation: fg-shake-bar 0.1s ease-out 6; }
+@keyframes fg-shake-bar { 50% { transform: translateX(8px); } }
+.P1ShieldBroken .Left .ShieldIconBroken, .P2ShieldBroken .Right .ShieldIconBroken { visibility: visible; }
+.P1ShieldBroken .Left .ShieldIcon, .P2ShieldBroken .Right .ShieldIcon { visibility: hidden; }
+.P1ShieldBroken .Left .ShieldBar, .P2ShieldBroken .Right .ShieldBar { filter: saturate(0.1); opacity: 0.15; animation: fg-glow 0.3s infinite alternate-reverse; }
+.ScoreContainer { display: none; flex-direction: column; margin: -16px 0 0 40px; }
+.SinglePlayer:not(.FirstFight) .ScoreContainer { display: flex; }
+.ScoreLabel { font-size: 20px; text-transform: uppercase; opacity: 0.6; color: #fff; text-shadow: 0 4px 12px #000; margin-bottom: -6px; }
+.LeftRightFlow { display: flex; align-items: baseline; gap: 4px; }
+.ScoreValue { font: 600 40px 'MGReaver', serif; background: linear-gradient(#fff2df 35%, #ebc386 60%, #ba8c47 64%, #8d6c3a); -webkit-background-clip: text; background-clip: text; color: transparent; filter: brightness(1.3) drop-shadow(0 4px 8px #000); }
+.ScorePTS { color: #fff2df; font: 600 22px 'MGReaver', serif; text-shadow: 0 4px 12px #000; }
+.HPBarInfoContainer { flex: 1; display: flex; flex-direction: column; padding: 0 12px; }
+.HUDHeroContainer.Left .HPBarInfoContainer { margin-left: -28px; }
+.HUDHeroContainer.Right .HPBarInfoContainer { margin-right: -28px; }
+.StatusContainer { position: relative; height: 32px; box-shadow: 0 6px 24px -4px rgba(0, 0, 0, 0.7); }
+#LeftHeroStatusContainer { transform: skew(15deg); }
+#RightHeroStatusContainer { transform: skew(-15deg); }
+.HPBarBG, .HPBarMID, .HPBarFG { position: absolute; top: 0; height: 32px; }
+.HPBarBG { left: 0; right: 0; background: linear-gradient(#010307, #152131); border: 1px solid rgba(220, 243, 255, 0.6); }
+.HPBarMID { background: #ffffffcc; }
+.HPBarFG { background: linear-gradient(#fff2df, #d7b56b 48%, #b58d4d 52%, #64481f); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04); }
+.Left .HPBarMID, .Left .HPBarFG { right: 0; } .Right .HPBarMID, .Right .HPBarFG { left: 0; }
+.P1HealthLow #LeftHeroStatusContainer .HPBarFG, .P2HealthLow #RightHeroStatusContainer .HPBarFG { background: linear-gradient(#ff9898, #e84d4d 48%, #bb2d2d 52%, #5f1616); animation: fg-glow-hp 0.5s infinite alternate-reverse; }
+@keyframes fg-glow-hp { to { filter: brightness(1.8); } }
+.HeroNameContainer { display: flex; align-items: center; margin-top: 8px; }
+.HUDHeroContainer.Left .HeroNameContainer { padding-left: 20px; }
+.HUDHeroContainer.Right .HeroNameContainer { flex-direction: row-reverse; padding-right: 20px; }
+.HeroName { font: 700 26px 'MGReaver', serif; text-transform: uppercase; letter-spacing: 1px; color: rgba(255, 255, 255, 0.96); text-shadow: 0 4px 16px #000; }
+.FillWidth { flex: 1; }
+.RoundPips { display: flex; }
+.RoundPipIcon { width: 28px; height: 28px; margin: 4px; background: url('../../../../assets/minigames/fighter/images/hud/win_icon.webp') center / cover; opacity: 0; filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4)); transition: opacity 0.2s; }
+.P1RoundWins1 .Left .RoundPip1, .P1RoundWins2 .Left .RoundPip1, .P1RoundWins2 .Left .RoundPip2,
+.P2RoundWins1 .Right .RoundPip1, .P2RoundWins2 .Right .RoundPip1, .P2RoundWins2 .Right .RoundPip2 { opacity: 1; }
+.SingleUseActionContainer { width: 44px; height: 44px; margin-top: 6px; border: 2px solid; border-image: linear-gradient(#fff, #a8b0bc 48%, #444950 52%, #70767e) 1; overflow: hidden; visibility: hidden; }
+.SingleUseActionContainer.HasSingleUseAction { visibility: visible; }
+.SingleUseActionContainer.SingleUseActionUnavailable { opacity: 0.2; filter: saturate(0.1); }
+.SingleUseActionContainer img { width: 116%; margin: -8%; }
+.HUDHeroContainer.Left .SingleUseActionContainer { margin-left: 36px; transform: skewX(15deg); }
+.HUDHeroContainer.Right .SingleUseActionContainer { align-self: flex-end; margin-right: 36px; transform: skewX(-15deg); }
+#CountdownContainer { position: relative; width: 280px; height: 180px; margin: 0 -28px; flex: none; }
+#CountdownContainer > img { position: absolute; left: 0; top: 0; width: 280px; }
+.TimerBackgroundImage { -webkit-mask: url('../../../../assets/minigames/fighter/images/hud/timer_mask.webp') 0 0 / 280px no-repeat; mask: url('../../../../assets/minigames/fighter/images/hud/timer_mask.webp') 0 0 / 280px no-repeat; transition: filter 0.2s; }
+.TimerLow .TimerBackgroundImage { filter: sepia(1) saturate(8) hue-rotate(-50deg) brightness(1.4); }
+.RoundTimerContainer { position: absolute; left: 0; right: 0; top: 40px; padding: 0 40px; display: flex; flex-direction: column; align-items: center; }
+#RoundCounter { width: 100%; text-align: center; padding-bottom: 4px; margin-bottom: -4px; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid; border-image: linear-gradient(90deg, transparent, #fff, transparent) 1; background: linear-gradient(#fff, #b0bcc2); -webkit-background-clip: text; background-clip: text; color: transparent; }
+#TimeCountdown { font: 600 56px 'MGReaver', serif; color: #fff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.73); }
+.TimerLow #TimeCountdown { animation: fg-timer-low 1s 6; }
+@keyframes fg-timer-low { 5% { transform: scale(1.3); text-shadow: 0 0 12px rgba(255, 0, 0, 0.8); filter: brightness(3); } }
+
+/* ---- foreground announcements ------------------------------------------------------------------------------ */
+.ForegroundUILayer { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.ScoreAnnouncementContainer { position: absolute; top: 300px; display: flex; flex-direction: column; gap: 20px; }
+.ScoreAnnouncementContainer.Left { left: 0; }
+.ScoreAnnouncementContainer.Right { right: 0; transform: scaleX(-1); }
+.ScoreAnnouncementContainer.Right .ScoreDataContainer, .ScoreAnnouncementContainer.Right .ScoreAnnouncementIcon, .ScoreAnnouncementContainer.Right .ComboCount { transform: scaleX(-1); }
+.ScoreAnnouncement { position: relative; height: 64px; opacity: 0; transform: translateX(-32px); filter: brightness(5); transition: opacity 0.2s cubic-bezier(1, 0, 1, 1), transform 0.2s cubic-bezier(1, 0, 1, 1), filter 1s; display: flex; }
+.P1ShowFirstBlood .Left .FirstBlood, .P2ShowFirstBlood .Right .FirstBlood, .P1ShowCounterHit .Left .CounterHit, .P2ShowCounterHit .Right .CounterHit,
+.P1ShowPunish .Left .PunishCounter, .P2ShowPunish .Right .PunishCounter, .P1ShowComboCounter .Left .ComboCounter, .P2ShowComboCounter .Right .ComboCounter { opacity: 1; transform: none; filter: brightness(1); transition-timing-function: cubic-bezier(0, 0.9, 0, 0.9); }
+.ScoreAnnouncementBackground, .ScoreAnnouncementIconBackground, .ScoreAnnouncementShimmer, .ScoreGlow { position: absolute; top: 0; bottom: 0; left: -24px; transform: skewX(-15deg); }
+.ScoreAnnouncementBackground, .ScoreAnnouncementShimmer { right: 0; }
+.ScoreAnnouncementBackground { border: 1px solid; opacity: 0.6; }
+.ScoreAnnouncementIconBackground { width: 92px; border: 2px solid rgba(255, 255, 255, 0.5); }
+.ScoreAnnouncementShimmer { opacity: 0.4; mix-blend-mode: screen; }
+.P1ShowFirstBlood .Left .FirstBlood .ScoreAnnouncementShimmer, .P2ShowFirstBlood .Right .FirstBlood .ScoreAnnouncementShimmer, .P1ShowCounterHit .Left .CounterHit .ScoreAnnouncementShimmer, .P2ShowCounterHit .Right .CounterHit .ScoreAnnouncementShimmer,
+.P1ShowPunish .Left .PunishCounter .ScoreAnnouncementShimmer, .P2ShowPunish .Right .PunishCounter .ScoreAnnouncementShimmer, .P1ShowComboCounter .Left .ComboCounter .ScoreAnnouncementShimmer, .P2ShowComboCounter .Right .ComboCounter .ScoreAnnouncementShimmer {
+  animation: fg-shimmer-score 0.5s ease-out 0.1s; background: linear-gradient(90deg, transparent 40%, #fff 50%, transparent 60%) -150% 0 / 300% 100% no-repeat; }
+@keyframes fg-shimmer-score { to { background-position: 150% 0; } }
+.ComboCounter .ScoreAnnouncementBackground, .ComboCounter .ScoreAnnouncementIconBackground { background: linear-gradient(90deg, rgba(150, 0, 215, 0.16), rgba(112, 20, 224, 0.5)); border-color: #ab51ffcb; }
+.FirstBlood .ScoreAnnouncementBackground, .FirstBlood .ScoreAnnouncementIconBackground { background: linear-gradient(90deg, rgba(215, 0, 57, 0.16), rgba(234, 0, 31, 0.5)); border-color: #ff5151cb; }
+.CounterHit .ScoreAnnouncementBackground, .CounterHit .ScoreAnnouncementIconBackground { background: linear-gradient(90deg, rgba(212, 169, 77, 0.2), rgba(255, 215, 141, 0.3)); border-color: #ffd69475; }
+.PunishCounter .ScoreAnnouncementBackground, .PunishCounter .ScoreAnnouncementIconBackground { background: linear-gradient(90deg, rgba(72, 100, 220, 0.5), rgba(71, 140, 214, 0.4)); border-color: #7fb2ff9c; }
+.ScoreAnnouncementInfoContainer { position: relative; display: flex; align-items: center; padding: 0 44px 0 16px; }
+.ComboCounter .ScoreAnnouncementInfoContainer { padding-left: 8px; }
+.ScoreAnnouncementIcon { width: 32px; height: 32px; margin-right: 40px; }
+.ScoreAnnouncementIcon svg { width: 32px; height: 32px; }
+.ComboCount { width: 48px; margin-right: 32px; text-align: center; font: 600 36px 'MGReaver', serif; color: whitesmoke; text-shadow: 0 0 12px rgba(231, 126, 255, 0.74); }
+.ScoreDataContainer { display: flex; flex-direction: column; }
+.ScoreAnnouncementLabel { font: 600 28px 'MGRadiance', sans-serif; text-transform: uppercase; letter-spacing: 1px; color: #fff; text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6); white-space: nowrap; }
+.ScoreAnnouncementPoints { margin-top: -3px; opacity: 0.8; font-size: 20px; color: #c7d0d4; display: none; }
+.SinglePlayer:not(.FirstFight) .Left .ScoreAnnouncementPoints { display: block; }
+
+#AnnouncementContainer { position: absolute; inset: 0; }
+.IntroTextContainer { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity 0.3s; }
+.MatchStateIntro .IntroTextContainer { opacity: 1; }
+.IntroTextContainer > span:not(.Spattering) { grid-area: 1 / 1; padding: 4px 48px; border-radius: 8px; background: #000; color: #fff; font: 700 150px/1 'MGReaver', serif; text-transform: uppercase; max-width: 1100px; white-space: nowrap; opacity: 0; }
+.MatchStateIntro .IntroTextContainer > span { animation: fg-name-in 0.25s cubic-bezier(0.5, 0, 0.8, 1.3) forwards; }
+.HeroName1Label { transform: translate(-180px, -150px) rotate(4deg); --from: translate(-180px, -150px) scale(5) rotate(-1deg); animation-delay: 0.6s !important; }
+.VSLabel { font-size: 64px !important; z-index: 1; --from: scale(2); animation-delay: 1.8s !important; }
+.HeroName2Label { transform: translate(180px, 150px) rotate(12deg); --from: translate(180px, 150px) scale(5) rotate(17deg); animation-delay: 2.6s !important; }
+@keyframes fg-name-in { from { opacity: 0; transform: var(--from); } to { opacity: 1; } }
+.Spattering { grid-area: 1 / 1; opacity: 0; width: 1000px; height: 800px; background: url('../../../../assets/minigames/fighter/images/text_dust.webp') center / contain no-repeat; padding: 0 !important; z-index: -1; }
+.MatchStateIntro .Spattering { animation-delay: 0.4s !important; --from: scale(2); }
+.Announcement { position: absolute; left: 50%; top: 50%; padding: 4px 40px; margin-top: -170px; border-radius: 8px; background: #000; color: #fff; text-align: center;
+  font: 700 80px/0.95 'MGReaver', serif; transform: translate(-50%, -50%) rotate(-8deg) scale(2); opacity: 0; transition: transform 0.2s cubic-bezier(0.5, 0, 0.8, 1.3), opacity 0.2s ease-out; white-space: nowrap; }
+.Announcement b { font-size: 130px; }
+.P0WonMatch.MatchStateMatchEnd .LeftHeroWins, .P1WonMatch.MatchStateMatchEnd .RightHeroWins, .DrewMatch.MatchStateMatchEnd .Draw, .TimeOutHappening .TimeOutText { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg); }
+.fg-video { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.1s; pointer-events: none; }
+.KOHappening .KOMovie, .KOHappening.Perfect .PerfectMovie { opacity: 1; transition-duration: 0.3s; }
+.KOHappening.Perfect .KOMovie { opacity: 0; }
+.MatchStateRound1Start.ShowMovie .Round1Movie, .MatchStateRound2Start.ShowMovie .Round2Movie, .MatchStateRound3Start.ShowMovie .Round3Movie { opacity: 1; transition-duration: 0.3s; }
+.fg-no-video .fg-video { display: none; }
+.fg-text { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%) rotate(-6deg) scale(0.6); opacity: 0; text-align: center; font: 700 90px/1 'MGReaver', serif; color: #fff;
+  text-shadow: 0 0 24px #ff6a00, 0 0 6px #000; white-space: nowrap; }
+.fg-text b { display: block; font-size: 170px; color: #ffe8c0; }
+.fg-text i { display: block; font-style: normal; font-size: 130px; color: #ffb35a; opacity: 0; }
+.fg-text-round1.fg-text-round1, .fg-text-round2.fg-text-round2, .fg-text-round3.fg-text-round3, .fg-text-ko.fg-text-ko, .fg-text-perfect.fg-text-perfect { animation: none; }
+.fg-text-round1 .fg-text-round1, .fg-text-round2 .fg-text-round2, .fg-text-round3 .fg-text-round3, .fg-text-ko .fg-text-ko, .fg-text-perfect .fg-text-perfect { animation: fg-word 2.8s ease-out forwards; }
+.fg-text-round1 .fg-text-round1 i, .fg-text-round2 .fg-text-round2 i, .fg-text-round3 .fg-text-round3 i { animation: fg-fight-word 2.8s forwards; }
+@keyframes fg-word { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(-6deg) scale(2); } 8%, 80% { opacity: 1; transform: translate(-50%, -50%) rotate(-6deg) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) rotate(-6deg) scale(1.1); } }
+@keyframes fg-fight-word { 0%, 50% { opacity: 0; } 60%, 100% { opacity: 1; } }
+
+#ScoreBreakdownContainer { position: absolute; left: 50%; bottom: 156px; width: 920px; margin-left: -460px; padding: 180px 0 40px; display: flex; flex-direction: column; align-items: center; animation: fg-breakdown 0.4s ease-out 0.8s backwards; }
+@keyframes fg-breakdown { from { opacity: 0; transform: translateY(32px); } }
+.ScoreHeadingContainer { position: relative; height: 48px; width: 100%; display: grid; place-items: center; }
+.ScoreBackground { position: absolute; left: 0; width: 920px; top: -180px; z-index: -1; }
+.ScoreHeading { font: 600 30px 'MGReaver', serif; color: whitesmoke; text-shadow: 0 4px 12px #000; text-transform: uppercase; }
+.ScoreBreakdownRow { width: 360px; margin-top: 3px; padding-top: 2px; display: flex; justify-content: space-between; border-top: 1px solid rgba(255, 255, 255, 0.05); font-size: 22px; color: rgba(222, 240, 255, 0.65); text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8); }
+.ScoreBreakdownRow b { background: linear-gradient(#fff2df 35%, #ebc386 60%, #ba8c47 64%, #8d6c3a); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 700; }
+.ScoreBreakdownRow.Total { flex-direction: column; align-items: center; border: 0; margin-top: 4px; }
+.ScoreBreakdownRow.Total b { font: 700 64px 'MGReaver', serif; margin-top: -8px; animation: fg-pulse-total 0.3s 2 1.3s; }
+@keyframes fg-pulse-total { 20% { filter: brightness(4); transform: scale(1.15); } }
+
+/* ---- pause and the move list ----------------------------------------------------------------------------- */
+#PauseContainer { position: absolute; inset: 0; z-index: 8; pointer-events: none; }
+.Paused #PauseContainer { pointer-events: auto; }
+#PauseTextContainer { position: absolute; left: 55%; top: 50%; padding: 32px 64px; border-radius: 8px; background: #000; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  opacity: 0; transform: translate(-50%, -50%) scale(1.3); transition: opacity 0.15s cubic-bezier(0, 0.9, 0, 0.9), transform 0.15s cubic-bezier(0, 0.9, 0, 0.9); }
+.Paused #PauseTextContainer { opacity: 1; transform: translate(-50%, -50%); }
+.PauseIcon { width: 48px; filter: invert(1); }
+#PauseText { font: 700 40px 'MGReaver', serif; color: #fff; }
+.fg-pause-buttons { display: flex; gap: 8px; margin-top: 16px; }
+#MoveListPanel { position: absolute; left: 40px; top: 50%; width: 760px; max-height: 900px; overflow: auto; background: linear-gradient(#253242, #0e151f); box-shadow: 0 24px 120px -4px rgba(0, 0, 0, 0.48); border: 1px solid rgba(217, 240, 255, 0.05);
+  opacity: 0; transform: translate(-24px, -50%) scale(1.1); transition: opacity 0.2s cubic-bezier(0, 0.9, 0, 0.9), transform 0.2s cubic-bezier(0, 0.9, 0, 0.9); }
+.Paused #MoveListPanel { opacity: 1; transform: translate(0, -50%); }
+#MoveListTitle { padding: 16px 16px 12px 24px; background: rgba(2, 6, 10, 0.4); border-bottom: 1px solid rgba(0, 0, 0, 0.1); text-transform: uppercase; font-size: 16px; letter-spacing: 1.5px; line-height: 1.1; color: rgba(225, 235, 244, 0.6); position: relative; }
+#MoveListTitle b { font: 600 28px 'MGReaver', serif; color: #f5f5f5; letter-spacing: 0.5px; }
+.fg-movelist-tabs { position: absolute; right: 16px; top: 16px; display: flex; gap: 4px; }
+.fg-movelist-tabs button { border: 1px solid #ffffff30; background: #0b111a; padding: 2px 10px; cursor: pointer; }
+.fg-movelist-tabs button.on { background: #3b6fa5; }
+.MoveList { padding: 16px 8px 16px 16px; }
+.MoveListHeader, .MoveListEntry { display: grid; grid-template-columns: 1fr 172px 76px 76px 76px 70px; align-items: center; column-gap: 4px; }
+.MoveListHeader { margin-bottom: 8px; font-size: 12px; line-height: 1.1; letter-spacing: 0.5px; text-transform: uppercase; color: #b0bcc2; text-align: center; }
+.MoveListHeader .Command { text-align: left; }
+.MoveListEntry { min-height: 38px; padding: 4px 8px; margin-bottom: 1px; background: linear-gradient(90deg, rgba(161, 200, 255, 0.03) 20%, rgba(203, 225, 255, 0)); }
+.MoveListEntry > span { text-align: center; text-transform: uppercase; letter-spacing: 1px; font-size: 16px; color: #b0bcc2; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8); }
+.MoveListEntry .Name { text-align: left; font-size: 18px; color: rgba(245, 245, 245, 0.97); text-transform: none; letter-spacing: 0; margin-right: 8px; }
+.fg-commands { display: flex; flex-direction: column; gap: 3px; align-items: flex-start !important; }
+.Command { display: flex; align-items: center; }
+.fg-cmd { width: 26px; height: 26px; margin-right: 6px; border-radius: 2.5px; background: center 4px / 16px no-repeat, linear-gradient(#44515e, #38434e 10%, #212930); border: 1px solid rgba(0, 0, 0, 0.8); border-bottom-width: 2.6px; box-shadow: 0 0 0 1px rgba(230, 247, 255, 0.1); }
+.fg-cmd.Up { background-image: url('../../../../assets/minigames/shared/images/arrow_up.svg'), linear-gradient(#44515e, #38434e 10%, #212930); }
+.fg-cmd.Down { background-image: url('../../../../assets/minigames/shared/images/arrow_down.svg'), linear-gradient(#44515e, #38434e 10%, #212930); }
+.fg-cmd.Forward { background-image: url('../../../../assets/minigames/shared/images/arrow_right.svg'), linear-gradient(#44515e, #38434e 10%, #212930); }
+.fg-cmd.Back { background-image: url('../../../../assets/minigames/shared/images/arrow_left.svg'), linear-gradient(#44515e, #38434e 10%, #212930); }
+.fg-cmd.DownForward, .fg-cmd.DownBack { position: relative; }
+.fg-cmd.DownForward::before, .fg-cmd.DownBack::before { content: ''; position: absolute; inset: 4px; background: url('../../../../assets/minigames/shared/images/arrow_down.svg') center / 16px no-repeat; }
+.fg-cmd.DownForward::before { transform: rotate(-45deg); }
+.fg-cmd.DownBack::before { transform: rotate(45deg); }
+.fg-cmd.Attack { width: 36px; background-image: url('../../../../assets/minigames/shared/images/space.svg'), linear-gradient(#44515e, #38434e 10%, #212930); background-size: 24px, auto; }
+.fg-cmd.Special { background-image: url('../../../../assets/minigames/shared/images/alt.svg'), linear-gradient(#44515e, #38434e 10%, #212930); background-size: 18px, auto; background-position: center 3px, 0 0; }
+.MoveListEntry.Safe .OnBlock { color: #5ec95e; }
+.MoveListEntry.Equal .OnBlock { color: rgb(60, 113, 226); }
+.MoveListEntry.TurnOver .OnBlock { color: #fff; }
+.MoveListEntry.Unsafe .OnBlock { color: rgb(243, 147, 69); }
+.MoveListEntry.VeryUnsafe .OnBlock { color: rgb(241, 48, 48); }
+.MoveListInstallHeader { margin: 20px 0 6px 4px; font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase; color: #b0bcc2; }
+.fg-chain-note { margin: 14px 4px 2px; font-size: 14px; line-height: 1.35; color: #8b989e; }
+.PauseHint { position: absolute; right: 0; bottom: 0; z-index: 7; padding: 24px 28px 24px 24px; display: flex; align-items: center; gap: 8px; opacity: 0; transform: translateY(24px); transition: opacity 0.3s cubic-bezier(0, 1, 0, 1), transform 0.3s cubic-bezier(0, 1, 0, 1); }
+.MatchStateRoundInProgress .PauseHint, .Paused .PauseHint { opacity: 1; transform: none; }
+.PauseLabelContainer { display: grid; justify-items: end; }
+.PauseLabel, .UnPauseLabel { grid-area: 1 / 1; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; color: #b0bcc2; transition: opacity 0.2s, transform 0.2s; }
+.UnPauseLabel { opacity: 0; transform: translateY(8px); }
+.Paused .PauseLabel { opacity: 0; transform: translateY(-8px); }
+.Paused .UnPauseLabel { opacity: 1; transform: none; }
+.ControlKey { min-width: 38px; height: 38px; padding: 0 8px; display: inline-grid; place-items: center; border: 1px solid #000; border-radius: 3px; background: #2127268a; box-shadow: 1px 0 1px 1px #000000bb, inset 0 1px 0 #ffffff22; cursor: pointer; }
+.KeyText { font: 600 18px 'MGRadiance', sans-serif; color: #fff; }
+img.KeyText { width: 20px; height: 20px; }
+#ControlsDisplay { position: absolute; left: 50%; bottom: 0; z-index: 6; transform: translate(-50%, 24px); padding: 48px 200px 18px; display: flex; align-items: flex-end; gap: 12px; opacity: 0; pointer-events: none;
+  background: radial-gradient(50% 100% at 50% 100%, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0)); transition: opacity 0.3s cubic-bezier(0, 1, 0, 1), transform 0.3s cubic-bezier(0, 1, 0, 1); }
+#ControlsDisplay .Column { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#ControlsDisplay .Row { display: flex; gap: 6px; }
+#ControlsDisplay .ControlKey.Medium { min-width: 64px; } #ControlsDisplay .ControlKey.ExtraLarge { min-width: 180px; }
+.OrText { align-self: center; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: whitesmoke; }
+.FirstFight.MatchStateRoundInProgress #ControlsDisplay, .FirstFight.MatchStateRound1Start #ControlsDisplay, .FirstFight.MatchStateRound2Start #ControlsDisplay, .FirstFight.MatchStateRound3Start #ControlsDisplay { opacity: 1; transform: translate(-50%, 0); }
+.FirstFight.MatchStateRoundInProgress #ControlsDisplay .ControlKey { animation: fg-key-pulse 1s infinite alternate-reverse; }
+@keyframes fg-key-pulse { to { filter: brightness(2); } }
+
+/* ---- corner, touch ------------------------------------------------------------------------------------------ */
+.fg-popup .mg-close { top: 6px; right: 6px; transform: scale(1.4); }
+.fg-corner { position: absolute; z-index: 30; left: 18px; top: 14px; transform: scale(1.3); transform-origin: left top; }
+.fg-touch-controls { position: absolute; inset: 0; z-index: 9; pointer-events: none; }
+.fg-dpad { position: absolute; left: 70px; bottom: 60px; width: 360px; height: 360px; pointer-events: auto; }
+.fg-dpad button, .fg-buttons button { position: absolute; border: 3px solid rgba(255, 255, 255, 0.35); background: rgba(10, 16, 26, 0.45); border-radius: 22px; touch-action: none; }
+.fg-dpad button:active, .fg-buttons button:active { background: rgba(120, 170, 255, 0.45); }
+.fg-pad-up { left: 120px; top: 0; width: 120px; height: 120px; } .fg-pad-down { left: 120px; bottom: 0; width: 120px; height: 120px; }
+.fg-pad-left { left: 0; top: 120px; width: 120px; height: 120px; } .fg-pad-right { right: 0; top: 120px; width: 120px; height: 120px; }
+.fg-pad-dl { left: 0; bottom: 0; width: 110px; height: 110px; border-radius: 50% !important; opacity: 0.6; } .fg-pad-dr { right: 0; bottom: 0; width: 110px; height: 110px; border-radius: 50% !important; opacity: 0.6; }
+.fg-pad-up::after, .fg-pad-down::after, .fg-pad-left::after, .fg-pad-right::after { content: ''; position: absolute; inset: 34px; background: center / contain no-repeat; opacity: 0.85; }
+.fg-pad-up::after { background-image: url('../../../../assets/minigames/shared/images/arrow_up.svg'); } .fg-pad-down::after { background-image: url('../../../../assets/minigames/shared/images/arrow_down.svg'); }
+.fg-pad-left::after { background-image: url('../../../../assets/minigames/shared/images/arrow_left.svg'); } .fg-pad-right::after { background-image: url('../../../../assets/minigames/shared/images/arrow_right.svg'); }
+.fg-buttons { position: absolute; right: 70px; bottom: 80px; width: 420px; height: 300px; pointer-events: auto; }
+.fg-pad-attack { right: 0; bottom: 0; width: 220px; height: 220px; border-radius: 50% !important; }
+.fg-pad-attack img { width: 110px; opacity: 0.85; }
+.fg-pad-special { left: 0; top: 0; width: 170px; height: 170px; border-radius: 50% !important; font: 700 44px 'MGRadiance', sans-serif; color: #fff; }
+.fg-touch .PauseHint { bottom: auto; top: 200px; }
+.fg-touch #ControlsDisplay { display: none; }
+@media (prefers-reduced-motion: reduce) { .ArcadeMapDestination.UpNext, .GlowButton, .Player1 .SelectedBorder, .Player2 .SelectedBorder { animation: none; } }

@@ -12,6 +12,7 @@ import { GuideCard } from '../guides/GuideParts.jsx';
 import '../guides/guides.css';
 import { bioParts } from '../../scripts/profile-links.mjs';
 import { locale, t } from '../../scripts/i18n.mjs';
+import { HUB } from '../minigames/hub.mjs';
 
 // A creator's public profile (asked for on 2026-10-02; /workshop?creator=<key>, server/profiles.mjs):
 // the nickname, avatar, a few lines about them, the Telegram @username if they chose to show it, how many
@@ -54,9 +55,10 @@ export default function CreatorProfile({ id }) {
       <img className="creator-avatar" src={profile.avatar} alt="" width="112" height="112"/>
       <div className="creator-about">
         <h1>{profile.nickname}</h1>
-        <BadgeList badges={profile.badges || []}/>
+        <BadgeList badges={profile.badges || []} likes={stats.likes} best={profile.dotadle?.best}/>
         <p className="creator-facts">{profile.telegram && <a href={telegramLink(profile.telegram)} target="_blank" rel="noreferrer"><Icon name="telegram" size={15}/>{profile.telegram}</a>}
           {profile.dotadle && <a className="creator-dotadle" href="./dotadle" title={t('Dotadle: побед {won} из {played}, лучшая серия {best}', profile.dotadle)}><Icon name="trophy" size={15}/>{t('Dotadle: серия {streak}', profile.dotadle)}</a>}
+          {profile.minigames?.length > 0 && <MinigamePlaces places={profile.minigames}/>}
           <span><Icon name="clock" size={15}/>{t('На сайте с {date}', { date: new Date(profile.joined).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) })}</span></p>
         {profile.bio ? <p className="creator-bio">{bioParts(profile.bio).map((part, i) => part.href ? <a key={i} href={part.href} target="_blank" rel="noopener noreferrer nofollow ugc">{part.text}</a> : part.text)}</p> : profile.mine && <p className="creator-bio catalog-muted">{t('Расскажи о себе в настройках профиля.')}</p>}
       </div>
@@ -74,12 +76,20 @@ export default function CreatorProfile({ id }) {
       {kind !== 'guides' && <HideAdultButton/>}</div>
     <div key={kind} className="workshop-switch-view">{kind === 'liked' ? <Liked liked={liked} error={likedError} onUpdate={(list, itemId, value) => setLiked((current) => ({ ...current, [list]: current[list].map((item) => item.id === itemId ? { ...item, ...value } : item) }))}/>
       : !items.length ? <section className="catalog-empty creator-empty"><h2>{kind === 'grids' ? t('Сеток пока нет') : kind === 'backgrounds' ? t('Фонов пока нет') : t('Гайдов пока нет')}</h2>
-      {profile.mine && <p>{kind === 'grids' ? t('Создай сетку в редакторе и отправь её на проверку.') : kind === 'backgrounds' ? t('Собери фон из картинки, GIF или видео и нажми «Опубликовать в мастерскую».') : t('Напиши гайд — после проверки он появится здесь.')}</p>}</section>
+      {profile.mine && <p>{kind === 'grids' ? t('Создай сетку в редакторе и отправь её на проверку.') : kind === 'backgrounds' ? t('Собери фон из GIF или видео и нажми «Опубликовать в мастерскую».') : t('Напиши гайд — после проверки он появится здесь.')}</p>}</section>
       : <><Works kind={kind} items={items} onUpdate={update}/>{items.length < stats[kind] && <p className="catalog-muted creator-more">{t('Здесь последние {count}.', { count: items.length })}</p>}</>}
     </div>
     {badges && <BadgeEditor profile={profile} onChange={(value) => setProfile((current) => ({ ...current, badges: value }))} onClose={() => setBadges(false)}/>}
     {settings && <ProfileSettings onClose={() => setSettings(false)} onSaved={async () => { await auth.refresh().catch(() => {}); setRetry((x) => x + 1); }}/>}
   </>;
+}
+
+// «Мини-игры»: the best place in the tables of records (server/minigames.mjs placements), the others in the hint.
+const gameName = (id) => t(HUB.find((game) => game.id === id)?.name || id);
+function MinigamePlaces({ places }) {
+  const [top] = places, all = places.map((place) => t('#{rank} — {game}', { rank: place.rank, game: gameName(place.game) })).join('\n');
+  return <a className="creator-dotadle creator-minigames" href={`./minigames?game=${top.game}`} title={`${t('Таблицы рекордов мини-игр')}\n${all}`}>
+    <Icon name="trophy" size={15}/>{t('Мини-игры: #{rank} — {game}', { rank: top.rank, game: gameName(top.game) })}</a>;
 }
 
 // Grids, backgrounds or guides as the workshop shows them. `onUpdate(list, id, value)`: a like.

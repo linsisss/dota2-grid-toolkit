@@ -4,8 +4,13 @@ import { join } from 'node:path';
 import { inflateRawSync } from 'node:zlib';
 import { fail } from './catalog-store.mjs';
 import { panoramaSource, readVPK } from '../scripts/vpk.mjs';
-import { MENU_PACK_PATHS, MENU_PACK_VIDEOS } from '../scripts/menu-background.mjs';
+import { MENU_LAYOUT, MENU_PACK_PATHS, MENU_PACK_VIDEOS, MENU_VIDEO } from '../scripts/menu-background.mjs';
+import { HUD_STYLE } from '../scripts/hud-style.mjs';
+import { ABILITIES_PATH, TEXTS_PATH } from '../scripts/dota-texts.mjs';
+import { CURSOR_IDS as CURSOR_ID_LIST, CURSOR_SIZES } from '../scripts/dota-cursor.mjs';
+import { CUSTOMIZE_PAKS, customizeEntry } from '../scripts/customize-pack.mjs';
 import { DOTA_FONT_FILES } from '../scripts/dota-font.mjs';
+import { D2PFX_FILE } from '../scripts/d2pfx-mods.mjs';
 
 // The menu background's and the font's packs for their PowerShell commands (asked for on 2026-10-03:
 // «чтобы скрипт сам качал выбранный фон, а не брал из загрузок — чтобы юзер не мог ошибиться»). The
@@ -18,8 +23,11 @@ import { DOTA_FONT_FILES } from '../scripts/dota-font.mjs';
 // a ZIP of fonts/<Dota's font>.otf, OFL.txt and the read-me.
 // `storage`: 15 GB since 2026-10-07 (5 GB filled up and every new pack was refused for a day); when a
 // new pack does not fit, the oldest ready ones make room (evict).
-export const PACK_LIMITS = Object.freeze({ bg: 80_000_000, font: 30_000_000, part: 4 * 1024 * 1024, days: 7, storage: 15_000_000_000, startsHourly: 30 });
-const EXT = { bg: 'vpk', font: 'zip' };
+// 'all': the customization page's one file (scripts/customize-pack.mjs): a background's videos, the
+// interface, the cursor, the d2pfx mods and a font together (200 MB since the d2pfx mods, 2026-10-17: a HUD
+// skin and a play-panel background alone may be 25 MB each).
+export const PACK_LIMITS = Object.freeze({ bg: 80_000_000, font: 30_000_000, all: 200_000_000, part: 4 * 1024 * 1024, days: 7, storage: 15_000_000_000, startsHourly: 30 });
+const EXT = { bg: 'vpk', font: 'zip', all: 'zip' };
 const DAY = 86_400_000;
 
 // ——— What a pack may hold.
@@ -36,10 +44,14 @@ export function panoramaProblem(text) {
   return '';
 }
 const EBML = [0x1a, 0x45, 0xdf, 0xa3];
-function backgroundProblem(bytes) {
+// `whole`: the background's own pack has the menu's video and dashboard; inside the customization's one
+// file it may carry only the other parts (no menu background: scripts/menu-background.mjs, video null),
+// but a layout that plays the menu's video comes with it.
+function backgroundProblem(bytes, { whole = true } = {}) {
   let files;
   try { files = readVPK(bytes).files; } catch { return 'Это не фон GridStudio.'; }
-  if (!files.some((file) => file.path === MENU_PACK_PATHS[0]) || !files.some((file) => file.path === MENU_PACK_VIDEOS[0])) return 'Это не фон GridStudio.';
+  const has = (path) => files.some((file) => file.path === path);
+  if (whole ? !has(MENU_PACK_PATHS[0]) || !has(MENU_PACK_VIDEOS[0]) : !files.length || (has(MENU_LAYOUT) && !has(MENU_VIDEO))) return 'Это не фон GridStudio.';
   for (const file of files) {
     if (!MENU_PACK_PATHS.includes(file.path)) return 'В фоне есть лишний файл.';
     if (MENU_PACK_VIDEOS.includes(file.path)) { if (!EBML.every((byte, i) => file.data[i] === byte)) return 'Видео фона повреждено.'; continue; }
@@ -86,7 +98,72 @@ function fontProblem(bytes) {
   }
   return '';
 }
-export const packProblem = (kind, bytes) => (kind === 'bg' ? backgroundProblem(bytes) : fontProblem(bytes));
+// The interface's pak03 (scripts/interface-modules.mjs): the HUD's style (Panorama, checked like the menu's
+// files) and Valve's localization files with the user's texts (plain UTF-8 text, nothing to run).
+const INTERFACE_PATHS = [HUD_STYLE, TEXTS_PATH, ABILITIES_PATH];
+function interfaceProblem(bytes) {
+  let files;
+  try { files = readVPK(bytes).files; } catch { return 'Это не интерфейс GridStudio.'; }
+  if (!files.length) return 'Это не интерфейс GridStudio.';
+  for (const file of files) {
+    if (!INTERFACE_PATHS.includes(file.path)) return 'В интерфейсе есть лишний файл.';
+    if (file.path === HUD_STYLE) {
+      let text;
+      try { text = panoramaSource(file.data); } catch { return 'Файл интерфейса повреждён.'; }
+      const problem = /[^\x00-\x7f]/.test(text) ? 'не ASCII' : panoramaProblem(text);
+      if (problem) return `В файле интерфейса недопустимое: ${problem}.`;
+    } else if (file.data.includes(0) || file.data.length > 8_000_000) return 'Файл текстов повреждён.';
+  }
+  return '';
+}
+// The cursor's loose files: every id of Dota's cursors at its sizes (scripts/dota-cursor.mjs CURSOR_IDS, 23
+// since 2026-10-17), 32-bit BMPs exactly as cursorBMP writes them, and cursor.res.
+const CURSOR_IDS = new Set(CURSOR_ID_LIST);
+function cursorProblem(path, data) {
+  if (path === 'resource/cursor/cursor.res') return data.includes(0) || data.length > 200_000 ? 'Файл курсора повреждён.' : '';
+  const name = /^resource\/cursor\/([a-z_]+?)(?:_vsz([0-3]))?\.bmp$/.exec(path);
+  if (!name || !CURSOR_IDS.has(name[1])) return 'В архиве есть лишний файл.';
+  const size = CURSOR_SIZES[Number(name[2] ?? 0)];
+  return data[0] === 0x42 && data[1] === 0x4d && data.length === 54 + size * size * 4 ? '' : 'Курсор в архиве повреждён.';
+}
+// The d2pfx mods' pak04 (scripts/d2pfx-mods.mjs): only d2pfx's own files, byte for byte — every path and
+// SHA-256 is one of those the page's list was made from (server/d2pfx-files.json, scripts/make-d2pfx-catalog.mjs),
+// so nothing but the mods the page offers can be handed out under gridstudio.me.
+let d2pfxKnown = null;
+const d2pfxFiles = () => (d2pfxKnown ||= JSON.parse(readFileSync(new URL('./d2pfx-files.json', import.meta.url), 'utf8')).files);
+export function d2pfxProblem(bytes) {
+  let files;
+  try { files = readVPK(bytes).files; } catch { return 'Это не моды d2pfx.'; }
+  if (!files.length || files.length > 2000) return 'Это не моды d2pfx.';
+  const known = d2pfxFiles(), seen = new Set();
+  for (const file of files) {
+    if (seen.has(file.path) || !D2PFX_FILE.test(file.path) || !known[file.path]) return 'В модах d2pfx есть лишний файл.';
+    seen.add(file.path);
+    if (!known[file.path].includes(createHash('sha256').update(file.data).digest('hex'))) return 'Файл мода d2pfx не совпадает с d2pfx.';
+  }
+  return '';
+}
+function customizeProblem(bytes) {
+  let entries;
+  try { entries = readZip(bytes, PACK_LIMITS.all * 2); } catch { return 'Это не сборка GridStudio.'; }
+  if (!entries.some((entry) => customizeEntry(entry.name)?.kind !== 'text' && customizeEntry(entry.name))) return 'В сборке ничего нет.';
+  const names = new Set();
+  for (const { name, data } of entries) {
+    const entry = customizeEntry(name);
+    if (!entry || names.has(name)) return 'В сборке есть лишний файл.';
+    names.add(name);
+    let problem = '';
+    if (entry.kind === 'text') problem = data.includes(0) ? 'В сборке есть лишний файл.' : '';
+    else if (entry.kind === 'fonts') problem = !FONT_NAMES.has(`fonts/${entry.path}`) ? 'В сборке есть лишний файл.' : FONT_MAGIC.some((magic) => magic.every((byte, i) => data[i] === byte)) ? '' : 'Шрифт в сборке повреждён.';
+    else if (entry.path === CUSTOMIZE_PAKS.menu) problem = backgroundProblem(data, { whole: false });
+    else if (entry.path === CUSTOMIZE_PAKS.match) problem = interfaceProblem(data);
+    else if (entry.path === CUSTOMIZE_PAKS.d2pfx) problem = d2pfxProblem(data);
+    else problem = cursorProblem(entry.path, data);
+    if (problem) return problem;
+  }
+  return '';
+}
+export const packProblem = (kind, bytes) => (kind === 'bg' ? backgroundProblem(bytes) : kind === 'all' ? customizeProblem(bytes) : fontProblem(bytes));
 
 export class InstallPacks {
   constructor(store, { dir, storage = PACK_LIMITS.storage }) {

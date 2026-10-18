@@ -1,0 +1,1328 @@
+{
+ "made": "2026-10-17",
+ "note": "E_valve (emulator, Valve files, capture state) against the capture, per panel; levels of 255",
+ "lower": {
+  "70": {
+   "whole": {
+    "mean": 3.51,
+    "within2": 87.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 3.51
+   },
+   "PortraitContainer": {
+    "mean": 43.67,
+    "within2": 4.1,
+    "shift": [
+     0,
+     -1
+    ],
+    "meanShifted": 42.99
+   },
+   "minimap_block": {
+    "mean": 8.25,
+    "within2": 66.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 8.25
+   },
+   "minimap_container": {
+    "mean": 6.3,
+    "within2": 78.1,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 6.3
+   },
+   "center_bg": {
+    "mean": 15.78,
+    "within2": 20.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 15.78
+   },
+   "PortraitBacker": {
+    "mean": 43.67,
+    "within2": 4.1,
+    "shift": [
+     0,
+     -1
+    ],
+    "meanShifted": 42.99
+   },
+   "inventory_items": {
+    "mean": 7.73,
+    "within2": 25.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.73
+   },
+   "InventoryBG": {
+    "mean": 8.51,
+    "within2": 24.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 8.51
+   },
+   "QuickBuyRows": {
+    "mean": 33.98,
+    "within2": 1.7,
+    "shift": [
+     1,
+     0
+    ],
+    "meanShifted": 32.12
+   },
+   "shop_launcher_bg": {
+    "mean": 23.85,
+    "within2": 43.9,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 23.85
+   },
+   "right_flare": {
+    "mean": 17.82,
+    "within2": 48.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 17.82
+   },
+   "left_flare": {
+    "mean": 7.77,
+    "within2": 66.2,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.77
+   },
+   "GlyphScanContainer": {
+    "mean": 7.75,
+    "within2": 64.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.75
+   },
+   "StatBranchBG": {
+    "mean": 12.7,
+    "within2": 7.5,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 12.7
+   },
+   "AghsStatusScepter": {
+    "mean": 7.31,
+    "within2": 26.2,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.31
+   },
+   "xp": {
+    "mean": 17.67,
+    "within2": 42.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 17.67
+   },
+   "HealthContainer": {
+    "mean": 15.87,
+    "within2": 41,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 15.87
+   },
+   "ManaContainer": {
+    "mean": 12.4,
+    "within2": 32.9,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 12.4
+   },
+   "lower_hud": {
+    "mean": 3.51,
+    "within2": 87.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 3.51
+   }
+  },
+  "80": {
+   "whole": {
+    "mean": 3.99,
+    "within2": 86.1,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 3.99
+   },
+   "PortraitContainer": {
+    "mean": 50.98,
+    "within2": 2.1,
+    "shift": [
+     3,
+     -2
+    ],
+    "meanShifted": 48.67
+   },
+   "minimap_block": {
+    "mean": 7.23,
+    "within2": 67.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.23
+   },
+   "minimap_container": {
+    "mean": 7.19,
+    "within2": 74.9,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.19
+   },
+   "center_bg": {
+    "mean": 17.5,
+    "within2": 18.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 17.5
+   },
+   "PortraitBacker": {
+    "mean": 50.98,
+    "within2": 2.1,
+    "shift": [
+     3,
+     -2
+    ],
+    "meanShifted": 48.67
+   },
+   "inventory_items": {
+    "mean": 7.58,
+    "within2": 24.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.58
+   },
+   "InventoryBG": {
+    "mean": 8.46,
+    "within2": 21.3,
+    "shift": [
+     -1,
+     0
+    ],
+    "meanShifted": 8.33
+   },
+   "QuickBuyRows": {
+    "mean": 34.59,
+    "within2": 0.3,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 34.59
+   },
+   "shop_launcher_bg": {
+    "mean": 14.84,
+    "within2": 38.3,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 14.84
+   },
+   "right_flare": {
+    "mean": 15.1,
+    "within2": 49.9,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 15.1
+   },
+   "left_flare": {
+    "mean": 7.72,
+    "within2": 66,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.72
+   },
+   "GlyphScanContainer": {
+    "mean": 6.28,
+    "within2": 69,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 6.28
+   },
+   "StatBranchBG": {
+    "mean": 9.26,
+    "within2": 10.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 9.26
+   },
+   "AghsStatusScepter": {
+    "mean": 8.54,
+    "within2": 22.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 8.54
+   },
+   "xp": {
+    "mean": 24.96,
+    "within2": 45.6,
+    "shift": [
+     1,
+     -1
+    ],
+    "meanShifted": 24.67
+   },
+   "HealthContainer": {
+    "mean": 19.21,
+    "within2": 21,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 19.21
+   },
+   "ManaContainer": {
+    "mean": 16.92,
+    "within2": 33.3,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 16.92
+   },
+   "lower_hud": {
+    "mean": 3.99,
+    "within2": 86.1,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 3.99
+   }
+  },
+  "85": {
+   "whole": {
+    "mean": 4.25,
+    "within2": 85.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 4.25
+   },
+   "PortraitContainer": {
+    "mean": 50.95,
+    "within2": 3,
+    "shift": [
+     4,
+     -2
+    ],
+    "meanShifted": 50.08
+   },
+   "minimap_block": {
+    "mean": 5.66,
+    "within2": 73.9,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.66
+   },
+   "minimap_container": {
+    "mean": 7.67,
+    "within2": 74,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.67
+   },
+   "center_bg": {
+    "mean": 17.91,
+    "within2": 19.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 17.91
+   },
+   "PortraitBacker": {
+    "mean": 50.95,
+    "within2": 3,
+    "shift": [
+     4,
+     -2
+    ],
+    "meanShifted": 50.08
+   },
+   "inventory_items": {
+    "mean": 7.38,
+    "within2": 26.3,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.38
+   },
+   "InventoryBG": {
+    "mean": 8.35,
+    "within2": 21.9,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 8.35
+   },
+   "QuickBuyRows": {
+    "mean": 38.63,
+    "within2": 0.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 38.63
+   },
+   "shop_launcher_bg": {
+    "mean": 16.81,
+    "within2": 38.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 16.81
+   },
+   "right_flare": {
+    "mean": 12.16,
+    "within2": 57.5,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 12.16
+   },
+   "left_flare": {
+    "mean": 7.79,
+    "within2": 69.6,
+    "shift": [
+     0,
+     -1
+    ],
+    "meanShifted": 7.34
+   },
+   "GlyphScanContainer": {
+    "mean": 7.95,
+    "within2": 64.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.95
+   },
+   "StatBranchBG": {
+    "mean": 10.07,
+    "within2": 12,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 10.07
+   },
+   "AghsStatusScepter": {
+    "mean": 9.6,
+    "within2": 16,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 9.6
+   },
+   "xp": {
+    "mean": 23.1,
+    "within2": 45.1,
+    "shift": [
+     0,
+     -1
+    ],
+    "meanShifted": 21.48
+   },
+   "HealthContainer": {
+    "mean": 18.97,
+    "within2": 22.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 18.97
+   },
+   "ManaContainer": {
+    "mean": 16.94,
+    "within2": 38.5,
+    "shift": [
+     3,
+     0
+    ],
+    "meanShifted": 16.61
+   },
+   "lower_hud": {
+    "mean": 4.25,
+    "within2": 85.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 4.25
+   }
+  },
+  "90": {
+   "whole": {
+    "mean": 4.3,
+    "within2": 84.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 4.3
+   },
+   "PortraitContainer": {
+    "mean": 43.92,
+    "within2": 3,
+    "shift": [
+     2,
+     0
+    ],
+    "meanShifted": 41.51
+   },
+   "minimap_block": {
+    "mean": 5.8,
+    "within2": 73.9,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.8
+   },
+   "minimap_container": {
+    "mean": 7.75,
+    "within2": 72.2,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.75
+   },
+   "center_bg": {
+    "mean": 18.33,
+    "within2": 15.5,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 18.33
+   },
+   "PortraitBacker": {
+    "mean": 43.92,
+    "within2": 3,
+    "shift": [
+     2,
+     0
+    ],
+    "meanShifted": 41.51
+   },
+   "inventory_items": {
+    "mean": 7.6,
+    "within2": 25.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.6
+   },
+   "InventoryBG": {
+    "mean": 8.43,
+    "within2": 21.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 8.43
+   },
+   "QuickBuyRows": {
+    "mean": 30.02,
+    "within2": 0.5,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 30.02
+   },
+   "shop_launcher_bg": {
+    "mean": 20.31,
+    "within2": 38,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 20.31
+   },
+   "right_flare": {
+    "mean": 12.36,
+    "within2": 59.1,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 12.36
+   },
+   "left_flare": {
+    "mean": 8.23,
+    "within2": 67,
+    "shift": [
+     1,
+     -2
+    ],
+    "meanShifted": 6.57
+   },
+   "GlyphScanContainer": {
+    "mean": 7.74,
+    "within2": 63.1,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.74
+   },
+   "StatBranchBG": {
+    "mean": 12.18,
+    "within2": 10.4,
+    "shift": [
+     1,
+     0
+    ],
+    "meanShifted": 6.54
+   },
+   "AghsStatusScepter": {
+    "mean": 7.87,
+    "within2": 19.9,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.87
+   },
+   "xp": {
+    "mean": 18.31,
+    "within2": 47.9,
+    "shift": [
+     1,
+     -2
+    ],
+    "meanShifted": 16.7
+   },
+   "HealthContainer": {
+    "mean": 15.17,
+    "within2": 23.2,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 15.17
+   },
+   "ManaContainer": {
+    "mean": 23.66,
+    "within2": 14.4,
+    "shift": [
+     4,
+     0
+    ],
+    "meanShifted": 22.01
+   },
+   "lower_hud": {
+    "mean": 4.3,
+    "within2": 84.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 4.3
+   }
+  },
+  "95": {
+   "whole": {
+    "mean": 4.57,
+    "within2": 83.7,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 4.57
+   },
+   "PortraitContainer": {
+    "mean": 41.56,
+    "within2": 4.8,
+    "shift": [
+     1,
+     -1
+    ],
+    "meanShifted": 41.37
+   },
+   "minimap_block": {
+    "mean": 7.38,
+    "within2": 67.9,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.38
+   },
+   "minimap_container": {
+    "mean": 8.24,
+    "within2": 70.7,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 8.24
+   },
+   "center_bg": {
+    "mean": 17.88,
+    "within2": 17.2,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 17.88
+   },
+   "PortraitBacker": {
+    "mean": 41.56,
+    "within2": 4.8,
+    "shift": [
+     1,
+     -1
+    ],
+    "meanShifted": 41.37
+   },
+   "inventory_items": {
+    "mean": 7.16,
+    "within2": 27.1,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.16
+   },
+   "InventoryBG": {
+    "mean": 8.3,
+    "within2": 21.2,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 8.3
+   },
+   "QuickBuyRows": {
+    "mean": 29.19,
+    "within2": 0.3,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 29.19
+   },
+   "shop_launcher_bg": {
+    "mean": 18.36,
+    "within2": 48.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 18.36
+   },
+   "right_flare": {
+    "mean": 16.88,
+    "within2": 52.3,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 16.88
+   },
+   "left_flare": {
+    "mean": 7.52,
+    "within2": 67.1,
+    "shift": [
+     1,
+     -1
+    ],
+    "meanShifted": 6.21
+   },
+   "GlyphScanContainer": {
+    "mean": 6.74,
+    "within2": 69.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 6.74
+   },
+   "StatBranchBG": {
+    "mean": 11.33,
+    "within2": 10.7,
+    "shift": [
+     1,
+     0
+    ],
+    "meanShifted": 6.6
+   },
+   "AghsStatusScepter": {
+    "mean": 6.82,
+    "within2": 17.5,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 6.82
+   },
+   "xp": {
+    "mean": 17.21,
+    "within2": 50.3,
+    "shift": [
+     1,
+     -1
+    ],
+    "meanShifted": 15.2
+   },
+   "HealthContainer": {
+    "mean": 20.52,
+    "within2": 22.6,
+    "shift": [
+     0,
+     -1
+    ],
+    "meanShifted": 19.07
+   },
+   "ManaContainer": {
+    "mean": 19.41,
+    "within2": 22.1,
+    "shift": [
+     3,
+     -1
+    ],
+    "meanShifted": 17.12
+   },
+   "lower_hud": {
+    "mean": 4.57,
+    "within2": 83.7,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 4.57
+   }
+  },
+  "100": {
+   "whole": {
+    "mean": 3.1,
+    "within2": 87.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 3.1
+   },
+   "PortraitContainer": {
+    "mean": 5.26,
+    "within2": 87.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.26
+   },
+   "minimap_block": {
+    "mean": 0,
+    "within2": 100,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 0
+   },
+   "minimap_container": {
+    "mean": 5.6,
+    "within2": 77.2,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.6
+   },
+   "center_bg": {
+    "mean": 15.31,
+    "within2": 20.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 15.31
+   },
+   "PortraitBacker": {
+    "mean": 5.26,
+    "within2": 87.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.26
+   },
+   "inventory_items": {
+    "mean": 7.22,
+    "within2": 28.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.22
+   },
+   "InventoryBG": {
+    "mean": 8.5,
+    "within2": 22.5,
+    "shift": [
+     -1,
+     0
+    ],
+    "meanShifted": 8.31
+   },
+   "QuickBuyRows": {
+    "mean": 35.39,
+    "within2": 0.2,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 35.39
+   },
+   "shop_launcher_bg": {
+    "mean": 15.32,
+    "within2": 44.1,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 15.32
+   },
+   "right_flare": {
+    "mean": 11.46,
+    "within2": 57.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 11.46
+   },
+   "left_flare": {
+    "mean": 6.58,
+    "within2": 69.1,
+    "shift": [
+     0,
+     -1
+    ],
+    "meanShifted": 5.98
+   },
+   "GlyphScanContainer": {
+    "mean": 5.54,
+    "within2": 72.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.54
+   },
+   "StatBranchBG": {
+    "mean": 5.68,
+    "within2": 15.2,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.68
+   },
+   "AghsStatusScepter": {
+    "mean": 7.45,
+    "within2": 21.3,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.45
+   },
+   "xp": {
+    "mean": 10.72,
+    "within2": 68.5,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 10.72
+   },
+   "HealthContainer": {
+    "mean": 16.63,
+    "within2": 27.1,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 16.63
+   },
+   "ManaContainer": {
+    "mean": 16.57,
+    "within2": 34.7,
+    "shift": [
+     3,
+     0
+    ],
+    "meanShifted": 15.66
+   },
+   "lower_hud": {
+    "mean": 3.1,
+    "within2": 87.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 3.1
+   }
+  }
+ },
+ "top": {
+  "70": {
+   "whole": {
+    "mean": 6.22,
+    "within2": 77.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 6.22
+   },
+   "TimeOfDayBG": {
+    "mean": 14.39,
+    "within2": 35,
+    "shift": [
+     -1,
+     0
+    ],
+    "meanShifted": 12.16
+   },
+   "TopBarRadiantTeam": {
+    "mean": 7.07,
+    "within2": 73.1,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.07
+   },
+   "TopBarDireTeam": {
+    "mean": 5.37,
+    "within2": 81.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.37
+   },
+   "topbar": {
+    "mean": 6.22,
+    "within2": 77.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 6.22
+   }
+  },
+  "80": {
+   "whole": {
+    "mean": 5.45,
+    "within2": 78.9,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.45
+   },
+   "TimeOfDayBG": {
+    "mean": 10.43,
+    "within2": 54,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 10.43
+   },
+   "TopBarRadiantTeam": {
+    "mean": 6.39,
+    "within2": 76.3,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 6.39
+   },
+   "TopBarDireTeam": {
+    "mean": 4.5,
+    "within2": 81.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 4.5
+   },
+   "topbar": {
+    "mean": 5.45,
+    "within2": 78.9,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.45
+   }
+  },
+  "90": {
+   "whole": {
+    "mean": 7.02,
+    "within2": 77.7,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.02
+   },
+   "TimeOfDayBG": {
+    "mean": 19.11,
+    "within2": 39.7,
+    "shift": [
+     0,
+     2
+    ],
+    "meanShifted": 14.81
+   },
+   "TopBarRadiantTeam": {
+    "mean": 8.19,
+    "within2": 75.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 8.19
+   },
+   "TopBarDireTeam": {
+    "mean": 5.85,
+    "within2": 80,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.85
+   },
+   "topbar": {
+    "mean": 7.02,
+    "within2": 77.7,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.02
+   }
+  },
+  "100": {
+   "whole": {
+    "mean": 5.37,
+    "within2": 81.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.37
+   },
+   "TimeOfDayBG": {
+    "mean": 16.01,
+    "within2": 41.1,
+    "shift": [
+     0,
+     2
+    ],
+    "meanShifted": 12.88
+   },
+   "TopBarRadiantTeam": {
+    "mean": 5.92,
+    "within2": 80.7,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.92
+   },
+   "TopBarDireTeam": {
+    "mean": 4.82,
+    "within2": 82.1,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 4.82
+   },
+   "topbar": {
+    "mean": 5.37,
+    "within2": 81.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.37
+   }
+  },
+  "110": {
+   "whole": {
+    "mean": 6.32,
+    "within2": 76.5,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 6.32
+   },
+   "TimeOfDayBG": {
+    "mean": 18.08,
+    "within2": 28.7,
+    "shift": [
+     -1,
+     2
+    ],
+    "meanShifted": 17.26
+   },
+   "TopBarRadiantTeam": {
+    "mean": 7.24,
+    "within2": 73.4,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.24
+   },
+   "TopBarDireTeam": {
+    "mean": 5.4,
+    "within2": 79.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.4
+   },
+   "topbar": {
+    "mean": 6.32,
+    "within2": 76.5,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 6.32
+   }
+  },
+  "120": {
+   "whole": {
+    "mean": 5.61,
+    "within2": 78.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.61
+   },
+   "TimeOfDayBG": {
+    "mean": 10.61,
+    "within2": 53.5,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 10.61
+   },
+   "TopBarRadiantTeam": {
+    "mean": 7.07,
+    "within2": 72.7,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 7.07
+   },
+   "TopBarDireTeam": {
+    "mean": 5.68,
+    "within2": 78.8,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.68
+   },
+   "topbar": {
+    "mean": 5.61,
+    "within2": 78.6,
+    "shift": [
+     0,
+     0
+    ],
+    "meanShifted": 5.61
+   }
+  }
+ }
+}

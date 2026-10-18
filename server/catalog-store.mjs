@@ -309,9 +309,16 @@ export class CatalogStore {
     const from = `FROM works w JOIN revisions r ON r.id=w.public_revision WHERE ${clauses.join(' AND ')}`;
     const total = this.get(`SELECT count(*) n ${from}`, ...args).n;
     // `popular`: by likes; 'week' — by the likes of the last seven days first (asked for on 2026-10-03:
-    // new works could not get to the top of all-time likes), then all-time likes.
-    const week = popular === 'week' ? `(SELECT count(*) FROM likes WHERE work=w.id AND created>=${Math.floor(this.now() - 7 * 86_400_000)}) DESC,` : '';
-    const rows = this.all(`SELECT w.id ${from} ORDER BY ${week}${popular ? '(SELECT count(*) FROM likes WHERE work=w.id) DESC,' : ''}r.created DESC,w.id LIMIT 12 OFFSET ?`, ...args, page * 12);
+    // new works could not get to the top of all-time likes), then all-time likes. 'downloads', 'categories'
+    // and 'categories-asc' (asked for on 2026-10-16: «только по лайкам в популярных» was all the same works;
+    // by categories, not symbols, the same day).
+    const likes = '(SELECT count(*) FROM likes WHERE work=w.id) DESC,', categories = "coalesce(json_extract(r.stats,'$.categories'),0)";
+    const order = {
+      week: `(SELECT count(*) FROM likes WHERE work=w.id AND created>=${Math.floor(this.now() - 7 * 86_400_000)}) DESC,${likes}`,
+      downloads: "(SELECT count(*) FROM downloads WHERE kind='work' AND item=w.id) DESC,",
+      categories: `${categories} DESC,`, 'categories-asc': `${categories} ASC,`
+    }[popular] ?? (popular ? likes : '');
+    const rows = this.all(`SELECT w.id ${from} ORDER BY ${order}r.created DESC,w.id LIMIT 12 OFFSET ?`, ...args, page * 12);
     return { total, page, items: rows.map(({ id }) => { const item = this.publicItem(id, account); delete item.grid; return item; }) };
   }
   like(id, account, liked) {

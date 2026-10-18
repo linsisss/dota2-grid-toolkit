@@ -160,18 +160,21 @@ export function portraitSourceRect(image, width, height, crop) {
   return [x + (sourceWidth - w) / 2, y + (sourceHeight - h) / 2, w, h];
 }
 
-export function drawCategoryLabel(ctx, text, x, y, color = DOTA.labelColor) {
+// `shadow`: the game's soft drop shadow; off for the sketch look (grid-picture.mjs), pure ink on white.
+export function drawCategoryLabel(ctx, text, x, y, color = DOTA.labelColor, shadow = true) {
   ctx.save();
   ctx.font = FONT;
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = color;
   ctx.letterSpacing = '0px';
-  ctx.shadowColor = '#00000044';
-  const transform = ctx.getTransform();
-  const rasterScale = Math.hypot(transform.a, transform.b);
-  ctx.shadowOffsetX = 2 * rasterScale;
-  ctx.shadowOffsetY = 2 * rasterScale;
-  ctx.shadowBlur = 4 * rasterScale;
+  if (shadow) {
+    ctx.shadowColor = '#00000044';
+    const transform = ctx.getTransform();
+    const rasterScale = Math.hypot(transform.a, transform.b);
+    ctx.shadowOffsetX = 2 * rasterScale;
+    ctx.shadowOffsetY = 2 * rasterScale;
+    ctx.shadowBlur = 4 * rasterScale;
+  }
   // Radiance SemiBold's ascender is 857 / 1000 em. A fixed baseline keeps
   // punctuation, ASCII and fallback glyphs aligned to the same category origin.
   // Glyphs are placed one by one at the game's advances.

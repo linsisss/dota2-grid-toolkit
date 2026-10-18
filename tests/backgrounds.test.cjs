@@ -7,7 +7,8 @@ const { spawnSync } = require('node:child_process');
 const { proof } = require('./captcha-helper.cjs');
 
 const hasFFmpeg = spawnSync('ffmpeg', ['-version']).status === 0 && spawnSync('ffprobe', ['-version']).status === 0;
-const webm = (size, seconds = 2, color = '0x6040a0') => new Uint8Array(spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=${color}:s=${size}:r=30:d=${seconds}`,
+// The colour turns, so the video moves: a still picture is not taken (stillVideo).
+const webm = (size, seconds = 2, color = '0x6040a0', still = false) => new Uint8Array(spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=${color}:s=${size}:r=30:d=${seconds}${still ? '' : ',hue=H=t*2'}`,
   '-c:v', 'libvpx-vp9', '-b:v', '200k', '-deadline', 'realtime', '-cpu-used', '8', '-an', '-f', 'webm', '-'], { maxBuffer: 5e7 }).stdout);
 
 test('shared backgrounds: captcha, ffprobe-checked upload, moderation, gallery, ranged video, limits', { skip: !hasFFmpeg && 'ffmpeg is not installed' }, async t => {
@@ -38,6 +39,9 @@ test('shared backgrounds: captcha, ffprobe-checked upload, moderation, gallery, 
   assert.equal((await upload(meta({ tags: ['Аниме', 'Игры', 'Мемы', 'Космос'] }))).status, 400, 'at most three tags');
   const wrong = await upload(meta(), webm('640x360'));
   assert.equal(wrong.status, 415); assert.match(wrong.body.error, /640×360.*1920×1080/);
+  // A still picture made into a video (2026-10-16): not taken.
+  const still = await upload(meta(), webm('1920x1080', 2, '0x6040a0', true));
+  assert.equal(still.status, 415); assert.match(still.body.error, /Картинки в мастерскую не публикуем/);
   const sent = await upload(meta());
   assert.equal(sent.status, 201); assert.equal(sent.body.status, 'pending');
   const id = sent.body.id;

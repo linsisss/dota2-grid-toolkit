@@ -1,0 +1,16 @@
+<!doctype html><html><body style="margin:0;background:transparent">
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+window.THREE = THREE;
+const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true, alpha: true, premultipliedAlpha: false });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping;
+renderer.setPixelRatio(1);
+renderer.setClearColor(0x000000, 0);
+document.body.appendChild(renderer.domElement);
+window.renderer = renderer;
+window.loader = new GLTFLoader();
+window.ready = true;
+</script></body></html>

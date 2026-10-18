@@ -24,6 +24,7 @@ export function reflectItems(doc, ids, axis) {
       delete next.rowGlyphs;
       delete next.rowText;
       delete next.textMetrics;
+      delete next.box;
       if (axis === 'horizontal') next.x = bounds.x * 2 + bounds.w - glyph.x - glyph.w;
       else next.y = bounds.y * 2 + bounds.h - glyph.y - C.visualHeight(glyph);
       if (index) return C.entity(doc, next);
@@ -113,14 +114,17 @@ export function mergeRows(doc, measure = null, ids = null) {
   );
   return replacements;
 }
+// Glyphs past the canvas (core glyphOutside): every export leaves them out by itself since 2026-10-16;
+// «Обрезать» deletes them from the document too, by the same rule.
 export function overflow(doc) {
   let count = 0,
     editable = 0;
+  const size = C.canvasSize(doc);
   for (const item of doc.entities) {
     const layer = doc.layers.find((l) => l.id === item.layer);
     if (item.type === 'heroes' || !layer?.visible) continue;
     for (const glyph of C.textGlyphs(item, true))
-      if (C.outside(glyph, C.canvasSize(doc))) {
+      if (C.glyphOutside(glyph, size)) {
         count++;
         if (!layer.locked) editable++;
       }
@@ -128,26 +132,12 @@ export function overflow(doc) {
   return { count, editable };
 }
 export function cropSymbols(doc) {
-  const items = [];
+  const items = [], size = C.canvasSize(doc);
   for (const item of doc.entities) {
     const layer = doc.layers.find((l) => l.id === item.layer);
-    if (item.type === 'heroes' || !layer?.visible || layer.locked) {
-      items.push(item);
-      continue;
-    }
-    const glyphs = C.textGlyphs(item, true),
-      inside = glyphs.filter((glyph) => !C.outside(glyph, C.canvasSize(doc)));
-    if (inside.length === glyphs.length) {
-      items.push(item);
-      continue;
-    }
-    for (const glyph of inside) {
-      const clean = { ...glyph, rotation: 0 };
-      delete clean.rowGlyphs;
-      delete clean.rowText;
-      delete clean.textMetrics;
-      items.push(C.entity(doc, clean));
-    }
+    const inside = item.type === 'heroes' || !layer?.visible || layer.locked ? null : C.insideGlyphs(item, size);
+    if (!inside) items.push(item);
+    else for (const glyph of inside) items.push(C.entity(doc, glyph));
   }
   doc.entities = items;
 }
@@ -157,13 +147,30 @@ export function alignItems(items, side, size = C.canvasSize()) {
   const x = side === 'left' ? 0 : side === 'right' ? size.w - group.w : (size.w - group.w) / 2;
   moveItems(items, x - group.x, 0);
 }
-// Move the selection as one rigid body. Only the top and left canvas edges stop it.
+// Move the selection as one rigid body. Since 2026-10-16 drawings, text and art go past every edge of
+// the canvas, left and up too (the editor shows them dimmed; exports crop them, core categoryEntries).
+// Hero groups still stop at the top and left edges: Dota would put their cards off the screen. `keep`
+// (the canvas with the margin the editor shows) stops a move from taking the whole selection out of it
+// (KEEP_IN units stay inside), so a drag or a nudge never loses it off the screen; a selection already
+// out may come back. FAR keeps positions well within what importProject reads.
 // Imported geometry is left untouched until the user moves or transforms it.
-export function moveItems(items, dx = 0, dy = 0) {
+const FAR = 20000, KEEP_IN = 12;
+export function moveItems(items, dx = 0, dy = 0, keep = null) {
   if (!items.length) return;
-  const b = C.bounds(items, true);
-  dx = Math.max(dx, -b.x);
-  dy = Math.max(dy, -b.y);
+  const b = C.bounds(items, true), heroes = items.filter((item) => item.type === 'heroes');
+  if (keep) {
+    if (dx < 0) dx = Math.max(dx, Math.min(0, keep.x + KEEP_IN - b.x - b.w));
+    if (dx > 0) dx = Math.min(dx, Math.max(0, keep.x + keep.w - KEEP_IN - b.x));
+    if (dy < 0) dy = Math.max(dy, Math.min(0, keep.y + KEEP_IN - b.y - b.h));
+    if (dy > 0) dy = Math.min(dy, Math.max(0, keep.y + keep.h - KEEP_IN - b.y));
+  }
+  dx = Math.min(Math.max(dx, -FAR - b.x), Math.max(FAR - b.x - b.w, -FAR - b.x));
+  dy = Math.min(Math.max(dy, -FAR - b.y), Math.max(FAR - b.y - b.h, -FAR - b.y));
+  if (heroes.length) {
+    const own = C.bounds(heroes, true);
+    dx = Math.max(dx, -own.x);
+    dy = Math.max(dy, -own.y);
+  }
   for (const item of items) {
     item.x += dx;
     item.y += dy;
@@ -250,15 +257,21 @@ export function drawReference(ctx, image, r) {
 // of a text from its category origin (dota-rendering measureCategoryInk, cached by the caller); a
 // «.» sits on the baseline, about 9 units below a letter's middle, so one fixed centre for every
 // glyph missed dots right under the ring. Without `ink` (tests, no canvas) a letter's middle is used.
-const GLYPH_CENTER = { x: 9, y: 8 };
+const GLYPH_CENTER = C.GLYPH_CENTER;
 const glyphDistance = (g, point, ink) => {
   const box = ink?.(g.text), cx = box ? box.x + box.w / 2 : GLYPH_CENTER.x, cy = box ? box.y + box.h / 2 : GLYPH_CENTER.y;
   return Math.hypot(g.x + cx - point.x, g.y + cy - point.y);
 };
-export function eraseSymbols(doc, point, radius = 22, ink = null) {
+// `only` (asked for on 2026-10-16): the id of the one layer the eraser works on; null — every layer.
+// Hidden and locked layers are never touched.
+const untouchable = (doc, item, only) => {
+  if (item.type === 'heroes' || (only && item.layer !== only)) return true;
+  const layer = doc.layers.find((l) => l.id === item.layer);
+  return !layer?.visible || layer.locked;
+};
+export function eraseSymbols(doc, point, radius = 22, ink = null, only = null) {
   doc.entities = doc.entities.flatMap((item) => {
-    const layer = doc.layers.find((l) => l.id === item.layer);
-    if (item.type === 'heroes' || !layer?.visible || layer.locked) return [item];
+    if (untouchable(doc, item, only)) return [item];
     const glyphs = C.textGlyphs(item, true);
     const keep = glyphs.filter((g) => glyphDistance(g, point, ink) > radius);
     if (keep.length === glyphs.length) return [item];
@@ -268,6 +281,7 @@ export function eraseSymbols(doc, point, radius = 22, ink = null) {
       delete clean.rowGlyphs;
       delete clean.rowText;
       delete clean.textMetrics;
+      delete clean.box;
       return C.entity(doc, clean);
     });
   });
@@ -285,19 +299,19 @@ function scatterNoise(seed, x, y, salt) {
   h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; h = Math.imul(h, 0x297a2d39); h ^= h >>> 15;
   return (h >>> 0) / 4294967296;
 }
-export function scatterSymbols(doc, point, radius, direction, { distance = SCATTER_DEFAULTS.distance, spread = SCATTER_DEFAULTS.spread, seed = 1, thrown = new Set(), ink = null } = {}) {
+// `layer`: the one layer it works on, as the eraser's `only`.
+export function scatterSymbols(doc, point, radius, direction, { distance = SCATTER_DEFAULTS.distance, spread = SCATTER_DEFAULTS.spread, seed = 1, thrown = new Set(), ink = null, layer = null } = {}) {
   const heading = Math.atan2(direction.y, direction.x), cone = (spread * Math.PI) / 180;
   let changed = false;
   doc.entities = doc.entities.flatMap((item) => {
-    const layer = doc.layers.find((l) => l.id === item.layer);
-    if (item.type === 'heroes' || !layer?.visible || layer.locked || thrown.has(item.id)) return [item];
+    if (untouchable(doc, item, layer) || thrown.has(item.id)) return [item];
     const glyphs = C.textGlyphs(item, true);
     const under = glyphs.map((g) => glyphDistance(g, point, ink) <= radius);
     if (!under.some(Boolean)) return [item];
     changed = true;
     return glyphs.map((g, i) => {
       const clean = { ...g, rotation: 0 };
-      delete clean.id; delete clean.rowGlyphs; delete clean.rowText; delete clean.textMetrics;
+      delete clean.id; delete clean.rowGlyphs; delete clean.rowText; delete clean.textMetrics; delete clean.box;
       if (under[i]) {
         // Most glyphs land near, a few far: the trail thins out like dust.
         const angle = heading + (scatterNoise(seed, g.x, g.y, 1) * 2 - 1) * cone;

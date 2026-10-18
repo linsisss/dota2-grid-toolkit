@@ -1,0 +1,552 @@
+{
+ "version": 1,
+ "opponents": {
+  "match3_opponent_chaos_knight": {
+   "file": "match3_opponent_chaos_knight.webp",
+   "size": [
+    502,
+    448
+   ],
+   "anchor": [
+    269.1,
+    425.3
+   ],
+   "scale": 1.18,
+   "clips": {
+    "idle": {
+     "row": 0,
+     "frames": 6,
+     "fps": 3.05,
+     "loop": true
+    },
+    "attack": {
+     "row": 1,
+     "frames": 4,
+     "fps": 3.08,
+     "loop": false
+    },
+    "cast": {
+     "row": 2,
+     "frames": 4,
+     "fps": 5.22,
+     "loop": false
+    },
+    "death": {
+     "row": 3,
+     "frames": 5,
+     "fps": 3.41,
+     "loop": false
+    },
+    "stun": {
+     "row": 4,
+     "frames": 2,
+     "fps": 1.36,
+     "loop": true
+    }
+   },
+   "portraitIndex": 0
+  },
+  "match3_opponent_angry_icicle": {
+   "file": "match3_opponent_angry_icicle.webp",
+   "size": [
+    416,
+    476
+   ],
+   "anchor": [
+    201.2,
+    511.4
+   ],
+   "scale": 1.18,
+   "fog": "#cfeaff",
+   "clips": {
+    "idle": {
+     "row": 0,
+     "frames": 6,
+     "fps": 1.41,
+     "loop": true
+    },
+    "attack": {
+     "row": 1,
+     "frames": 4,
+     "fps": 4.8,
+     "loop": false
+    },
+    "cast": {
+     "row": 2,
+     "frames": 4,
+     "fps": 3.43,
+     "loop": false
+    },
+    "death": {
+     "row": 3,
+     "frames": 5,
+     "fps": 5.77,
+     "loop": false
+    }
+   },
+   "portraitIndex": 1
+  },
+  "match3_opponent_ice_ranger": {
+   "file": "match3_opponent_ice_ranger.webp",
+   "size": [
+    351,
+    357
+   ],
+   "anchor": [
+    176.1,
+    337.1
+   ],
+   "scale": 1.18,
+   "clips": {
+    "idle": {
+     "row": 0,
+     "frames": 6,
+     "fps": 2,
+     "loop": true
+    },
+    "attack": {
+     "row": 1,
+     "frames": 4,
+     "fps": 2.73,
+     "loop": false
+    },
+    "cast": {
+     "row": 2,
+     "frames": 4,
+     "fps": 4.62,
+     "loop": false
+    },
+    "death": {
+     "row": 3,
+     "frames": 5,
+     "fps": 1.43,
+     "loop": false
+    },
+    "stun": {
+     "row": 4,
+     "frames": 2,
+     "fps": 0.94,
+     "loop": true
+    }
+   },
+   "portraitIndex": 2
+  },
+  "match3_opponent_healing_puppy": {
+   "file": "match3_opponent_healing_puppy.webp",
+   "size": [
+    389,
+    248
+   ],
+   "anchor": [
+    262.2,
+    207.4
+   ],
+   "scale": 1.2,
+   "clips": {
+    "idle": {
+     "row": 0,
+     "frames": 6,
+     "fps": 0.9,
+     "loop": true
+    },
+    "greet": {
+     "row": 1,
+     "frames": 6,
+     "fps": 1.87,
+     "loop": false
+    },
+    "run": {
+     "row": 2,
+     "frames": 4,
+     "fps": 8,
+     "loop": true
+    }
+   },
+   "portraitIndex": 3
+  },
+  "match3_opponent_melee_creep_dire": {
+   "file": "match3_opponent_melee_creep_dire.webp",
+   "size": [
+    538,
+    371
+   ],
+   "anchor": [
+    203.6,
+    357.1
+   ],
+   "scale": 1.15,
+   "clips": {
+    "idle": {
+     "row": 0,
+     "frames": 6,
+     "fps": 3.53,
+     "loop": true
+    },
+    "attack": {
+     "row": 1,
+     "frames": 4,
+     "fps": 4.29,
+     "loop": false
+    },
+    "death": {
+     "row": 2,
+     "frames": 5,
+     "fps": 2.94,
+     "loop": false
+    },
+    "stun": {
+     "row": 3,
+     "frames": 2,
+     "fps": 1.87,
+     "loop": true
+    }
+   },
+   "portraitIndex": 4
+  },
+  "match3_opponent_ranged_creep_radiant": {
+   "file": "match3_opponent_ranged_creep_radiant.webp",
+   "size": [
+    348,
+    428
+   ],
+   "anchor": [
+    219.7,
+    376.2
+   ],
+   "scale": 1.15,
+   "clips": {
+    "idle": {
+     "row": 0,
+     "frames": 6,
+     "fps": 3.75,
+     "loop": true
+    },
+    "attack": {
+     "row": 1,
+     "frames": 4,
+     "fps": 4,
+     "loop": false
+    },
+    "death": {
+     "row": 2,
+     "frames": 5,
+     "fps": 5.77,
+     "loop": false
+    },
+    "stun": {
+     "row": 3,
+     "frames": 2,
+     "fps": 1.43,
+     "loop": true
+    },
+    "victory": {
+     "row": 4,
+     "frames": 4,
+     "fps": 4,
+     "loop": true
+    }
+   },
+   "portraitIndex": 5
+  },
+  "match3_opponent_warpine_raider": {
+   "file": "match3_opponent_warpine_raider.webp",
+   "size": [
+    568,
+    791
+   ],
+   "anchor": [
+    243.2,
+    474
+   ],
+   "scale": 1.15,
+   "clips": {
+    "idle": {
+     "row": 0,
+     "frames": 6,
+     "fps": 3.91,
+     "loop": true
+    },
+    "attack": {
+     "row": 1,
+     "frames": 4,
+     "fps": 4.62,
+     "loop": false
+    },
+    "death": {
+     "row": 2,
+     "frames": 5,
+     "fps": 1.12,
+     "loop": false
+    },
+    "stun": {
+     "row": 3,
+     "frames": 2,
+     "fps": 1.25,
+     "loop": true
+    },
+    "spawn": {
+     "row": 4,
+     "frames": 4,
+     "fps": 3.43,
+     "loop": false
+    }
+   },
+   "portraitIndex": 6
+  },
+  "match3_opponent_alpha_wolf": {
+   "file": "match3_opponent_alpha_wolf.webp",
+   "size": [
+    507,
+    395
+   ],
+   "anchor": [
+    174.4,
+    334.9
+   ],
+   "scale": 1.15,
+   "clips": {
+    "idle": {
+     "row": 0,
+     "frames": 6,
+     "fps": 4.09,
+     "loop": true
+    },
+    "attack": {
+     "row": 1,
+     "frames": 4,
+     "fps": 4.14,
+     "loop": false
+    },
+    "death": {
+     "row": 2,
+     "frames": 5,
+     "fps": 2.24,
+     "loop": false
+    },
+    "stun": {
+     "row": 3,
+     "frames": 2,
+     "fps": 1.36,
+     "loop": true
+    },
+    "spawn": {
+     "row": 4,
+     "frames": 4,
+     "fps": 5,
+     "loop": false
+    }
+   },
+   "portraitIndex": 7
+  },
+  "match3_opponent_ancient_ice_shaman": {
+   "file": "match3_opponent_ancient_ice_shaman.webp",
+   "size": [
+    432,
+    395
+   ],
+   "anchor": [
+    201.6,
+    346.3
+   ],
+   "scale": 1.15,
+   "clips": {
+    "idle": {
+     "row": 0,
+     "frames": 6,
+     "fps": 3.83,
+     "loop": true
+    },
+    "attack": {
+     "row": 1,
+     "frames": 4,
+     "fps": 2.45,
+     "loop": false
+    },
+    "cast": {
+     "row": 2,
+     "frames": 4,
+     "fps": 2.73,
+     "loop": false
+    },
+    "death": {
+     "row": 3,
+     "frames": 5,
+     "fps": 2.54,
+     "loop": false
+    },
+    "stun": {
+     "row": 4,
+     "frames": 2,
+     "fps": 1.28,
+     "loop": true
+    },
+    "spawn": {
+     "row": 5,
+     "frames": 4,
+     "fps": 3.08,
+     "loop": false
+    }
+   },
+   "portraitIndex": 8
+  },
+  "match3_opponent_ancient_frostbitten_golem": {
+   "file": "match3_opponent_ancient_frostbitten_golem.webp",
+   "size": [
+    453,
+    519
+   ],
+   "anchor": [
+    355.1,
+    456
+   ],
+   "scale": 1.15,
+   "clips": {
+    "idle": {
+     "row": 0,
+     "frames": 6,
+     "fps": 3.6,
+     "loop": true
+    },
+    "attack": {
+     "row": 1,
+     "frames": 4,
+     "fps": 5.45,
+     "loop": false
+    },
+    "cast": {
+     "row": 2,
+     "frames": 5,
+     "fps": 1.25,
+     "loop": false
+    },
+    "death": {
+     "row": 3,
+     "frames": 5,
+     "fps": 2.78,
+     "loop": false
+    },
+    "stun": {
+     "row": 4,
+     "frames": 2,
+     "fps": 1.2,
+     "loop": true
+    }
+   },
+   "portraitIndex": 9
+  },
+  "match3_opponent_frost_dragon": {
+   "file": "match3_opponent_frost_dragon.webp",
+   "size": [
+    703,
+    644
+   ],
+   "anchor": [
+    392.1,
+    569.8
+   ],
+   "scale": 1.15,
+   "clips": {
+    "idle": {
+     "row": 0,
+     "frames": 6,
+     "fps": 7.5,
+     "loop": true
+    },
+    "attack": {
+     "row": 1,
+     "frames": 4,
+     "fps": 4,
+     "loop": false
+    },
+    "cast": {
+     "row": 2,
+     "frames": 5,
+     "fps": 6.52,
+     "loop": false
+    },
+    "victory": {
+     "row": 3,
+     "frames": 4,
+     "fps": 5,
+     "loop": true
+    }
+   },
+   "portraitIndex": 10
+  }
+ },
+ "gems": {
+  "file": "gems.webp",
+  "cell": 128,
+  "heroes": [
+   "lina",
+   "broodmother",
+   "crystal_maiden",
+   "lich",
+   "vengefulspirit",
+   "winter_wyvern"
+  ],
+  "kinds": [
+   "normal",
+   "super",
+   "ultra"
+  ],
+  "tints": [
+   "#ff4300",
+   "#b40008",
+   "#ffde73",
+   "#3377ff",
+   "#ff3af8",
+   "#d9fdff"
+  ]
+ },
+ "fragments": {
+  "file": "fragments.webp",
+  "cell": 48,
+  "offsets": [
+   [
+    0.011,
+    0.012,
+    0.729
+   ],
+   [
+    -0.003,
+    0.01,
+    0.529
+   ],
+   [
+    0.012,
+    -0.051,
+    0.425
+   ],
+   [
+    -0.015,
+    0.011,
+    0.575
+   ],
+   [
+    0.025,
+    0.021,
+    0.407
+   ],
+   [
+    0.002,
+    -0.017,
+    0.313
+   ],
+   [
+    -0.074,
+    0.055,
+    0.558
+   ],
+   [
+    0.007,
+    0.014,
+    0.367
+   ]
+  ]
+ },
+ "portraits": {
+  "file": "portraits.webp",
+  "size": 64
+ }
+}

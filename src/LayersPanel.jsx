@@ -54,6 +54,8 @@ export function LayersPanel({ editor, layers }) {
               >
                 {art && <Icon name="art" />}
                 <span>{layer.name}</span>
+                {/* The eraser and «Распыление» work on this layer only (app.mjs eraserTarget). */}
+                {layer.erasing && <span className="layer-erasing" title={t('Ластик работает только на этом слое')}><Icon name="eraser" /></span>}
                 <span className="item-count">{layer.count.toLocaleString(locale)}</span>
               </button>
               <button

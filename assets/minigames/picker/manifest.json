@@ -1,0 +1,125 @@
+{
+ "about": "Made by scripts/make-minigame-assets.mjs from Valve’s Dota 2 files; see docs/minigames.md.",
+ "files": {
+  "images/backdrop.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/vn_background_act4_png.png",
+   "width": 1280,
+   "height": 720,
+   "quality": 72,
+   "stamp": "d45b1ab9c6464cb6",
+   "bytes": 7086
+  },
+  "images/encounter_artillery.webp": {
+   "from": "panorama/images/events/crownfall/overworld/nodes/icons/encounter_artillery_png.png",
+   "width": 94,
+   "height": 94,
+   "lossless": true,
+   "stamp": "2142920488d97a13",
+   "bytes": 1934
+  },
+  "images/encounter_bat.webp": {
+   "from": "panorama/images/events/crownfall/overworld/nodes/icons/encounter_bat_png.png",
+   "width": 94,
+   "height": 94,
+   "lossless": true,
+   "stamp": "8adf36d4a86e560d",
+   "bytes": 1784
+  },
+  "images/encounter_bullethell.webp": {
+   "from": "panorama/images/events/crownfall/overworld/nodes/icons/encounter_bullethell_png.png",
+   "width": 94,
+   "height": 94,
+   "lossless": true,
+   "stamp": "bd514aba0de2bb90",
+   "bytes": 860
+  },
+  "images/encounter_fish.webp": {
+   "from": "panorama/images/events/crownfall/overworld/nodes/icons/encounter_fish_png.png",
+   "width": 100,
+   "height": 100,
+   "lossless": true,
+   "stamp": "cde1b0b7a54f9da1",
+   "bytes": 1058
+  },
+  "images/encounter_match3.webp": {
+   "from": "panorama/images/events/crownfall/overworld/nodes/icons/encounter_match3_png.png",
+   "width": 94,
+   "height": 94,
+   "lossless": true,
+   "stamp": "0dc59468afe85b67",
+   "bytes": 828
+  },
+  "images/encounter_minesweeper.webp": {
+   "from": "panorama/images/events/crownfall/overworld/nodes/icons/encounter_minesweeper_png.png",
+   "width": 94,
+   "height": 94,
+   "lossless": true,
+   "stamp": "c8df31662f69e8ea",
+   "bytes": 2074
+  },
+  "images/encounter_sleetfighter.webp": {
+   "from": "panorama/images/events/crownfall/overworld/nodes/icons/encounter_sleetfighter_png.png",
+   "width": 94,
+   "height": 94,
+   "lossless": true,
+   "stamp": "fb479cb992e59ff2",
+   "bytes": 1914
+  },
+  "images/encounter_spoonman.webp": {
+   "from": "panorama/images/events/crownfall/overworld/nodes/icons/encounter_spoonman_png.png",
+   "width": 94,
+   "height": 94,
+   "lossless": true,
+   "stamp": "ce3aebb363347ade",
+   "bytes": 1800
+  },
+  "images/encounter_survivors.webp": {
+   "from": "panorama/images/events/crownfall/overworld/nodes/icons/encounter_survivors_png.png",
+   "width": 94,
+   "height": 94,
+   "lossless": true,
+   "stamp": "2a2baf3194c61fd5",
+   "bytes": 2896
+  },
+  "images/node_background_encounter.webp": {
+   "from": "panorama/images/events/crownfall/overworld/nodes/node_background_encounter_png.png",
+   "width": 396,
+   "height": 396,
+   "quality": 90,
+   "stamp": "4025a3692cf2ddd4",
+   "bytes": 29078
+  },
+  "images/node_background_encounter_inner.webp": {
+   "from": "panorama/images/events/crownfall/overworld/nodes/node_background_encounter_inner_png.png",
+   "width": 396,
+   "height": 396,
+   "quality": 90,
+   "stamp": "401585053e27fc05",
+   "bytes": 6106
+  },
+  "strings.en.json": {
+   "from": "resource/localization/dota_english.txt, resource/localization/novels/crownfall_english.txt",
+   "count": 10,
+   "bytes": 639
+  },
+  "strings.ru.json": {
+   "from": "resource/localization/dota_russian.txt, resource/localization/novels/crownfall_russian.txt",
+   "count": 10,
+   "bytes": 778
+  }
+ },
+ "valve": {
+  "panorama/images/events/crownfall/overworld/nodes/icons/encounter_artillery_png": "images/encounter_artillery.webp",
+  "panorama/images/events/crownfall/overworld/nodes/icons/encounter_bat_png": "images/encounter_bat.webp",
+  "panorama/images/events/crownfall/overworld/nodes/icons/encounter_bullethell_png": "images/encounter_bullethell.webp",
+  "panorama/images/events/crownfall/overworld/nodes/icons/encounter_fish_png": "images/encounter_fish.webp",
+  "panorama/images/events/crownfall/overworld/nodes/icons/encounter_match3_png": "images/encounter_match3.webp",
+  "panorama/images/events/crownfall/overworld/nodes/icons/encounter_minesweeper_png": "images/encounter_minesweeper.webp",
+  "panorama/images/events/crownfall/overworld/nodes/icons/encounter_sleetfighter_png": "images/encounter_sleetfighter.webp",
+  "panorama/images/events/crownfall/overworld/nodes/icons/encounter_spoonman_png": "images/encounter_spoonman.webp",
+  "panorama/images/events/crownfall/overworld/nodes/icons/encounter_survivors_png": "images/encounter_survivors.webp",
+  "panorama/images/events/crownfall/overworld/nodes/node_background_encounter_inner_png": "images/node_background_encounter_inner.webp",
+  "panorama/images/events/crownfall/overworld/nodes/node_background_encounter_png": "images/node_background_encounter.webp",
+  "panorama/images/events/crownfall/visual_novel/vn_background_act4_png": "images/backdrop.webp"
+ }
+}

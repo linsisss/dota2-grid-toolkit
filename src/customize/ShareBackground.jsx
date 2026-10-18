@@ -6,7 +6,7 @@ import { BackgroundTagPicker } from '../catalog/BackgroundGallery.jsx';
 import { CreditField, SimilarWarning } from '../catalog/Creator.jsx';
 import { posterFrame, similarityFrames } from '../studio-backgrounds.js';
 import { t, translateMessage } from '../../scripts/i18n.mjs';
-import { rich } from './CustomizeApp.jsx';
+import { rich } from './ui.jsx';
 
 // Publishing a built background to the workshop («Фоны»): the WebM exactly as it went into the pack, a poster
 // frame, a title, an author and up to three tags; moderators check it before anyone sees it. Signed in with

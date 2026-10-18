@@ -121,7 +121,7 @@ function Landing({ variant }) {
             <a className="landing-catalog" href={CATALOG_PATH}><Icon name="workshop" />{t('Смотреть сетки и фоны')}</a>
           </div>
           <div className="landing-tools">
-            <a className="landing-catalog landing-tool" href={CUSTOMIZE_PATH}><Icon name="brush" />{t('Фон меню Dota')}</a>
+            <a className="landing-catalog landing-tool" href={CUSTOMIZE_PATH}><Icon name="brush" />{t('Фон и интерфейс Dota')}</a>
             <a className="landing-catalog landing-tool" href={FONT_PATH}><Icon name="font" />{t('Шрифты')}</a>
             <a className="landing-catalog landing-tool" href={GUIDES_PATH}><Icon name="guides" />{t('Гайды')}</a>
           </div>

@@ -62,4 +62,5 @@ export function countVisit(page) {
   if (document.prerendering) document.addEventListener('prerenderingchange', count, { once: true });
   else count();
 }
-export const countAction = (event) => send({ event });
+// `parts`: the customization page's file: which modules it had (one event for the whole file).
+export const countAction = (event, parts = null) => send(parts ? { event, parts } : { event });

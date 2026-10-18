@@ -18,14 +18,15 @@ export function editorRoute(request, response, next) {
     response.writeHead(308, { Location: `/workshop${query}` }); response.end(); return;
   }
   if (pathname === '/workshop') request.url = `/catalog.html${query}`;
-  // The menu background builder was /customize until 1.6.3; old links keep their query.
-  if (pathname === '/customize' || pathname === '/customize/') {
-    response.writeHead(301, { Location: `/background${query}` }); response.end(); return;
+  // 2026-10-17: the one customization page is /customize again (it holds far more than the background);
+  // /background, its address from 1.6.3, redirects with its query.
+  if (pathname === '/background' || pathname === '/background/') {
+    response.writeHead(301, { Location: `/customize${query}` }); response.end(); return;
   }
-  if (pathname === '/background/') {
-    response.writeHead(308, { Location: `/background${query}` }); response.end(); return;
+  if (pathname === '/customize/') {
+    response.writeHead(308, { Location: `/customize${query}` }); response.end(); return;
   }
-  if (pathname === '/background') request.url = `/customize.html${query}`;
+  if (pathname === '/customize') request.url = `/customize.html${query}`;
   // «Гайды» (src/guides/).
   if (pathname === '/guides/') {
     response.writeHead(308, { Location: `/guides${query}` }); response.end(); return;

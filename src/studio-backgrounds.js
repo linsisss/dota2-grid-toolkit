@@ -73,7 +73,7 @@ export async function claimBuiltBackground(id, user) {
 // After a build: the background (new, or the one opened from the studio) is kept in this browser
 // with its WebM; a signed-in account gets the recipe. Syncing failures are left to the studio,
 // which uploads anything not yet synced when it opens.
-export async function saveBuiltBackground({ id = null, recipe, video, heroVideo = null, gridVideo = null, codec, seconds }) {
+export async function saveBuiltBackground({ id = null, recipe, video, heroVideo = null, gridVideo = null, loadingVideo = null, codec, seconds }) {
   const [user, old] = await Promise.all([signedIn(), id ? getBackground(id) : null]);
   const now = Date.now(), checked = studioRecipe(recipe);
   const record = { id: old?.id || id || crypto.randomUUID(), name: old?.name || defaultStudioName(checked.source), account: old?.account || user,
@@ -82,6 +82,8 @@ export async function saveBuiltBackground({ id = null, recipe, video, heroVideo 
     heroVideo: heroVideo ? new Blob([heroVideo], { type: 'video/webm' }) : null,
     // The video under the hero grid (recipe.grid.mode 'own', 1.6.4), the same way.
     gridVideo: gridVideo ? new Blob([gridVideo], { type: 'video/webm' }) : null,
+    // The loading screen's own video (recipe.loading.mode 'own', 2026-10-16), the same way.
+    loadingVideo: loadingVideo ? new Blob([loadingVideo], { type: 'video/webm' }) : null,
     created: old?.created || now, updated: now, synced: false };
   await putBackground(record);
   keepBackgrounds();

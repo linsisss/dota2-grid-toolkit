@@ -1,0 +1,232 @@
+{
+ "events": {
+  "minesweeper.boom": {
+   "files": [
+    "sounds/weapons/hero/techies/land_mine01.mp3",
+    "sounds/weapons/hero/techies/land_mine02.mp3"
+   ],
+   "volume": 0.75,
+   "pitch": 1,
+   "delay": 0.4,
+   "limiter": true,
+   "duration": 2.480453
+  },
+  "minesweeper.cell_explode": {
+   "files": [
+    "sounds/weapons/hero/techies/land_mine_primed.mp3"
+   ],
+   "volume": 0.75,
+   "pitch": 1,
+   "layers": [
+    "minesweeper.boom"
+   ],
+   "limiter": true,
+   "duration": 1.367982
+  },
+  "minesweeper.cell_flag": {
+   "files": [
+    "sounds/weapons/hero/techies/sign.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 0.412063
+  },
+  "minesweeper.cell_illusion_explode": {
+   "files": [
+    "sounds/weapons/hero/techies/land_mine02.mp3"
+   ],
+   "volume": 0.3,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 2.480453
+  },
+  "minesweeper.cell_reveal": {
+   "files": [
+    "sounds/ambient/tree_fall.mp3"
+   ],
+   "volume": 0.5,
+   "pitch": 1,
+   "limiter": true,
+   "mixgroup": "misc",
+   "duration": 3.648503
+  },
+  "minesweeper.cell_unflag": {
+   "files": [
+    "sounds/physics/damage/building/damage05.mp3"
+   ],
+   "volume": 0.15,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 0.714694
+  },
+  "minesweeper.cell_use_illusion": {
+   "files": [
+    "sounds/items/manta.mp3"
+   ],
+   "volume": 0.2,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 2.457143
+  },
+  "minesweeper.game_music": {
+   "files": [
+    "sounds/misc/crownfall/music/match3_main.mp3"
+   ],
+   "volume": 0.25,
+   "pitch": 1,
+   "delay": 1,
+   "fadeIn": 2,
+   "fadeOut": 1,
+   "duration": 44.403969
+  },
+  "minesweeper.game_music.loss": {
+   "files": [
+    "sounds/music/valve_dota_001/stingers/radiant_lose.mp3"
+   ],
+   "volume": 0.35,
+   "pitch": 1,
+   "fadeOut": 1,
+   "mixgroup": "misc",
+   "duration": 24.032654
+  },
+  "minesweeper.game_music.win": {
+   "files": [
+    "sounds/music/valve_dota_001/stingers/radiant_win.mp3"
+   ],
+   "volume": 0.35,
+   "pitch": 1,
+   "fadeOut": 3,
+   "duration": 53.002449
+  },
+  "minesweeper.invalid_move": {
+   "files": [
+    "sounds/ui/magic_immune.mp3"
+   ],
+   "volume": 0.6,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 1.503673
+  },
+  "minesweeper.lost_mana_pot": {
+   "files": [
+    "sounds/misc/crownfall/combo_break.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "duration": 0.541043
+  },
+  "minesweeper.lost_timer_increase": {
+   "files": [
+    "sounds/misc/crownfall/combo_break.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 1,
+   "pitchRand": [
+    -0.05,
+    0.05
+   ],
+   "limiter": true,
+   "duration": 0.541043
+  },
+  "minesweeper.techies_run": {
+   "files": [
+    "sounds/vo/techies/tech_happy_31.mp3"
+   ],
+   "volume": 0.6,
+   "pitch": 1,
+   "mixgroup": "misc",
+   "duration": 1.17551
+  },
+  "minesweeper.techies_taunt1": {
+   "files": [
+    "sounds/vo/techies/tech_attack_13.mp3"
+   ],
+   "volume": 0.6,
+   "pitch": 1,
+   "mixgroup": "misc",
+   "duration": 0.809796
+  },
+  "minesweeper.techies_taunt2": {
+   "files": [
+    "sounds/vo/techies/tech_attack_14.mp3"
+   ],
+   "volume": 0.6,
+   "pitch": 1,
+   "mixgroup": "misc",
+   "duration": 1.227755
+  },
+  "minesweeper.techies_taunt3": {
+   "files": [
+    "sounds/vo/techies/tech_attack_16.mp3"
+   ],
+   "volume": 0.6,
+   "pitch": 1,
+   "mixgroup": "misc",
+   "duration": 1.671837
+  },
+  "minesweeper.techies_taunt4": {
+   "files": [
+    "sounds/vo/techies/tech_attack_24.mp3"
+   ],
+   "volume": 0.6,
+   "pitch": 1,
+   "mixgroup": "misc",
+   "duration": 1.097143
+  },
+  "minesweeper.techies_win": {
+   "files": [
+    "sounds/vo/techies/tech_win_02.mp3"
+   ],
+   "volume": 0.6,
+   "pitch": 1,
+   "mixgroup": "misc",
+   "duration": 1.880816
+  },
+  "minesweeper.use_mana_pot": {
+   "files": [
+    "sounds/items/clarity_potion.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 7.926349
+  },
+  "minesweeper.use_timer_increase": {
+   "files": [
+    "sounds/misc/soundboard/tick-tock.mp3"
+   ],
+   "volume": 0.4,
+   "pitch": 1,
+   "limiter": true,
+   "duration": 2.952792
+  }
+ },
+ "files": {
+  "sounds/misc/crownfall/combo_break.mp3": {
+   "duration": 0.541043
+  },
+  "sounds/misc/crownfall/music/match3_main.mp3": {
+   "duration": 44.403969,
+   "loop": [
+    0,
+    44.403945578231294
+   ]
+  },
+  "sounds/misc/soundboard/tick-tock.mp3": {
+   "duration": 2.952789
+  },
+  "sounds/vo/techies/tech_win_02.mp3": {
+   "duration": 1.880816
+  }
+ },
+ "missing": {}
+}

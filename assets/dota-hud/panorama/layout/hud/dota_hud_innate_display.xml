@@ -1,0 +1,24 @@
+<!-- xml reconstructed by Source 2 Viewer 12.0.0.0 - https://valveresourceformat.github.io -->
+<root>
+	<styles>
+		<include src="s2r://panorama/styles/dotastyles.vcss" />
+		<include src="s2r://panorama/styles/hudstyles.vcss" />
+		<include src="s2r://panorama/styles/hud/hud_reborn.vcss" />
+		<include src="s2r://panorama/styles/custom_ui.vcss" />
+		<include src="s2r://panorama/styles/collection_shared.vcss" />
+		<include src="s2r://panorama/styles/hud/dota_hud_innate_display.vcss" />
+		<include src="s2r://panorama/styles/hud/dota_hud_ability_details_ui_card.vcss" />
+	</styles>
+	<DOTAInnateDisplay class="RootInnateDisplay">
+		<Panel id="AbilityDetailsUIButton" hittest="true" class="Hidden" onactivate="DOTAToggleAbilityDetailsUICard()">
+			<Image class="ButtonImage" src="s2r://panorama/images/hud/spell_card_img_png.vtex" scaling="stretch-to-fit-preserve-aspect" />
+		</Panel>
+		<Panel id="ContentsContainer">
+			<Image class="InnateFrame" src="s2r://panorama/images/hud/facets/innate_frame_png.vtex" />
+			<Panel class="FacetHolder" onactivate="DOTAActivateInnateDisplayFacet()" oncontextmenu="DOTAFacetContextMenu()" onmouseover="DOTAShowFacetDisplayTooltip()" onmouseout="DOTAHideFacetDisplayTooltip()">
+				<DOTAFacetIcon id="FacetIcon" hittest="false" class="Darken" hittestchildren="false" />
+			</Panel>
+			<DOTAInnateIcon id="InnateIcon" show-tooltips="false" onactivate="DOTAActivateInnateDisplayInnate()" oncontextmenu="DOTAInnateContextMenu()" onmouseover="DOTAShowInnateDisplayTooltip()" onmouseout="DOTAHideInnateDisplayTooltip()" />
+		</Panel>
+	</DOTAInnateDisplay>
+</root>

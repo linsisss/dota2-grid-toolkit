@@ -1,0 +1,161 @@
+{
+ "about": "Made by scripts/make-minigame-assets.mjs from Valve’s Dota 2 files; see docs/minigames.md.",
+ "files": {
+  "images/border_over_simple.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/border_over_simple_png.png",
+   "width": 720,
+   "height": 810,
+   "quality": 90,
+   "stamp": "a14113290965a591",
+   "bytes": 32588
+  },
+  "images/border_under_simple.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/border_under_simple_png.png",
+   "width": 720,
+   "height": 810,
+   "quality": 90,
+   "stamp": "d4e699723353cb9c",
+   "bytes": 32072
+  },
+  "images/name_container_edge.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/name_container_edge_png.png",
+   "width": 120,
+   "height": 192,
+   "lossless": true,
+   "stamp": "b3ed16ebf3169e79",
+   "bytes": 10596
+  },
+  "images/name_container_fill.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/name_container_fill_png.png",
+   "width": 72,
+   "height": 192,
+   "lossless": true,
+   "stamp": "fa8be2de92c12360",
+   "bytes": 6628
+  },
+  "images/name_container_middle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/name_container_middle_png.png",
+   "width": 72,
+   "height": 192,
+   "lossless": true,
+   "stamp": "7985d3f1369a8d64",
+   "bytes": 8838
+  },
+  "images/portrait_mask.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portrait_mask_png.png",
+   "width": 640,
+   "height": 720,
+   "lossless": true,
+   "stamp": "3a6ba9e1f5ab0f08",
+   "bytes": 66904
+  },
+  "images/prop_donkey_prompt.webp": {
+   "from": "panorama/images/emoticons/crownfall/props/prop_donkey_prompt_psd.png",
+   "width": 100,
+   "height": 80,
+   "lossless": true,
+   "stamp": "28dffc8594c9d2ef",
+   "bytes": 1114
+  },
+  "images/shadow.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/shadow_png.png",
+   "width": 640,
+   "height": 640,
+   "lossless": true,
+   "stamp": "76e7efd74505ceaf",
+   "bytes": 76996
+  },
+  "images/vn_background_act2.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/vn_background_act2_png.png",
+   "width": 1920,
+   "height": 1080,
+   "quality": 86,
+   "stamp": "4d44662192a1a98b",
+   "bytes": 17200
+  },
+  "images/vn_background_act4.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/vn_background_act4_png.png",
+   "width": 1920,
+   "height": 1080,
+   "quality": 86,
+   "stamp": "2bcaa381c9a2ea75",
+   "bytes": 19238
+  },
+  "portraits/batrider_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/batrider_portrait_idle_png.png",
+   "width": 800,
+   "height": 900,
+   "quality": 88,
+   "stamp": "653669093b7d4ecd",
+   "bytes": 46844
+  },
+  "portraits/batrider_portrait_sad.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/batrider_portrait_sad_png.png",
+   "width": 800,
+   "height": 900,
+   "quality": 88,
+   "stamp": "da588b06c7b9d250",
+   "bytes": 46124
+  },
+  "portraits/kestrel_parka_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/kestrel_parka_portrait_idle_png.png",
+   "width": 800,
+   "height": 900,
+   "quality": 88,
+   "stamp": "e6238fdf92906e55",
+   "bytes": 37064
+  },
+  "portraits/spleen_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/spleen_portrait_idle_png.png",
+   "width": 800,
+   "height": 900,
+   "quality": 88,
+   "stamp": "047ac5b20136b8af",
+   "bytes": 43798
+  },
+  "portraits/spoon_portrait_bombs.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/spoon_portrait_bombs_png.png",
+   "width": 800,
+   "height": 900,
+   "quality": 88,
+   "stamp": "ad9eefb1be73d59f",
+   "bytes": 56350
+  },
+  "portraits/spoon_portrait_idle.webp": {
+   "from": "panorama/images/events/crownfall/visual_novel/portraits/spoon_portrait_idle_png.png",
+   "width": 800,
+   "height": 900,
+   "quality": 88,
+   "stamp": "9f26ba4e98ccbcfe",
+   "bytes": 33086
+  },
+  "strings.en.json": {
+   "from": "resource/localization/dota_english.txt, resource/localization/novels/crownfall_english.txt",
+   "count": 112,
+   "bytes": 6248
+  },
+  "strings.ru.json": {
+   "from": "resource/localization/dota_russian.txt, resource/localization/novels/crownfall_russian.txt",
+   "count": 112,
+   "bytes": 7292
+  }
+ },
+ "valve": {
+  "panorama/images/emoticons/crownfall/props/prop_donkey_prompt_psd": "images/prop_donkey_prompt.webp",
+  "panorama/images/events/crownfall/visual_novel/border_over_simple_png": "images/border_over_simple.webp",
+  "panorama/images/events/crownfall/visual_novel/border_under_simple_png": "images/border_under_simple.webp",
+  "panorama/images/events/crownfall/visual_novel/name_container_edge_png": "images/name_container_edge.webp",
+  "panorama/images/events/crownfall/visual_novel/name_container_fill_png": "images/name_container_fill.webp",
+  "panorama/images/events/crownfall/visual_novel/name_container_middle_png": "images/name_container_middle.webp",
+  "panorama/images/events/crownfall/visual_novel/portrait_mask_png": "images/portrait_mask.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/batrider_portrait_idle_png": "portraits/batrider_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/batrider_portrait_sad_png": "portraits/batrider_portrait_sad.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/kestrel_parka_portrait_idle_png": "portraits/kestrel_parka_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/spleen_portrait_idle_png": "portraits/spleen_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/spoon_portrait_bombs_png": "portraits/spoon_portrait_bombs.webp",
+  "panorama/images/events/crownfall/visual_novel/portraits/spoon_portrait_idle_png": "portraits/spoon_portrait_idle.webp",
+  "panorama/images/events/crownfall/visual_novel/shadow_png": "images/shadow.webp",
+  "panorama/images/events/crownfall/visual_novel/vn_background_act2_png": "images/vn_background_act2.webp",
+  "panorama/images/events/crownfall/visual_novel/vn_background_act4_png": "images/vn_background_act4.webp"
+ }
+}

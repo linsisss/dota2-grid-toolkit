@@ -1,0 +1,144 @@
+<!doctype html><html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"./three/build/three.module.js","three/addons/":"./three/examples/jsm/"}}</script>
+</head><body style="margin:0;background:#000">
+<canvas id="c" width="1920" height="1080"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+const SOURCE_TO_GLTF = new THREE.Matrix4().compose(new THREE.Vector3(), new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, -Math.PI / 2, 'YXZ')), new THREE.Vector3(0.0254, 0.0254, 0.0254));
+const manifest = await (await fetch('hero/hero.json')).json();
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+// Items worn instead of the defaults: ?items=9198,5772 (dota-loadout's assets/items/<id>).
+const itemIds = (new URLSearchParams(location.search).get('items') || '').split(',').filter(Boolean);
+const items = await Promise.all(itemIds.map(async (id) => ({ id, ...(await (await fetch(`items/${id}/item.json`)).json()) })));
+const replaced = new Set(items.map((i) => i.slot));
+const parts = ['hero', ...Object.keys(manifest.models).filter((k) => k !== 'hero' && k !== 'pedestal' && !replaced.has(k))];
+const loaded = Object.fromEntries(await Promise.all(parts.map(async (k) => [k, await loader.loadAsync('hero/' + manifest.models[k])])));
+const materialDefs = { ...manifest.materials }, textureDir = {};
+for (const m of Object.keys(manifest.materials)) textureDir[m] = 'hero/textures/';
+for (const item of items) for (const [k, file] of Object.entries(item.models)) {
+  const key = `item${item.id}_${k}`; loaded[key] = await loader.loadAsync(`items/${item.id}/${file}`); parts.push(key);
+  for (const [m, def] of Object.entries(item.materials)) { materialDefs[m] = def; textureDir[m] = `items/${item.id}/textures/`; }
+}
+const root = loaded.hero.scene, bones = {}, inverses = {};
+root.traverse((o) => { if (o.isBone) bones[o.name.toLowerCase()] = o; if (o.isSkinnedMesh) o.skeleton.bones.forEach((b, i) => { inverses[b.name.toLowerCase()] ||= o.skeleton.boneInverses[i]; }); });
+const meshesOf = {};
+for (const k of parts.slice(1)) {
+  const scene = loaded[k].scene, skinned = [], rigid = [];
+  scene.traverse((o) => { if (o.isSkinnedMesh) skinned.push(o); else if (o.isMesh) rigid.push(o); });
+  for (const mesh of skinned) {
+    const mapped = mesh.skeleton.bones.map((b, i) => {
+      const own = bones[b.name.toLowerCase()]; if (own) return own;
+      const parent = b.parent && bones[b.parent.name.toLowerCase()];
+      if (parent) { const key = parent.name.toLowerCase(), j = mesh.skeleton.bones.findIndex((x) => x.name.toLowerCase() === key);
+        const pinv = j >= 0 ? mesh.skeleton.boneInverses[j] : inverses[key];
+        const local = pinv.clone().multiply(mesh.skeleton.boneInverses[i].clone().invert()); parent.add(b); local.decompose(b.position, b.quaternion, b.scale); bones[b.name.toLowerCase()] = b; }
+      return b; });
+    mesh.bind(new THREE.Skeleton(mapped, mesh.skeleton.boneInverses), mesh.bindMatrix);
+    root.add(mesh);
+  }
+  for (const m of rigid) root.add(m);
+  meshesOf[k] = skinned.length + rigid.length;
+}
+const group = new THREE.Group(); group.matrixAutoUpdate = false;
+const holder = new THREE.Group(); holder.add(root);
+// holder in glTF space → Source space via inverse.
+holder.matrixAutoUpdate = false; holder.matrix.copy(SOURCE_TO_GLTF.clone().invert());
+group.add(holder);
+const scene = new THREE.Scene(); scene.add(group);
+const mixer = new THREE.AnimationMixer(root), clips = Object.fromEntries(loaded.hero.animations.map((a) => [a.name, a]));
+// Camera: Dota's (distance 1200, pitch 60, fov 70 at 4:3 widened).
+const vfov = 2 * Math.atan(Math.tan(35 * Math.PI / 180) * 0.75) * 180 / Math.PI;
+const camera = new THREE.PerspectiveCamera(vfov, 16 / 9, 50, 4000);
+const p = 60 * Math.PI / 180; camera.position.set(0, -1200 * Math.cos(p), 1200 * Math.sin(p)); camera.up.set(0, 0, 1); camera.lookAt(0, 0, 0);
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), preserveDrawingBuffer: true, antialias: false });
+renderer.setSize(1920, 1080, false);
+// Materials: the colour texture's alpha with the material's alpha test (feathers, hair cards).
+const texLoader = new THREE.TextureLoader(), texCache = {};
+const tex = (f) => texCache[f] ||= new Promise((r) => texLoader.load(f, (t) => { t.flipY = false; r(t); }, undefined, () => r(null)));
+const maskMats = new Map(), depthMats = new Map(), colourMats = new Map();
+const meshes = []; root.traverse((o) => { if (o.isMesh) meshes.push(o); });
+for (const m of meshes) {
+  const def = materialDefs[m.material.name] || {};
+  const map = def.color ? await tex(textureDir[m.material.name] + def.color) : null, alphaTest = def.alphaTest ?? 0;
+  const mask = new THREE.MeshBasicMaterial({ color: 0xffffff, map, alphaTest: map && alphaTest ? alphaTest : 0, side: THREE.DoubleSide });
+  if (map) mask.onBeforeCompile = (s) => { s.fragmentShader = s.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb = vec3(1.0);'); };
+  const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map, alphaTest: map && alphaTest ? alphaTest : 0, side: THREE.DoubleSide });
+  maskMats.set(m, mask); depthMats.set(m, depth); colourMats.set(m, new THREE.MeshBasicMaterial({ map, alphaTest: map && alphaTest ? alphaTest : 0, side: THREE.DoubleSide })); m.frustumCulled = false;
+}
+window.info = { parts, meshesOf, clips: Object.keys(clips), materials: meshes.map((m) => [m.name, m.material.name, !!materialDefs[m.material.name]]) };
+let action = null;
+window.pose = ({ clip = 'Idle_anim', time = 0, yaw = 0, x = 0, y = 0, scale = 0.8 }) => {
+  if (action) action.stop();
+  action = mixer.clipAction(clips[clip]); action.reset().play(); mixer.setTime(time);
+  group.matrix.compose(new THREE.Vector3(x, y, 0), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), yaw * Math.PI / 180), new THREE.Vector3(scale, scale, scale));
+  group.updateMatrixWorld(true);
+  return clips[clip].duration;
+};
+window.render = (kind) => {
+  for (const m of meshes) m.material = (kind === 'depth' ? depthMats : kind === 'colour' ? colourMats : maskMats).get(m);
+  renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(scene, camera);
+  return true;
+};
+// Scoring against the captured frame inside a crop: the silhouette's edges on the frame's edges, and
+// a bright inside.
+const CROP = { x: 780, y: 380, w: 380, h: 340 };
+const img = await new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.src = 'world.webp'; });
+const cv = document.createElement('canvas'); cv.width = CROP.w; cv.height = CROP.h; const cx = cv.getContext('2d'); cx.drawImage(img, CROP.x, CROP.y, CROP.w, CROP.h, 0, 0, CROP.w, CROP.h);
+const px = cx.getImageData(0, 0, CROP.w, CROP.h).data, L = new Float32Array(CROP.w * CROP.h), G = new Float32Array(CROP.w * CROP.h);
+for (let i = 0; i < L.length; i++) L[i] = 0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2];
+for (let y = 1; y < CROP.h - 1; y++) for (let x = 1; x < CROP.w - 1; x++) { const i = y * CROP.w + x;
+  const gx = L[i - CROP.w + 1] + 2 * L[i + 1] + L[i + CROP.w + 1] - L[i - CROP.w - 1] - 2 * L[i - 1] - L[i + CROP.w - 1];
+  const gy = L[i + CROP.w - 1] + 2 * L[i + CROP.w] + L[i + CROP.w + 1] - L[i - CROP.w - 1] - 2 * L[i - CROP.w] - L[i - CROP.w + 1]; G[i] = Math.hypot(gx, gy); }
+const target = new THREE.WebGLRenderTarget(CROP.w, CROP.h), buf = new Uint8Array(CROP.w * CROP.h * 4);
+window.maskCrop = () => {
+  for (const m of meshes) m.material = maskMats.get(m);
+  camera.setViewOffset(1920, 1080, CROP.x, CROP.y, CROP.w, CROP.h);
+  renderer.setRenderTarget(target); renderer.setClearColor(0, 0); renderer.clear(); renderer.render(scene, camera);
+  renderer.readRenderTargetPixels(target, 0, 0, CROP.w, CROP.h, buf); renderer.setRenderTarget(null); camera.clearViewOffset();
+  const M = new Uint8Array(CROP.w * CROP.h);
+  for (let y = 0; y < CROP.h; y++) for (let x = 0; x < CROP.w; x++) M[y * CROP.w + x] = buf[((CROP.h - 1 - y) * CROP.w + x) * 4 + 3] > 127 ? 1 : 0;
+  return M;
+};
+window.score = (q) => {
+  window.pose(q); const M = window.maskCrop();
+  let e = 0, ne = 0, inside = 0, ni = 0;
+  for (let y = 1; y < CROP.h - 1; y++) for (let x = 1; x < CROP.w - 1; x++) { const i = y * CROP.w + x;
+    if (M[i]) { inside += L[i]; ni++; if (!M[i - 1] || !M[i + 1] || !M[i - CROP.w] || !M[i + CROP.w]) { e += G[i]; ne++; } } }
+  return { edge: ne ? e / ne : 0, bright: ni ? inside / ni : 0, area: ni };
+};
+// A target: the bright hero (white body, wings, spear) against the dark grass round him; the pale stone
+// ground on the far left is outside the region scored.
+const REGION = { x0: 870 - CROP.x, x1: 1150 - CROP.x, y0: 425 - CROP.y, y1: 710 - CROP.y };
+const T = new Uint8Array(CROP.w * CROP.h);
+for (let y = REGION.y0; y < REGION.y1; y++) for (let x = REGION.x0; x < REGION.x1; x++) { const i = y * CROP.w + x, r = px[i * 4], g = px[i * 4 + 1], b = px[i * 4 + 2];
+  T[i] = L[i] > 145 && b > g ? 1 : 0; }
+// The health bar and its portrait are not the hero.
+for (let y = 0; y < 470 - CROP.y; y++) for (let x = 0; x < CROP.w; x++) T[y * CROP.w + x] = 0;
+window.iou = (q) => {
+  window.pose(q); const M = window.maskCrop(); let inter = 0, uni = 0;
+  for (let y = REGION.y0; y < REGION.y1; y++) for (let x = REGION.x0; x < REGION.x1; x++) { const i = y * CROP.w + x; if (y < 470 - CROP.y) continue; inter += M[i] & T[i]; uni += M[i] | T[i]; }
+  return inter / (uni || 1);
+};
+window.targetMask = () => Array.from(T);
+// The view depth (along the camera's forward axis, in units) of every pixel of a crop, 0 where empty.
+window.depthCrop = (q, box) => {
+  window.pose(q);
+  for (const m of meshes) m.material = depthMats.get(m);
+  const t = new THREE.WebGLRenderTarget(box.w, box.h), b = new Uint8Array(box.w * box.h * 4);
+  camera.setViewOffset(1920, 1080, box.x, box.y, box.w, box.h);
+  renderer.setRenderTarget(t); renderer.setClearColor(0xffffff, 1); renderer.clear(); renderer.render(scene, camera);
+  renderer.readRenderTargetPixels(t, 0, 0, box.w, box.h, b); renderer.setRenderTarget(null); camera.clearViewOffset();
+  const n = camera.near, f = camera.far, out = new Array(box.w * box.h).fill(0);
+  for (let y = 0; y < box.h; y++) for (let x = 0; x < box.w; x++) {
+    const i = ((box.h - 1 - y) * box.w + x) * 4;
+    const packed = b[i] / 256 + b[i + 1] / 65536 + b[i + 2] / 16777216 + b[i + 3] / (255 * 16777216);
+    if (packed > 0.9999) continue;
+    const zn = packed * 2 - 1; out[y * box.w + x] = (2 * n * f) / (f + n - zn * (f - n));
+  }
+  return out;
+};
+window.CROP = CROP;
+window.ready = true;
+</script></body></html>

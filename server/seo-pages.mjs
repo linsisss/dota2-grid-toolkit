@@ -44,7 +44,7 @@ const GRID_COPY = {
     text: 'Мрачные dead inside сетки героев для Dota 2: тёмные арты из символов на экране выбора героя.' },
 };
 export const SEO_SECTIONS = {
-  backgrounds: { copy: BACKGROUND_COPY, label: 'Фоны', more: { href: '/workshop?backgrounds', text: 'Все фоны в мастерской' }, make: { href: '/background', text: 'Сделать свой фон' },
+  backgrounds: { copy: BACKGROUND_COPY, label: 'Фоны', more: { href: '/workshop?backgrounds', text: 'Все фоны в мастерской' }, make: { href: '/customize', text: 'Сделать свой фон' },
     steps: ['Открой фон и нажми «Скачать»: файл для Dota соберётся прямо в браузере.', 'Поставь его командой PowerShell (она сама найдёт Dota) или вручную по инструкции на сайте.', 'Перезапусти Dota 2: фон появится в главном меню.'] },
   grids: { copy: GRID_COPY, label: 'Сетки героев', more: { href: '/workshop', text: 'Все сетки в мастерской' }, make: { href: '/editor', text: 'Собрать свою сетку' },
     steps: ['Открой сетку и нажми «Скачать грид».', 'Положи файл в папку Dota по инструкции на странице сетки (сайт подскажет путь для твоего Steam).', 'Перезапусти Dota 2: сетка появится на экране выбора героя.'] },
@@ -67,7 +67,7 @@ function collect(list, want) {
 }
 function card(section, item) {
   const grid = section === 'grids';
-  const href = grid ? `/workshop?id=${item.id}` : `/background?background=${item.id}`;
+  const href = grid ? `/workshop?id=${item.id}` : `/customize?background=${item.id}`;
   const image = grid ? `/api/catalog/preview/work/${item.id}.jpg?revision=${item.revision}` : `/api/catalog/backgrounds/${item.id}/poster.jpg`;
   const by = authorName(item);
   return `<li><a href="${href}"><img src="${image}" alt="${escape(`${grid ? 'Сетка героев' : 'Фон'} «${item.title}»`)}" loading="lazy" width="${grid ? 1200 : 640}" height="${grid ? 630 : 360}">`
@@ -101,7 +101,7 @@ export function seoPage(section, slug, { list, origin, image }) {
   const other = section === 'grids' ? 'backgrounds' : 'grids';
   const structured = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: copy.h1, description: copy.text, url, inLanguage: 'ru',
     mainEntity: { '@type': 'ItemList', itemListElement: items.map((item, i) => ({ '@type': 'ListItem', position: i + 1, name: item.title,
-      url: `${origin}${section === 'grids' ? `/workshop?id=${item.id}` : `/background?background=${item.id}`}` })) } };
+      url: `${origin}${section === 'grids' ? `/workshop?id=${item.id}` : `/customize?background=${item.id}`}` })) } };
   return withMetrika(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escape(title)}</title><meta name="description" content="${escape(copy.text)}"><link rel="canonical" href="${escape(url)}">
 <meta property="og:type" content="website"><meta property="og:site_name" content="GridStudio"><meta property="og:locale" content="ru_RU"><meta property="og:title" content="${escape(copy.title)}">
@@ -115,7 +115,7 @@ export function seoPage(section, slug, { list, origin, image }) {
 ${items.length ? `<ul class="items">${items.map((item) => card(section, item)).join('')}</ul>` : '<p class="empty">Здесь пока пусто — загляни в мастерскую.</p>'}
 <h2>Как поставить</h2><ol>${def.steps.map((step) => `<li>${escape(step)}</li>`).join('')}</ol>
 <p class="lead">Как это сделать: <a href="/sozdat-setku-geroev">создать сетку героев</a> · <a href="/kak-postavit-setku-geroev">поставить сетку в Dota 2</a> · <a href="/fon-glavnogo-menyu-dota-2">сделать фон меню</a> · <a href="/shrift-dota-2">поменять шрифт</a></p>
-<h2>Ещё для Dota 2</h2><p class="lead">${section === 'grids' ? 'Фон главного меню и шрифт тоже можно поменять:' : 'Сетку героев и шрифт тоже можно поменять:'} <a href="/${other}">${escape(SEO_SECTIONS[other].label)}</a> · <a href="/background?tab=font">Шрифт для Dota</a> · <a href="/guides">Гайды по оформлению</a></p>
+<h2>Ещё для Dota 2</h2><p class="lead">${section === 'grids' ? 'Фон главного меню и шрифт тоже можно поменять:' : 'Сетку героев и шрифт тоже можно поменять:'} <a href="/${other}">${escape(SEO_SECTIONS[other].label)}</a> · <a href="/customize?tab=font">Шрифт для Dota</a> · <a href="/guides">Гайды по оформлению</a></p>
 </main><footer>GridStudio — сетки героев, фоны и шрифты для Dota 2. Бесплатно, в браузере.</footer>${counter(`seo:${section}${slug ? `/${slug}` : ''}`)}</body></html>`, origin === METRIKA_ORIGIN);
 }
 
@@ -126,7 +126,7 @@ export const robotsText = (origin) => `User-agent: *\nDisallow: /api/\nAllow: /a
 
 // `entries`: [{ path, updated? (ms) }] beyond the fixed pages.
 export function sitemapXML(origin, entries) {
-  const fixed = ['/', '/editor', '/workshop', '/workshop?backgrounds', '/background', '/background?tab=font', '/guides', '/dotadle', ...seoPaths()].map((path) => ({ path }));
+  const fixed = ['/', '/editor', '/workshop', '/workshop?backgrounds', '/customize', '/customize?tab=font', '/minigames', '/guides', '/dotadle', ...seoPaths()].map((path) => ({ path }));
   const day = (ms) => new Date(ms).toISOString().slice(0, 10);
   const rows = [...fixed, ...entries].map(({ path, updated }) => `<url><loc>${escape(`${origin}${path}`)}</loc>${updated ? `<lastmod>${day(updated)}</lastmod>` : ''}</url>`);
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${rows.join('\n')}\n</urlset>\n`;

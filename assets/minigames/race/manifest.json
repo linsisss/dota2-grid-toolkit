@@ -1,0 +1,316 @@
+{
+ "about": "Made by scripts/make-minigame-assets.mjs from Valve’s Dota 2 files; see docs/minigames.md.",
+ "files": {
+  "data.json": {
+   "from": "scripts/events/crownfall/flappy_skywrath_act2.vdata",
+   "bytes": 1787
+  },
+  "images/bar_black.webp": {
+   "from": "panorama/images/hud/bar_black_psd.png",
+   "width": 181,
+   "height": 26,
+   "lossless": true,
+   "stamp": "05a01f2634cf134b",
+   "bytes": 1120
+  },
+  "images/circle_mask.webp": {
+   "from": "panorama/images/events/crownfall/flappy/circle_mask_png.png",
+   "width": 1244,
+   "height": 700,
+   "lossless": true,
+   "stamp": "9b5afcaeaa5683b3",
+   "bytes": 518
+  },
+  "images/divider_graphic_minigame.webp": {
+   "from": "panorama/images/events/crownfall/fishing/divider_graphic_minigame_png.png",
+   "width": 502,
+   "height": 39,
+   "lossless": true,
+   "stamp": "895942b299589cf1",
+   "bytes": 5502
+  },
+  "images/finish_icon.webp": {
+   "from": "panorama/images/events/crownfall/flappy/finish_icon_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "8c8e1f20df592438",
+   "bytes": 458
+  },
+  "images/hed_graphic_minigame.webp": {
+   "from": "panorama/images/events/crownfall/fishing/hed_graphic_minigame_png.png",
+   "width": 923,
+   "height": 294,
+   "lossless": true,
+   "stamp": "23c42fe0029e7742",
+   "bytes": 49018
+  },
+  "images/npc_dota_hero_batrider.webp": {
+   "from": "panorama/images/heroes/icons/npc_dota_hero_batrider_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "f543104a43dfd6a8",
+   "bytes": 654
+  },
+  "images/npc_dota_hero_skywrath_mage_alt1.webp": {
+   "from": "panorama/images/heroes/icons/npc_dota_hero_skywrath_mage_alt1_png.png",
+   "width": 32,
+   "height": 32,
+   "lossless": true,
+   "stamp": "f038f1daf4680bcd",
+   "bytes": 1252
+  },
+  "sounds.json": {
+   "from": "soundevents/soundevents_crownfall.vsndevts",
+   "bytes": 5514
+  },
+  "sounds/items/force_staff.mp3": {
+   "from": "sounds/items/force_staff.wav",
+   "stamp": "b8e1c4aebbedca08",
+   "bytes": 21642
+  },
+  "sounds/physics/movement/hero/phoenix/wings.mp3": {
+   "from": "sounds/physics/movement/hero/phoenix/wings.wav",
+   "stamp": "c0e1d628c80115f4",
+   "bytes": 15772
+  },
+  "sounds/physics/movement/wings/wingflaps_light_01.mp3": {
+   "from": "sounds/physics/movement/wings/wingflaps_light_01.wav",
+   "stamp": "3d2229c2ab6c3ff0",
+   "bytes": 4921
+  },
+  "sounds/physics/movement/wings/wingflaps_light_02.mp3": {
+   "from": "sounds/physics/movement/wings/wingflaps_light_02.wav",
+   "stamp": "353b748321b0cfdf",
+   "bytes": 5025
+  },
+  "sounds/ui/last_hit.mp3": {
+   "from": "sounds/ui/last_hit.wav",
+   "stamp": "dcbda16d824adba1",
+   "bytes": 25404
+  },
+  "sounds/vo/batrider/bat_inthebag_01.mp3": {
+   "from": "sounds/vo/batrider/bat_inthebag_01.mp3",
+   "stamp": "4912c93153768597",
+   "bytes": 19772
+  },
+  "sounds/vo/batrider/bat_kill_07.mp3": {
+   "from": "sounds/vo/batrider/bat_kill_07.mp3",
+   "stamp": "e2452ec1b7e1dad4",
+   "bytes": 8487
+  },
+  "sounds/vo/batrider/bat_kill_19.mp3": {
+   "from": "sounds/vo/batrider/bat_kill_19.mp3",
+   "stamp": "b159bfb8ca628903",
+   "bytes": 12248
+  },
+  "sounds/vo/batrider/bat_kill_20.mp3": {
+   "from": "sounds/vo/batrider/bat_kill_20.mp3",
+   "stamp": "4b67a6298361f9ab",
+   "bytes": 7860
+  },
+  "sounds/vo/batrider/bat_lasthit_07.mp3": {
+   "from": "sounds/vo/batrider/bat_lasthit_07.mp3",
+   "stamp": "9a46324fd59a29ee",
+   "bytes": 13502
+  },
+  "sounds/vo/batrider/bat_lasthit_09.mp3": {
+   "from": "sounds/vo/batrider/bat_lasthit_09.mp3",
+   "stamp": "e2452ec1b7e1dad4",
+   "bytes": 8487
+  },
+  "sounds/vo/batrider/bat_lasthit_11.mp3": {
+   "from": "sounds/vo/batrider/bat_lasthit_11.mp3",
+   "stamp": "abfdd18ed0d2db92",
+   "bytes": 6397
+  },
+  "sounds/vo/batrider/bat_respawn_15.mp3": {
+   "from": "sounds/vo/batrider/bat_respawn_15.mp3",
+   "stamp": "43d0e59a934636da",
+   "bytes": 20399
+  },
+  "sounds/vo/batrider/bat_respawn_17.mp3": {
+   "from": "sounds/vo/batrider/bat_respawn_17.mp3",
+   "stamp": "56c93d5f01c3e9c0",
+   "bytes": 20190
+  },
+  "sounds/vo/batrider/bat_spawn_02.mp3": {
+   "from": "sounds/vo/batrider/bat_spawn_02.mp3",
+   "stamp": "ea4fd93a6fccc763",
+   "bytes": 15801
+  },
+  "sounds/vo/batrider/bat_win_01.mp3": {
+   "from": "sounds/vo/batrider/bat_win_01.mp3",
+   "stamp": "6d7dcc470033117a",
+   "bytes": 19772
+  },
+  "sounds/vo/batrider/bat_win_02.mp3": {
+   "from": "sounds/vo/batrider/bat_win_02.mp3",
+   "stamp": "a648ee72838daf32",
+   "bytes": 12875
+  },
+  "sounds/vo/batrider/bat_win_03.mp3": {
+   "from": "sounds/vo/batrider/bat_win_03.mp3",
+   "stamp": "cb73256a4d8a55ce",
+   "bytes": 31474
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_01.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_anger_01.mp3",
+   "stamp": "f15c7ee124a49d90",
+   "bytes": 26083
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_02.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_anger_02.mp3",
+   "stamp": "d277591a3fe14851",
+   "bytes": 22953
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_03.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_anger_03.mp3",
+   "stamp": "21444f1f9616be9f",
+   "bytes": 23684
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_04.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_anger_04.mp3",
+   "stamp": "e22bf04356201175",
+   "bytes": 17632
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_05.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_anger_05.mp3",
+   "stamp": "ad331f3ca23e3b3b",
+   "bytes": 23579
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_death_07.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_death_07.mp3",
+   "stamp": "50536196051d526d",
+   "bytes": 39021
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_happy_03.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_happy_03.mp3",
+   "stamp": "2df30427ffb79323",
+   "bytes": 24205
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_happy_04.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_happy_04.mp3",
+   "stamp": "65e7c398fa28d024",
+   "bytes": 27961
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_inthebag_01.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_inthebag_01.mp3",
+   "stamp": "5abe1c5b90c0b412",
+   "bytes": 114349
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_inthebag_02.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_inthebag_02.mp3",
+   "stamp": "04dc23d5468831ef",
+   "bytes": 102559
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_lose_01.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_lose_01.mp3",
+   "stamp": "ecd406e9fdef9492",
+   "bytes": 61243
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_lose_03.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_lose_03.mp3",
+   "stamp": "585f2d6cc76816dc",
+   "bytes": 50289
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_move_01.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_move_01.mp3",
+   "stamp": "639d4547a6c42537",
+   "bytes": 37038
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_move_09.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_move_09.mp3",
+   "stamp": "62a56477f84ee375",
+   "bytes": 61869
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_move_14.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_move_14.mp3",
+   "stamp": "217025935d4f1aa9",
+   "bytes": 58845
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_move_33.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_move_33.mp3",
+   "stamp": "2c127e6b59579dda",
+   "bytes": 39438
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_spawn_08.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_spawn_08.mp3",
+   "stamp": "07b8fdd10aa6cc91",
+   "bytes": 70843
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_win_02.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_win_02.mp3",
+   "stamp": "e86acb0ad1dc4204",
+   "bytes": 50497
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_win_03.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_win_03.mp3",
+   "stamp": "51949089b7b90f7a",
+   "bytes": 48202
+  },
+  "sounds/vo/skywrath_mage/skywrath_crown_yes_04.mp3": {
+   "from": "sounds/vo/skywrath_mage/skywrath_crown_yes_04.mp3",
+   "stamp": "731f7086db43b773",
+   "bytes": 20032
+  },
+  "strings.en.json": {
+   "from": "resource/localization/dota_english.txt, resource/localization/novels/crownfall_english.txt",
+   "count": 90,
+   "bytes": 8308
+  },
+  "strings.ru.json": {
+   "from": "resource/localization/dota_russian.txt, resource/localization/novels/crownfall_russian.txt",
+   "count": 87,
+   "bytes": 10258
+  }
+ },
+ "valve": {
+  "panorama/images/events/crownfall/fishing/divider_graphic_minigame_png": "images/divider_graphic_minigame.webp",
+  "panorama/images/events/crownfall/fishing/hed_graphic_minigame_png": "images/hed_graphic_minigame.webp",
+  "panorama/images/events/crownfall/flappy/circle_mask_png": "images/circle_mask.webp",
+  "panorama/images/events/crownfall/flappy/finish_icon_png": "images/finish_icon.webp",
+  "panorama/images/heroes/icons/npc_dota_hero_batrider_png": "images/npc_dota_hero_batrider.webp",
+  "panorama/images/heroes/icons/npc_dota_hero_skywrath_mage_alt1_png": "images/npc_dota_hero_skywrath_mage_alt1.webp",
+  "panorama/images/hud/bar_black_psd": "images/bar_black.webp",
+  "sounds/items/force_staff": "sounds/items/force_staff.mp3",
+  "sounds/physics/movement/hero/phoenix/wings": "sounds/physics/movement/hero/phoenix/wings.mp3",
+  "sounds/physics/movement/wings/wingflaps_light_01": "sounds/physics/movement/wings/wingflaps_light_01.mp3",
+  "sounds/physics/movement/wings/wingflaps_light_02": "sounds/physics/movement/wings/wingflaps_light_02.mp3",
+  "sounds/ui/last_hit": "sounds/ui/last_hit.mp3",
+  "sounds/vo/batrider/bat_inthebag_01": "sounds/vo/batrider/bat_inthebag_01.mp3",
+  "sounds/vo/batrider/bat_kill_07": "sounds/vo/batrider/bat_kill_07.mp3",
+  "sounds/vo/batrider/bat_kill_19": "sounds/vo/batrider/bat_kill_19.mp3",
+  "sounds/vo/batrider/bat_kill_20": "sounds/vo/batrider/bat_kill_20.mp3",
+  "sounds/vo/batrider/bat_lasthit_07": "sounds/vo/batrider/bat_lasthit_07.mp3",
+  "sounds/vo/batrider/bat_lasthit_09": "sounds/vo/batrider/bat_lasthit_09.mp3",
+  "sounds/vo/batrider/bat_lasthit_11": "sounds/vo/batrider/bat_lasthit_11.mp3",
+  "sounds/vo/batrider/bat_respawn_15": "sounds/vo/batrider/bat_respawn_15.mp3",
+  "sounds/vo/batrider/bat_respawn_17": "sounds/vo/batrider/bat_respawn_17.mp3",
+  "sounds/vo/batrider/bat_spawn_02": "sounds/vo/batrider/bat_spawn_02.mp3",
+  "sounds/vo/batrider/bat_win_01": "sounds/vo/batrider/bat_win_01.mp3",
+  "sounds/vo/batrider/bat_win_02": "sounds/vo/batrider/bat_win_02.mp3",
+  "sounds/vo/batrider/bat_win_03": "sounds/vo/batrider/bat_win_03.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_01": "sounds/vo/skywrath_mage/skywrath_crown_anger_01.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_02": "sounds/vo/skywrath_mage/skywrath_crown_anger_02.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_03": "sounds/vo/skywrath_mage/skywrath_crown_anger_03.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_04": "sounds/vo/skywrath_mage/skywrath_crown_anger_04.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_anger_05": "sounds/vo/skywrath_mage/skywrath_crown_anger_05.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_death_07": "sounds/vo/skywrath_mage/skywrath_crown_death_07.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_happy_03": "sounds/vo/skywrath_mage/skywrath_crown_happy_03.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_happy_04": "sounds/vo/skywrath_mage/skywrath_crown_happy_04.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_inthebag_01": "sounds/vo/skywrath_mage/skywrath_crown_inthebag_01.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_inthebag_02": "sounds/vo/skywrath_mage/skywrath_crown_inthebag_02.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_lose_01": "sounds/vo/skywrath_mage/skywrath_crown_lose_01.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_lose_03": "sounds/vo/skywrath_mage/skywrath_crown_lose_03.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_move_01": "sounds/vo/skywrath_mage/skywrath_crown_move_01.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_move_09": "sounds/vo/skywrath_mage/skywrath_crown_move_09.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_move_14": "sounds/vo/skywrath_mage/skywrath_crown_move_14.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_move_33": "sounds/vo/skywrath_mage/skywrath_crown_move_33.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_spawn_08": "sounds/vo/skywrath_mage/skywrath_crown_spawn_08.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_win_02": "sounds/vo/skywrath_mage/skywrath_crown_win_02.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_win_03": "sounds/vo/skywrath_mage/skywrath_crown_win_03.mp3",
+  "sounds/vo/skywrath_mage/skywrath_crown_yes_04": "sounds/vo/skywrath_mage/skywrath_crown_yes_04.mp3"
+ }
+}

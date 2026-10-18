@@ -1,0 +1,21 @@
+<!doctype html><html><body style="margin:0;background:transparent">
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script>
+<canvas id="c" width="400" height="400" style="width:400px;height:400px"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { HeroViewer, Loadout } from '/hero/src/index.js'; // dota-loadout's library (--loadout)
+window.THREE = THREE;
+window.make = async (address, size) => {
+  const c = document.getElementById('c'); c.style.width = size[0] + 'px'; c.style.height = size[1] + 'px';
+  const viewer = new HeroViewer(c, { controls: false, wheel: false, pixelRatio: 1, textureScale: 1, assets: location.origin + '/hero/assets/', bloom: 0.35 });
+  const look = new Loadout(viewer);
+  await look.show(address);
+  await new Promise((r) => setTimeout(r, 300));
+  viewer.renderer.setAnimationLoop(null);
+  viewer.timer = { update() {}, getDelta: () => window.DT || 1 / 30, connect() {} };
+  viewer.visible = true;
+  window.viewer = viewer; window.look = look;
+  return viewer.animations.map((a) => a.name);
+};
+window.ready = true;
+</script></body></html>

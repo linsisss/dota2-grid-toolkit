@@ -233,7 +233,6 @@ export function drawingPoints(
       if (settings.mirrorH && settings.mirrorV)
         positions.push({ ...point, x: size.w - point.x, y: size.h - point.y });
       return positions.filter((p) => {
-        if (p.x < 0 || p.y < 0) return false;
         const key = `${Math.round(p.x * 10)},${Math.round(p.y * 10)}`;
         if (seen.has(key)) return false;
         seen.add(key);

@@ -224,3 +224,8 @@
 .an-pick select { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; font-size: 16px; }
 .an-pick select option { color: #efeaf5; background: #1b1922; }
 .an-refresh { display: inline-flex; align-items: center; gap: 7px; padding: 0 13px; font-size: 13.5px; }
+
+/* «Воронки → Вход»: where the window was opened, the way to the bot, what got lost (2026-10-19). */
+.an-login-extra { display: grid; gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--an-line); }
+.an-login-extra h4 { margin: 6px 0 0; color: var(--an-muted); font-size: 12.5px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; }
+.an-login-extra .an-tiles.is-strip { margin: 0; }

@@ -654,4 +654,10 @@ export default {
   'Браузер не смог собрать такую большую картинку. Выбери масштаб меньше.': 'The browser couldn’t make a picture this large. Choose a smaller scale.',
   '{file} скачан': '{file} downloaded',
   'Не удалось собрать картинку.': 'Couldn’t make the picture.',
+  'Готовая сетка из Мастерской': 'A ready grid from the Workshop',
+  'Удалён в аккаунте на другом устройстве': 'Deleted in your account on another device',
+  'Копия из этого браузера не сохраняется в аккаунт. Создай из неё копию, если она нужна, или убери файл в архив.': 'The copy in this browser isn’t saved to your account. Make a copy of it if you need it, or move the file to the archive.',
+  'Этот файл удалён в аккаунте на другом устройстве, а в этом браузере его копии нет.': 'This file was deleted in your account on another device, and there’s no copy of it in this browser.',
+  'Файл удалён в аккаунте на другом устройстве. Здесь осталась копия из этого браузера: она не сохраняется в аккаунт — создай из неё копию в Студии, если она нужна.': 'The file was deleted in your account on another device. The copy in this browser stays here but isn’t saved to your account — make a copy of it in the Studio if you need it.',
+  '<strong>Замени старый файл новым:</strong> скопируй <strong>hero_grid_config.json</strong> в эту папку с заменой; если папки cfg нет, создай её. В папке должен остаться один <strong>hero_grid_config.json</strong>.': '<strong>Replace the old file:</strong> copy <strong>hero_grid_config.json</strong> into this folder, replacing the old one; if there is no cfg folder, create it. Only one <strong>hero_grid_config.json</strong> should stay in the folder.',
 };

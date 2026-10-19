@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { DEFAULT_STEAM_DIRECTORY, steamConfigFolder } from '../../scripts/steam-profile.mjs';
+import { STEAM_DIRECTORIES, steamConfigFolder } from '../../scripts/steam-profile.mjs';
+import { BY_HAND, SYSTEM, SYSTEM_NAMES } from '../system.js';
 import { findSteamAccount } from '../../scripts/steam-folder.mjs';
 import { Icon, Modal, rich } from './Common.jsx';
 import { EDITOR_PATH, countDownload, downloadGrid, gridInstallCommand, gridRestoreCommand } from './api.js';
@@ -7,18 +8,20 @@ import { t, translateMessage } from '../../scripts/i18n.mjs';
 import VideoGuide from '../VideoGuide.jsx';
 import { packOf, track } from '../site-stats.js';
 
-// Kept while the page is open, so reopening the guide shows the same folder. Never stored.
-const remembered = { profile: '', directory: DEFAULT_STEAM_DIRECTORY, account: null };
+// Kept while the page is open, so reopening the guide shows the same folder. Never stored. On macOS and
+// Linux the folders are theirs (src/system.js).
+const FOLDERS = BY_HAND ? SYSTEM : 'windows', DEFAULT_DIRECTORY = STEAM_DIRECTORIES[FOLDERS];
+const remembered = { profile: '', directory: DEFAULT_DIRECTORY, account: null };
 
 function SteamFolder() {
   const [profile, setProfile] = useState(remembered.profile), [directory, setDirectory] = useState(remembered.directory);
   const [account, setAccount] = useState(remembered.account), [busy, setBusy] = useState(false), [copied, setCopied] = useState(false);
   const [status, setStatus] = useState(() => remembered.account ? { text: t('Код друга: {id}', { id: remembered.account.accountId }), state: 'ready' } : null);
-  const request = useRef(null), [custom] = useState(() => remembered.directory !== DEFAULT_STEAM_DIRECTORY);
+  const request = useRef(null), [custom] = useState(() => remembered.directory !== DEFAULT_DIRECTORY);
   useEffect(() => () => request.current?.abort(), []);
   // The Steam helpers (scripts/steam-*.mjs, the server's lookup) explain in Russian: translated where a dictionary has it.
   let path = '', pathError = '';
-  try { path = steamConfigFolder(account?.accountId, directory); } catch (error) { pathError = translateMessage(error.message); }
+  try { path = steamConfigFolder(account?.accountId, directory, FOLDERS); } catch (error) { pathError = translateMessage(error.message); }
   const reset = () => { request.current?.abort(); request.current = null; setBusy(false); setAccount(remembered.account = null); setCopied(false); };
   async function find(event) {
     event.preventDefault(); reset(); setStatus(null);
@@ -45,11 +48,14 @@ function SteamFolder() {
     </form>
     <p id="installSteamStatus" className="catalog-steam-status" data-state={status?.state} role={status?.state === 'error' ? 'alert' : 'status'} hidden={!status}>{status?.text}</p>
     <details className="catalog-steam-location" open={custom || undefined}><summary>{t('Steam установлен в другой папке')}</summary>
-      <label>{t('Папка Steam')}<input value={directory} maxLength={260} spellCheck={false} placeholder="D:\Steam" aria-invalid={!!pathError || undefined}
-        onChange={event => { setCopied(false); setDirectory(remembered.directory = event.target.value); }}/></label></details>
+      <label>{t('Папка Steam')}<input value={directory} maxLength={260} spellCheck={false} placeholder={BY_HAND ? '~/Steam' : 'D:\\Steam'} aria-invalid={!!pathError || undefined}
+        onChange={event => { setCopied(false); setDirectory(remembered.directory = event.target.value); }}/></label>
+      {SYSTEM === 'linux' && <p className="catalog-muted">{rich(t('Steam из Flatpak: {path}'), { path: <code>~/.var/app/com.valvesoftware.Steam/.local/share/Steam</code> })}</p>}</details>
     <div className="catalog-steam-path"><code>{pathError || path}</code>
       <button type="button" className="catalog-button" disabled={!account || !!pathError} onClick={copy}><Icon name={copied ? 'check' : 'copy'}/>{copied ? t('Скопировано') : t('Скопировать')}</button></div>
-    <p className="catalog-muted">{t('Путь можно вставить в адресную строку Проводника. Код друга — это ID аккаунта в Dota 2.')}</p>
+    <p className="catalog-muted">{SYSTEM === 'mac' ? rich(t('В Finder: «Переход» → «Переход к папке» ({keys}) — вставь путь. Код друга — это ID аккаунта в Dota 2.'), { keys: <kbd>⇧⌘G</kbd> })
+      : SYSTEM === 'linux' ? rich(t('Вставь путь в адресную строку файлового менеджера ({keys}). Код друга — это ID аккаунта в Dota 2.'), { keys: <kbd>Ctrl + L</kbd> })
+      : t('Путь можно вставить в адресную строку Проводника. Код друга — это ID аккаунта в Dota 2.')}</p>
   </div>;
 }
 
@@ -116,7 +122,7 @@ function FileSteps({ item }) {
     <li><strong>{t('Закрой Dota 2.')}</strong> {rich(t('Если в папке ниже уже есть {file}, сохрани его копию: новый файл заменит все твои сетки.'), { file })}
       <p className="catalog-muted">{rich(t('Хочешь оставить свои сетки? {open} — она добавится к твоему файлу, и ты скачаешь всё одним JSON.'), { open: item ? <a href={`${EDITOR_PATH}?catalog=${item.id}`} onClick={() => openedInEditor(item)}>{t('Открой эту сетку в редакторе')}</a> : t('Открой сетку в редакторе') })}</p></li>
     <li><strong>{t('Найди папку с настройками Dota 2.')}</strong><SteamFolder/></li>
-    <li><strong>{t('Замени старый файл новым.')}</strong> {rich(t('Скопируй {file} в эту папку. Если Windows спросит про файл с таким же именем, выбери «Заменить файл в папке назначения».'), { file })}
+    <li><strong>{t('Замени старый файл новым.')}</strong> {BY_HAND ? rich(t('Скопируй {file} в эту папку с заменой. Если папки cfg нет, создай её.'), { file }) : rich(t('Скопируй {file} в эту папку. Если Windows спросит про файл с таким же именем, выбери «Заменить файл в папке назначения».'), { file })}
       <p className="catalog-muted">{rich(t('В папке должен остаться один {file}. Файлы с другими именами Dota 2 не читает.'), { file })}</p></li>
     <li>{rich(t('{start}, открой «Герои» и выбери сетку в списке «Сортировка» внизу слева.'), { start: <strong>{t('Запусти Dota 2')}</strong> })}</li>
   </ol></>;
@@ -132,8 +138,9 @@ export function InstallGuide({ item }) {
     setCommand(null);
     gridInstallCommand(item.grid).then(text => { setCommand({ text }); countDownload('work', item.id); track('workshop.download', { kind: 'grid', way: 'command', id: item.id }); }, error => { asked.current = false; setCommand({ error: error.message }); });
   }, [method]);
-  if (!item) return <FileSteps/>;
-  return <div className="catalog-install-guide"><Methods method={method} onChange={setMethod}/>
+  const system = BY_HAND && <p className="catalog-install-system">{t('У тебя {system}: команда PowerShell работает только в Windows, поэтому ставь файлом — путь к папке ниже уже для {system}.', { system: SYSTEM_NAMES[SYSTEM] })}</p>;
+  if (!item) return <>{system}<FileSteps/></>;
+  return <div className="catalog-install-guide">{system}<Methods method={method} onChange={setMethod}/>
     {method === 'command' ? <CommandSteps item={item} command={command}/> : <FileSteps item={item}/>}</div>;
 }
 

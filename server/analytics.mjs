@@ -14,13 +14,15 @@
 // from the raw events — today again every minute it is asked for — and, for the days before the
 // analytics, from the old counter: `origin` 1), an_errors (script errors, failed API calls and the
 // server's 5xx per day and place; 400 days), an_installs (what the PowerShell installers report; 400
-// days). The old counter's visits/stat_events go on being written for «Пользователи», «Сейчас на сайте»
+// days), an_logins (one row per sign-in window and the steps it reached: the button to the bot, the bot's
+// /start, «Войти» in the bot, the site's finish; 90 days). The old counter's visits/stat_events go on being written for «Пользователи», «Сейчас на сайте»
 // and the old numbers. Sessions before the analytics are made from those visits once (backfill: one per
 // visitor and day, no engaged time), so the history does not start at zero.
 import { ANALYTICS_EVENTS, ANALYTICS_PAGE, SCREEN_BUCKETS, eventKeys, eventSpec, validateEvent } from '../scripts/analytics-events.mjs';
 import { DAY, MSK, dayStart, engagedBuckets, funnelSteps, mskDay, retentionCohorts, searchText, uaFamilies, weekOf, weekStart, ENGAGED_BUCKETS } from './analytics-math.mjs';
 import { SOURCES, sourceOf } from './site-stats.mjs';
 import { MINIGAME_NAMES } from './minigames.mjs';
+import { createHash } from 'node:crypto';
 
 export const ANALYTICS_KEEP = Object.freeze({ raw: 90, days: 400 });
 const SCREENS = new Set(SCREEN_BUCKETS.map(([, label]) => label));
@@ -50,7 +52,26 @@ const SCHEMA = `
     first_at INTEGER NOT NULL, last_at INTEGER NOT NULL, PRIMARY KEY(day, kind, key)) WITHOUT ROWID;
   CREATE TABLE IF NOT EXISTS an_installs(at INTEGER NOT NULL, day INTEGER NOT NULL, kind TEXT NOT NULL, pack TEXT NOT NULL, result TEXT NOT NULL, error TEXT NOT NULL DEFAULT '');
   CREATE INDEX IF NOT EXISTS an_installs_day ON an_installs(day);
-  CREATE INDEX IF NOT EXISTS an_installs_pack ON an_installs(pack);`;
+  CREATE INDEX IF NOT EXISTS an_installs_pack ON an_installs(pack);
+  CREATE TABLE IF NOT EXISTS an_logins(id TEXT PRIMARY KEY, at INTEGER NOT NULL, day INTEGER NOT NULL, origin TEXT NOT NULL DEFAULT '', device TEXT NOT NULL DEFAULT '',
+    opened TEXT NOT NULL DEFAULT '', started INTEGER NOT NULL DEFAULT 0, approved INTEGER NOT NULL DEFAULT 0, finished INTEGER NOT NULL DEFAULT 0,
+    back INTEGER NOT NULL DEFAULT 0, fresh INTEGER NOT NULL DEFAULT 0) WITHOUT ROWID;
+  CREATE INDEX IF NOT EXISTS an_logins_day ON an_logins(day);`;
+// The sign-in funnel (asked for on 2026-10-19: of 337 windows a day only 89 ended signed in, and the 248 others
+// never reached the bot). A row per window, keyed by a hash of the login request's id (the id alone signs
+// nobody in, but it is not kept as it is); the bot's process marks its steps with loginStep too.
+export const LOGIN_WAYS = Object.freeze(['link', 'app', 'code']);
+const loginKey = (id) => createHash('sha256').update(`an-login:${id}`).digest('base64url').slice(0, 32);
+const LOGIN_STEPS = { opened: (v) => (LOGIN_WAYS.includes(v) ? v : null), started: () => 1, approved: (v) => (v ? 1 : -1), finished: () => 1, back: () => 1, fresh: (v) => (v ? 1 : 0) };
+export function loginStep(store, id, step, value = true) {
+  const clean = LOGIN_STEPS[step]?.(value);
+  if (clean === null || clean === undefined || !/^[\w-]{32}$/.test(String(id || ''))) return false;
+  try {
+    // The first way to the bot stays: a second click (the app after the link) says nothing new.
+    const sql = step === 'opened' ? "UPDATE an_logins SET opened=? WHERE id=? AND opened=''" : `UPDATE an_logins SET ${step}=? WHERE id=?`;
+    return store.db.prepare(sql).run(clean, loginKey(id)).changes > 0;
+  } catch { return false; }
+}
 // Old counter's actions → the event they were (backfill).
 const LEGACY_EVENTS = { 'grid-export': ['editor.export', 'dota'], 'background-pack': ['customize.build-done', 'bg'], 'font-pack': ['customize.build-done', 'font'],
   'interface-pack': ['customize.build-done', 'hud'], 'customize-pack': ['customize.build-done', null], login: ['auth.login', null], 'studio-save': ['studio.save', null],
@@ -156,6 +177,14 @@ export class Analytics {
     this.q('INSERT INTO an_events(at, day, name, session, visitor, account, page, props) VALUES(?,?,?,NULL,?,?,\'\',?)').run(now, mskDay(now), name, visitor, account ? String(account) : null, JSON.stringify(clean));
     return true;
   }
+  // A sign-in window opened (POST /auth/start): where (requestLogin's `from`) and on what device.
+  loginBegin(id, from = '', agent = '') {
+    if (!/^[\w-]{32}$/.test(String(id || ''))) return false;
+    const now = this.store.now(), origin = /^[a-z][a-z0-9-]{0,23}$/.test(String(from)) ? String(from) : 'header';
+    this.q('INSERT OR IGNORE INTO an_logins(id, at, day, origin, device) VALUES(?,?,?,?,?)').run(loginKey(id), now, mskDay(now), origin, uaFamilies(agent).device);
+    return true;
+  }
+  loginStep(id, step, value) { return loginStep(this.store, id, step, value); }
   // A script error, a failed API call ('js', 'api', from the pages) or the server's own 5xx ('server').
   error(kind, props, { page = '', version = '', visitor = '', now = this.store.now() } = {}) {
     const key = kind === 'js' ? String(props.at || '') : kind === 'api' ? `${props.endpoint}|${props.status}` : `${props.endpoint}|${props.status}`;
@@ -218,6 +247,7 @@ export class Analytics {
     this.pruned = now;
     const today = mskDay(now), raw = today - ANALYTICS_KEEP.raw, old = today - ANALYTICS_KEEP.days;
     this.q('DELETE FROM an_events WHERE day<?').run(raw);
+    this.q('DELETE FROM an_logins WHERE day<?').run(raw);
     for (const table of ['an_sessions', 'an_daily', 'an_errors', 'an_installs']) this.q(`DELETE FROM ${table} WHERE day<?`).run(old);
     this.q('DELETE FROM an_visitors WHERE first_day<? AND NOT EXISTS (SELECT 1 FROM an_sessions s WHERE s.visitor=an_visitors.visitor)').run(today - 2 * ANALYTICS_KEEP.days);
   }
@@ -461,6 +491,24 @@ export class Analytics {
       return { steps: funnelSteps(kept), byDevice: { desktop: by('desktop'), phone: by('phone'), tablet: by('tablet') } };
     };
     const customizeBuilt = union(events(['customize.build-done']), legacy(['customize-pack', 'background-pack', 'font-pack', 'interface-pack']));
+    // Sign-in: by window (an_logins), not by visitor — the bot's steps have no visitor. The device filter
+    // applies; the source one does not (a window keeps no source).
+    const logins = store.all(`SELECT id, origin, device, opened, started, approved, finished, back, fresh FROM an_logins WHERE day BETWEEN ? AND ?${f.device ? ' AND device=?' : ''}`, from, to, ...(f.device ? [f.device] : []));
+    const ids = (test) => new Set(logins.filter(test).map((row) => row.id));
+    const loginSteps = (rows) => funnelSteps([
+      { id: 'window', label: 'Открыл окно входа', visitors: new Set(rows.map((row) => row.id)) },
+      { id: 'opened', label: 'Нажал «Перейти в бота»', visitors: new Set(rows.filter((row) => row.opened || row.started).map((row) => row.id)) },
+      { id: 'started', label: 'Бот получил /start', visitors: new Set(rows.filter((row) => row.started).map((row) => row.id)) },
+      { id: 'approved', label: 'Нажал «Войти» в боте', visitors: new Set(rows.filter((row) => row.approved > 0).map((row) => row.id)) },
+      { id: 'finished', label: 'Вошёл на сайте', visitors: new Set(rows.filter((row) => row.finished).map((row) => row.id)) }]);
+    const loginFunnel = { id: 'login', title: 'Вход', unit: 'окна', steps: loginSteps(logins),
+      byDevice: Object.fromEntries(DEVICES.map((device) => [device, loginSteps(logins.filter((row) => row.device === device))])),
+      byOrigin: [...new Set(logins.map((row) => row.origin))].map((origin) => { const rows = logins.filter((row) => row.origin === origin);
+        return { origin, windows: rows.length, opened: rows.filter((row) => row.opened || row.started).length, started: rows.filter((row) => row.started).length, finished: rows.filter((row) => row.finished).length }; })
+        .sort((a, b) => b.windows - a.windows),
+      ways: Object.fromEntries(LOGIN_WAYS.map((way) => [way, ids((row) => row.opened === way).size])),
+      cancelled: ids((row) => row.approved < 0).size, back: ids((row) => row.back).size, fresh: ids((row) => row.finished && row.fresh).size,
+      lost: ids((row) => row.approved > 0 && !row.finished).size };
     return { funnelFrom: from, funnelTo: to, funnels: [
       { id: 'customize', title: 'Оформление Dota', ...make([
         { id: 'visit', label: 'Зашёл', visitors: visits(`page IN ${CUSTOMIZE_PAGES} OR page LIKE 'customize:%'`) },
@@ -479,6 +527,7 @@ export class Analytics {
         { id: 'open', label: 'Открыл работу', visitors: union(events(['workshop.open']), visits("page LIKE 'work:%'")) },
         { id: 'download', label: 'Скачал или взял команду', visitors: events(['workshop.download', 'workshop.command-copy']) },
         { id: 'install', label: 'Поставил командой', visitors: installed(['workshop.command-copy']) }]) },
+      loginFunnel,
     ] };
   }
   content(p) {
@@ -541,7 +590,36 @@ export class Analytics {
         likes: this.days(p).map((_, i) => ['likes', 'background_likes', 'guide_likes'].reduce((sum, table) => sum + this.countSeries(p, table, 'created')[i], 0)),
         comments: this.days(p).map((_, i) => ['guide_comments', 'item_comments'].reduce((sum, table) => sum + this.countSeries(p, table, 'created')[i], 0)),
         follows: this.countSeries(p, 'subscriptions', 'created') },
-      games: Object.values(games).sort((a, b) => (b.open || 0) - (a.open || 0)), dotadle };
+      games: Object.values(games).sort((a, b) => (b.open || 0) - (a.open || 0)), dotadle, repeats: this.repeats(p) };
+  }
+  // Downloading again (asked for on 2026-10-19: half the visits are people coming back for a minute —
+  // to put the same grid back after Dota or Steam Cloud dropped it?). By visitor, over the raw window:
+  // who got something on two days or more, who got the same thing again on a later day, after how long,
+  // and which grids and backgrounds are got again most.
+  repeats(p) {
+    const from = Math.max(p.from, p.today - ANALYTICS_KEEP.raw + 1);
+    const rows = this.store.all(`SELECT visitor, day, json_extract(props, '$.kind') kind, json_extract(props, '$.id') id FROM an_events
+      WHERE name='workshop.download' AND day BETWEEN ? AND ? AND visitor IS NOT NULL AND json_extract(props, '$.id') IS NOT NULL`, from, p.to);
+    const out = { from, kinds: {} };
+    for (const kind of ['grid', 'background']) {
+      const days = new Map(), items = new Map();
+      for (const row of rows) {
+        if (row.kind !== kind) continue;
+        if (!days.has(row.visitor)) days.set(row.visitor, new Set());
+        days.get(row.visitor).add(row.day);
+        const key = `${row.visitor}\0${row.id}`;
+        if (!items.has(key)) items.set(key, { id: row.id, visitor: row.visitor, days: new Set() });
+        items.get(key).days.add(row.day);
+      }
+      const again = [...items.values()].filter((item) => item.days.size > 1), gaps = again.map((item) => { const list = [...item.days].sort((a, b) => a - b); return list[1] - list[0]; }).sort((a, b) => a - b);
+      const top = new Map();
+      for (const item of again) top.set(item.id, (top.get(item.id) || 0) + 1);
+      out.kinds[kind] = { visitors: days.size, onTwoDays: [...days.values()].filter((set) => set.size > 1).length,
+        sameAgain: new Set(again.map((item) => item.visitor)).size,
+        medianGap: gaps.length ? gaps[Math.floor((gaps.length - 1) / 2)] : 0,
+        top: [...top.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id, visitors]) => ({ id, visitors, title: (kind === 'grid' ? this.stats?.itemTitle?.('work', id) : this.has('backgrounds') ? this.store.get('SELECT title FROM backgrounds WHERE id=?', Number(id))?.title : '') || '—' })) };
+    }
+    return out;
   }
   errors(p) {
     const rows = this.q(`SELECT kind, key, message, place, page, max(last_at) last, version, sum(count) count, sum(visitors) visitors, min(first_at) first FROM an_errors

@@ -766,4 +766,6 @@ export default {
   'Наведи: курсор как в игре, в настоящем размере. A — атака, правый клик — ход.': 'Hover: the cursor as in the game, at its real size. A — attack, right click — move.',
   'Открыть крупно': 'Open large',
   'видео d2pfx': 'd2pfx video',
+  'Команда PowerShell — только для Windows. На {system} ставь файлом: «Как установить» ниже.': 'The PowerShell command is Windows only. On {system}, install the file: see “How to install” below.',
+  'У тебя {system}: команда PowerShell работает только в Windows, поэтому ставь вручную.': 'You’re on {system}: the PowerShell command works only on Windows, so install by hand.',
 };

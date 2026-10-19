@@ -15,10 +15,15 @@ import { BadgeMark } from '../catalog/BadgeMark.jsx';
 import { heroIndex, nearestHeroes, searchHeroes } from '../../scripts/hero-search.mjs';
 
 // Dotadle (1.8.18): today's hero in symbols from its portrait, sharper after every miss, with hints
-// like Wordle's. Signed-in only: the server keeps each account's game (server/dotadle.mjs). The guide
-// and the training game (a known hero, every hint explained in words) are open to guests too.
+// like Wordle's. The server keeps each account's game (server/dotadle.mjs); since 2026-10-19 a guest plays
+// too — today's guesses kept in this browser (GUEST_GAME) and carried to the account after signing in —
+// with a note on what signing in gives. The guide and the training game (a known hero, every hint
+// explained in words) are open to everyone.
 // One screen: the picture on the left, the search, the result and the hints on the right.
 const GUIDE_SEEN = 'gridstudio.dotadle.guide';
+const GUEST_GAME = 'gridstudio.dotadle.guest';
+const readGuest = () => { try { const value = JSON.parse(localStorage.getItem(GUEST_GAME) || 'null'); return value && Number.isInteger(value.number) && Array.isArray(value.guesses) ? value : null; } catch { return null; } };
+const writeGuest = (value) => { try { if (value) localStorage.setItem(GUEST_GAME, JSON.stringify(value)); else localStorage.removeItem(GUEST_GAME); } catch { /* This tab keeps it. */ } };
 const ATTRS = { str: 'strength', agi: 'agility', int: 'intelligence', all: 'universal' };
 const ATTR_NAMES = () => ({ str: t('Сила'), agi: t('Ловкость'), int: t('Интеллект'), all: t('Универсал') });
 const ROLE_NAMES = () => ({ Carry: t('Керри'), Support: t('Саппорт'), Nuker: t('Нюкер'), Disabler: t('Дизейблер'), Durable: t('Танк'), Escape: t('Побег'), Pusher: t('Пушер'), Initiator: t('Инициатор') });
@@ -160,7 +165,7 @@ function Guide({ onClose, onPractice }) {
       <li><span className="is-other"/>{t('Скорость 280 и стрелка ↑ — у загаданного скорость больше 280.')}</li>
       <li><span className="is-same"/>{t('Дальность зелёная — такая же, 150.')}</li>
     </ul>
-    <p className="catalog-muted">{t('Играть можно после входа: серия побед хранится в аккаунте. Новый герой — каждый день в полночь по Москве. Результат можно скопировать и отправить друзьям: героя он не выдаёт.')}</p>
+    <p className="catalog-muted">{t('Играть можно и без входа. Войди — и серия побед, значки за серию и напоминание о новом герое сохранятся в аккаунте. Новый герой — каждый день в полночь по Москве. Результат можно скопировать и отправить друзьям: героя он не выдаёт.')}</p>
     <div className="dle-actions"><button className="catalog-button primary" onClick={onPractice}><Icon name="sparkle"/>{t('Попробовать на тренировке')}</button><button className="catalog-button" onClick={onClose}>{t('Понятно')}</button></div>
   </div></Modal>;
 }
@@ -190,6 +195,21 @@ function Reminder({ on, onChange }) {
     {error && <span role="alert"> {error}</span>}</p>;
 }
 
+// What signing in gives (2026-10-19: Dotadle opened to guests, «уведомляй о том что вход дает плюшки»).
+function GuestPerks({ done }) {
+  const auth = useAccount();
+  return <div className="dle-perks">
+    <p><b>{done ? t('Сохрани результат — войди') : t('Играешь без входа')}</b>{done ? t('Сегодняшняя игра перенесётся в аккаунт.') : t('Попытки хранятся только в этом браузере. Войди — и сегодняшняя игра перенесётся в аккаунт.')}</p>
+    <ul>
+      <li><Icon name="trophy" size={15}/>{t('Серия побед и статистика — на любом устройстве')}</li>
+      <li><Icon name="award" size={15}/>{t('Значки в профиль за 7 и 21 победу подряд')}</li>
+      <li><Icon name="bell" size={15}/>{t('Напоминание о новом герое в Telegram')}</li>
+      <li><Icon name="link" size={15}/>{t('Ссылка на результат с картинкой для друзей')}</li>
+    </ul>
+    <button className="catalog-button primary" onClick={() => auth.requestLogin(t('Войди, чтобы сохранить серию побед в Dotadle.'), 'dotadle')}><Icon name="user"/>{t('Войти')}</button>
+  </div>;
+}
+
 function Result({ game, left, onReminder }) {
   const [copied, setCopied] = useState(false), [error, setError] = useState('');
   const text = shareText(game);
@@ -201,8 +221,8 @@ function Result({ game, left, onReminder }) {
     {/* Asked for on 2026-10-06: the hero is the same for everyone today. */}
     <p className="dle-spoiler"><span aria-hidden="true">🤫</span>{t('Не называй героя, когда делишься: сегодня он у всех один. Скопированный результат его не выдаёт — отправляй смело.')}</p>
     {error && <Notice error>{error}</Notice>}
-    <Stats stats={game.stats}/>
-    <div className="dle-result-foot"><span className="catalog-muted">{t('Новый герой через {time}', { time: clock(left) })}</span><Reminder on={game.reminder} onChange={onReminder}/></div>
+    {game.guest ? <GuestPerks done/> : <Stats stats={game.stats}/>}
+    <div className="dle-result-foot"><span className="catalog-muted">{t('Новый герой через {time}', { time: clock(left) })}</span>{!game.guest && <Reminder on={game.reminder} onChange={onReminder}/>}</div>
   </div>;
 }
 
@@ -218,37 +238,40 @@ function useCountdown(ms) {
 }
 
 function Daily({ onGuide, onPractice }) {
-  const auth = useAccount(), [game, setGame] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [teaser, setTeaser] = useState(null);
+  const auth = useAccount(), [game, setGame] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false);
   const left = useCountdown(game?.next);
   useEffect(() => {
     if (auth.loading) return;
     setError('');
-    catalogAPI('/dotadle').then(setGame).catch((e) => setError(e.message));
+    let active = true;
+    (async () => {
+      const kept = readGuest();
+      if (auth.user) {
+        // Today's game played before signing in goes to the account (server/dotadle.mjs adopt).
+        const value = kept?.guesses.length ? await catalogAPI('/dotadle/adopt', { method: 'POST', body: kept }) : await catalogAPI('/dotadle');
+        writeGuest(null); return value;
+      }
+      const fresh = await catalogAPI('/dotadle');
+      if (!kept || kept.number !== fresh.number || !kept.guesses.length) { if (kept) writeGuest(null); return fresh; }
+      return catalogAPI('/dotadle/guest', { method: 'POST', body: kept });
+    })().then((value) => { if (active) setGame(value); }).catch((e) => { if (active) setError(e.message); });
+    return () => { active = false; };
   }, [auth.loading, auth.user?.id]);
-  useEffect(() => { if (game?.login && !teaser) catalogAPI('/dotadle/practice').then((value) => setTeaser(value.pictures[0])).catch(() => {}); }, [game?.login]);
   if (error && !game) return <Notice error>{error}</Notice>;
   if (!game) return <p role="status">{t('Загружаем героя дня…')}</p>;
-  if (game.login) return <div className="dle">
-    <Picture pictures={teaser ? [teaser] : []} level={0} caption={t('Герой дня #{number}', { number: game.number })}/>
-    <section className="dle-side">
-      <Head title={<>Dotadle <span>#{game.number}</span></>} onGuide={onGuide} other={<button className="catalog-button" onClick={onPractice}><Icon name="sparkle"/>{t('Тренировка')}</button>}/>
-      <Friend number={game.number}/>
-      <div className="dle-gate"><h2>{t('Войди, чтобы играть')}</h2>
-        <p>{t('Герой дня один на всех, попыток — 6. Войди — попытки и серия побед сохранятся в аккаунте, играть можно с любого устройства. Вход в один клик через нашего бота, без пароля.')}</p>
-        <div className="dle-actions"><button className="catalog-button primary" onClick={() => auth.requestLogin(t('Войди, чтобы играть в Dotadle.'))}><Icon name="user"/>{t('Войти')}</button>
-          <button className="catalog-button" onClick={onPractice}>{t('Тренировка без входа')}</button></div></div>
-    </section>
-  </div>;
   async function guess(hero) {
     if (busy) return;
     setBusy(true); setError('');
     try {
-      const next = await catalogAPI('/dotadle/guess', { method: 'POST', body: { number: game.number, hero: hero.id } });
+      const next = game.guest
+        ? await catalogAPI('/dotadle/guest', { method: 'POST', body: { number: game.number, guesses: [...game.kept, hero.id], guess: true } })
+        : await catalogAPI('/dotadle/guess', { method: 'POST', body: { number: game.number, hero: hero.id } });
+      if (next.guest) writeGuest({ number: next.number, guesses: next.kept });
       if (!game.guesses.length) track('dotadle.start', { mode: 'daily' });
       if (next.done) track('dotadle.finish', { mode: 'daily', solved: !!next.solved, attempts: next.guesses?.length });
       setGame(next);
     }
-    catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin('', 'dotadle'); } finally { setBusy(false); }
+    catch (e) { setError(e.message); } finally { setBusy(false); }
   }
   const used = new Set(game.guesses.map((item) => item.hero.id));
   return <div className="dle">
@@ -260,7 +283,7 @@ function Daily({ onGuide, onPractice }) {
       {game.done ? <Result game={game} left={left} onReminder={(reminder) => setGame((current) => ({ ...current, reminder }))}/> : <>
         <div className="dle-play"><HeroSearch heroes={game.heroes} used={used} disabled={busy} onPick={guess}/><Tries used={game.guesses.length} tries={game.tries}/></div>
         <p className="dle-note">{t('Новый герой через {time}', { time: clock(left) })}</p>
-        <Reminder on={game.reminder} onChange={(reminder) => setGame((current) => ({ ...current, reminder }))}/></>}
+        {game.guest ? <GuestPerks/> : <Reminder on={game.reminder} onChange={(reminder) => setGame((current) => ({ ...current, reminder }))}/>}</>}
       {error && <Notice error>{error}</Notice>}
       <Hints guesses={game.guesses} tries={game.tries}/>
     </section>

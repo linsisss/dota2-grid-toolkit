@@ -378,9 +378,19 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
         return response.end(photo);
       }
       if (path === '/auth/start' && method === 'POST') {
-        const login = accounts.begin(ipHash, identity.browser);
+        // `back`: the page the window was opened on — the bot's «Вернуться на сайт» leads there (2026-10-19).
+        const body = await readJSON(request, 2_000).catch(() => ({}));
+        const login = accounts.begin(ipHash, identity.browser, body.back);
+        analytics.loginBegin(login.id, body.from, String(request.headers['user-agent'] || ''));
         setCookie(cookie('gs_login', `${login.id}.${login.verifier}`, 300));
         return send(201, { id: login.id, expires: login.expires, url: `https://t.me/${config.botUsername || 'grid_studio_bot'}?start=login_${login.id}` });
+      }
+      // The window's way to the bot (the link, the app, the code copied): only the sign-in funnel needs it.
+      if (path === '/auth/opened' && method === 'POST') {
+        const login = loginCookie(), body = await readJSON(request, 1_000);
+        if (body.id !== login.id) fail(409, 'Попытка входа изменилась.');
+        analytics.loginStep(login.id, 'opened', body.way);
+        response.writeHead(204); return response.end();
       }
       if (path === '/auth/status' && method === 'GET') {
         const login = loginCookie(); if (url.searchParams.get('id') !== login.id) fail(409, 'В другой вкладке начат новый вход. Начни заново.');
@@ -393,7 +403,7 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
         const fresh = !store.get('SELECT 1 x FROM accounts WHERE id=?', String(body.userId));
         const result = accounts.finish(login.id, login.verifier, body.userId, session);
         stats.event('login', result.user?.id);
-        if (result.user) analytics.serverEvent('auth.login', { fresh }, { account: result.user.id });
+        if (result.user) { analytics.serverEvent('auth.login', { fresh }, { account: result.user.id }); analytics.loginStep(login.id, 'finished'); analytics.loginStep(login.id, 'fresh', fresh); if (body.back === true) analytics.loginStep(login.id, 'back'); }
         if (fresh && result.user) stats.signup(result.user.id, body.source, /^[A-Za-z0-9_-]{22}$/.test(String(body.source?.visitor || '')) ? store.identity('visitor', body.source.visitor) : identity.browser);
         setCookie(cookie('gs_account', result.session, SESSION_AGE)); setCookie(cookie('gs_login', '', 0));
         return send(200, { user: result.user });
@@ -463,8 +473,21 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
         response.writeHead(200, { 'Content-Type': cached.type, 'Cache-Control': 'public, max-age=600' });
         return response.end(method === 'HEAD' ? undefined : cached.body);
       }
-      // Dotadle (server/dotadle.mjs): signed-in only; a guest gets the day's number and the training game.
-      if (path === '/dotadle' && method === 'GET') return send(200, user ? await dotadle.state(user.id) : { login: true, number: dotadle.today() });
+      // Dotadle (server/dotadle.mjs): an account's game is kept here; a guest's in the browser, sent whole
+      // (POST /dotadle/guest) and carried to the account after signing in (POST /dotadle/adopt).
+      if (path === '/dotadle' && method === 'GET') return send(200, user ? await dotadle.state(user.id) : await dotadle.guestState(undefined, []));
+      if (path === '/dotadle/guest' && method === 'POST') {
+        store.rate(`dotadle-guest:${ipHash}`, 60, 60_000);
+        const body = await readJSON(request, 2_000), result = await dotadle.guestState(body.number, body.guesses);
+        if (result.error) fail(400, result.error);
+        if (result.done && body.guess === true) analytics.serverEvent('dotadle.guess', { solved: !!result.solved });
+        return send(200, result);
+      }
+      if (path === '/dotadle/adopt' && method === 'POST') {
+        const member = requireUser(); store.rate(`dotadle:${member.id}`, 30, 60_000);
+        const body = await readJSON(request, 2_000);
+        return send(200, await dotadle.adopt(member.id, body.number, body.guesses));
+      }
       if (path === '/dotadle/guess' && method === 'POST') {
         const member = requireUser(); store.rate(`dotadle:${member.id}`, 30, 60_000);
         const body = await readJSON(request, 2_000), result = await dotadle.guess(member.id, body.number, body.hero);

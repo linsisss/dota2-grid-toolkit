@@ -8,8 +8,10 @@ import { t } from '../scripts/i18n.mjs';
 // page's code when the address is about to change (the builder drops ?background=); else from it.
 // `from`: the analytics' name of the page it is on (pc.send).
 const PHONE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
-export default function SendToPC({ text, code = pcCode(location), from = 'page' }) {
+// `compact`: one line among the workshop's cards (2026-10-19: on a phone the strip on top pushed every grid
+// below the first screen).
+export default function SendToPC({ text, code = pcCode(location), from = 'page', compact = false }) {
   if (!PHONE || !code) return null;
-  return <aside className="send-pc"><Icon name="telegram"/><p>{text}</p>
-    <a className="catalog-button" href={`/api/catalog/pc/${code}`} target="_blank" rel="noopener" onClick={() => track('pc.send', { from })}>{t('Прислать в Telegram')}</a></aside>;
+  return <aside className={`send-pc${compact ? ' is-compact' : ''}`}><Icon name="telegram"/><p>{text}</p>
+    <a className="catalog-button" href={`/api/catalog/pc/${code}`} target="_blank" rel="noopener" onClick={() => track('pc.send', { from })}>{compact ? t('Прислать') : t('Прислать в Telegram')}</a></aside>;
 }

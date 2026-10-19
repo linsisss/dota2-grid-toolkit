@@ -610,4 +610,6 @@ export default {
   'Выбери, что отправить, — здесь появится превью.': 'Choose what to send, and the preview appears here.',
   'Арт вставится у других так же, как он стоит у тебя: строки символов на своих местах.': 'Others will insert the art just as it stands in your editor: rows of symbols in their places.',
   'Строк символов: {rows} · {w} × {h} px на холсте.': 'Rows of symbols: {rows} · {w} × {h} px on the canvas.',
+  'Впервые в редакторе?': 'New to the editor?',
+  'Покажем, где что, — около минуты. Или возьми готовую сетку в Мастерской и поменяй её под себя.': 'We’ll show you around — about a minute. Or take a ready grid from the Workshop and make it yours.',
 };

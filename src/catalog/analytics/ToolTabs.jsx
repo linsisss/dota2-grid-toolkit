@@ -100,12 +100,31 @@ export function ToolsTab({ data }) {
 export function FunnelsTab({ data }) {
   return <>
     <p className="an-hint">Воронки считаются по посетителям: дошедший до шага считается и на всех шагах до него. Сырые события хранятся 90 дней{data.funnelFrom > data.from ? ` — период обрезан: с ${dateOf(data.funnelFrom, { day: 'numeric', month: 'long' })}` : ''}.
-      «Поставил» — установщик PowerShell сообщил об успехе для файла или команды этого посетителя.</p>
+      «Поставил» — установщик PowerShell сообщил об успехе для файла или команды этого посетителя. «Вход» считается по окнам входа, а не по посетителям.</p>
     <div className="an-grid">{data.funnels.map((funnel) => <Card key={funnel.id} wide title={funnel.title} table={<FunnelTable funnel={funnel}/>}>
       <div className="an-funnel-row"><Funnel steps={funnel.steps}/>
         <div className="an-funnel-devices"><h4>По устройствам</h4><FunnelTable funnel={funnel} compact/></div></div>
+      {funnel.id === 'login' && <LoginDetails funnel={funnel}/>}
     </Card>)}</div>
   </>;
+}
+// The sign-in funnel's extras: where the window was opened, which way led to the bot, what got lost.
+const WAYS = { link: '«Перейти в бота»', app: '«Открыть в приложении Telegram»', code: 'Скопировал код' };
+function LoginDetails({ funnel }) {
+  const rows = funnel.byOrigin.map((row) => ({ ...row, key: row.origin, label: label(FROM_LABELS, row.origin), rate: row.windows ? row.finished / row.windows : 0 }));
+  return <div className="an-login-extra">
+    <div className="an-tiles is-strip">
+      <Tile label="Вошли по кнопке «Вернуться на сайт»" value={funnel.back}/>
+      <Tile label="Нажали «Войти», но сайт не завершил вход" value={funnel.lost} good="down"/>
+      <Tile label="Отменили в боте" value={funnel.cancelled} good="down"/>
+      <Tile label="Новые аккаунты" value={funnel.fresh}/>
+    </div>
+    <h4>Где открыли окно</h4>
+    <Table name="login-origin" bar="windows" limit={12} empty="Пока ничего" rows={rows} columns={[{ key: 'label', label: 'Откуда' }, { key: 'windows', label: 'Окон', num: true },
+      { key: 'opened', label: 'Пошли в бота', num: true }, { key: 'started', label: 'Дошли до бота', num: true }, { key: 'finished', label: 'Вошли', num: true }, { key: 'rate', label: 'Доля входов', num: true, format: (n) => percent(n, 1) }]}/>
+    <h4>Как шли в бота</h4>
+    <BarList name="login-ways" rows={Object.entries(funnel.ways).map(([way, value]) => ({ key: way, label: WAYS[way] || way, value }))}/>
+  </div>;
 }
 function FunnelTable({ funnel, compact }) {
   const devices = ['desktop', 'phone', 'tablet'].filter((d) => funnel.byDevice[d][0]?.visitors);

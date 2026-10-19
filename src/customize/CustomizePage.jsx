@@ -12,6 +12,7 @@ import { FontFields, FontScreen, fontCaption, useFont } from './FontPicker.jsx';
 import { customizeRemoveCommand, customizeZip, deliverCustomize, CUSTOMIZE_FILE } from './customize-pack.js';
 import { D2PFX_MODULES, D2pfxFields, useD2pfx } from './D2pfxSections.jsx';
 import { creditLine } from './d2pfx-ui.jsx';
+import { BY_HAND, SYSTEM, SYSTEM_NAMES } from '../system.js';
 import matchThumb from '../../assets/customize/match-thumb.webp';
 
 // «Твоя Dota» (/background, 2026-10-17; the owner's «A · Сцена» of three mockups): everything about Dota
@@ -97,7 +98,7 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
   const query = useMemo(() => new URLSearchParams(location.search), []);
   const MODS = MODULES(), find = (id) => MODS.find((module) => module.id === id);
   const [open, setOpen] = useState(() => startSection(query)), [scene, setScene] = useState(() => find(startSection(query)).scene);
-  const [delivery, setDelivery] = useState('command'), [inside, setInside] = useState(false), [install, setInstall] = useState(false), [handed, setHanded] = useState(null);
+  const [delivery, setDelivery] = useState(BY_HAND ? 'file' : 'command'), [inside, setInside] = useState(false), [install, setInstall] = useState(false), [handed, setHanded] = useState(null);
   const [busy, setBusy] = useState(null), [error, setError] = useState(''), [made, setMade] = useState(null), [hudThumb, setHudThumb] = useState(null);
   const menuPage = ['menu', 'grid', 'hero', 'loading'].includes(scene) ? scene : 'menu';
   const bg = useMenuBackground({ preset, studioItem, page: menuPage, onRemove });
@@ -249,7 +250,8 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
         <p className="cz-line">{footLine}</p>
         {inside && <Receipt rows={rows} files={files} total={total} onOpen={(id) => { if (open !== id) openSection(id); }}/>}
         {error && <Notice error report>{error}</Notice>}
-        <Segmented label={t('Как поставить')} value={delivery} onChange={(value) => { setDelivery(value); setHanded(null); }} options={[['command', t('Командой PowerShell')], ['file', t('Только файл')]]}/>
+        {BY_HAND ? <p className="cz-os-note">{t('Команда PowerShell — только для Windows. На {system} ставь файлом: «Как установить» ниже.', { system: SYSTEM_NAMES[SYSTEM] })}</p>
+          : <Segmented label={t('Как поставить')} value={delivery} onChange={(value) => { setDelivery(value); setHanded(null); }} options={[['command', t('Командой PowerShell')], ['file', t('Только файл')]]}/>}
         {busy || encoding ? <div className="custom-progress" role="status"><span style={{ width: `${Math.round((encoding ? bg.progress : busy.progress ?? 0.15) * 100)}%` }}/>
           <b>{encoding ? t('Собираем видео… {percent}%', { percent: Math.round(bg.progress * 100) }) : busy.label}</b>
           {encoding && <button type="button" className="catalog-icon" aria-label={t('Отменить')} onClick={bg.cancel}><Icon name="close"/></button>}</div>
@@ -268,11 +270,12 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
 
 // How to install the one file: the command (it was just made for this file), or by hand.
 function Install({ delivery, handed, made, bg, onClose }) {
-  const [way, setWay] = useState(delivery);
+  const [way, setWay] = useState(BY_HAND ? 'file' : delivery);
   const fonts = made ? made.entries.some((entry) => entry.name.startsWith(CUSTOMIZE_DIRS.fonts)) : true;
   return <InstallWindow title={t('Как установить')} onClose={onClose}>
     <p className="catalog-muted cz-install-lead">{t('Одна сборка — фон, интерфейс и шрифт сразу.')}{made ? ` ${t('Файл: {name}, {size}.', { name: CUSTOMIZE_FILE, size: sizeText(made.size) })}` : ''}</p>
-    <Segmented label={t('Как поставить')} value={way} onChange={setWay} options={[['command', t('Командой PowerShell')], ['file', t('Вручную')]]}/>
+    {BY_HAND ? <p className="cz-os-note">{t('У тебя {system}: команда PowerShell работает только в Windows, поэтому ставь вручную.', { system: SYSTEM_NAMES[SYSTEM] })}</p>
+      : <Segmented label={t('Как поставить')} value={way} onChange={setWay} options={[['command', t('Командой PowerShell')], ['file', t('Вручную')]]}/>}
     {way === 'command' ? <ol>
       <li>{handed ? t('Сборка сохранена на GridStudio на 7 дней — команда скачает именно её, ничего искать не нужно.') : t('Выбери «Командой PowerShell» и нажми «Собрать и получить команду»: сборка отправится на GridStudio на 7 дней, а здесь появится команда именно для неё.')}</li>
       {handed && <li>{t('Скопируй команду:')}<CopyField value={handed.command} onCopy={() => track('customize.command-copy', { pack: packOf(handed.command) })}/></li>}
@@ -283,12 +286,12 @@ function Install({ delivery, handed, made, bg, onClose }) {
       <li>{rich(t('В Steam: Dota 2 → «Свойства» → «Установленные файлы» → «Обзор». Откроется папка {folder}.'), { folder: <code>dota 2 beta</code> })}</li>
       {fonts && <li>{rich(t('На всякий случай скопируй куда-нибудь папку {folder}: шрифт из сборки заменит шрифты Dota.'), { folder: <code>game\dota\panorama\fonts</code> })}</li>}
       <li>{rich(t('Распакуй архив и скопируй его папку {game} в {folder} {replace}.'), { game: <code>game</code>, folder: <code>dota 2 beta</code>, replace: <b>{t('с заменой')}</b> })}</li>
-      {fonts && <li>{rich(t('Если есть папка {folder}, удали её: там старый кэш шрифтов.'), { folder: <CopyField value="%TEMP%\fontconfig"/> })}</li>}
+      {fonts && !BY_HAND && <li>{rich(t('Если есть папка {folder}, удали её: там старый кэш шрифтов.'), { folder: <CopyField value="%TEMP%\fontconfig"/> })}</li>}
       <li>{t('В настройках Dota поставь русский язык озвучки: моды Dota читает только из папки dota_russian. Интерфейс можно оставить английским. Если в параметрах запуска Dota есть -language (кроме -language russian), убери его.')}</li>
       <li>{t('Запусти Dota 2.')}</li>
     </ol>}
     <DotaLanguage bg={bg}/>
-    <p className="catalog-muted">{t('Вернуть всё как было — вставь в PowerShell:')}</p><CopyField value={handed?.remove || customizeRemoveCommand()}/>
+    {!BY_HAND && <><p className="catalog-muted">{t('Вернуть всё как было — вставь в PowerShell:')}</p><CopyField value={handed?.remove || customizeRemoveCommand()}/></>}
     <p className="catalog-muted">{t('Или в Steam: «Проверить целостность файлов игры» вернёт шрифты; файлы в dota_russian удали сам.')}</p>
     <MenuVersion/>
   </InstallWindow>;

@@ -506,4 +506,10 @@ export default {
   'Таблицы рекордов мини-игр': 'Minigame leaderboards', '#{rank} — {game}': '#{rank} — {game}', 'Мини-игры: #{rank} — {game}': 'Minigames: #{rank} — {game}',
   'Крылатые гонки': 'Bat Racer', 'Сосулечный боец': 'Sleet Fighter', 'Драконьи шахматы': 'Dragon Chess', 'Логово Зауга': 'Zaug’s Lair', 'Подрывник Спун': 'Spoon Man',
   'Рыбалка': 'Fishing', 'Замкобой': 'Castle Carnage', 'Сапёр Сплин': 'Spleen Sweeper', 'Терновый трон': 'Nest of Thorns',
+  'Ставится с компьютера — пришлём ссылку в Telegram.': 'Installed from a computer — we’ll send the link to Telegram.',
+  'Steam из Flatpak: {path}': 'Steam from Flatpak: {path}',
+  'В Finder: «Переход» → «Переход к папке» ({keys}) — вставь путь. Код друга — это ID аккаунта в Dota 2.': 'In Finder: Go → Go to Folder ({keys}) — paste the path. The friend code is the Dota 2 account ID.',
+  'Вставь путь в адресную строку файлового менеджера ({keys}). Код друга — это ID аккаунта в Dota 2.': 'Paste the path into your file manager’s address bar ({keys}). The friend code is the Dota 2 account ID.',
+  'Скопируй {file} в эту папку с заменой. Если папки cfg нет, создай её.': 'Copy {file} into this folder, replacing the old one. If there is no cfg folder, create it.',
+  'У тебя {system}: команда PowerShell работает только в Windows, поэтому ставь файлом — путь к папке ниже уже для {system}.': 'You’re on {system}: the PowerShell command works only on Windows, so install the file by hand — the folder path below is already for {system}.',
 };

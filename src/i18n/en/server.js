@@ -241,6 +241,7 @@ const messages = {
   'Забег слишком долгий для таблицы.': 'The run is too long for the table.', 'Таблица рекордов этой игры для тебя закрыта.': 'This game’s table of records is closed to you.',
   'Время забега не сходится.': 'The run’s time doesn’t add up.', 'Нет такого уровня.': 'No such level.', 'Нет такой таблицы.': 'No such table.', 'Нет такой игры.': 'No such game.',
   'Слишком много результатов подряд. Подожди немного.': 'Too many results in a row. Wait a little.',
+  'Укажи полный путь к папке Steam, например ~/.local/share/Steam.': 'Enter the full path to the Steam folder, for example ~/.local/share/Steam.',
 };
 export default messages;
 

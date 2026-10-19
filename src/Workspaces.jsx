@@ -59,7 +59,8 @@ function BackgroundFile({ item, status, disabled, onDownload, onRename, onDelete
   return <article className="workspace-file workspace-background" onPointerEnter={play} onPointerLeave={stop}>
     <a className="workspace-background-picture" href={href} aria-label={t('Изменить фон {name}', { name: item.name })}>{poster ? <img src={poster} alt=""/> : <span className="workspace-file-empty"><Icon name="brush"/></span>}<video ref={video} muted loop playsInline onPlaying={(event) => event.currentTarget.classList.add('is-playing')}/></a>
     <div className="workspace-background-caption"><Icon name="brush"/><span>{t('Фон меню')} · {item.recipe.aspect}{item.seconds ? ` · ${seconds(item.seconds)}` : ''}</span><Publication status={status}/>{!here && <span className="workspace-background-away">{item.cloud ? t('в аккаунте') : t('нужно собрать')}</span>}</div>
-    <div className="workspace-file-info"><a href={href}><h2>{item.name}</h2></a><time dateTime={new Date(item.updated).toISOString()}>{day(item.updated)}</time></div>
+    <div className="workspace-file-info"><a href={href}><h2>{item.name}</h2></a><time dateTime={new Date(item.updated).toISOString()}>{day(item.updated)}</time>
+          {item.gone && <p className="workspace-file-gone" title={t('Копия из этого браузера не сохраняется в аккаунт. Создай из неё копию, если она нужна, или убери файл в архив.')}><Icon name="alert" size={14}/>{t('Удалён в аккаунте на другом устройстве')}</p>}</div>
     <div className="workspace-file-actions">
       {here ? <button className="catalog-icon" aria-label={t('Скачать {name}', { name: item.name })} title={t('Скачать для Dota')} disabled={disabled} onClick={onDownload}><Icon name="download"/></button>
         : <a className="catalog-link" href={href}>{fromWorkshop(item.recipe) ? t('Собрать заново') : t('Выбрать файл и собрать')}</a>}
@@ -143,8 +144,8 @@ export default function Workspaces({ registry, onOpen }) {
           const next = { ...row, ...(old || {}), id: old?.id || row.id, cloudId: row.id, account: row.account,
             name: old?.dirty ? old.name : row.name, preview: old?.dirty ? old.preview : row.preview,
             gridNames: row.gridNames ?? old?.gridNames, configIndex: row.configIndex ?? old?.configIndex,
-            updated: Math.max(row.updated, old?.updated || 0), archived: !!row.archived, cloudRevision: old?.cloudRevision || 0, remoteRevision: row.revision };
-          if (old && ['name', 'updated', 'archived', 'remoteRevision', 'configIndex'].every((key) => old[key] === next[key]) && JSON.stringify(old.gridNames) === JSON.stringify(next.gridNames)) continue;
+            updated: Math.max(row.updated, old?.updated || 0), archived: !!row.archived, cloudRevision: old?.cloudRevision || 0, remoteRevision: row.revision, gone: false };
+          if (old && ['name', 'updated', 'archived', 'remoteRevision', 'configIndex'].every((key) => old[key] === next[key]) && !old.gone && JSON.stringify(old.gridNames) === JSON.stringify(next.gridNames)) continue;
           await registry.put(next); changed = true;
         }
         if (changed) setItems(await registry.list());
@@ -156,7 +157,23 @@ export default function Workspaces({ registry, onOpen }) {
   async function run(action) { setBusy(true); setError(''); try { await action(); if (auth.user) await auth.syncFiles(); await refresh(); } catch (e) { setError(translateMessage(e.message)); } finally { setBusy(false); } }
   async function read(meta) {
     const storage = await createProjectStorage(C.importProject, APP_VERSION, meta.id);
-    try { const initial = await storage.load(); if (meta.account && !meta.dirty) return (await catalogAPI(`/spaces/${cloudWorkspaceId(meta)}`)).document; if (initial.doc) return initial.doc; if (meta.account) return (await catalogAPI(`/spaces/${cloudWorkspaceId(meta)}`)).document; throw new Error(initial.issue || t('В файле нет сохранённого проекта.')); }
+    try {
+      const initial = await storage.load();
+      // A file deleted in the account on another device (gone): this browser's copy is all there is.
+      const remote = async () => {
+        try { return (await catalogAPI(`/spaces/${cloudWorkspaceId(meta)}`)).document; }
+        catch (e) {
+          if (e.status !== 404) throw e;
+          await registry.update(meta.id, { gone: true }).catch(() => {});
+          if (initial.doc) return initial.doc;
+          throw new Error(t('Этот файл удалён в аккаунте на другом устройстве, а в этом браузере его копии нет.'));
+        }
+      };
+      if (meta.account && !meta.dirty && !meta.gone) return await remote();
+      if (initial.doc) return initial.doc;
+      if (meta.account && !meta.gone) return await remote();
+      throw new Error(initial.issue || t('В файле нет сохранённого проекта.'));
+    }
     finally { storage.database?.close(); }
   }
   async function copy(meta) {
@@ -224,7 +241,7 @@ export default function Workspaces({ registry, onOpen }) {
         <div className="workspace-file-actions">{!archive && <><button className="catalog-icon" aria-label={t('Переименовать {name}', { name: item.name })} disabled={locked} onClick={() => { setRename(item); setName(item.name); }}><Icon name="edit"/></button><button className="catalog-icon" aria-label={t('Создать копию {name}', { name: item.name })} disabled={locked} onClick={() => run(() => copy(item))}><Icon name="copy"/></button></>}
         <button className="catalog-icon" aria-label={t(archive ? 'Восстановить {name}' : 'В архив {name}', { name: item.name })} disabled={locked} onClick={() => run(async () => {
           let revision = item.cloudRevision;
-          if (item.account) { if (item.dirty) throw new Error(t('Сначала открой файл для синхронизации или создай его копию.')); const base = item.remoteRevision || item.cloudRevision; const result = await catalogAPI(`/spaces/${cloudWorkspaceId(item)}`, { method: 'PATCH', body: { revision: base, archived: !archive } }); if (item.cloudRevision === base) revision = result.revision; }
+          if (item.account && !item.gone) { if (item.dirty) throw new Error(t('Сначала открой файл для синхронизации или создай его копию.')); const base = item.remoteRevision || item.cloudRevision; const result = await catalogAPI(`/spaces/${cloudWorkspaceId(item)}`, { method: 'PATCH', body: { revision: base, archived: !archive } }); if (item.cloudRevision === base) revision = result.revision; }
           await registry.update(item.id, { archived: !archive, cloudRevision: revision });
         })}><Icon name={archive ? 'back' : 'archive'}/></button></div>
       </article>; };
@@ -248,7 +265,8 @@ export default function Workspaces({ registry, onOpen }) {
       {loading ? <p role="status">{t('Открываем файлы…')}</p> : entries.length ? <section className="workspace-files" aria-label={t('Студия')}>{entries.map(({ kind, item }) => kind === 'grid' ? gridCard(item)
         : <BackgroundFile key={item.id} item={item} status={statuses[item.id]} disabled={working} onDownload={() => run(() => download(item))} onRename={() => { setRename(item); setName(item.name); }} onDelete={() => setRemoving(item)}/>)}</section>
         : <section className="workspace-empty"><Icon name={archive ? 'archive' : show === 'backgrounds' ? 'brush' : 'grid'}/><h2>{empty[0]}</h2><p>{empty[1]}</p>
-        {!query && !archive && <div className="workspace-empty-actions">{show !== 'backgrounds' && <button className="catalog-button primary" disabled={working} onClick={newGrid}><Icon name="grid"/>{t('Пустая сетка')}</button>}{show !== 'grids' && <a className={`catalog-button${show === 'backgrounds' ? ' primary' : ''}`} href={CUSTOMIZE_PATH}><Icon name="brush"/>{t('Фон меню')}</a>}</div>}</section>}
+        {!query && !archive && <div className="workspace-empty-actions">{show !== 'backgrounds' && <><button className="catalog-button primary" disabled={working} onClick={newGrid}><Icon name="grid"/>{t('Пустая сетка')}</button>
+          {/* 2026-10-19: most people want a ready grid, not a blank file. */}<a className="catalog-button" href={CATALOG_PATH}><Icon name="workshop"/>{t('Готовая сетка из Мастерской')}</a></>}{show !== 'grids' && <a className={`catalog-button${show === 'backgrounds' ? ' primary' : ''}`} href={CUSTOMIZE_PATH}><Icon name="brush"/>{t('Фон меню')}</a>}</div>}</section>}
     </main></div>{handed && <Modal title={t('Как установить фон')} icon="download" onClose={() => setHanded(null)}><div className="catalog-confirm workspace-install">
       {handed.command ? <><p>{t('Фон сохранён на GridStudio на 7 дней — команда скачает именно его, ничего искать не нужно.')} {rich(t('Открой PowerShell ({key}, набери PowerShell, {enter}), вставь команду и нажми {enter}.'), { key: <kbd>Win</kbd>, enter: <kbd>Enter</kbd> })}</p>
         <CommandCopy text={handed.command}/>

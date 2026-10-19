@@ -104,3 +104,34 @@ test('searches that found nothing are kept for the admins, with the hero picked 
   assert.deepEqual(dotadle.misses(), []);
   store.close();
 });
+
+test('a guest plays from the guesses the page keeps; after signing in the game goes to the account once', async () => {
+  const [{ Dotadle, DOTADLE_HEROES, DOTADLE_TRIES }, { CatalogStore }] = await Promise.all([game, import('../server/catalog-store.mjs')]);
+  const store = new CatalogStore(':memory:', 'test-only-salt'), now = Date.UTC(2026, 9, 10, 12, 0);
+  const dotadle = new Dotadle({ secret: 'x'.repeat(40), store, now: () => now }), number = dotadle.today(), answer = dotadle.answer(number);
+  const other = DOTADLE_HEROES.filter((hero) => hero.id !== answer.id);
+  let state = await dotadle.guestState(undefined, []);
+  assert.deepEqual({ guest: state.guest, number: state.number, pictures: state.pictures.length, done: state.done, answer: state.answer, stats: state.stats }, { guest: true, number, pictures: 1, done: false, answer: null, stats: null });
+  state = await dotadle.guestState(number, [other[0].id, other[1].id]);
+  assert.deepEqual(state.kept, [other[0].id, other[1].id]); assert.equal(state.pictures.length, 3); assert.equal(state.answer, null);
+  assert.match((await dotadle.guestState(number - 1, [])).error, /сменился/);
+  // Not a game: repeats, unknown heroes, guesses after the right one, more than the tries — cut there.
+  assert.deepEqual((await dotadle.guestState(number, [other[0].id, other[0].id, other[1].id])).kept, [other[0].id]);
+  assert.deepEqual((await dotadle.guestState(number, [9999, other[0].id])).kept, []);
+  state = await dotadle.guestState(number, [other[0].id, answer.id, other[1].id]);
+  assert.deepEqual(state.kept, [other[0].id, answer.id]); assert.equal(state.done, true); assert.equal(state.solved, true); assert.equal(state.answer.id, answer.id);
+  assert.equal(state.pictures.length, 6, 'all the pictures once over');
+  assert.equal((await dotadle.guestState(number, other.slice(0, 20).map((hero) => hero.id))).kept.length, DOTADLE_TRIES);
+  assert.equal(store.get('SELECT COUNT(*) n FROM dotadle_plays').n, 0, 'nothing kept for a guest');
+  // Adopted after signing in: counts for the streak; never over a game the account already has today.
+  state = await dotadle.adopt('a', number, [other[0].id, answer.id]);
+  assert.equal(state.solved, true); assert.equal(state.stats.streak, 1); assert.equal(state.guest, undefined);
+  await dotadle.adopt('a', number, [answer.id]);
+  assert.deepEqual(dotadle.play('a', number).guesses, [other[0].id, answer.id]);
+  await dotadle.guess('b', number, other[2].id);
+  await dotadle.adopt('b', number, [answer.id]);
+  assert.deepEqual(dotadle.play('b', number).guesses, [other[2].id], 'another device\'s game stays');
+  await dotadle.adopt('c', number - 1, [answer.id]);
+  assert.equal(dotadle.play('c', number).guesses.length, 0, 'yesterday\'s guest game is not today\'s');
+  store.close();
+});

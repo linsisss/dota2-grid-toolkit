@@ -197,4 +197,5 @@ export default {
   'Нажми в нём «Войти» — и ты на сайте.': 'Press «Войти» (Sign in) there — and you are in.',
   'Без пароля, почты и номера телефона: сайт получит только имя, ник и аватар. Файлы этого браузера сохранятся в аккаунте.': 'No password, email or phone number: the site gets only your name, username and avatar. This browser’s files will be saved to your account.',
   'Перейти в бота': 'Go to the bot', 'Готовим вход…': 'Preparing sign-in…',
+  'Прислать': 'Send',
 };

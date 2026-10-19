@@ -20,7 +20,7 @@ const loginFrom = (text) => { try { return (text && LOGIN_FROM.find(([words]) =>
 // The like's kind (workshop.like) from its endpoint.
 const likeKind = (path) => (/^\/backgrounds\//.test(path) ? 'background' : /^\/guides\//.test(path) ? 'guide' : 'grid');
 export function AccountProvider({ children }) {
-  const [user, setUser] = useState(null), [admin, setAdmin] = useState(false), [moderator, setModerator] = useState(false), [loading, setLoading] = useState(true), [login, setLogin] = useState(false), [reason, setReason] = useState('');
+  const [user, setUser] = useState(null), [admin, setAdmin] = useState(false), [moderator, setModerator] = useState(false), [loading, setLoading] = useState(true), [login, setLogin] = useState(false), [reason, setReason] = useState(''), [from, setFrom] = useState('header');
   const userRef = useRef(null), transferQueue = useRef(Promise.resolve()), checked = useRef(0), channel = useRef(null);
   const [fileSync, setFileSync] = useState({ busy: false, error: '', revision: 0 });
   async function refresh() { try { const result = await catalogAPI('/auth/me'); checked.current = Date.now(); userRef.current = result.user; setUser(result.user); setAdmin(!!result.admin); setModerator(!!result.moderator); return result.user; } finally { setLoading(false); } }
@@ -40,7 +40,23 @@ export function AccountProvider({ children }) {
     return transferQueue.current;
   }
   useEffect(() => {
-    refresh().catch(() => {});
+    // «Вернуться на сайт» in the bot: ?login=<id> finishes a sign-in approved there, when this browser began it
+    // (the window may be closed by now). Else the mark just goes away.
+    const back = new URLSearchParams(location.search).get('login');
+    if (back !== null) {
+      const url = new URL(location.href); url.searchParams.delete('login');
+      history.replaceState(history.state, '', `${url.pathname}${url.search.replace(/=(?=&|$)/g, '')}${url.hash}`);
+    }
+    if (back && /^[\w-]{32}$/.test(back)) {
+      (async () => {
+        try {
+          const state = await catalogAPI(`/auth/status?id=${back}`);
+          if (state.state !== 'approved') return refresh();
+          await catalogAPI('/auth/finish', { method: 'POST', body: { id: back, userId: state.user.id, source: signupSource(), back: true } });
+          track('auth.login-done'); await refresh(); announce();
+        } catch { refresh().catch(() => {}); }
+      })();
+    } else refresh().catch(() => {});
     // Login and logout in another tab arrive at once. Switching back from Dota
     // only rechecks a session that is a few minutes old, not on every Alt+Tab.
     const recheck = () => refresh().then(() => syncFiles()).catch(() => {});
@@ -50,9 +66,11 @@ export function AccountProvider({ children }) {
     window.addEventListener('focus', focus); window.addEventListener('online', recheck);
     return () => { channel.current?.close(); channel.current = null; window.removeEventListener('focus', focus); window.removeEventListener('online', recheck); };
   }, []);
+  // Signed in another way (the bot's «Вернуться на сайт», another tab): an open window has nothing left to do.
+  useEffect(() => { if (user) setLogin(false); }, [user?.id]);
   useEffect(() => { if (user) syncFiles(); else setFileSync(state => ({ ...state, busy: false, error: '' })); }, [user?.id]);
-  return <Context.Provider value={{ user, admin, moderator, loading, refresh, fileSync, syncFiles, requestLogin: (text, from) => { track('auth.login-start', { from: from || loginFrom(text) }); setReason(text || ''); setLogin(true); }, logout: async () => { await catalogAPI('/auth/logout', { method: 'POST', body: {} }); track('auth.logout'); userRef.current = null; setUser(null); setAdmin(false); setModerator(false); announce(); } }}>
-    {children}{login && <LoginDialog reason={reason} onClose={() => setLogin(false)} onSuccess={async () => { track('auth.login-done'); await refresh(); announce(); setLogin(false); }}/>}</Context.Provider>;
+  return <Context.Provider value={{ user, admin, moderator, loading, refresh, fileSync, syncFiles, requestLogin: (text, place) => { const origin = place || loginFrom(text); track('auth.login-start', { from: origin }); setFrom(origin); setReason(text || ''); setLogin(true); }, logout: async () => { await catalogAPI('/auth/logout', { method: 'POST', body: {} }); track('auth.logout'); userRef.current = null; setUser(null); setAdmin(false); setModerator(false); announce(); } }}>
+    {children}{login && <LoginDialog reason={reason} from={from} onClose={() => setLogin(false)} onSuccess={async () => { track('auth.login-done'); await refresh(); announce(); setLogin(false); }}/>}</Context.Provider>;
 }
 export const useAccount = () => useContext(Context);
 // The account's creator profile nickname (server/profiles.mjs) — the name the site shows for it.
@@ -66,25 +84,27 @@ export function AccountAvatar({ user }) {
 // Signing in (redone on 2026-10-07: Telegram no longer opens by itself — the window explains first, then
 // «Перейти в бота» opens it). Below, for when the t.me page does not load or there is no Telegram app on
 // this computer: the app directly (tg://) and the code to send to the bot by hand.
-function LoginHelp({ url }) {
+// Which way the window led to the bot (the sign-in funnel, server/analytics.mjs an_logins). Never in the way.
+const opened = (id, way) => catalogAPI('/auth/opened', { method: 'POST', body: { id, way } }).catch(() => {});
+function LoginHelp({ url, id }) {
   const [copied, setCopied] = useState(false), [open, setOpen] = useState(false);
   const link = new URL(url), bot = link.pathname.slice(1), start = link.searchParams.get('start'), command = `/start ${start}`;
-  const copy = async () => { try { await navigator.clipboard.writeText(command); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* Selectable below. */ } };
+  const copy = async () => { opened(id, 'code'); try { await navigator.clipboard.writeText(command); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* Selectable below. */ } };
   // A button, not <details>: the site animates every <details> (scripts/disclosure-motion.mjs) and kept this one shut.
   return <div className="login-help"><button type="button" className="catalog-link login-help-toggle" aria-expanded={open} onClick={() => setOpen((value) => !value)}>{t('Бот не открылся?')}<Icon name="chevron" size={15}/></button>
     {open && <div className="login-help-ways">
-      <a className="catalog-button" href={`tg://resolve?domain=${bot}&start=${start}`}><Icon name="telegram"/>{t('Открыть в приложении Telegram')}</a>
+      <a className="catalog-button" href={`tg://resolve?domain=${bot}&start=${start}`} onClick={() => opened(id, 'app')}><Icon name="telegram"/>{t('Открыть в приложении Telegram')}</a>
       <p className="catalog-muted">{t('Или найди в Telegram бота @{bot} и отправь ему:', { bot })}</p>
       <div className="login-help-code"><code>{command}</code><button type="button" className="catalog-button" onClick={copy}><Icon name={copied ? 'check' : 'copy'}/>{copied ? t('Скопировано') : t('Скопировать')}</button></div>
     </div>}</div>;
 }
-function LoginDialog({ reason, onClose, onSuccess }) {
+function LoginDialog({ reason, from, onClose, onSuccess }) {
   const [request, setRequest] = useState(null), [error, setError] = useState(''), [finishing, setFinishing] = useState(false), [attempt, setAttempt] = useState(0), [went, setWent] = useState(false);
   useEffect(() => {
     let active = true, timer, polling = false; const controller = new AbortController(); setError(''); setRequest(null); setFinishing(false);
     let poll = () => {};
     const focus = () => { clearTimeout(timer); poll(); };
-    catalogAPI('/auth/start', { method: 'POST', body: {}, signal: controller.signal }).then(value => {
+    catalogAPI('/auth/start', { method: 'POST', body: { from, back: `${location.pathname}${location.search}` }, signal: controller.signal }).then(value => {
       if (!active) return; setRequest(value);
       poll = async () => {
         if (polling || !active) return; polling = true;
@@ -108,10 +128,10 @@ function LoginDialog({ reason, onClose, onSuccess }) {
       <li>{t('Нажми в нём «Войти» — и ты на сайте.')}</li>
     </ol>
     <p className="catalog-muted">{t('Без пароля, почты и номера телефона: сайт получит только имя, ник и аватар. Файлы этого браузера сохранятся в аккаунте.')}</p>
-    {request ? <a className="catalog-button primary login-go" href={request.url} target="_blank" rel="noreferrer" onClick={() => setWent(true)}><Icon name="telegram"/>{t('Перейти в бота')}</a>
+    {request ? <a className="catalog-button primary login-go" href={request.url} target="_blank" rel="noreferrer" onClick={() => { setWent(true); opened(request.id, 'link'); }}><Icon name="telegram"/>{t('Перейти в бота')}</a>
       : !error && <button type="button" className="catalog-button primary login-go" disabled><Icon name="loader"/>{t('Готовим вход…')}</button>}
     {request && went && <p className="login-wait" role="status">{finishing ? t('Входим…') : t('Ждём, пока нажмёшь «Войти» в боте…')}</p>}
-    {request && <LoginHelp url={request.url}/>}
+    {request && <LoginHelp url={request.url} id={request.id}/>}
     {error && <><Notice error>{error}</Notice><button className="catalog-button" onClick={() => setAttempt(x => x + 1)}>{t('Начать заново')}</button></>}
     <button className="catalog-link" onClick={onClose}>{t('Продолжить без входа')}</button>
   </div></Modal>;

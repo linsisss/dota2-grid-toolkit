@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { BY_HAND } from '../system.js';
 import { Icon, Modal, Notice } from '../catalog/Common.jsx';
 import catalog from '../../data/dota-fonts.json';
 import { GRID_FONT_FILE, dotaFontPack, fontCoverage, readFont } from '../../scripts/dota-font.mjs';
@@ -42,15 +43,15 @@ function FontChip({ font, selected, onSelect }) {
 // (scripts/installer.mjs fontRemoveScript); by hand, Steam's file check brings back Valve's files.
 export function FontRestore({ onClose }) {
   return <Modal title={t('Вернуть обычный шрифт')} icon="undo" onClose={onClose} size="md"><div className="custom-install custom-restore">
-    <section><h3>{t('Командой PowerShell')}</h3>
+    {!BY_HAND && <section><h3>{t('Командой PowerShell')}</h3>
       <p>{t('Если шрифт ставился командой: она сохранила шрифты Dota и вернёт их.')}</p>
       <CopyField value={fontRemoveCommand()}/>
-      <p className="catalog-muted">{rich(t('Открой PowerShell ({key}, набери PowerShell, {enter}), вставь команду и нажми {enter}. Закрыть игру она попросит сама.'), { key: <kbd>Win</kbd>, enter: <kbd>Enter</kbd> })}</p></section>
+      <p className="catalog-muted">{rich(t('Открой PowerShell ({key}, набери PowerShell, {enter}), вставь команду и нажми {enter}. Закрыть игру она попросит сама.'), { key: <kbd>Win</kbd>, enter: <kbd>Enter</kbd> })}</p></section>}
     <section><h3>{t('Файлами')}</h3><ol>
       <li>{t('Закрой Dota 2.')}</li>
       <li>{t('В Steam: Dota 2 → «Свойства» → «Установленные файлы» → «Проверить целостность файлов игры». Steam сам вернёт шрифты Dota.')}</li>
       <li>{rich(t('Или, если перед установкой сохранял папку {folder}, положи её обратно с заменой.'), { folder: <code>game\dota\panorama\fonts</code> })}</li>
-      <li>{rich(t('Если есть папка {folder}, удали её: там старый кэш шрифтов.'), { folder: <CopyField value="%TEMP%\fontconfig"/> })}</li>
+      {!BY_HAND && <li>{rich(t('Если есть папка {folder}, удали её: там старый кэш шрифтов.'), { folder: <CopyField value="%TEMP%\fontconfig"/> })}</li>}
       <li>{t('Запусти Dota 2.')}</li>
     </ol></section>
   </div></Modal>;

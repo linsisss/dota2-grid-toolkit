@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { catalogAPI, CATALOG_PATH, CUSTOMIZE_PATH, GUIDES_PATH } from '../api.js';
 import { Notice } from '../Common.jsx';
-import { BarList, Card, Columns, DaysTable, LineChart, SERIES, Table, Tile, decimal, duration, percent } from './charts.jsx';
+import { BarList, Card, Columns, DaysTable, LineChart, SERIES, Table, Tile, dateOf, decimal, duration, percent } from './charts.jsx';
 import { PLACE_LABELS, label } from './labels.js';
 import { useReport } from './use-report.js';
 
@@ -16,6 +16,27 @@ function DotadleMisses() {
   if (!items) return null;
   return <Card title="Dotadle: поиск не нашёл" hint="за 7 дней · что вводили и кого потом выбрали — кандидаты в клички">
     <BarList name="dotadle-misses" share={false} unit=" раз" rows={items.map((row) => ({ key: `${row.text}:${row.hero}`, label: `«${row.text}»${row.name ? ` → ${row.name}` : ''}`, value: row.count }))} empty="Пока пусто: всё, что вводили, нашлось."/></Card>;
+}
+
+// Downloading again (server/analytics.mjs repeats): the same grid or background on a later day — Dota or
+// Steam Cloud dropping the grid would show here.
+function Repeats({ data }) {
+  const kinds = [['grid', 'Сетки', (id) => `${CATALOG_PATH}?id=${id}`], ['background', 'Фоны', (id) => `${CUSTOMIZE_PATH}?background=${id}`]];
+  return <>
+    <h2 className="an-section">Повторные скачивания</h2>
+    <p className="an-hint">По посетителям, кто скачивал файлом, командой или в редактор{data.from ? ` — с ${dateOf(data.from, { day: 'numeric', month: 'long' })}` : ''}: тот же файл в другой день значит, что его ставили заново.</p>
+    <div className="an-grid">{kinds.map(([kind, title, href]) => { const k = data.kinds[kind]; if (!k) return null;
+      return <Card key={kind} title={title} hint="кто скачал тот же файл ещё раз в другой день">
+        <div className="an-tiles is-strip">
+          <Tile label="Скачивали" value={k.visitors} good="none"/>
+          <Tile label={`В разные дни${k.visitors ? ` · ${percent(k.onTwoDays / k.visitors, 1)}` : ''}`} value={k.onTwoDays} good="none"/>
+          <Tile label={`Тот же файл снова${k.visitors ? ` · ${percent(k.sameAgain / k.visitors, 1)}` : ''}`} value={k.sameAgain} good="none"/>
+          <Tile label="Через, дней (медиана)" value={k.medianGap} good="none"/>
+        </div>
+        <Table name={`repeats-${kind}`} bar="visitors" limit={10} empty="Пока никто не скачивал заново" rows={k.top.map((row) => ({ ...row, key: row.id }))}
+          columns={[{ key: 'title', label: 'Название', format: (value, row) => link(href(row.id), value) }, { key: 'visitors', label: 'Скачали снова', num: true }]}/>
+      </Card>; })}</div>
+  </>;
 }
 
 export function ContentTab({ data }) {
@@ -42,6 +63,7 @@ export function ContentTab({ data }) {
         { key: 'avgSeconds', label: 'Забег', num: true, format: (v) => (v ? duration(v) : '—') }, { key: 'record', label: 'Рекордов', num: true }, { key: 'leaders', label: 'В таблицах', num: true }]}
         rows={data.games.map((row) => ({ ...row, id: row.game }))} empty="В мини-игры за период не играли"/></Card>
     </div>
+    {data.repeats && <Repeats data={data.repeats}/>}
     <h2 className="an-section">Dotadle</h2>
     {d ? <>
       <div className="an-tiles">

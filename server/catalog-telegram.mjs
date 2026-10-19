@@ -12,7 +12,8 @@ import { badgeOf } from '../scripts/profile-badges.mjs';
 import { NOTIFICATIONS } from '../scripts/profile-notifications.mjs';
 import { rejectReasons } from '../scripts/reject-reasons.mjs';
 import { renderCatalogPreview, renderArtPreview, renderComparison } from './catalog-preview.mjs';
-import { Accounts } from './accounts.mjs';
+import { Accounts, backLink } from './accounts.mjs';
+import { loginStep } from './analytics.mjs';
 import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
 import { telegramAvatar } from './telegram-profile.mjs';
 import { CatalogGuides } from './guides.mjs';
@@ -610,6 +611,7 @@ export class CatalogTelegram {
     try {
       this.store.rate(`tg-login:${message.from.id}`, 10, 600_000);
       const request = this.accounts.candidate(match[1], message.from);
+      loginStep(this.store, request.id, 'started');
       let photoDeadline;
       try {
         const photo = await Promise.race([this.loadAvatar(this.api, this.config.token, message.from.id),
@@ -633,10 +635,16 @@ export class CatalogTelegram {
     try {
       const request = this.accounts.request(match[2]);
       if (request.message !== m.message_id) return answer('Используй последнюю карточку входа.');
-      this.accounts.approve(match[2], query.from.id, match[1] === 'yes');
-      const text = match[1] === 'yes' ? 'Готово — ты вошёл в GridStudio. Можно вернуться на сайт.' : 'Вход отменён.';
-      await answer(text, false);
-      await this.api.editMessageText({ chat_id: m.chat.id, message_id: m.message_id, text, reply_markup: { inline_keyboard: [] } }).catch(() => {});
+      const yes = match[1] === 'yes';
+      this.accounts.approve(match[2], query.from.id, yes);
+      loginStep(this.store, match[2], 'approved', yes);
+      // «Вернуться на сайт» (2026-10-19: some pressed «Войти» and the site never finished — the tab was closed
+      // or the phone switched apps): the page the window was opened on, finishing the sign-in when it opens
+      // in the same browser (src/catalog/Account.jsx, ?login=).
+      const text = yes ? 'Готово — ты вошёл в GridStudio. Возвращайся на сайт: если окно входа уже закрыто, нажми кнопку ниже.' : 'Вход отменён.';
+      await answer(yes ? 'Готово — ты вошёл в GridStudio.' : text, false);
+      await this.api.editMessageText({ chat_id: m.chat.id, message_id: m.message_id, text,
+        reply_markup: { inline_keyboard: yes ? [[{ text: 'Вернуться на сайт', url: backLink(this.config.origin, request.back, match[2]) }]] : [] } }).catch(() => {});
     } catch (error) { await answer(error.status ? error.message : 'Не удалось подтвердить вход. Начни заново на сайте.'); }
   }
   async run(signal) {

@@ -131,3 +131,13 @@
   .home-tiles { gap:8px; }
   .home-tiles .home-tile { flex-direction:column; align-items:flex-start; gap:8px; padding:10px; }
 }
+
+/* Phones (2026-10-19): the cards' buttons ran past the card's edge and the grid's caption broke on the small
+   picture — the buttons go under the picture and the text, two equal halves; no caption there. */
+@media (max-width: 700px) {
+  .home-cards.is-two .home-card-media { grid-row:1 / 3; }
+  .home-cards.is-two .home-card-actions, .is-look-2 .home-cards.is-two .home-card-actions { grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .home-cards.is-two .home-card-action, .home-cards.is-two .home-card-more { min-width:0; padding:0 10px; overflow:hidden; text-overflow:ellipsis; }
+  .home-thumb-caption { display:none; }
+  .home-cards.is-two .home-thumb.is-grid, .is-look-2 .home-cards.is-two .home-thumb.is-grid { aspect-ratio:16 / 9; }
+}

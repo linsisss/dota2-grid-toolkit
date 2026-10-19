@@ -152,3 +152,18 @@ a.tour-start { text-decoration: none; }
   .tour-root *, .tour-root *::before, .tour-root *::after { animation: none !important; transition: none !important; }
   .tour-mark path, .tour-burst path { stroke-dashoffset: 0; }
 }
+
+/* The first visit's corner card (2026-10-19): nothing behind it is blocked, the editor keeps its keys. */
+.tour-hint-card { position: fixed; right: 20px; bottom: 72px; z-index: 60; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start;
+  width: min(380px, calc(100vw - 32px)); padding: 14px 12px 14px 14px; border: 1px solid var(--tour-line); border-radius: 16px; color: var(--tour-ink);
+  background: radial-gradient(120% 90% at 0% 0%, #c4b5ed1f, transparent 60%), var(--tour-bg); box-shadow: 0 18px 50px #0000008c; pointer-events: auto;
+  animation: tour-pop .45s var(--tour-ease) both; }
+.tour-hint-card.is-leaving { animation: tour-pop-out .2s ease-in forwards; pointer-events: none; }
+.tour-hint-card h2 { margin: 1px 0 4px; font-size: 15px; font-weight: 650; }
+.tour-hint-card p { margin: 0; color: var(--tour-text); font-size: 13px; line-height: 1.45; }
+.tour-hint-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: #c4b5ed1f; }
+.tour-hint-mark svg { width: 20px; height: 20px; stroke: var(--tour-accent); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.tour-hint-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.tour-hint-actions .button { min-height: 32px; padding: 6px 12px; font-size: 13px; text-decoration: none; }
+.tour-hint-card .tour-skip { position: static; }
+@media (prefers-reduced-motion: reduce) { .tour-hint-card, .tour-hint-card.is-leaving { animation: none; } }

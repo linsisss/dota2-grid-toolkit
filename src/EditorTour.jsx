@@ -2,10 +2,13 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { Icon } from './Icon.jsx';
 import { t } from '../scripts/i18n.mjs';
 import { COMMUNITY } from '../scripts/community.mjs';
+import { CATALOG_PATH } from './catalog/api.js';
 
 // The editor's welcome, tour and last card, like Figma's: a spotlight glides over one part of the
 // editor at a time with a card beside it that says what it is for, and the last card offers a start.
-// Shown once per browser (TOUR_KEY), again from «Помощь» → «Обучение» (TOUR_EVENT). A step inside a
+// The first visit gets a small card in the corner that blocks nothing ('hint', 2026-10-19: a window over
+// the editor at once, and of the people who opened the editor only one in six got a grid out); the tour
+// starts from it, and again from «Помощь» → «Обучение» (TOUR_EVENT). Once per browser (TOUR_KEY). A step inside a
 // hidden panel opens the panel for its turn and closes it after (REVEAL); a step whose part is not on
 // screen (a narrow window) is left out. Titles and texts are Russian keys shown through t(), checked
 // against the editor on 02.10.2026 — change them with the editor. While it is open the editor gets
@@ -160,7 +163,7 @@ export default function EditorTour({ editor }) {
       setList(steps); setStep(Math.max(0, steps.findIndex((item) => item.target === was.target))); setPhase(was.phase);
     });
     else if (!seen()) {
-      const later = () => { wait = setTimeout(() => (document.querySelector('dialog[open], .group-choice') ? later() : setPhase('welcome')), 900); };
+      const later = () => { wait = setTimeout(() => (document.querySelector('dialog[open], .group-choice') ? later() : setPhase('hint')), 2500); };
       later();
     }
     return () => {
@@ -229,7 +232,7 @@ export default function EditorTour({ editor }) {
 
   // Keys: the tour's own, Tab kept inside the card, nothing reaches the editor's shortcuts.
   useEffect(() => {
-    if (!phase) return;
+    if (!phase || phase === 'hint') return;
     const keys = (event) => {
       event.stopPropagation();
       if (event.key === 'Escape') { event.preventDefault(); close(); }
@@ -255,6 +258,14 @@ export default function EditorTour({ editor }) {
     : { left: innerWidth / 2, top: innerHeight / 2, width: 0, height: 0 };
   const item = current || list[step];
   return <div className="tour-root">
+    {shown('hint') && <aside className={`tour-hint-card${fading('hint')}`} aria-labelledby="tourHint">
+      <span className="tour-hint-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="m5 4 23 24M5 18v10h10M18 4h10v10"/></svg></span>
+      <div><h2 id="tourHint">{t('Впервые в редакторе?')}</h2>
+        <p>{t('Покажем, где что, — около минуты. Или возьми готовую сетку в Мастерской и поменяй её под себя.')}</p>
+        <div className="tour-hint-actions"><button type="button" className="button primary" onClick={() => begin(0)}>{t('Показать, где что')}</button>
+          <a className="button secondary" href={CATALOG_PATH}>{t('Готовые сетки')}</a></div></div>
+      <button type="button" className="tour-skip" onClick={close} aria-label={t('Закрыть')} title={t('Закрыть')}><Icon name="close" size={16}/></button>
+    </aside>}
     {shown('welcome') && <div className={`tour-backdrop${fading('welcome')}`} role="dialog" aria-modal="true" aria-labelledby="tourWelcome">
       <section className="tour-welcome" ref={phase === 'welcome' ? card : null}>
         <span className="tour-mark tour-rise" style={{ '--i': 0 }} aria-hidden="true">

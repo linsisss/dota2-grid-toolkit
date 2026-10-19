@@ -320,3 +320,48 @@ test('write cost: a burst of batches', async (t) => {
   assert.ok(ms / batches < 5, 'well under 5 ms a batch');
   assert.equal(store.get('SELECT count(*) n FROM an_events').n, batches * 5);
 });
+
+test('sign-in funnel: windows, the way to the bot, the bot\'s steps, the finish and the way back', async (t) => {
+  const [, , , { CatalogStore }, { SiteStats }, { Analytics, loginStep }] = await load();
+  const { backPath, backLink } = await import('../server/accounts.mjs');
+  const store = new CatalogStore(':memory:', 'test-analytics-login'); t.after(() => store.close());
+  const analytics = new Analytics(store, new SiteStats(store, { live: false }), { timers: false });
+  const id = (n) => `login${String(n).padStart(27, '0')}`; // 32 characters, like a login request's id
+  const phone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148 Safari/604.1';
+  for (let n = 1; n <= 5; n += 1) assert.ok(analytics.loginBegin(id(n), n <= 3 ? 'dotadle' : 'evil<x>', n === 5 ? phone : 'Windows NT 10.0'));
+  assert.equal(analytics.loginBegin('short', 'header'), false);
+  assert.ok(analytics.loginStep(id(1), 'opened', 'link')); assert.equal(analytics.loginStep(id(1), 'opened', 'app'), false, 'the first way stays');
+  assert.equal(analytics.loginStep(id(2), 'opened', 'carrier-pigeon'), false);
+  analytics.loginStep(id(2), 'opened', 'code');
+  for (const n of [1, 2]) loginStep(store, id(n), 'started');
+  loginStep(store, id(1), 'approved', true); loginStep(store, id(2), 'approved', true);
+  analytics.loginStep(id(1), 'finished'); analytics.loginStep(id(1), 'fresh', true); analytics.loginStep(id(1), 'back');
+  loginStep(store, id(3), 'started'); loginStep(store, id(3), 'approved', false);
+  assert.equal(loginStep(store, id(99), 'started'), false, 'no window, nothing marked');
+  const day = Math.floor((store.now() + 3 * 3_600_000) / 86_400_000), p = { from: day - 6, to: day, today: day };
+  const login = analytics.funnels(p, {}).funnels.find((funnel) => funnel.id === 'login');
+  assert.deepEqual(login.steps.map((step) => step.visitors), [5, 3, 3, 2, 1], 'started without a click on the site still went to the bot');
+  assert.deepEqual({ back: login.back, lost: login.lost, cancelled: login.cancelled, fresh: login.fresh }, { back: 1, lost: 1, cancelled: 1, fresh: 1 });
+  assert.deepEqual(login.ways, { link: 1, app: 0, code: 1 });
+  assert.deepEqual(login.byOrigin.map((row) => [row.origin, row.windows, row.finished]), [['dotadle', 3, 1], ['header', 2, 0]], 'an origin that is not an id is the header\'s');
+  assert.equal(login.byDevice.phone[0].visitors, 1);
+  assert.equal(analytics.funnels(p, { device: 'phone' }).funnels.find((funnel) => funnel.id === 'login').steps[0].visitors, 1, 'the device filter applies');
+  // The way back: only this site's pages, no earlier mark.
+  assert.equal(backPath('/workshop?backgrounds&login=x'), '/workshop?backgrounds=');
+  for (const bad of ['//evil.example', 'https://evil.example/', '/\\evil.example', '', '/a b']) assert.equal(backPath(bad), '/', bad);
+  assert.equal(backLink('https://gridstudio.me', '/dotadle', id(1)), `https://gridstudio.me/dotadle?login=${id(1)}`);
+});
+
+test('repeat downloads: the same file on a later day, by visitor, with the gap', async (t) => {
+  const { store, analytics } = await setup(t);
+  const day = Math.floor((store.now() + 3 * 3_600_000) / 86_400_000);
+  const put = (visitor, at, kind, id) => store.run("INSERT INTO an_events(at, day, name, visitor, props) VALUES(?,?,'workshop.download',?,?)", 0, at, visitor, JSON.stringify({ kind, way: 'file', id }));
+  put('v1', day - 6, 'grid', 'g1'); put('v1', day - 2, 'grid', 'g1'); // the same grid four days later
+  put('v2', day - 5, 'grid', 'g1'); put('v2', day - 5, 'grid', 'g2'); put('v2', day - 1, 'grid', 'g3'); // two days, never the same
+  put('v3', day - 3, 'grid', 'g2'); put('v3', day - 3, 'grid', 'g2'); // twice the same day: not again
+  put('v4', day - 4, 'background', '7'); put('v4', day, 'background', '7');
+  const r = analytics.repeats({ from: day - 29, to: day, today: day });
+  assert.deepEqual({ ...r.kinds.grid, top: undefined }, { visitors: 3, onTwoDays: 2, sameAgain: 1, medianGap: 4, top: undefined });
+  assert.deepEqual(r.kinds.grid.top.map((row) => [row.id, row.visitors]), [['g1', 1]]);
+  assert.deepEqual([r.kinds.background.sameAgain, r.kinds.background.medianGap], [1, 4]);
+});

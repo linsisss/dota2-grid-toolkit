@@ -161,8 +161,13 @@ export async function openWorkspace(meta, registry, api, user, onStatus = () => 
         meta = await registry.update(meta.id, { cloudRevision, dirty: false, pendingUpload: false, name: remote.name, ...describe(remote.document) });
       }
     } catch (error) {
-      if (!initial.doc) { storage.database?.close(); throw error; }
-      if (!(error.status === 404 && cloudRevision === 0)) { paused = true; onStatus(t('{message} Работа продолжается локально.', { message: error.message })); }
+      // Deleted in the account (another device, 2026-10-19: «Рабочее пространство не найдено» said nothing):
+      // marked in the list (Workspaces.jsx shows it), this browser's copy stays and is not sent anywhere.
+      const gone = error.status === 404 && cloudRevision > 0;
+      if (gone) meta = await registry.update(meta.id, { gone: true }).catch(() => meta);
+      if (!initial.doc) { storage.database?.close(); throw gone ? Object.assign(new Error(t('Этот файл удалён в аккаунте на другом устройстве, а в этом браузере его копии нет.')), { status: 404 }) : error; }
+      if (gone) { paused = true; onStatus(t('Файл удалён в аккаунте на другом устройстве. Здесь осталась копия из этого браузера: она не сохраняется в аккаунт — создай из неё копию в Студии, если она нужна.')); }
+      else if (!(error.status === 404 && cloudRevision === 0)) { paused = true; onStatus(t('{message} Работа продолжается локально.', { message: error.message })); }
     }
   }
   // The progress statuses stay Russian: save-status.mjs knows them by text, and the editor

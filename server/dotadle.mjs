@@ -127,9 +127,9 @@ export function dotadleTables(store) {
       PRIMARY KEY(text, hero))`);
 }
 
-// Signed-in only (asked for on 2026-10-06): each account's guesses are kept here, so the streak follows
-// the account to any device, the tries cannot be had again by clearing the browser, and the page gets
-// only the pictures up to the current try (all of them once the game is over).
+// Each account's guesses are kept here, so the streak follows the account to any device and the tries
+// cannot be had again by clearing the browser; the page gets only the pictures up to the current try (all
+// of them once the game is over). Since 2026-10-19 a guest plays too (guestState), kept in the browser.
 export class Dotadle {
   constructor({ secret, store = null, root = new URL('..', import.meta.url), now = Date.now } = {}) {
     this.secret = createHash('sha256').update(`dotadle\0${secret}`).digest('hex'); this.store = store; this.root = root; this.now = now; this.cache = new Map();
@@ -191,6 +191,41 @@ export class Dotadle {
     return { number, tries: DOTADLE_TRIES, next: dotadleNext(this.now()), heroes: this.heroes(),
       pictures: done ? all : all.slice(0, play.guesses.length + 1), guesses: play.guesses.map((id) => this.check(id, answer)),
       done, solved: play.solved, answer: done ? { id: answer.id, name: answer.name } : null, stats: this.stats(account), reminder: this.reminder(account), share: done ? this.shareFor(account, number) : null };
+  }
+  // Without signing in (2026-10-19: of ~4,500 visitors in two weeks only 467 played behind the sign-in): the
+  // page keeps today's guesses in the browser and sends them all; the answer is worked out from them here,
+  // nothing is stored. A list that is not a game (unknown or repeated heroes, more than the tries, guesses
+  // after the right one) is cut where it stops being one.
+  guestGuesses(guesses) {
+    const answer = this.answer(this.today()), out = [];
+    for (const value of Array.isArray(guesses) ? guesses.slice(0, DOTADLE_TRIES) : []) {
+      const id = Number(value);
+      if (!BY_ID.has(id) || out.includes(id)) break;
+      out.push(id);
+      if (id === answer.id) break;
+    }
+    return out;
+  }
+  async guestState(number, guesses) {
+    const today = this.today();
+    if (number !== undefined && number !== today) return { error: 'Герой дня уже сменился. Обнови страницу.' };
+    const answer = this.answer(today), list = this.guestGuesses(guesses), solved = list.at(-1) === answer.id, done = finished(list, solved);
+    const all = await this.pictures(String(today), answer);
+    return { guest: true, number: today, tries: DOTADLE_TRIES, next: dotadleNext(this.now()), heroes: this.heroes(),
+      pictures: done ? all : all.slice(0, list.length + 1), guesses: list.map((id) => this.check(id, answer)), kept: list,
+      done, solved, answer: done ? { id: answer.id, name: answer.name } : null, stats: null, reminder: false, share: null };
+  }
+  // After signing in, today's game played as a guest goes to the account — only when the account has not
+  // played today (another device's game is never overwritten), so the streak counts it.
+  async adopt(account, number, guesses) {
+    const today = this.today(), list = this.guestGuesses(guesses);
+    if (number === today && list.length && !this.play(account, today).guesses.length) {
+      const solved = list.at(-1) === this.answer(today).id, before = solved ? this.stats(account).best : 0;
+      this.store.run('INSERT OR IGNORE INTO dotadle_plays(account, number, guesses, solved, updated) VALUES(?,?,?,?,?)', account, today, JSON.stringify(list), solved ? 1 : 0, this.now());
+      const badge = solved && streakBadge(before, this.stats(account).best);
+      if (badge && this.store.get("SELECT 1 x FROM sqlite_master WHERE name='badge_notices'")) this.store.run('INSERT OR IGNORE INTO badge_notices(account,badge,created) VALUES(?,?,?)', account, badge.id, this.now());
+    }
+    return this.state(account);
   }
   async guess(account, number, heroId) {
     const today = this.today();

@@ -25,7 +25,15 @@ export function parseSteamProfile(value) {
   return { kind: 'vanity', vanity: match[2] };
 }
 
-export function steamConfigFolder(accountId, directory = DEFAULT_STEAM_DIRECTORY) {
+// Where Steam is on macOS and Linux (2026-10-19); a path there uses «/» and may start with «~».
+export const STEAM_DIRECTORIES = Object.freeze({ windows: DEFAULT_STEAM_DIRECTORY, mac: '~/Library/Application Support/Steam', linux: '~/.local/share/Steam' });
+export function steamConfigFolder(accountId, directory = DEFAULT_STEAM_DIRECTORY, system = 'windows') {
+  if (system === 'mac' || system === 'linux') {
+    const root = directory.trim().replace(/^"(.*)"$/, '$1');
+    if (!root || root.length > 260 || !/^[~/]/.test(root)) throw new Error('Укажи полный путь к папке Steam, например ~/.local/share/Steam.');
+    const account = accountId ? steamAccount(String(accountId)).accountId : t('ID АККАУНТА');
+    return `${root.replace(/\/+$/, '')}/userdata/${account}/570/remote/cfg`;
+  }
   const root = directory.trim().replace(/^"(.*)"$/, '$1').replaceAll('/', '\\');
   if (!root || root.length > 260 || !/^(?:[A-Za-z]:\\|\\\\[^\\]+\\[^\\]+)/.test(root)) throw new Error('Укажи полный путь к папке Steam, например D:\\Steam.');
   const account = accountId ? steamAccount(String(accountId)).accountId : t('ID АККАУНТА');

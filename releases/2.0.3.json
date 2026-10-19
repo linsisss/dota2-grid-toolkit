@@ -1,0 +1,95 @@
+{
+  "version": "2.0.3",
+  "date": "2026-10-19",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v2.0.3",
+  "sections": [
+    {
+      "title": "Dotadle",
+      "changes": [
+        {
+          "text": "Играть можно без входа: попытки хранятся в браузере",
+          "children": [
+            "Войдёшь — сегодняшняя игра перенесётся в аккаунт, а с ней серия побед, значки и напоминание"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Сайт",
+      "changes": [
+        {
+          "text": "После «Войти» в боте есть кнопка «Вернуться на сайт» — вход завершится, даже если окно входа закрыто"
+        },
+        {
+          "text": "Мастерская на телефоне: сетки сразу на первом экране, вкладки и теги листаются вбок"
+        },
+        {
+          "text": "Главная на телефоне: кнопки карточек больше не вылезают за край"
+        },
+        {
+          "text": "macOS и Linux: инструкции показывают папки Steam этих систем"
+        }
+      ]
+    },
+    {
+      "title": "Редактор",
+      "changes": [
+        {
+          "text": "Первый заход: вместо окна во весь экран — подсказка в углу с обучением и готовыми сетками"
+        },
+        {
+          "text": "Пустая Студия предлагает готовую сетку из Мастерской"
+        },
+        {
+          "text": "Файл, удалённый на другом устройстве, помечен в Студии, а копия из браузера не теряется"
+        }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Dotadle",
+        "changes": [
+          {
+            "text": "Play without signing in: your guesses are kept in the browser",
+            "children": [
+              "Sign in and today’s game moves to your account, along with the win streak, badges and the reminder"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Site",
+        "changes": [
+          {
+            "text": "After “Sign in” in the bot there’s a “Back to the site” button — sign-in finishes even if the window was closed"
+          },
+          {
+            "text": "Workshop on phones: grids on the first screen, tabs and tags scroll sideways"
+          },
+          {
+            "text": "Home page on phones: card buttons no longer run past the edge"
+          },
+          {
+            "text": "macOS and Linux: install guides show these systems’ Steam folders"
+          }
+        ]
+      },
+      {
+        "title": "Editor",
+        "changes": [
+          {
+            "text": "First visit: a small hint in the corner with the tour and ready grids instead of a full-screen window"
+          },
+          {
+            "text": "An empty Studio offers a ready grid from the Workshop"
+          },
+          {
+            "text": "A file deleted on another device is marked in the Studio, and the browser’s copy isn’t lost"
+          }
+        ]
+      }
+    ]
+  }
+}

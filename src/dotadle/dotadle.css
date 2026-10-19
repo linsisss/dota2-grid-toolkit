@@ -120,3 +120,15 @@
 
 .dle-result-foot { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px 16px; font-size:13px; }
 .dle-result-foot .dle-reminder { margin:0; }
+
+/* A guest's game (2026-10-19): what signing in gives, under the search and in the result. */
+.dle-perks { display:grid; gap:10px; padding:14px 16px; border:1px solid color-mix(in srgb, var(--cat-accent) 34%, transparent); border-radius:14px;
+  background:color-mix(in srgb, var(--cat-accent) 7%, var(--cat-panel)); }
+.dle-perks p { display:grid; gap:2px; margin:0; color:var(--cat-muted); font-size:13.5px; line-height:1.45; }
+.dle-perks p b { color:var(--cat-ink); font-size:15px; }
+.dle-perks ul { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px 14px; margin:0; padding:0; list-style:none; font-size:13px; }
+.dle-perks li { display:flex; align-items:center; gap:7px; }
+.dle-perks li svg { flex:none; color:var(--cat-accent); }
+.dle-perks .catalog-button { justify-self:start; }
+.dle-result .dle-perks { margin-top:4px; }
+@media (max-width: 640px) { .dle-perks ul { grid-template-columns:1fr; } }

@@ -4,6 +4,20 @@ import { catalogText, selectedCatalogGrid } from '../scripts/catalog-document.mj
 import C from '../scripts/core.mjs';
 
 export const SESSION_AGE = 30 * 86400;
+// A page of this site to come back to after signing in: a path with its query, never another host, no
+// earlier «login» mark. Anything else → the home page.
+export function backPath(value) {
+  const text = String(value || '');
+  if (!/^\/(?!\/)[^\s\\]{0,300}$/.test(text)) return '/';
+  try {
+    const url = new URL(text, 'https://gridstudio.invalid');
+    if (url.origin !== 'https://gridstudio.invalid') return '/';
+    url.searchParams.delete('login'); url.hash = '';
+    return `${url.pathname}${url.search}`;
+  } catch { return '/'; }
+}
+// The bot's link back: the page with «login=<id>», which finishes the sign-in in the browser that began it.
+export const backLink = (origin, back, id) => { const url = new URL(backPath(back), origin); url.searchParams.set('login', id); return url.href; };
 export class Accounts {
   constructor(store) {
     this.store = store;
@@ -18,6 +32,8 @@ export class Accounts {
     // 1.6.1: the grids of a file (names and the open one), so «Студия» on another device lists
     // them without the document. Older rows get it on their next save.
     if (!store.all('PRAGMA table_info(workspaces)').some((column) => column.name === 'grids')) store.db.exec('ALTER TABLE workspaces ADD COLUMN grids TEXT');
+    // 2.0.3: the page a sign-in began on — the bot's «Вернуться на сайт» button leads back to it.
+    if (!store.all('PRAGMA table_info(login_requests)').some((column) => column.name === 'back')) store.db.exec("ALTER TABLE login_requests ADD COLUMN back TEXT NOT NULL DEFAULT ''");
     this.thumbnails = new Map();
     // Every account has a creator profile; ones signed in before profiles get a generated nickname here.
     store.profiles.ensureAll();
@@ -37,14 +53,14 @@ export class Accounts {
   }
   avatar(user) { return this.store.get('SELECT image FROM account_avatars WHERE account=?', user.id)?.image; }
   require(session) { const user = this.user(session); if (!user) fail(401, 'Сначала войди на сайт.'); return user; }
-  begin(ip, browser) {
+  begin(ip, browser, back = '') {
     return this.store.tx(() => {
       this.store.rate(`login-tg:${ip}`, 20, 3_600_000); this.store.rate(`login-browser:${browser}`, 5, 600_000);
       this.store.run('DELETE FROM login_requests WHERE expires<?', this.store.now() - 86_400_000);
       this.store.run('DELETE FROM account_sessions WHERE expires<?', this.store.now());
       const id = randomBytes(24).toString('base64url'), verifier = secret(), expires = this.store.now() + 5 * 60_000;
       // Keep the legacy column to open existing databases without destructive migration.
-      this.store.run('INSERT INTO login_requests(id,verifier,code,expires) VALUES(?,?,?,?)', id, digest(verifier), '', expires);
+      this.store.run('INSERT INTO login_requests(id,verifier,code,expires,back) VALUES(?,?,?,?,?)', id, digest(verifier), '', expires, backPath(back));
       return { id, verifier, expires };
     });
   }

@@ -651,3 +651,34 @@ a.creator-name:hover > span:not(.badge-icons) { color:var(--cat-ink); text-decor
 .login-steps li::marker { color:var(--cat-accent); font-weight:600; }
 .login-go { width:100%; min-height:50px; font-size:16px; }
 .login-wait { color:var(--cat-muted); font-size:14px; }
+
+/* The workshop on a phone (2026-10-19: 36% left at once — the first screen held the header in two rows,
+   the strip, the buttons and the filters, and not a single grid). The links go in one row under the
+   brand, «Реклама» stays on computers, the description goes, the tabs and the tags scroll sideways. */
+.catalog-grid > .send-pc { grid-column:1 / -1; margin:0; }
+.send-pc.is-compact { flex-wrap:nowrap; padding:8px 8px 8px 12px; }
+.send-pc.is-compact p { flex:1 1 auto; font-size:12.5px; line-height:1.35; }
+.send-pc.is-compact .catalog-button { min-height:34px; padding:6px 12px; font-size:13px; }
+@media (max-width:560px) {
+  .catalog-nav { flex-direction:column; align-items:stretch; gap:10px; padding:16px 20px 8px; }
+  .catalog-nav nav { flex-wrap:nowrap; justify-content:space-between; gap:12px; }
+  .catalog-nav nav > a[href$="?advertise"] { display:none; }
+  .catalog-nav nav .account-button, .catalog-nav nav > .catalog-button { min-height:36px; padding:6px 12px; }
+  .catalog-main { margin-top:12px; }
+  .catalog-heading.is-gallery { gap:12px; margin-bottom:16px; }
+  .catalog-heading.is-gallery p { display:none; }
+  .catalog-heading.is-gallery h1 { font-size:28px; }
+  .catalog-heading.is-gallery .page-icon { display:none; }
+  .catalog-heading.is-gallery .catalog-title { flex-wrap:nowrap; gap:12px; }
+  .catalog-heading.is-gallery .catalog-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; }
+  .catalog-heading.is-gallery .catalog-actions > :only-child { grid-column:1 / -1; }
+  .catalog-heading.is-gallery .catalog-button { min-height:40px; padding:8px 12px; font-size:14px; }
+  .catalog-toolbar { gap:10px; margin-bottom:10px; }
+  .catalog-tabs, .catalog-tags.catalog-filters { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin-inline:-20px; padding-inline:20px; }
+  .catalog-tabs::-webkit-scrollbar, .catalog-tags.catalog-filters::-webkit-scrollbar { display:none; }
+  .catalog-tabs > *, .catalog-tags.catalog-filters > * { flex:none; }
+  .catalog-tags.catalog-filters { margin-bottom:12px; }
+  .catalog-search input { padding-block:10px; }
+}
+/* macOS and Linux (src/system.js): why the command is off and the folders are theirs. */
+.catalog-install-system { margin:0 0 14px; padding:10px 14px; border:1px solid #c4b5ed40; border-radius:10px; background:#c4b5ed10; color:var(--cat-ink); font-size:14px; }

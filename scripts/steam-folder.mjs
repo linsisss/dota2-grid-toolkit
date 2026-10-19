@@ -1,8 +1,11 @@
-import { DEFAULT_STEAM_DIRECTORY, parseSteamProfile, steamConfigFolder } from './steam-profile.mjs';
+import { STEAM_DIRECTORIES, parseSteamProfile, steamConfigFolder } from './steam-profile.mjs';
+import { BY_HAND, SYSTEM } from '../src/system.js';
 import { t, translateMessage } from './i18n.mjs';
 
-// Convenience within this page only; never part of a grid or an exported file.
-const remembered = { profile: '', directory: DEFAULT_STEAM_DIRECTORY, account: null };
+// Convenience within this page only; never part of a grid or an exported file. macOS and Linux get
+// their own Steam folder (src/system.js).
+const FOLDERS = BY_HAND ? SYSTEM : 'windows', DEFAULT_DIRECTORY = STEAM_DIRECTORIES[FOLDERS];
+const remembered = { profile: '', directory: DEFAULT_DIRECTORY, account: null };
 
 // Steam link or friend code → { accountId, steamId64 }. Custom profile names are resolved by the
 // catalog API; onLookup runs only before that network request. Shared by the editor and the workshop.
@@ -31,7 +34,7 @@ export function steamFolderMarkup() {
       <div class="steam-folder-input"><input id="steamProfile" type="text" placeholder="${t('steamcommunity.com/id/… или код друга')}" maxlength="256" autocomplete="off" spellcheck="false" aria-describedby="steamFolderStatus"><button class="button secondary" type="submit">${t('Найти папку')}</button></div>
     </form>
     <p id="steamFolderStatus" class="steam-folder-status" role="status" aria-live="polite" hidden></p>
-    <details class="steam-folder-location"><summary>${t('Steam установлен в другой папке')}</summary><label for="steamDirectory">${t('Папка Steam')}<input id="steamDirectory" type="text" maxlength="260" spellcheck="false" placeholder="D:\\Steam"></label></details>
+    <details class="steam-folder-location"><summary>${t('Steam установлен в другой папке')}</summary><label for="steamDirectory">${t('Папка Steam')}<input id="steamDirectory" type="text" maxlength="260" spellcheck="false" placeholder="${BY_HAND ? "~/Steam" : "D:\\Steam"}"></label></details>
     <div class="steam-folder-path"><code></code><button type="button" class="button secondary" data-copy-folder disabled>${t('Скопировать')}</button></div>
   </div>`;
 }
@@ -42,7 +45,7 @@ export function mountSteamFolder(host, icon) {
   const code = host.querySelector('code'), status = host.querySelector('#steamFolderStatus');
   let request, account = remembered.account;
   input.value = remembered.profile; directory.value = remembered.directory;
-  host.querySelector('details').open = directory.value !== DEFAULT_STEAM_DIRECTORY;
+  host.querySelector('details').open = directory.value !== DEFAULT_DIRECTORY;
   const copyLabel = () => { copy.innerHTML = `${icon('copy')}${t('Скопировать')}`; };
   function message(text = '', state = '') {
     status.textContent = text; status.hidden = !text; status.dataset.state = state;
@@ -50,7 +53,7 @@ export function mountSteamFolder(host, icon) {
   }
   function updatePath() {
     copyLabel();
-    try { code.textContent = steamConfigFolder(account?.accountId, directory.value); copy.disabled = !account; directory.removeAttribute('aria-invalid'); }
+    try { code.textContent = steamConfigFolder(account?.accountId, directory.value, FOLDERS); copy.disabled = !account; directory.removeAttribute('aria-invalid'); }
     catch (error) { code.textContent = error.message; copy.disabled = true; directory.setAttribute('aria-invalid', 'true'); }
   }
   function clearRequest() { request?.abort(); request = null; submit.disabled = false; submit.textContent = t('Найти папку'); form.removeAttribute('aria-busy'); }

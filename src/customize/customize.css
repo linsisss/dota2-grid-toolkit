@@ -863,3 +863,6 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .d2-ok a { color:#bfe3c4!important; }
 .d2-shot-mark { position:absolute; right:6px; bottom:6px; padding:1px 6px; border-radius:999px; background:#000b; color:#ddd; font-size:10.5px; }
 .d2-click-thumb { display:block; width:100%; height:100%; }
+
+/* macOS and Linux (src/system.js, 2026-10-19): the command is Windows only — a word instead of the switch. */
+.cz-os-note { margin:0; padding:9px 12px; border:1px solid #c4b5ed40; border-radius:10px; background:#c4b5ed10; color:var(--cat-ink, #efeaf5); font-size:13px; line-height:1.45; }

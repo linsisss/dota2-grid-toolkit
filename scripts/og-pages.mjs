@@ -51,12 +51,12 @@ export const OG_PAGES = {
     alt: 'Сетки героев в мастерской GridStudio',
   },
   background: {
-    entry: 'customize.html', path: '/customize', label: 'Твоя Dota', icon: 'image',
+    entry: 'customize.html', path: '/customize', label: 'Оформление Dota', icon: 'image',
     title: 'Свой фон, интерфейс и шрифт в Dota 2',
     description: 'Фон главного меню из картинки, GIF или видео, вид HUD, чат, курсор, шрифт и тексты — на одной странице, и всё ставится одним файлом.',
     alt: 'Конструктор фона главного меню GridStudio',
-    headline: ['Свой фон', 'главного меню', 'Dota 2'],
-    text: ['Из картинки, GIF или видео.', 'Смотри, как он выглядит', 'в меню, и ставь в пару кликов.'],
+    headline: ['Оформление', 'Dota 2'],
+    text: ['Фон меню, интерфейс в матче,', 'курсор, шрифт и моды —', 'собери и поставь одним файлом.'],
     shot: { file: 'assets/readme/background.webp', crop: [36, 145, 1144, 643] },
   },
   font: {

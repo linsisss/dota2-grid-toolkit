@@ -47,4 +47,10 @@ export default {
   'Сетка героев': 'Hero grid', 'Герои, рисунки и ASCII-арты из символов.': 'Heroes, drawings and ASCII art from symbols.', 'Создать сетку': 'Create a grid',
   'Шрифт': 'Font', 'Любой шрифт с кириллицей в чате и меню.': 'Any font with Cyrillic in chat and menus.', 'Выбрать шрифт': 'Pick a font',
   'Dotadle #{number}': 'Dotadle #{number}', 'Угадай героя дня по портрету из символов': 'Guess the hero of the day from a portrait made of symbols', 'Мини-игры': 'Minigames', 'Девять игр Crownfall из Dota 2 прямо в браузере': 'Nine Crownfall games from Dota 2, right in the browser',
+  // The home page since 2026-10-19: two cards and three tiles.
+  'Меню, интерфейс и сетка героев — бесплатно, прямо в браузере. А между катками — мини-игры.': 'Menu, interface and hero grid — free, right in the browser. And minigames between matches.',
+  'Оформление Dota': 'Dota customization', 'Фон меню, интерфейс в матче, курсор, шрифт и моды — собери и поставь одним файлом.': 'Menu background, in-match interface, cursor, font and mods — build them and install as one file.',
+  'Разложи героев по позициям, нарисуй символами арт или надпись и поставь сетку в Dota за пару кликов.': 'Sort heroes by position, draw art or a caption in symbols and put the grid into Dota in a couple of clicks.',
+  'Готовые фоны': 'Ready backgrounds', 'Готовые сетки': 'Ready grids',
+  'Ещё на сайте': 'More on the site', 'Герой дня по портрету': 'Hero of the day by portrait', 'Девять игр Crownfall': 'Nine Crownfall games', 'Моды и советы': 'Mods and tips',
 };

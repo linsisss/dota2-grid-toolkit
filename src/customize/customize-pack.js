@@ -12,7 +12,7 @@ export const customizeRemoveCommand = () => installCommand(`${location.origin}/a
 
 // The archive's read-me in the site's language (Windows line ends, with a BOM for Notepad).
 function readme({ titles, russian, fonts, credits = [] }) {
-  const lines = [t('Твоя Dota от GridStudio — одним файлом.'), t('В сборке: {list}.', { list: titles.join(', ') }), '',
+  const lines = [t('Оформление Dota от GridStudio — одним файлом.'), t('В сборке: {list}.', { list: titles.join(', ') }), '',
     t('Проще всего — командой PowerShell с сайта (gridstudio.me/background → «Командой PowerShell»): она сама найдёт Dota, поставит всё и запомнит, что вернуть.'), '',
     t('Установка вручную:'), t('1. Закрой Dota 2.'), t('2. В Steam: Dota 2 -> «Свойства» -> «Установленные файлы» -> «Обзор». Откроется папка dota 2 beta.')];
   let step = 3;

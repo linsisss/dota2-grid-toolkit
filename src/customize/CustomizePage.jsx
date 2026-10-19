@@ -201,7 +201,7 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
     </section>
     <aside className="cz-panel">
       <div className="cz-panel-body">
-        <header className="cz-head"><h1>{t('Твоя Dota')}</h1>
+        <header className="cz-head"><h1>{t('Оформление Dota')}</h1>
           <p>{t('Фон, интерфейс, шрифт и тексты — на одной странице. Меняй что хочешь: превью само покажет нужный экран, а скачается всё одним файлом.')}</p></header>
         {GROUPS().map(([group, title]) => {
           const list = MODS.filter((module) => module.group === group), count = list.filter((module) => states[module.id] === 'changed').length;

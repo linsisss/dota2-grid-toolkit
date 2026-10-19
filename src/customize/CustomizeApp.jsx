@@ -30,7 +30,7 @@ export default function CustomizeApp() {
   // RU / EN redraws the page in place (its files and settings stay).
   const lang = useLanguage();
   const [preset, setPreset] = useState(() => LINKED ? { id: LINKED } : null);
-  useEffect(() => { document.title = t('Твоя Dota: фон, интерфейс и шрифт — GridStudio'); }, [lang]);
+  useEffect(() => { document.title = t('Оформление Dota: фон, интерфейс и шрифт — GridStudio'); }, [lang]);
   useEffect(() => {
     if (!LINKED) return;
     const url = new URL(location.href); url.searchParams.delete('background'); history.replaceState(history.state, '', url);

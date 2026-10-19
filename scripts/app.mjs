@@ -25,7 +25,7 @@ import { ALIGN_ACTIONS, DISTRIBUTE_ACTIONS, alignIconSVG } from './align-icons.m
 import { iconSVG } from './icons.mjs';
 import { PORTRAIT_MD_HEIGHT, portraitSource } from './portraits.mjs';
 import { applyMyBackground, hasMyBackground } from '../src/my-background.js';
-import { countAction } from '../src/site-stats.js';
+import { track } from '../src/site-stats.js';
 import { mountVideoGuide } from '../src/video-guide.js';
 import { slideIndicator } from './slide-indicator.mjs';
 import { wheelScrollsSideways } from './wheel-scroll.mjs';
@@ -191,7 +191,7 @@ export function createStudio(projectStorage, initial) {
     $('brushOrder').value = 'sequence';
     renderSymbols();
     remember(char);
-    setTool('pencil');
+    pickTool('pencil');
   }
   let selected = new Set(),
     mode = 'heroes',
@@ -407,6 +407,7 @@ export function createStudio(projectStorage, initial) {
       C.assertCategoryLimit(doc);
       if (JSON.stringify(before) === JSON.stringify(doc)) return false;
       history.push(before);
+      track('editor.edit'); // once per session: the first real change
       selected = new Set([...selected].filter((id) => doc.entities.some((e) => e.id === id)));
       save();
       render();
@@ -419,10 +420,12 @@ export function createStudio(projectStorage, initial) {
       return false;
     }
   }
+  let undoCount = 0; // undos this page load: 25 of them is editor.undo-heavy
   function undo() {
     finishLiveEdit();
     heroMotion = null;
     if (!history.past.length) return;
+    if (++undoCount === 25) track('editor.undo-heavy');
     const previousIndex = doc.configIndex,
       previousFile = doc.fileName;
     doc = C.keepSketch(doc, history.undo(doc));
@@ -482,6 +485,17 @@ export function createStudio(projectStorage, initial) {
     if (next === 'draw' && ['select', 'hand'].includes(tool)) setTool('pencil', false);
     $('emptyCanvas').hidden = doc.entities.length > 0 || mode === 'draw';
     draw();
+  }
+  // The switches the user makes (tabs, tool buttons, keys, the context menu) — not the editor's own resets.
+  function pickMode(next) {
+    setMode(next);
+    track('editor.mode', { mode: next });
+  }
+  function pickTool(next) {
+    const was = mode;
+    setTool(next);
+    track('editor.tool', { tool: next });
+    if (mode !== was) track('editor.mode', { mode });
   }
   function setTool(next, changeMode = true) {
     if (next === 'gradient') {
@@ -1045,7 +1059,7 @@ export function createStudio(projectStorage, initial) {
     if (!liveEdit) return;
     const { before } = liveEdit;
     liveEdit = null;
-    if (JSON.stringify(before) !== JSON.stringify(doc)) history.push(before);
+    if (JSON.stringify(before) !== JSON.stringify(doc)) { history.push(before); track('editor.edit'); }
     $('undoButton').disabled = !history.past.length;
     $('redoButton').disabled = !history.future.length;
   }
@@ -1930,6 +1944,7 @@ export function createStudio(projectStorage, initial) {
     }
     if (!cancel && gesture.before && JSON.stringify(gesture.before) !== JSON.stringify(doc)) {
       history.push(gesture.before);
+      track('editor.edit');
       if (gesture.type === 'draw') remember((drawFrame || []).map((p) => p.ch).join(''));
       save();
     }
@@ -2158,6 +2173,7 @@ export function createStudio(projectStorage, initial) {
         selected = new Set(items.map((e) => e.id));
       });
       if (!applied) return;
+      track('editor.import', { kind: 'ascii' }); // «Текст или ASCII-арт»: typed or pasted
       closeModal();
       setTool('select');
     };
@@ -2259,6 +2275,7 @@ export function createStudio(projectStorage, initial) {
         pickerGroupId = null;
       }, t('Сетка добавлена в файл'));
       if (!added) return;
+      if (template !== 'blank') track('editor.file', { action: 'template' });
       closeModal();
       resetGridView();
     };
@@ -2287,6 +2304,7 @@ export function createStudio(projectStorage, initial) {
       JSON.stringify(doc, null, 2),
       (doc.name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').slice(0, 80) || 'grid') + '.gridstudio.json'
     );
+    track('editor.export', { type: 'project' });
     toast(t('Проект скачан: слои и настройки сохранены'));
   }
   async function openRecovery() {
@@ -2395,7 +2413,11 @@ export function createStudio(projectStorage, initial) {
       catch { toast(t('Не удалось скопировать. Выдели команду и скопируй вручную.'), true); }
     };
     $('modalContent').querySelector('[data-copy-restore]').onclick = () => copyText(restoreCommand, t('Команда возврата скопирована'));
-    $('modalContent').querySelector('[data-copy-command]').onclick = () => command && copyText(command.text, t('Команда скопирована: вставь её в PowerShell'));
+    $('modalContent').querySelector('[data-copy-command]').onclick = () => {
+      if (!command) return;
+      copyText(command.text, t('Команда скопирована: вставь её в PowerShell'));
+      track('editor.export', { type: 'command' });
+    };
     // The grid goes to the site once per content: the same file keeps its command.
     async function makeCommand(json) {
       if (command?.json === json) return command.text;
@@ -2436,7 +2458,7 @@ export function createStudio(projectStorage, initial) {
       try { output = exportCurrent(); } catch (error) { toast(error.message, true); return; }
       if (method !== 'command') {
         download(JSON.stringify(withGridNote(output, t(GRID_NOTE)), null, 2), 'hero_grid_config.json');
-        countAction('grid-export');
+        track('editor.export', { type: 'dota' });
         closeModal();
         return toast(t('hero_grid_config.json скачан'));
       }
@@ -2444,7 +2466,7 @@ export function createStudio(projectStorage, initial) {
       button.disabled = true; button.setAttribute('aria-busy', 'true');
       try {
         const text = await prepareCommand();
-        if (text && modal.open) await copyText(text, t('Команда скопирована: вставь её в PowerShell'));
+        if (text && modal.open) { await copyText(text, t('Команда скопирована: вставь её в PowerShell')); track('editor.export', { type: 'command' }); }
       } finally { button.disabled = false; button.removeAttribute('aria-busy'); }
     };
     $('exportPng').onclick = openPngExport;
@@ -2553,6 +2575,7 @@ export function createStudio(projectStorage, initial) {
         const blob = await new Promise((resolve) => picture.toBlob(resolve, 'image/png'));
         if (!blob) throw new Error(t('Браузер не смог собрать такую большую картинку. Выбери масштаб меньше.'));
         download(blob, pngName(), 'image/png');
+        track('editor.export', { type: options.look === 'sketch' ? 'sketch' : 'png' });
         closeModal();
         toast(t('{file} скачан', { file: pngName() }));
       } catch (error) {
@@ -2599,6 +2622,7 @@ export function createStudio(projectStorage, initial) {
           }
         }, append ? t('Сетки добавлены · всего: {count}', { count: current + count }) : t('Сетки открыты · всего: {count}', { count }));
         if (opened) {
+          for (const kind of new Set(imported.map((file) => (file.project ? 'project' : 'json')))) track('editor.import', { kind });
           if (!append) resetGridView();
           closeModal();
         }
@@ -2743,6 +2767,7 @@ export function createStudio(projectStorage, initial) {
       $('sourcePreview').src = cv.toDataURL('image/png');
       $('sourceName').textContent = file.name;
       sourceFilename = file.name;
+      track('editor.import', { kind: 'image' });
       $('imageSource').hidden = false;
       if (gesture) finishGesture(null, true);
       pickerGroupId = null;
@@ -3304,7 +3329,7 @@ export function createStudio(projectStorage, initial) {
           (input.onchange = () => {
             frameStyle[input.dataset.frame] = Array.from(input.value)[0] || '·';
             renderFrame();
-            setTool('frame');
+            pickTool('frame');
           })
       );
   }
@@ -3389,20 +3414,20 @@ export function createStudio(projectStorage, initial) {
     chooseGroup(event.currentTarget);
   };
   document.querySelectorAll('[data-mode]').forEach((button) => {
-    button.onclick = () => setMode(button.dataset.mode);
+    button.onclick = () => pickMode(button.dataset.mode);
     button.onkeydown = (event) => {
       if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
         event.preventDefault();
         const modes = ['heroes', 'draw', 'image'],
           next = modes[(modes.indexOf(mode) + (event.key === 'ArrowRight' ? 1 : 2)) % 3];
-        setMode(next);
+        pickMode(next);
         $('tab-' + next).focus();
       }
     };
   });
   document
     .querySelectorAll('[data-tool]')
-    .forEach((button) => (button.onclick = () => setTool(button.dataset.tool)));
+    .forEach((button) => (button.onclick = () => pickTool(button.dataset.tool)));
   const tools = DRAWING_TOOLS;
   $('drawingTools').innerHTML = tools
     .map(
@@ -3412,7 +3437,7 @@ export function createStudio(projectStorage, initial) {
     .join('');
   $('drawingTools')
     .querySelectorAll('[data-tool]')
-    .forEach((button) => (button.onclick = () => setTool(button.dataset.tool)));
+    .forEach((button) => (button.onclick = () => pickTool(button.dataset.tool)));
   slideIndicator($('drawingTools'), 'button.active', { signal: abort.signal });
   // Category keys stay Russian (data.mjs); the names are shown in the page's language.
   $('symbolCategory').innerHTML = Object.keys(D.symbols)
@@ -3485,7 +3510,7 @@ export function createStudio(projectStorage, initial) {
   $('frameStyle').onchange = () => {
     frameStyle = { ...D.frames[$('frameStyle').value] };
     renderFrame();
-    setTool('frame');
+    pickTool('frame');
   };
   $('addGroup').onclick = (event) => chooseGroup(event.currentTarget);
   $('emptyAddGroup').onclick = (event) => chooseGroup(event.currentTarget);
@@ -3700,6 +3725,7 @@ export function createStudio(projectStorage, initial) {
       selected = new Set(artwork.items.map((e) => e.id));
     }, t('Создан отдельный ASCII-слой'));
     if (!applied) return;
+    track('editor.ascii', { method: imageMethod });
     if (!rows) remember(conversionPoints.map((point) => point.ch).join(''));
     closeImageDialog();
     setMode('heroes');
@@ -3960,13 +3986,13 @@ export function createStudio(projectStorage, initial) {
       spaceDown = true;
       viewport.classList.add('panning');
     }
-    if (key === 'v') setTool('select');
-    if (key === 'b') setTool('pencil');
-    if (key === 'i') setTool('eyedropper');
-    if (key === 'l') setTool('lasso');
-    if (key === 't') setTool('text');
-    if (key === 'e') setTool('eraser');
-    if (key === 'r') setTool('rect');
+    if (key === 'v') pickTool('select');
+    if (key === 'b') pickTool('pencil');
+    if (key === 'i') pickTool('eyedropper');
+    if (key === 'l') pickTool('lasso');
+    if (key === 't') pickTool('text');
+    if (key === 'e') pickTool('eraser');
+    if (key === 'r') pickTool('rect');
     if (key === 'g') $('gridToggle').click();
     if (key === 'p') $('previewButton').click();
     if (key === 'f') focusButton.click();
@@ -4244,7 +4270,11 @@ export function createStudio(projectStorage, initial) {
         doc = appendCatalogGrid(doc, grid);
         selected.clear(); pickerGroupId = null;
       }, t('Сетка из мастерской добавлена'));
-      if (added) resetGridView();
+      if (added) {
+        resetGridView();
+        track('editor.file', { action: 'workshop' });
+        track('editor.import', { kind: 'workshop' });
+      }
       return added;
     },
     simplifyArt: (percent) => commit(() => { doc = simplifyArtwork(doc, percent).doc; }, t('Плотность уменьшена. Ctrl+Z — отменить')),
@@ -4259,7 +4289,7 @@ export function createStudio(projectStorage, initial) {
           : optimizeCategories(planOptimization(doc, measure, { pack, count: pickCount }), target).doc;
         const output = C.exportDota(outputDoc, null, { widths: pickWidths });
         download(JSON.stringify(withGridNote(output, t(GRID_NOTE)), null, 2), 'hero_grid_config.json');
-        countAction('grid-export');
+        track('editor.export', { type: 'optimized' });
         toast(t('Оптимизированный JSON скачан'));
         return true;
       } catch (error) { toast(error.message, true); return false; }
@@ -4270,7 +4300,7 @@ export function createStudio(projectStorage, initial) {
     runContextAction: (action) => {
       const anchor = contextMenu?.point;
       closeContextMenu(true);
-      if (action.startsWith('tool:')) setTool(action.slice(5));
+      if (action.startsWith('tool:')) pickTool(action.slice(5));
       else if (action === 'undo') undo();
       else if (action === 'redo') redo();
       else if (action === 'copy') copySelection();
@@ -4291,7 +4321,7 @@ export function createStudio(projectStorage, initial) {
         const result = C.addArtwork(doc, placeTextArt(art, workspace(), ink), name ? t('Текст «{name}»', { name }) : t('Текст'));
         selected = new Set(result.items.map((item) => item.id));
       }, t('Надпись добавлена'));
-      if (done) setTool('select');
+      if (done) { setTool('select'); track('editor.import', { kind: 'text' }); }
       return done;
     },
     // «Предложить свой арт» from the editor (src/ArtSubmission.jsx): what can be offered — the selection,
@@ -4352,7 +4382,7 @@ export function createStudio(projectStorage, initial) {
         doc = C.addMetaConfig(doc, name, heading, groups, { ...options, measure: (text) => measureCategoryWidth(ctx, text).width });
         selected.clear(); pickerGroupId = null;
       }, t('Сетка меты добавлена в файл'));
-      if (added) { metaDialog = null; resetGridView(); }
+      if (added) { metaDialog = null; resetGridView(); track('editor.file', { action: 'template' }); }
       return added;
     },
     // The same heroes of a group in another order (scripts/hero-meta.mjs orderByMeta).
@@ -4368,6 +4398,7 @@ export function createStudio(projectStorage, initial) {
       publishUI();
     },
     addDrawing: (items, reference) => {
+      const fresh = reference && reference.src !== doc.reference?.src;
       const done = commit(() => {
         const result = C.addArtwork(doc, items, t('Рисунок'));
         selected = new Set(result.items.map((e) => e.id));
@@ -4377,6 +4408,7 @@ export function createStudio(projectStorage, initial) {
         drawingOpen = false;
         setTool('select');
         publishUI();
+        if (fresh) track('editor.import', { kind: 'image' }); // the drawing's reference picture
       }
       return done;
     },
@@ -4391,7 +4423,7 @@ export function createStudio(projectStorage, initial) {
     setReference: (reference) => {
       const added = reference && reference.src !== doc.reference?.src;
       commit(() => { if (reference) doc.reference = reference; else delete doc.reference; });
-      if (added) { setTool('select'); selected.clear(); referenceEditing = true; draw(); }
+      if (added) { setTool('select'); selected.clear(); referenceEditing = true; draw(); track('editor.import', { kind: 'image' }); }
       if (!reference) { referenceEditing = false; draw(); }
     },
     cropOverflow: () =>

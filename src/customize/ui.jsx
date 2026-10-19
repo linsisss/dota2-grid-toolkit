@@ -17,10 +17,11 @@ export function Field({ label, aside, hint, children }) {
   return <div className="custom-field">{aside ? <span className="custom-label-row"><span className="custom-label">{label}</span><span className="custom-aside">{aside}</span></span>
     : <span className="custom-label">{label}</span>}{children}{hint && <p className="custom-hint">{hint}</p>}</div>;
 }
-export function CopyField({ value }) {
+// `onCopy`: after a copy went through (the page's statistics).
+export function CopyField({ value, onCopy }) {
   const [copied, setCopied] = useState(false);
   return <span className="custom-copy"><code>{value}</code><button type="button" className="catalog-icon" aria-label={t('Скопировать {value}', { value })} onClick={async () => {
-    try { await navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* The value stays visible to copy by hand. */ }
+    try { await navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1500); onCopy?.(); } catch { /* The value stays visible to copy by hand. */ }
   }}><Icon name={copied ? 'check' : 'copy'}/></button></span>;
 }
 // Installation steps plus the honest part about changing game files.

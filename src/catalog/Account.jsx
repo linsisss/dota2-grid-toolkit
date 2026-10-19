@@ -5,10 +5,20 @@ import { profilePath } from './Creator.jsx';
 import ProfileSettings from './ProfileSettings.jsx';
 import { attachGuestWorkspaces, openWorkspaceRegistry } from '../../scripts/workspaces.mjs';
 import { t } from '../../scripts/i18n.mjs';
-import { signupSource } from '../site-stats.js';
+import { signupSource, track } from '../site-stats.js';
 
 const Context = createContext(null);
 const AUTH_RECHECK = 5 * 60_000;
+// Where a sign-in began (auth.login-start): requestLogin(text, from), else the reason's words (compared in
+// the page's language), else the header's «Войти».
+const LOGIN_FROM = [['Войди, чтобы поставить лайк.', 'like'], ['Войди, чтобы подписаться на автора. О новых работах напишет бот.', 'follow'],
+  ['Войди, чтобы пожаловаться.', 'report'], ['Войди, чтобы комментировать.', 'comment'], ['Войди, чтобы отвечать.', 'comment'], ['Войди, чтобы написать гайд.', 'guide'],
+  ['Войди, чтобы играть в Dotadle.', 'dotadle'], ['Войди, чтобы попасть в таблицу рекордов мини-игр.', 'minigames'],
+  ['Войди, чтобы привязать сетку и редактировать её после публикации.', 'publish'], ['Войди, чтобы бот сообщил, когда арт одобрят.', 'publish'],
+  ['Войди, чтобы фон сохранился в аккаунте: его настройки не пропадут вместе с браузером и откроются на другом компьютере.', 'customize'], ['Войди, чтобы открыть админку.', 'admin']];
+const loginFrom = (text) => { try { return (text && LOGIN_FROM.find(([words]) => text === words || text === t(words))?.[1]) || 'header'; } catch { return 'header'; } };
+// The like's kind (workshop.like) from its endpoint.
+const likeKind = (path) => (/^\/backgrounds\//.test(path) ? 'background' : /^\/guides\//.test(path) ? 'guide' : 'grid');
 export function AccountProvider({ children }) {
   const [user, setUser] = useState(null), [admin, setAdmin] = useState(false), [moderator, setModerator] = useState(false), [loading, setLoading] = useState(true), [login, setLogin] = useState(false), [reason, setReason] = useState('');
   const userRef = useRef(null), transferQueue = useRef(Promise.resolve()), checked = useRef(0), channel = useRef(null);
@@ -41,8 +51,8 @@ export function AccountProvider({ children }) {
     return () => { channel.current?.close(); channel.current = null; window.removeEventListener('focus', focus); window.removeEventListener('online', recheck); };
   }, []);
   useEffect(() => { if (user) syncFiles(); else setFileSync(state => ({ ...state, busy: false, error: '' })); }, [user?.id]);
-  return <Context.Provider value={{ user, admin, moderator, loading, refresh, fileSync, syncFiles, requestLogin: text => { setReason(text || ''); setLogin(true); }, logout: async () => { await catalogAPI('/auth/logout', { method: 'POST', body: {} }); userRef.current = null; setUser(null); setAdmin(false); setModerator(false); announce(); } }}>
-    {children}{login && <LoginDialog reason={reason} onClose={() => setLogin(false)} onSuccess={async () => { await refresh(); announce(); setLogin(false); }}/>}</Context.Provider>;
+  return <Context.Provider value={{ user, admin, moderator, loading, refresh, fileSync, syncFiles, requestLogin: (text, from) => { track('auth.login-start', { from: from || loginFrom(text) }); setReason(text || ''); setLogin(true); }, logout: async () => { await catalogAPI('/auth/logout', { method: 'POST', body: {} }); track('auth.logout'); userRef.current = null; setUser(null); setAdmin(false); setModerator(false); announce(); } }}>
+    {children}{login && <LoginDialog reason={reason} onClose={() => setLogin(false)} onSuccess={async () => { track('auth.login-done'); await refresh(); announce(); setLogin(false); }}/>}</Context.Provider>;
 }
 export const useAccount = () => useContext(Context);
 // The account's creator profile nickname (server/profiles.mjs) — the name the site shows for it.
@@ -162,8 +172,8 @@ export function LikeButton({ item, onChange, path = `/works/${item.id}/like`, ow
   const own = item.mine ? ownLabel || t('Свою работу лайкнуть нельзя') : '';
   return <span className="catalog-like-wrap"><button className={`catalog-like${item.liked ? ' is-liked' : ''}${own ? ' is-own' : ''}`} aria-label={own || (item.liked ? t('Убрать лайк') : t('Поставить лайк'))} title={own || undefined} aria-pressed={!!item.liked} disabled={busy || !!own} onClick={async () => {
     if (!auth.user) return auth.requestLogin(t('Войди, чтобы поставить лайк.'));
-    setBusy(true); setError(''); try { const result = await catalogAPI(path, { method: 'PUT', body: { liked: !item.liked } }); onChange(result); }
-    catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }
+    setBusy(true); setError(''); try { const result = await catalogAPI(path, { method: 'PUT', body: { liked: !item.liked } }); track('workshop.like', { kind: likeKind(path), on: !item.liked }); onChange(result); }
+    catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin('', 'like'); } finally { setBusy(false); }
   }}><Icon name="heart"/>{item.likes || 0}</button>{error && <span className="catalog-like-error" role="alert">{error}</span>}</span>;
 }
 // Followers get a Telegram message from the bot when this author publishes a new grid. `path`: a grid's
@@ -175,8 +185,8 @@ export function SubscribeButton({ item, onChange, path = `/works/${item.id}/subs
     <button className={`catalog-button${item.subscribed ? ' is-subscribed' : ''}`} aria-pressed={!!item.subscribed} disabled={busy} onClick={async () => {
       if (!auth.user) return auth.requestLogin(t('Войди, чтобы подписаться на автора. О новых работах напишет бот.'));
       setBusy(true); setError('');
-      try { onChange(await catalogAPI(path, { method: 'PUT', body: { subscribed: !item.subscribed } })); }
-      catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }
+      try { onChange(await catalogAPI(path, { method: 'PUT', body: { subscribed: !item.subscribed } })); track('profile.follow', { on: !item.subscribed }); }
+      catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin('', 'follow'); } finally { setBusy(false); }
     }}><Icon name={item.subscribed ? 'check' : 'bell'}/>{item.subscribed ? t('Вы подписаны на автора') : t('Подписаться на автора')}</button>
     <p className="catalog-muted">{item.subscribed ? t('Бот пришлёт ссылку, когда автор выложит новую сетку, фон или гайд.') : t('Новые сетки, фоны и гайды автора — сообщением от бота в Telegram.')}</p>
     {error && <Notice error>{error}</Notice>}

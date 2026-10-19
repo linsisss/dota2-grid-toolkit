@@ -11,12 +11,12 @@ import { watchErrors } from '../../scripts/community.mjs';
 import { countVisit } from '../site-stats.js';
 import { loadYandexAds } from '../yandex-ads.js';
 
-// The statistics' page (server/site-stats.mjs): a grid, a profile, the rules, the backgrounds or the
-// workshop; the admin panel is not counted.
+// The statistics' page (server/site-stats.mjs): a grid, a profile, the rules, «Реклама», the backgrounds
+// or the workshop; the admin panel is not counted.
 {
   const params = new URLSearchParams(location.search);
   if (!params.has('moderate')) countVisit(params.get('id') ? `work:${params.get('id')}` : params.get('creator') ? `profile:${params.get('creator')}`
-    : params.has('rules') ? 'rules' : params.has('backgrounds') ? 'workshop:backgrounds' : 'workshop');
+    : params.has('rules') ? 'rules' : params.has('advertise') ? 'advertise' : params.has('backgrounds') ? 'workshop:backgrounds' : 'workshop');
 }
 applyGridBackground();
 // Drawn once the language is settled (for English, with its dictionaries; scripts/i18n.mjs). The guides'

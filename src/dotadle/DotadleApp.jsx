@@ -7,7 +7,7 @@ import { CommunityLink } from '../Community.jsx';
 import LanguageSwitch from '../LanguageSwitch.jsx';
 import { useLanguage } from '../useLanguage.js';
 import { useAppMotion } from '../useAppMotion.js';
-import { countAction } from '../site-stats.js';
+import { track } from '../site-stats.js';
 import { t } from '../../scripts/i18n.mjs';
 import { SHARE_CODE, shareRow } from '../../scripts/dotadle-share.mjs';
 import { BADGES } from '../../scripts/profile-badges.mjs';
@@ -193,7 +193,7 @@ function Reminder({ on, onChange }) {
 function Result({ game, left, onReminder }) {
   const [copied, setCopied] = useState(false), [error, setError] = useState('');
   const text = shareText(game);
-  async function copy() { try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { setError(t('Не получилось скопировать. Выдели текст вручную.')); } }
+  async function copy() { try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); track('dotadle.share'); } catch { setError(t('Не получилось скопировать. Выдели текст вручную.')); } }
   return <div className="dle-result">
     <h2>{game.solved ? t('Это {name}! Угадано с {count}\u2011й попытки', { name: game.answer.name, count: game.guesses.length }) : t('Не угадано — это был {name}', { name: game.answer.name })}</h2>
     <div className="dle-share"><span aria-hidden="true">{game.guesses.map(squares).join('\n')}</span>
@@ -242,8 +242,13 @@ function Daily({ onGuide, onPractice }) {
   async function guess(hero) {
     if (busy) return;
     setBusy(true); setError('');
-    try { const next = await catalogAPI('/dotadle/guess', { method: 'POST', body: { number: game.number, hero: hero.id } }); if (next.done) countAction('dotadle-done'); setGame(next); }
-    catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }
+    try {
+      const next = await catalogAPI('/dotadle/guess', { method: 'POST', body: { number: game.number, hero: hero.id } });
+      if (!game.guesses.length) track('dotadle.start', { mode: 'daily' });
+      if (next.done) track('dotadle.finish', { mode: 'daily', solved: !!next.solved, attempts: next.guesses?.length });
+      setGame(next);
+    }
+    catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin('', 'dotadle'); } finally { setBusy(false); }
   }
   const used = new Set(game.guesses.map((item) => item.hero.id));
   return <div className="dle">
@@ -272,7 +277,12 @@ function Practice({ onGuide, onDaily }) {
   async function guess(hero) {
     if (busy) return;
     setBusy(true); setError('');
-    try { const result = await catalogAPI('/dotadle/practice', { method: 'POST', body: { hero: hero.id } }); setGuesses((list) => [...list, result]); setAnswer(result.answer); }
+    try {
+      const result = await catalogAPI('/dotadle/practice', { method: 'POST', body: { hero: hero.id } });
+      if (!guesses.length) track('dotadle.start', { mode: 'practice' });
+      if (result.correct || guesses.length + 1 >= data.tries) track('dotadle.finish', { mode: 'practice', solved: !!result.correct, attempts: guesses.length + 1 });
+      setGuesses((list) => [...list, result]); setAnswer(result.answer);
+    }
     catch (e) { setError(e.message); } finally { setBusy(false); }
   }
   const restart = () => { setGuesses([]); setAnswer(null); setError(''); };

@@ -7,6 +7,7 @@ import { catalog, d2pfxPack } from './d2pfx-pack.js';
 import { D2pfxAbout, D2pfxNote, PackCredits, creditLine, creditLines } from './d2pfx-ui.jsx';
 import { Field, rich, sizeText } from './ui.jsx';
 import { skinRender, skinThumb } from './d2pfx-hud.js';
+import { track } from '../site-stats.js';
 
 // The d2pfx sections of «Твоя Dota» (2026-10-17, the owner's list): «HUD-скин», «Детали HUD», «Клик»,
 // «Пинги», «Денай» in the match, «Детали меню» in the menu, «Иконка голоса» everywhere. Each is a gallery
@@ -182,7 +183,7 @@ export function D2pfxFields({ d2, section }) {
         {mod && <Chosen mod={mod} d2={d2} section={section}/>}
         <ul className={`cur-packs d2-gallery${section === 'voice' ? ' is-small' : ''}`} aria-label={`${SECTION_TITLES()[section]}: ${SLOT_TITLES()[slot]}`}>
           <DotaCard section={section} chosen={!id} onChoose={() => d2.set(section, slot, null)}/>
-          {list.map((item) => <ModCard key={item.id} mod={item} chosen={item.id === id} onChoose={() => d2.set(section, slot, item.id === id ? null : item.id)}/>)}
+          {list.map((item) => <ModCard key={item.id} mod={item} chosen={item.id === id} onChoose={() => { if (item.id !== id) track('customize.mod', { section, mod: item.id }); d2.set(section, slot, item.id === id ? null : item.id); }}/>)}
         </ul></>;
       return many ? <Field key={slot} label={SLOT_TITLES()[slot]} aside={mod ? mod.label : t('как в Dota')}>{gallery}</Field> : <div key={slot} className="custom-field">{gallery}</div>;
     })}

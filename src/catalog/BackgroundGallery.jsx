@@ -13,14 +13,15 @@ const seconds = (value) => t('{seconds} с', { seconds: (Math.round(value * 10) 
 
 // Approved backgrounds with a tag, a screen and a search (title or author), 24 a page; `more` appends
 // the next page; `aspects`: how many there are for every screen (the filter). Typing waits a
-// moment, like the grids' search.
-export function useBackgrounds({ tag = '', query = '', sort = 'new', aspect = '' } = {}) {
+// moment, like the grids' search. `onSearch(query, total)`: a search's answer (the workshop's analytics).
+export function useBackgrounds({ tag = '', query = '', sort = 'new', aspect = '', onSearch = null } = {}) {
   const [items, setItems] = useState(null), [total, setTotal] = useState(0), [aspects, setAspects] = useState({}), [page, setPage] = useState(0), [error, setError] = useState('');
+  const searched = useRef(onSearch); searched.current = onSearch;
   useEffect(() => { setItems(null); setPage(0); }, [tag, query, sort, aspect]);
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => catalogAPI(`/backgrounds?${new URLSearchParams({ tag, aspect, q: query, sort, page: String(page) })}`, { signal: controller.signal })
-      .then((data) => { setItems((current) => page ? [...(current || []), ...data.items] : data.items); setTotal(data.total); setAspects(data.aspects || {}); setError(''); })
+      .then((data) => { setItems((current) => page ? [...(current || []), ...data.items] : data.items); setTotal(data.total); setAspects(data.aspects || {}); setError(''); if (!page) searched.current?.(query, data.total); })
       .catch((problem) => { if (!controller.signal.aborted) setError(problem.message); }), query && !page ? 220 : 0);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [tag, query, sort, aspect, page]);

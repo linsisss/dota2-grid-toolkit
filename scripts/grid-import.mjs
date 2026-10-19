@@ -15,7 +15,7 @@ export async function readGridFiles(files) {
       const data = JSON.parse((await file.text()).replace(/^\uFEFF/, ''));
       const doc = data?.app === 'dota-grid-studio' ? C.importProject(data) : C.importDota(data);
       if (data?.app !== 'dota-grid-studio') doc.fileName = file.name.slice(0, 255);
-      imported.push({ name: file.name, doc });
+      imported.push({ name: file.name, doc, project: data?.app === 'dota-grid-studio' });
     } catch (error) {
       throw new Error(`${file.name}: ${error instanceof SyntaxError ? t('не удалось прочитать JSON. Проверь содержимое файла.') : error.message}`);
     }

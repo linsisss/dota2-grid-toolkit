@@ -9,8 +9,13 @@ import './hub.css';
 import { SITE_SLIDES, autoSlides } from '../../scripts/slide-indicator.mjs';
 import { watchErrors } from '../../scripts/community.mjs';
 import { countVisit } from '../site-stats.js';
+import { gameById } from './games/index.js';
 
-countVisit('minigames');
+// ?game=<id> opens a game over the hub: its own page (MinigamesApp counts the later ones).
+{
+  const game = new URLSearchParams(location.search).get('game');
+  countVisit(gameById(game)?.load ? `minigames:${game}` : 'minigames');
+}
 // «Мини-игры» (src/minigames/MinigamesApp.jsx): the hub and the games over it. Drawn once the language is
 // settled (scripts/i18n.mjs). No ad blocks here: a game takes the whole window.
 languageReady(() => import('../i18n/en/common.js'), () => import('../i18n/en/server.js'), () => import('../i18n/en/catalog.js'),

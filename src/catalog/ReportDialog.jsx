@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Captcha, Icon, Modal, Notice, useCatalogConfig } from './Common.jsx';
 import { t } from '../../scripts/i18n.mjs';
+import { track } from '../site-stats.js';
 
 // One report window for grids, menu backgrounds, guides and comments (asked for on 2026-10-02: the
 // buttons sat right under the field, and each kind looked different). Quick reasons fill the field
@@ -20,7 +21,7 @@ export default function ReportDialog({ kind, title, question, onClose, send, cap
   const quick = REPORT_REASONS[kind] || [];
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError('');
-    try { await send(reason.trim(), token); setSent(true); }
+    try { await send(reason.trim(), token); track('workshop.report', { kind }); setSent(true); }
     catch (problem) { setError(problem.message); setReset((x) => x + 1); } finally { setBusy(false); }
   }
   if (sent) return <Modal title={t('Жалоба отправлена')} icon="check" onClose={onClose} lead={t('Спасибо. Модераторы посмотрят и решат, скрыть ли это.')}>

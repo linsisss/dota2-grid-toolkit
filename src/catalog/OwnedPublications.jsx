@@ -51,7 +51,7 @@ export default function OwnedPublications({ items, guestItems, auth }) {
   const count = items.length + guestItems.length;
   return <section className="catalog-owned" aria-label={t('Мои публикации')}>
     <div className="catalog-results publication-summary"><span>{t('Публикаций: {count}', { count })}</span>
-      {!auth.user && <p>{t('Без входа доступны заявки этого браузера.')} <button className="catalog-link" onClick={() => auth.requestLogin()}>{t('Войти')}</button></p>}
+      {!auth.user && <p>{t('Без входа доступны заявки этого браузера.')} <button className="catalog-link" onClick={() => auth.requestLogin('', 'mine')}>{t('Войти')}</button></p>}
     </div>
     {count ? <div className="catalog-grid publication-files">
       {items.map(item => <PublicationCard key={`${auth.user?.id}:${item.id}`} entry={item} accountId={auth.user?.id}/>)}

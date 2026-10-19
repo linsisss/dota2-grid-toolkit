@@ -3,6 +3,7 @@ import { useAccount } from './Account.jsx';
 import SubmissionForm from './SubmissionForm.jsx';
 import { catalogAPI, editingWork, forgetEditing, ownedWorks } from './api.js';
 import { t } from '../../scripts/i18n.mjs';
+import { track } from '../site-stats.js';
 
 const STATUS = () => ({ pending: t('на проверке'), rejected: t('нужны изменения'), approved: t('опубликована') });
 const ORDER = { rejected: 0, pending: 1, approved: 2 };
@@ -41,6 +42,6 @@ export default function PublishTarget({ grid }) {
       {existing && <p className="catalog-muted">{t('Заявка обновится на месте: сетка, название и теги заменятся, и она снова пройдёт проверку.')}{existing.published ? ` ${t('До одобрения в мастерской останется прежняя версия.')}` : ''}</p>}
     </div>}
     <SubmissionForm key={target || 'new'} grid={grid} existing={existing} token={existing?.token}
-      onSaved={() => { if (existing) forgetEditing(); }}/>
+      onSaved={() => { track('editor.publish', { kind: 'grid' }); if (existing) forgetEditing(); }}/>
   </>;
 }

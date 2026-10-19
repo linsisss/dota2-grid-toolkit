@@ -3,7 +3,9 @@
 // font scripts find Dota 2 by themselves: Steam's path from the registry, every library from
 // steamapps/libraryfolders.vdf, the library whose "dota 2 beta" has game/dota/gameinfo.gi; if that
 // fails they ask for the folder. Nothing is downloaded or run besides copying; whatever they replace is
-// kept for the remove command. The messages follow the page's language (scripts/i18n.mjs).
+// kept for the remove command. The messages follow the page's language (scripts/i18n.mjs). At the end each
+// script tells the site whether it worked (REPORT, Send-Report: the pack's id and ok/fail/removed only,
+// fire and forget — it never stops or changes the install), for «Аналитика»'s «поставил».
 import { lang } from './i18n.mjs';
 import { CUSTOMIZE_LIST } from './customize-pack.mjs';
 
@@ -256,6 +258,7 @@ function Start-Grid([scriptblock]$work) {
     $root = Join-Path $steam ('userdata\' + $account + '\570')
     & $work (Join-Path $root 'remote\cfg') (Join-Path $root 'gridstudio-backup')
   } catch {
+    Send-Report 'fail' 'grid'
     Write-Host ''
     Write-Host (${quote(m.error)} + $_.Exception.Message) -ForegroundColor Red
   }
@@ -272,10 +275,11 @@ ${body}
 // background, the script downloads the hero_grid_config.json the page sent (server/grid-installs.mjs,
 // …/install/file/grid-<id>) as bytes and checks its size and SHA-256 (DOWNLOAD), so the encoding plays no
 // part. `restore`: the restore command's address, printed at the end.
-export function gridScript({ url, sha256, size }, { restore = '', language = lang } = {}) {
+export function gridScript({ url, sha256, size }, { restore = '', language = lang, report = null } = {}) {
   if (!validDownload(sha256, size, url)) throw new Error('Unknown grid file.');
   const m = texts(language), g = m.grid;
-  return gridFrame(g, `${GRID_STEAM(m, g)}
+  return gridFrame(g, `${REPORT(report)}
+${GRID_STEAM(m, g)}
 \$ProgressPreference = 'SilentlyContinue'
 ${DOWNLOAD({ sha256, size, url, ext: 'json' }, g)}
 Start-Grid {
@@ -292,15 +296,17 @@ Start-Grid {
     }
     Copy-Item -LiteralPath $file -Destination $dest -Force
     Write-Host (${quote(g.done)} + $dest) -ForegroundColor Green
+    Send-Report 'ok'
     Write-Host ''
     Write-Host ${quote(g.after)}
 ${restore ? `    Write-Host (${quote(g.back)} + ${quote(installCommand(restore))})\n` : ''}  } finally { Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue }
 }`);
 }
 // Puts the newest copy back (and drops it: the next run goes one copy further back).
-export function gridRestoreScript(language = lang) {
+export function gridRestoreScript(language = lang, report = null) {
   const m = texts(language), g = m.grid;
-  return gridFrame(g, `${GRID_STEAM(m, g)}
+  return gridFrame(g, `${REPORT(report)}
+${GRID_STEAM(m, g)}
 Start-Grid {
   param($cfg, $backups)
   $dest = Join-Path $cfg 'hero_grid_config.json'
@@ -310,6 +316,7 @@ Start-Grid {
   Copy-Item -LiteralPath $last.FullName -Destination $dest -Force
   Remove-Item -LiteralPath $last.FullName -Force
   Write-Host (${quote(g.restored)} + $last.Name) -ForegroundColor Green
+  Send-Report 'removed'
   Write-Host ${quote(g.restoredAfter)}
 }`);
 }
@@ -345,20 +352,35 @@ const DOWNLOAD = ({ sha256, size, url, ext }, x) => String.raw`function Get-Pack
   }
   return $file
 }`;
+// The install's outcome for the site's analytics (docs/analytics.md, the funnel's «поставил»): POST
+// {pack, result, error} to …/install/report — the pack's id (kind and SHA-256, or the grid's id), 'ok',
+// 'fail' or 'removed', and on a failure the step it stopped at ('download', 'find', 'copy'…). Nothing about
+// the computer, the account or the folders. Fire and forget: any problem with the report (no network, an
+// old site, a proxy) is swallowed, waits at most 5 seconds and never changes what the script does.
+// `report`: { url, pack }; without it the function does nothing.
+const REPORT = (report) => (report && /^https?:\/\/[A-Za-z0-9.:-]+\/[A-Za-z0-9/._-]+$/.test(String(report.url)) && /^(grid|bg|font|all)-([A-Za-z0-9_-]{16}|[0-9a-f]{64}|remove)$/.test(String(report.pack))
+  ? String.raw`function Send-Report([string]$result, [string]$step = '') {
+  try { Invoke-RestMethod -Uri '${report.url}' -Method Post -ContentType 'application/json' -TimeoutSec 5 -UseBasicParsing -Body ('{"pack":"${report.pack}","result":"' + $result + '","error":"' + ($step -replace '[^a-z-]', '') + '"}') | Out-Null } catch { }
+}`
+  : "function Send-Report([string]$result, [string]$step = '') { }");
 const validDownload = (sha256, size, url) => /^[0-9a-f]{64}$/.test(sha256) && Number.isSafeInteger(size) && size > 0 && /^https?:\/\/[A-Za-z0-9.:-]+\/[A-Za-z0-9/._-]+$/.test(String(url));
 // `url`: where the uploaded pack is (…/api/catalog/install/file/bg-<sha256>).
-export function backgroundScript({ sha256, size, url }, { remove = '', language = lang } = {}) {
+export function backgroundScript({ sha256, size, url }, { remove = '', language = lang, report = null } = {}) {
   if (!validDownload(sha256, size, url)) throw new Error('Unknown background file.');
   const m = texts(language), b = m.background;
   return gridFrame(b, String.raw`$ProgressPreference = 'SilentlyContinue'
+${REPORT(report)}
 ${FIND_DOTA(m)}
 ${DOWNLOAD({ sha256, size, url, ext: 'vpk' }, b)}
 $pack = $null
+$step = 'download'
 try {
   $pack = Get-Pack
+  $step = 'find'
   $dota = Find-Dota
   Write-Host ('Dota 2: ' + $dota)
   Wait-DotaClosed
+  $step = 'copy'
 ${AUDIO(b)}
   $target = Join-Path $dota 'game\dota_russian'
   $dest = Join-Path $target 'pak02_dir.vpk'
@@ -367,23 +389,28 @@ ${AUDIO(b)}
   if ((Test-Path -LiteralPath $dest) -and -not (Test-Path -LiteralPath $backup)) { Copy-Item -LiteralPath $dest -Destination $backup -Force; Write-Host (${quote(b.kept[0])} + 'pak02_dir.vpk' + ${quote(b.kept[1])}) }
   Copy-Item -LiteralPath $pack -Destination $dest -Force
   Write-Host (${quote(b.done)} + $dest) -ForegroundColor Green
+  Send-Report 'ok'
   Set-RussianAudio
   Write-Host ''
   Write-Host ${quote(b.launch)}
   Write-Host ${quote(b.restart)}
 ${remove ? `  Write-Host (${quote(b.back)} + ${quote(installCommand(remove))})\n` : ''}} catch {
+  Send-Report 'fail' $step
   Write-Host ''
   Write-Host (${quote(m.error)} + $_.Exception.Message) -ForegroundColor Red
 } finally { if ($pack) { Remove-Item -LiteralPath $pack -Force -ErrorAction SilentlyContinue } }`);
 }
 // Takes the background away: the file goes, the one it replaced and the audio language come back.
-export function backgroundRemoveScript(language = lang) {
+export function backgroundRemoveScript(language = lang, report = null) {
   const m = texts(language), b = m.background;
-  return gridFrame(b, String.raw`${FIND_DOTA(m)}
+  return gridFrame(b, String.raw`${REPORT(report)}
+${FIND_DOTA(m)}
+$step = 'find'
 try {
   $dota = Find-Dota
   Write-Host ('Dota 2: ' + $dota)
   Wait-DotaClosed
+  $step = 'remove'
 ${AUDIO(b)}
   $dest = Join-Path $dota 'game\dota_russian\pak02_dir.vpk'
   $backup = $dest + '.gridstudio-backup'
@@ -391,7 +418,9 @@ ${AUDIO(b)}
   if (Test-Path -LiteralPath $backup) { Move-Item -LiteralPath $backup -Destination $dest -Force; Write-Host ${quote(b.restored)} }
   Restore-Audio
   Write-Host ${quote(b.removed)} -ForegroundColor Green
+  Send-Report 'removed'
 } catch {
+  Send-Report 'fail' $step
   Write-Host ''
   Write-Host (${quote(m.error)} + $_.Exception.Message) -ForegroundColor Red
 }`);
@@ -407,18 +436,22 @@ ${AUDIO(b)}
 export const FONT_NAME = (sha256) => `gridstudio-font-${sha256.slice(0, 8)}.zip`;
 const FONT_CACHE = String.raw`  if ($env:TEMP) { $cache = Join-Path $env:TEMP 'fontconfig'; if (Test-Path -LiteralPath $cache) { Remove-Item -LiteralPath $cache -Recurse -Force -ErrorAction SilentlyContinue } }`;
 // `url`: where the uploaded archive is (…/api/catalog/install/file/font-<sha256>).
-export function fontScript({ sha256, size, url }, { remove = '', language = lang } = {}) {
+export function fontScript({ sha256, size, url }, { remove = '', language = lang, report = null } = {}) {
   if (!validDownload(sha256, size, url)) throw new Error('Unknown font archive.');
   const m = texts(language), f = m.font;
   return gridFrame(f, String.raw`$ProgressPreference = 'SilentlyContinue'
+${REPORT(report)}
 ${FIND_DOTA(m)}
 ${DOWNLOAD({ sha256, size, url, ext: 'zip' }, f)}
 $pack = $null
+$step = 'download'
 try {
   $pack = Get-Pack
+  $step = 'find'
   $dota = Find-Dota
   Write-Host ('Dota 2: ' + $dota)
   Wait-DotaClosed
+  $step = 'copy'
   $fonts = Join-Path $dota 'game\dota\panorama\fonts'
   $backup = Join-Path $fonts 'gridstudio-backup'
   Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -435,21 +468,26 @@ try {
   } finally { $archive.Dispose() }
 ${FONT_CACHE}
   Write-Host (${quote(f.done[0])} + $ours.Count + ${quote(f.done[1])} + $fonts) -ForegroundColor Green
+  Send-Report 'ok'
   Write-Host ''
   Write-Host ${quote(f.after)}
 ${remove ? `  Write-Host (${quote(f.back)} + ${quote(installCommand(remove))})\n` : ''}} catch {
+  Send-Report 'fail' $step
   Write-Host ''
   Write-Host (${quote(m.error)} + $_.Exception.Message) -ForegroundColor Red
 } finally { if ($pack) { Remove-Item -LiteralPath $pack -Force -ErrorAction SilentlyContinue } }`);
 }
 // Puts the game's fonts back from the backup and drops it.
-export function fontRemoveScript(language = lang) {
+export function fontRemoveScript(language = lang, report = null) {
   const m = texts(language), f = m.font;
-  return gridFrame(f, String.raw`${FIND_DOTA(m)}
+  return gridFrame(f, String.raw`${REPORT(report)}
+${FIND_DOTA(m)}
+$step = 'find'
 try {
   $dota = Find-Dota
   Write-Host ('Dota 2: ' + $dota)
   Wait-DotaClosed
+  $step = 'remove'
   $fonts = Join-Path $dota 'game\dota\panorama\fonts'
   $backup = Join-Path $fonts 'gridstudio-backup'
   if (-not (Test-Path -LiteralPath $backup)) { throw ${quote(f.noBackup)} }
@@ -457,7 +495,9 @@ try {
   Remove-Item -LiteralPath $backup -Recurse -Force
 ${FONT_CACHE}
   Write-Host ${quote(f.restored)} -ForegroundColor Green
+  Send-Report 'removed'
 } catch {
+  Send-Report 'fail' $step
   Write-Host ''
   Write-Host (${quote(m.error)} + $_.Exception.Message) -ForegroundColor Red
 }`);
@@ -493,18 +533,22 @@ const CUSTOMIZE_COMMON = (a) => String.raw`
     Get-ChildItem -LiteralPath $fontBackup -File | Where-Object { $keep -notcontains $_.Name } | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $fonts $_.Name) -Force }
     if ($env:TEMP) { $cache = Join-Path $env:TEMP 'fontconfig'; if (Test-Path -LiteralPath $cache) { Remove-Item -LiteralPath $cache -Recurse -Force -ErrorAction SilentlyContinue } }
   }`;
-export function customizeScript({ sha256, size, url }, { remove = '', language = lang } = {}) {
+export function customizeScript({ sha256, size, url }, { remove = '', language = lang, report = null } = {}) {
   if (!validDownload(sha256, size, url)) throw new Error('Unknown customization file.');
   const m = texts(language), a = m.all;
   return gridFrame(a, String.raw`$ProgressPreference = 'SilentlyContinue'
+${REPORT(report)}
 ${FIND_DOTA(m)}
 ${DOWNLOAD({ sha256, size, url, ext: 'zip' }, a)}
 $pack = $null
+$step = 'download'
 try {
   $pack = Get-Pack
+  $step = 'find'
   $dota = Find-Dota
   Write-Host ('Dota 2: ' + $dota)
   Wait-DotaClosed
+  $step = 'copy'
 ${AUDIO(a)}
 ${CUSTOMIZE_COMMON(a)}
   Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -547,23 +591,28 @@ ${CUSTOMIZE_COMMON(a)}
   elseif (Test-Path -LiteralPath $list) { Remove-Item -LiteralPath $list -Force }
   if ($now.Count -gt 0) { Set-RussianAudio } elseif ($before.Count -gt 0) { Restore-Audio }
   Write-Host (${quote(a.done)} + ($now.Count + $ourFonts.Count)) -ForegroundColor Green
+  Send-Report 'ok'
   Write-Host ''
   if ($now.Count -gt 0) { Write-Host ${quote(a.launch)} }
   Write-Host ${quote(a.restart)}
 ${remove ? `  Write-Host (${quote(a.back)} + ${quote(installCommand(remove))})\n` : ''}} catch {
+  Send-Report 'fail' $step
   Write-Host ''
   Write-Host (${quote(m.error)} + $_.Exception.Message) -ForegroundColor Red
 } finally { if ($pack) { Remove-Item -LiteralPath $pack -Force -ErrorAction SilentlyContinue } }`);
 }
 // Takes the whole build away: the files of the list go (what they replaced comes back), Valve's fonts and
 // the audio language come back.
-export function customizeRemoveScript(language = lang) {
+export function customizeRemoveScript(language = lang, report = null) {
   const m = texts(language), a = m.all;
-  return gridFrame(a, String.raw`${FIND_DOTA(m)}
+  return gridFrame(a, String.raw`${REPORT(report)}
+${FIND_DOTA(m)}
+$step = 'find'
 try {
   $dota = Find-Dota
   Write-Host ('Dota 2: ' + $dota)
   Wait-DotaClosed
+  $step = 'remove'
 ${AUDIO(a)}
 ${CUSTOMIZE_COMMON(a)}
   if (-not (Test-Path -LiteralPath $list)) { Write-Host ${quote(a.nothing)}; return }
@@ -572,7 +621,9 @@ ${CUSTOMIZE_COMMON(a)}
   Remove-Item -LiteralPath $list -Force
   Restore-Audio
   Write-Host ${quote(a.removed)} -ForegroundColor Green
+  Send-Report 'removed'
 } catch {
+  Send-Report 'fail' $step
   Write-Host ''
   Write-Host (${quote(m.error)} + $_.Exception.Message) -ForegroundColor Red
 }`);

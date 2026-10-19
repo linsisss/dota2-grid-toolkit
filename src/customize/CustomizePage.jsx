@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Icon, Notice } from '../catalog/Common.jsx';
 import { lang, t } from '../../scripts/i18n.mjs';
 import { pcCode } from '../../scripts/pc-link.mjs';
-import { countAction } from '../site-stats.js';
+import { packOf, track } from '../site-stats.js';
 import { openCommunity } from '../Community.jsx';
 import { CUSTOMIZE_DIRS } from '../../scripts/customize-pack.mjs';
 import { CopyField, InstallWindow, Segmented, rich, sizeText } from './ui.jsx';
@@ -140,11 +140,22 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
   const titles = MODS.filter((module) => states[module.id] !== 'default').map((module) => module.title);
   const follow = MODS.filter((module) => states[module.id] === 'follow').length;
   const dots = Object.fromEntries(SCENES().map(([id]) => [id, MODS.some((module) => module.scene === id && states[module.id] === 'changed') || (id === 'menu' && states.texts === 'changed')]));
+  // «customize.change»: a section that becomes «Своё» after the user did something on the page; what comes
+  // back by itself (saved settings, cursor pictures from IndexedDB, a studio recipe) is not a change.
+  const seen = useRef(states), touched = useRef(false);
+  const stateKey = MODS.map((module) => states[module.id]).join();
+  useEffect(() => {
+    for (const module of MODS) if (touched.current && states[module.id] === 'changed' && seen.current[module.id] !== 'changed') track('customize.change', { section: module.id, part: module.id });
+    seen.current = states;
+  }, [stateKey]);
+  const touch = () => { touched.current = true; };
 
   // The one file: the menu's videos encoded (once), every part made, zipped; then saved, or sent to the
-  // site for the command. One statistics event says which parts it had.
+  // site for the command. The statistics: its start, then its parts, size and pack, or why it failed.
   async function download() {
     setError(''); setBusy({ label: t('Собираем…') });
+    const parts = MODS.filter((module) => states[module.id] !== 'default').map((module) => module.id);
+    track('customize.build-start', { delivery, parts });
     try {
       const menu = await bg.prepare({ delivery });
       setBusy({ label: t('Собираем…') });
@@ -155,9 +166,13 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
       if (!zip) return;
       const given = await deliverCustomize(zip.blob, { delivery, onProgress: (share) => setBusy({ label: t('Отправляем на GridStudio… {percent}%', { percent: Math.round(share * 100) }), progress: share }) });
       bg.delivered({ delivery });
-      countAction('customize-pack', MODS.filter((module) => states[module.id] !== 'default').map((module) => module.id));
+      const mb = Math.round(zip.blob.size / 1e6);
+      track('customize.build-done', { delivery, parts, mb, pack: packOf(given?.command) || '' });
+      if (delivery === 'file') track('customize.download', { mb });
       setHanded(given); setMade({ size: zip.blob.size, entries: zip.entries }); setInstall(true);
     } catch (problem) {
+      // A cancel is not a failure.
+      if (!problem?.aborted) track('customize.build-fail', { delivery, reason: String(problem?.message || 'error').slice(0, 80) });
       if (!problem?.aborted && !problem?.shown) setError(problem?.message || t('Не получилось собрать файл.'));
       if (problem?.shown) setError(problem.message);
     } finally { setBusy(null); }
@@ -166,11 +181,12 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
     const next = open === id ? '' : id;
     setOpen(next);
     if (next) {
+      track('customize.section', { section: next });
       setScene(find(next).scene);
       setTimeout(() => document.querySelector(`.cz-mod[data-id="${next}"]`)?.scrollIntoView({ behavior: 'smooth', block: matchMedia('(max-width: 900px)').matches ? 'start' : 'nearest' }), 380);
     }
   };
-  const chooseScene = (id) => { setScene(id); if (open === 'font') setOpen(''); };
+  const chooseScene = (id) => { track('customize.scene', { scene: id }); setScene(id); if (open === 'font') setOpen(''); };
   const fields = { bg: <BackgroundFields bg={bg}/>, grid: <GridFields bg={bg}/>, hero: <HeroFields bg={bg}/>, loading: <LoadingFields bg={bg}/>, buttons: <ButtonsFields bg={bg}/>,
     hud: <HudFields ui={ui}/>, chat: <ChatFields ui={ui}/>, cursor: <CursorFields cur={ui.cursors}/>, font: <FontFields font={font}/>, texts: <TextsFields ui={ui}/>,
     ...Object.fromEntries(D2PFX_MODULES.map((id) => [id, <D2pfxFields d2={d2} section={id}/>])) };
@@ -184,7 +200,7 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
     : follow ? t('Пока всё как в Dota.') : t('Пока всё как в Dota. Открой любой раздел справа.');
   const sizeLine = changed.length ? `${t('изменений: {count}', { count: changed.length })} · ${sizeText(total, estimate)}` : t('пока ничего не изменено');
 
-  return <main className={`cz-work${bg.dragging ? ' is-over' : ''}`}>
+  return <main className={`cz-work${bg.dragging ? ' is-over' : ''}`} onPointerDownCapture={touch} onKeyDownCapture={touch} onDropCapture={touch}>
     <section className="cz-stage" aria-label={t('Превью')} {...(scene !== 'match' && scene !== 'font' ? bg.drop : {})}>
       <div className="cz-scenebar">
         <Scenes scene={scene} onScene={chooseScene} thumb={thumb} dots={dots}/>
@@ -239,12 +255,12 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
           {encoding && <button type="button" className="catalog-icon" aria-label={t('Отменить')} onClick={bg.cancel}><Icon name="close"/></button>}</div>
           : <button type="button" className="catalog-button primary cz-download" disabled={!titles.length || !!bg.fetching} onClick={download}>
             <Icon name={delivery === 'command' ? 'terminal' : 'download'}/>{delivery === 'command' ? t('Собрать и получить команду') : t('Скачать всё одним файлом')}</button>}
-        <div className="custom-foot-row"><button type="button" className="catalog-link" aria-expanded={inside} onClick={() => setInside(!inside)}>{t('Что внутри')}<Icon name={inside ? 'chevron' : 'chevronUp'} size={14}/></button>
-          <button type="button" className="catalog-link" onClick={() => setInstall(true)}>{t('Как установить')}</button></div>
+        <div className="custom-foot-row"><button type="button" className="catalog-link" aria-expanded={inside} onClick={() => { if (!inside) track('customize.inside'); setInside(!inside); }}>{t('Что внутри')}<Icon name={inside ? 'chevron' : 'chevronUp'} size={14}/></button>
+          <button type="button" className="catalog-link" onClick={() => { track('customize.install-help'); setInstall(true); }}>{t('Как установить')}</button></div>
       </footer>
     </aside>
     {PHONE && <div className="cz-phone-bar"><div><b>{changed.length ? sizeLine : t('Пока всё как в Dota')}</b>{changed.map((module) => module.title).join(', ') || t('Всё собирается на компьютере')}</div>
-      <a className="catalog-button primary" href={`/api/catalog/pc/${pcCode(location)}`} target="_blank" rel="noopener" onClick={() => countAction('send-pc')}><Icon name="telegram"/>{t('Прислать на ПК')}</a></div>}
+      <a className="catalog-button primary" href={`/api/catalog/pc/${pcCode(location)}`} target="_blank" rel="noopener" onClick={() => track('pc.send', { from: 'customize' })}><Icon name="telegram"/>{t('Прислать на ПК')}</a></div>}
     <MenuWindows bg={bg}/>
     {install && <Install delivery={delivery} handed={delivery === 'command' ? handed : null} made={made} bg={bg} onClose={() => setInstall(false)}/>}
   </main>;
@@ -259,7 +275,7 @@ function Install({ delivery, handed, made, bg, onClose }) {
     <Segmented label={t('Как поставить')} value={way} onChange={setWay} options={[['command', t('Командой PowerShell')], ['file', t('Вручную')]]}/>
     {way === 'command' ? <ol>
       <li>{handed ? t('Сборка сохранена на GridStudio на 7 дней — команда скачает именно её, ничего искать не нужно.') : t('Выбери «Командой PowerShell» и нажми «Собрать и получить команду»: сборка отправится на GridStudio на 7 дней, а здесь появится команда именно для неё.')}</li>
-      {handed && <li>{t('Скопируй команду:')}<CopyField value={handed.command}/></li>}
+      {handed && <li>{t('Скопируй команду:')}<CopyField value={handed.command} onCopy={() => track('customize.command-copy', { pack: packOf(handed.command) })}/></li>}
       <li>{rich(t('Открой PowerShell ({key}, набери PowerShell, {enter}), вставь команду и нажми {enter}.'), { key: <kbd>Win</kbd>, enter: <kbd>Enter</kbd> })}</li>
       <li>{t('Она сама найдёт Dota через Steam, попросит закрыть игру, сохранит файлы Dota, положит фон и интерфейс в dota_russian, шрифт — в panorama\\fonts, и включит русскую озвучку. То, чего больше нет в сборке, она уберёт. Запусти Dota.')}</li>
     </ol> : <ol>

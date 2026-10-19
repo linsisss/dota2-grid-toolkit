@@ -10,7 +10,7 @@ import { Queue, reasonNote, StaffRole, useQueue } from './ModerationQueue.jsx';
 import { CompareStage, MetaFields, metaBy, ReportsAlert, ReviewLayout, SimilarAlert } from './AdminReview.jsx';
 import { creatorText } from './Creator.jsx';
 import AdminJournal from './AdminJournal.jsx';
-const AdminStats = lazy(() => import('./AdminStats.jsx'));
+const AdminAnalytics = lazy(() => import('./AdminAnalytics.jsx'));
 const AdminUsers = lazy(() => import('./AdminUsers.jsx'));
 const AdminSpot = lazy(() => import('./AdminSpot.jsx'));
 import './admin.css';
@@ -34,7 +34,7 @@ export default function Moderation() {
   return <StaffRole.Provider value={auth.admin ? 'admin' : 'moderator'}><AdminPanel auth={auth}/></StaffRole.Provider>;
 }
 
-const VIEWS = [['inbox', 'Входящие', 'bell'], ['works', 'Сетки', 'grid'], ['arts', 'Готовые арты', 'art'], ['backgrounds', 'Фоны', 'brush'], ['guides', 'Гайды', 'guides'], ['stats', 'Статистика', 'gauge'], ['users', 'Пользователи', 'user'], ['spot', 'Реклама', 'news'], ['journal', 'Журнал', 'history']];
+const VIEWS = [['inbox', 'Входящие', 'bell'], ['works', 'Сетки', 'grid'], ['arts', 'Готовые арты', 'art'], ['backgrounds', 'Фоны', 'brush'], ['guides', 'Гайды', 'guides'], ['stats', 'Аналитика', 'gauge'], ['users', 'Пользователи', 'user'], ['spot', 'Реклама', 'news'], ['journal', 'Журнал', 'history']];
 const MODERATOR_VIEWS = ['works', 'arts', 'backgrounds', 'guides'];
 
 function AdminPanel({ auth }) {
@@ -53,7 +53,7 @@ function AdminPanel({ auth }) {
   const denied = error => { if (error.status === 401 || error.status === 403) auth.refresh().catch(() => {}); };
   useEffect(() => { catalogAPI('/admin/summary').then(setSummary, denied); }, [tick]);
   const changed = () => setTick(x => x + 1);
-  const show = value => { const url = new URL(location.href); url.searchParams.set('moderate', value === 'inbox' ? '' : value); url.searchParams.delete('filter'); history.replaceState(history.state, '', url); setView(value); };
+  const show = value => { const url = new URL(location.href); url.searchParams.set('moderate', value === 'inbox' ? '' : value); for (const key of ['filter', 'tab', 'days', 'from', 'to', 'device', 'source', 'compare']) url.searchParams.delete(key); history.replaceState(history.state, '', url); setView(value); };
   // A moderator's counts are what waits for their decision; reports are the admins'.
   const c = summary?.counts, waiting = c ? (moderator ? { works: c.works.pending, arts: c.arts.pending, backgrounds: c.backgrounds.pending, guides: c.guides.pending }
     : { works: c.works.pending + c.works.reports, arts: c.arts.pending, backgrounds: c.backgrounds.pending + c.backgrounds.reports, guides: c.guides.pending + c.guides.reports }) : {};
@@ -63,8 +63,10 @@ function AdminPanel({ auth }) {
     try { setSummary({ ...summary, ...(await catalogAPI('/admin/settings', { method: 'PATCH', body: { paused: !summary.paused } })) }); } catch (error) { denied(error); } finally { setBusy(false); }
   }
   return <div className="admin" ref={box} style={{ '--admin-offset': `${offset}px` }}>
-    <header className="admin-top"><div><h1>Модерация</h1><p>{moderator ? 'Одобряй или отклоняй сетки, арты, фоны и гайды на проверке. ' : ''}Проверяй именно ту версию, которая будет опубликована. Решения отражаются и на карточках в Telegram.</p></div>
-      {!moderator && <div className="admin-top-actions">
+    {/* «Аналитика» has a head of its own (2026-10-19 redesign): the intake switch belongs to moderation. */}
+    <header className="admin-top">{view === 'stats' ? <div><h1>Аналитика</h1><p>Посещаемость, источники, инструменты и воронки GridStudio</p></div>
+      : <div><h1>Модерация</h1><p>{moderator ? 'Одобряй или отклоняй сетки, арты, фоны и гайды на проверке. ' : ''}Проверяй именно ту версию, которая будет опубликована. Решения отражаются и на карточках в Telegram.</p></div>}
+      {!moderator && view !== 'stats' && <div className="admin-top-actions">
         <button type="button" className={`admin-pause${summary?.paused ? ' is-paused' : ''}`} role="switch" aria-checked={summary ? !summary.paused : undefined} disabled={busy || !summary} onClick={pause}
           title={summary?.paused ? 'Новые заявки не принимаются. Нажми, чтобы открыть приём.' : 'Нажми, чтобы временно не принимать новые заявки.'}><i/>{summary?.paused ? 'Приём приостановлен' : 'Приём открыт'}</button>
         {config?.moderationUrl && <a className="catalog-button" href={config.moderationUrl} target="_blank" rel="noreferrer"><Icon name="telegramLogo"/>Топик модерации<Icon name="external" size={14}/></a>}
@@ -83,7 +85,7 @@ function AdminPanel({ auth }) {
           : view === 'arts' ? <ArtModeration denied={denied} onChanged={changed}/>
           : view === 'backgrounds' ? <BackgroundModeration denied={denied} onChanged={changed}/>
           : view === 'guides' ? <Suspense fallback={<p role="status">Загружаем гайды…</p>}><GuideModeration denied={denied} onChanged={changed}/></Suspense>
-          : view === 'stats' ? <Suspense fallback={<p role="status">Загружаем статистику…</p>}><AdminStats denied={denied}/></Suspense>
+          : view === 'stats' ? <Suspense fallback={<p role="status">Загружаем аналитику…</p>}><AdminAnalytics denied={denied}/></Suspense>
           : view === 'users' ? <Suspense fallback={<p role="status">Загружаем пользователей…</p>}><AdminUsers denied={denied}/></Suspense>
           : view === 'spot' ? <Suspense fallback={<p role="status">Загружаем рекламу…</p>}><AdminSpot denied={denied}/></Suspense>
           : <AdminJournal denied={denied}/>}

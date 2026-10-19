@@ -9,6 +9,7 @@ import gridFontURL from '../../assets/fonts/radiance-semibold.otf?url';
 import { installCommand } from '../../scripts/installer.mjs';
 import { lang, t } from '../../scripts/i18n.mjs';
 import { CopyField, Field, rich } from './ui.jsx';
+import { track } from '../site-stats.js';
 
 // «Шрифт» of the one-page customization (CustomizePage.jsx; its own page /background?tab=font until
 // 2026-10-17): a catalog font (assets/dota-fonts, data/dota-fonts.json) or the user's own .ttf/.otf
@@ -138,7 +139,7 @@ export function FontFields({ font }) {
   return <>
     <div className="custom-fonts" role="radiogroup" aria-label={t('Шрифт')}>
       <button type="button" role="radio" aria-checked={dota} className="custom-font-dota" onClick={() => font.choose(null)}><span>{t('Шрифт Dota')}</span></button>
-      {catalog.fonts.map((item) => <FontChip key={item.id} font={item} selected={!font.own && font.selected === item.id} onSelect={() => font.choose(item.id)}/>)}
+      {catalog.fonts.map((item) => <FontChip key={item.id} font={item} selected={!font.own && font.selected === item.id} onSelect={() => { track('customize.preset', { section: 'font', preset: `font:${item.id}` }); font.choose(item.id); }}/>)}
       <button type="button" role="radio" aria-checked={!!font.own} className="custom-font-own" onClick={() => input.current?.click()}><Icon name="plus"/>{font.own ? t('Свой: {name}', { name: font.own.name }) : t('Свой шрифт .ttf / .otf')}</button>
     </div>
     <input ref={input} type="file" multiple accept=".ttf,.otf,font/ttf,font/otf" className="catalog-file" onChange={(event) => { font.upload([...event.target.files]); event.target.value = ''; }}/>

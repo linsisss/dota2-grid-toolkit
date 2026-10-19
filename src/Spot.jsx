@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { t } from '../scripts/i18n.mjs';
+import { track } from './site-stats.js';
 import './spot.css';
 
 // The advertising place (asked for on 2026-10-04): one banner on the landing page, in the workshop's
@@ -25,20 +26,32 @@ export function useSpot() {
 export function Spot({ place, className = '' }) {
   const spot = useSpot();
   if (!spot?.places?.[place]) return null;
-  return <SpotView spot={spot} className={className}/>;
+  return <SpotView spot={spot} className={className} place={place}/>;
 }
 
-// Also the admin panel's preview.
-export function SpotView({ spot, className = '' }) {
+// Also the admin panel's preview (no `place`: not counted). With `place`, spot.view once half of it is in
+// view, spot.click on the banner and the offer.
+export function SpotView({ spot, className = '', place = '' }) {
+  const box = useRef(null);
+  useEffect(() => {
+    if (!place || !box.current || typeof IntersectionObserver !== 'function') return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      observer.disconnect(); track('spot.view', { place });
+    }, { threshold: 0.5 });
+    observer.observe(box.current);
+    return () => observer.disconnect();
+  }, [place]);
+  const clicked = (target) => () => { if (place) track('spot.click', { place, target }); };
   const picture = <img src={spot.image} srcSet={`${spot.small} 960w, ${spot.image} ${spot.width}w`} sizes="(max-width: 760px) 100vw, 860px"
     alt={spot.alt} width={spot.width} height={spot.height} loading="lazy" decoding="async"/>;
-  return <aside className={`gs-spot ${className}`.trim()} aria-labelledby="gsSpotMark" style={{ '--spot-ratio': spot.width / spot.height }}>
+  return <aside ref={box} className={`gs-spot ${className}`.trim()} aria-labelledby="gsSpotMark" style={{ '--spot-ratio': spot.width / spot.height }}>
     <div className="gs-spot-frame">
       <img className="gs-spot-glow" src={spot.small} alt="" aria-hidden="true" loading="lazy" decoding="async"/>
-      {spot.href ? <a className="gs-spot-picture" href={spot.href} target="_blank" rel="noopener sponsored">{picture}</a> : <div className="gs-spot-picture">{picture}</div>}
+      {spot.href ? <a className="gs-spot-picture" href={spot.href} target="_blank" rel="noopener sponsored" onClick={clicked('banner')}>{picture}</a> : <div className="gs-spot-picture">{picture}</div>}
     </div>
     {/* The mark under the banner, not on it: on a phone it covered the banner's own text. */}
     <p className="gs-spot-caption"><span id="gsSpotMark" className="gs-spot-mark">{t('Реклама')}</span>
-      {spot.contact && <a className="gs-spot-offer" href={spot.contact} target="_blank" rel="noopener noreferrer">{t('Здесь может быть ваша реклама')}</a>}</p>
+      {spot.contact && <a className="gs-spot-offer" href={spot.contact} target="_blank" rel="noopener noreferrer" onClick={clicked('offer')}>{t('Здесь может быть ваша реклама')}</a>}</p>
   </aside>;
 }

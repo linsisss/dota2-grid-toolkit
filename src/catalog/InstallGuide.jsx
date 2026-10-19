@@ -5,6 +5,7 @@ import { Icon, Modal, rich } from './Common.jsx';
 import { EDITOR_PATH, countDownload, downloadGrid, gridInstallCommand, gridRestoreCommand } from './api.js';
 import { t, translateMessage } from '../../scripts/i18n.mjs';
 import VideoGuide from '../VideoGuide.jsx';
+import { packOf, track } from '../site-stats.js';
 
 // Kept while the page is open, so reopening the guide shows the same folder. Never stored.
 const remembered = { profile: '', directory: DEFAULT_STEAM_DIRECTORY, account: null };
@@ -69,6 +70,7 @@ export function FileNameNote() {
 // with the video and the steps (always first), or a PowerShell command (Windows) that puts the grid
 // into the folder of the account signed in to Steam (server/grid-installs.mjs, scripts/installer.mjs).
 // The command is made only once it is chosen: the grid is kept on the site for it, for a week.
+const openedInEditor = (item) => track('workshop.download', { kind: 'grid', way: 'editor', id: item.id });
 const WINDOWS = /win/i.test(globalThis.navigator?.userAgentData?.platform || globalThis.navigator?.platform || '');
 
 function Methods({ method, onChange }) {
@@ -84,14 +86,14 @@ function Methods({ method, onChange }) {
 function CommandSteps({ item, command }) {
   const [status, setStatus] = useState(null);
   const copy = async (text, done) => {
-    try { await navigator.clipboard.writeText(text); setStatus({ text: done }); }
-    catch { setStatus({ text: t('Не удалось скопировать. Выдели команду и скопируй вручную.'), error: true }); }
+    try { await navigator.clipboard.writeText(text); setStatus({ text: done }); return true; }
+    catch { setStatus({ text: t('Не удалось скопировать. Выдели команду и скопируй вручную.'), error: true }); return false; }
   };
   const ready = command?.text, keys = { key: <kbd>Win</kbd>, enter: <kbd>Enter</kbd>, paste: <kbd>Ctrl + V</kbd> };
   return <><ol className="catalog-install is-command">
     <li><strong>{t('Скопируй команду.')}</strong>
       <code className="catalog-install-command" data-state={command?.error ? 'error' : ready ? 'ready' : 'busy'}>{command?.error || ready || t('Готовим команду…')}</code>
-      <div className="catalog-install-copy"><button className="catalog-button primary" disabled={!ready} onClick={() => copy(ready, t('Команда скопирована: вставь её в PowerShell'))}>
+      <div className="catalog-install-copy"><button className="catalog-button primary" disabled={!ready} onClick={() => copy(ready, t('Команда скопирована: вставь её в PowerShell')).then((ok) => { if (ok) track('workshop.command-copy', { kind: 'grid', pack: packOf(ready) }); })}>
         <Icon name="copy"/>{t('Скопировать команду')}</button>
         {status && <span className="catalog-muted" role={status.error ? 'alert' : 'status'} data-state={status.error ? 'error' : 'ready'}>{status.text}</span>}</div></li>
     <li><strong>{t('Открой PowerShell.')}</strong> {rich(t('Нажми {key}, набери PowerShell и нажми {enter}.'), keys)}</li>
@@ -99,7 +101,7 @@ function CommandSteps({ item, command }) {
     <li>{rich(t('{start}, открой «Герои» и выбери сетку в списке «Сортировка» внизу слева.'), { start: <strong>{t('Запусти Dota 2')}</strong> })}</li>
   </ol>
   <div className="catalog-install-notes">
-    <p>{t('Команда работает 7 дней: сетка хранится на сайте только для неё.')} {rich(t('Хочешь оставить свои сетки? {open} — она добавится к твоему файлу, и ты скачаешь всё одним JSON.'), { open: <a href={`${EDITOR_PATH}?catalog=${item.id}`}>{t('Открой эту сетку в редакторе')}</a> })}</p>
+    <p>{t('Команда работает 7 дней: сетка хранится на сайте только для неё.')} {rich(t('Хочешь оставить свои сетки? {open} — она добавится к твоему файлу, и ты скачаешь всё одним JSON.'), { open: <a href={`${EDITOR_PATH}?catalog=${item.id}`} onClick={() => openedInEditor(item)}>{t('Открой эту сетку в редакторе')}</a> })}</p>
     <p>{t('Вернуть прежние сетки:')} <code className="catalog-install-command is-small">{gridRestoreCommand()}</code>
       <button type="button" className="catalog-icon" aria-label={t('Скопировать команду возврата')} onClick={() => copy(gridRestoreCommand(), t('Команда возврата скопирована'))}><Icon name="copy"/></button></p>
   </div></>;
@@ -109,10 +111,10 @@ function FileSteps({ item }) {
   const file = <code>hero_grid_config.json</code>;
   return <><div className="catalog-install-video"><VideoGuide/></div><ol className="catalog-install">
     <li><strong>{t('Скачай сетку.')}</strong> {rich(t('Браузер сохранит файл {file} в «Загрузки».'), { file })}
-      {item && <button className="catalog-button primary" onClick={() => { downloadGrid(item.grid); countDownload('work', item.id); }}><Icon name="download"/>{t('Скачать грид')}</button>}
+      {item && <button className="catalog-button primary" onClick={() => { downloadGrid(item.grid); countDownload('work', item.id); track('workshop.download', { kind: 'grid', way: 'file', id: item.id }); }}><Icon name="download"/>{t('Скачать грид')}</button>}
       <FileNameNote/></li>
     <li><strong>{t('Закрой Dota 2.')}</strong> {rich(t('Если в папке ниже уже есть {file}, сохрани его копию: новый файл заменит все твои сетки.'), { file })}
-      <p className="catalog-muted">{rich(t('Хочешь оставить свои сетки? {open} — она добавится к твоему файлу, и ты скачаешь всё одним JSON.'), { open: item ? <a href={`${EDITOR_PATH}?catalog=${item.id}`}>{t('Открой эту сетку в редакторе')}</a> : t('Открой сетку в редакторе') })}</p></li>
+      <p className="catalog-muted">{rich(t('Хочешь оставить свои сетки? {open} — она добавится к твоему файлу, и ты скачаешь всё одним JSON.'), { open: item ? <a href={`${EDITOR_PATH}?catalog=${item.id}`} onClick={() => openedInEditor(item)}>{t('Открой эту сетку в редакторе')}</a> : t('Открой сетку в редакторе') })}</p></li>
     <li><strong>{t('Найди папку с настройками Dota 2.')}</strong><SteamFolder/></li>
     <li><strong>{t('Замени старый файл новым.')}</strong> {rich(t('Скопируй {file} в эту папку. Если Windows спросит про файл с таким же именем, выбери «Заменить файл в папке назначения».'), { file })}
       <p className="catalog-muted">{rich(t('В папке должен остаться один {file}. Файлы с другими именами Dota 2 не читает.'), { file })}</p></li>
@@ -128,7 +130,7 @@ export function InstallGuide({ item }) {
     if (method !== 'command' || asked.current || !item) return;
     asked.current = true;
     setCommand(null);
-    gridInstallCommand(item.grid).then(text => { setCommand({ text }); countDownload('work', item.id); }, error => { asked.current = false; setCommand({ error: error.message }); });
+    gridInstallCommand(item.grid).then(text => { setCommand({ text }); countDownload('work', item.id); track('workshop.download', { kind: 'grid', way: 'command', id: item.id }); }, error => { asked.current = false; setCommand({ error: error.message }); });
   }, [method]);
   if (!item) return <FileSteps/>;
   return <div className="catalog-install-guide"><Methods method={method} onChange={setMethod}/>
@@ -137,6 +139,6 @@ export function InstallGuide({ item }) {
 
 export function InstallButton({ item, className = 'catalog-button' }) {
   const [open, setOpen] = useState(false);
-  return <><button type="button" className={className} onClick={() => setOpen(true)}>{t('Как установить')}</button>
+  return <><button type="button" className={className} onClick={() => { setOpen(true); track('workshop.install-help', { kind: 'grid' }); }}>{t('Как установить')}</button>
     {open && <Modal title={t('Как установить сетку')} icon="book" size="md" onClose={() => setOpen(false)}><InstallGuide item={item}/></Modal>}</>;
 }

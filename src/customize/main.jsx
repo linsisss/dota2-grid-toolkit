@@ -12,7 +12,7 @@ import { watchErrors } from '../../scripts/community.mjs';
 import { countVisit } from '../site-stats.js';
 import { loadYandexAds } from '../yandex-ads.js';
 
-countVisit(new URLSearchParams(location.search).get('tab') === 'font' ? 'font' : 'background');
+countVisit(new URLSearchParams(location.search).get('tab') === 'font' ? 'font' : 'customize');
 // Drawn once the language is settled (for English, with its dictionaries; scripts/i18n.mjs).
 languageReady(() => import('../i18n/en/common.js'), () => import('../i18n/en/server.js'), () => import('../i18n/en/catalog.js'),
   () => import('../i18n/en/customize.js')).then(() => createRoot(document.getElementById('catalog-root')).render(<AccountProvider><CustomizeApp/></AccountProvider>));

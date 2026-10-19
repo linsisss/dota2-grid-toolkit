@@ -7,6 +7,7 @@ import { DotaCursorLayer, canHover, cursorOf, onHero } from './DotaCursor.jsx';
 import { PackCredits } from './CursorSection.jsx';
 import world from '../../assets/dota-hud-capture/world.webp?no-inline';
 import menuScreen from '../../assets/backgrounds/dota-screen.webp';
+import { track } from '../site-stats.js';
 
 // The cursor creator (2026-10-17), after d2pfx's «Cursor Creator» (h6rd.github.io/Dota2PornFxWeb →
 // Tools): every cursor of Dota on the left with Valve's own picture; in the middle the chosen one on a
@@ -54,7 +55,7 @@ export default function CursorCreator({ cur, onClose }) {
   }
   const choose = (next) => { flush(); setId(next); setError(''); };
   const close = () => { flush(); onClose(); };
-  useEffect(() => () => flush(), []);
+  useEffect(() => { track('customize.cursor-creator', { action: 'open' }); return () => flush(); }, []);
 
   // The stage: Valve's picture faded under the user's.
   useEffect(() => {
@@ -185,7 +186,7 @@ export default function CursorCreator({ cur, onClose }) {
     </div>
     <footer className="cur-foot">
       <span className="catalog-muted">{count ? t('Готово курсоров: {count} из {all}. Они войдут в общий файл — кнопка внизу панели.', { count, all: CURSOR_IDS.length }) : t('Пока все курсоры как в Dota.')}</span>
-      <button type="button" className="catalog-button primary" onClick={close}><Icon name="check"/>{t('Готово')}</button>
+      <button type="button" className="catalog-button primary" onClick={() => { track('customize.cursor-creator', { action: 'save' }); close(); }}><Icon name="check"/>{t('Готово')}</button>
     </footer>
   </Modal>;
 }

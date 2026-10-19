@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon, Modal } from './Common.jsx';
 import ItemComments from './ItemComments.jsx';
 import { t } from '../../scripts/i18n.mjs';
+import { track } from '../site-stats.js';
 
 const media = (id, file) => `/api/catalog/backgrounds/${id}/${file}`;
 // A background has no page of its own: its comments open in a window over the workshop (asked for on
@@ -9,6 +10,8 @@ const media = (id, file) => `/api/catalog/backgrounds/${id}/${file}`;
 // video took the whole window and the comments were below its edge); on a phone a small video on top. `onCount`: the card's count follows what is written or deleted. The
 // bot's messages about comments open it by /workshop?backgrounds&comments=<id> (CatalogApp).
 export function BackgroundCommentsWindow({ item, onClose, onCount }) {
+  // A background's «page» (workshop.open).
+  useEffect(() => { track('workshop.open', { kind: 'background', id: String(item.id) }); }, [item.id]);
   return <Modal title={item.title} icon="comment" size="lg" onClose={onClose}>
     <div className="background-comments">
       <video src={media(item.id, 'video.webm')} poster={media(item.id, 'poster.jpg')} autoPlay muted loop playsInline/>

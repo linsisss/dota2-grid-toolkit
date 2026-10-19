@@ -3,6 +3,7 @@ import { catalogAPI, CATALOG_PATH } from './api.js';
 import { locale, t } from '../../scripts/i18n.mjs';
 import { rememberError } from '../../scripts/community.mjs';
 import { ReportButton } from '../Community.jsx';
+import { track } from '../site-stats.js';
 // The shared Lucide icons (src/Icon.jsx); catalog pages import them from here, and this file uses
 // them too (so an import, not only a re-export).
 import { Icon } from '../Icon.jsx';
@@ -113,6 +114,18 @@ export function useCatalogConfig() {
   const [config, setConfig] = useState(null), [error, setError] = useState('');
   useEffect(() => { const c = new AbortController(); catalogAPI('/config', { signal: c.signal }).then(setConfig).catch(e => { if (!c.signal.aborted) setError(e.message); }); return () => c.abort(); }, []);
   return { config, error };
+}
+// workshop.search once per settled query of a list (`section`: grids, backgrounds, guides): call the result
+// with the query a request was made with and the number found; the same query again (another page, tag
+// or order) is not a new search, an empty one starts over.
+export function useSearchCount(section) {
+  const last = useRef('');
+  return (query, results) => {
+    if (!query.trim()) { last.current = ''; return; }
+    if (last.current === query) return;
+    last.current = query;
+    track('workshop.search', { section, length: query.length, results: Number(results) || 0, q: query });
+  };
 }
 export function PublicLink({ id, children }) { return <a href={`${CATALOG_PATH}?id=${id}`}>{children}</a>; }
 // A translated sentence with markup in it, «Скопируй {file} в эту папку.»: rich(t(sentence), { file: <code>…</code> }).

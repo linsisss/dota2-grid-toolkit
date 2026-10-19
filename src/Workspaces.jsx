@@ -14,6 +14,7 @@ import LanguageSwitch from './LanguageSwitch.jsx';
 import { CommunityCard, CommunityLink } from './Community.jsx';
 import { t, locale, translateMessage } from '../scripts/i18n.mjs';
 import { BackgroundSteps } from './customize/BackgroundSteps.jsx';
+import { packOf, track } from './site-stats.js';
 
 // What the studio lists: everything, hero grids (files) or menu backgrounds. ?show=backgrounds
 // opens on the backgrounds (the builder links there after saving one).
@@ -165,6 +166,7 @@ export default function Workspaces({ registry, onOpen }) {
       const saved = await catalogAPI(`/spaces/${created.id}`, { method: 'PUT', body: { account, name: created.name, revision: 0, document: doc }, maxBytes: SPACE_REQUEST_BYTES });
       await registry.update(created.id, { cloudRevision: saved.revision, dirty: false, pendingUpload: false });
     }
+    track('editor.file', { action: 'duplicate' });
     onOpen(await registry.get(created.id));
   }
   async function changeName(event) {
@@ -193,7 +195,8 @@ export default function Workspaces({ registry, onOpen }) {
   const matches = (value) => value.toLocaleLowerCase().includes(query.toLocaleLowerCase());
   const visible = items.filter(item => (!item.account || item.account === auth.user?.id) && !!item.archived === archive && matches(item.name));
   const incoming = new URLSearchParams(location.search).has('catalog');
-  const newGrid = () => run(async () => { const item = await registry.create(t('Без названия'), C.demoDocument('blank'), auth.user?.id || null); onOpen(item); });
+  const newGrid = () => run(async () => { const item = await registry.create(t('Без названия'), C.demoDocument('blank'), auth.user?.id || null); track('editor.file', { action: 'create' }); onOpen(item); });
+  const openFile = (item) => { track('editor.file', { action: 'open' }); onOpen(item); };
   // The archive holds grid files only; the studio mixes both, newest first.
   const entries = [...(archive || show !== 'backgrounds' ? visible : []).map(item => ({ kind: 'grid', item })),
     ...(!archive && show !== 'grids' ? backgrounds.filter(item => matches(item.name)) : []).map(item => ({ kind: 'background', item }))]
@@ -205,6 +208,9 @@ export default function Workspaces({ registry, onOpen }) {
     let given;
     try { given = await downloadPack(packBackground(await bytes(item.video), item.recipe, await bytes(item.heroVideo), await bytes(item.gridVideo), await bytes(item.loadingVideo)), { ...item.recipe, onProgress: setSending }); }
     finally { setSending(null); }
+    // A «Студия» background built again: a file saved, or a command made (its pack id links the installer's report).
+    if (given?.command) track('customize.build-done', { delivery: 'command', parts: ['bg'], pack: packOf(given.command) });
+    else track('customize.download', {});
     // The install window after every download: the command, or the steps by hand for the file.
     setHanded(given || { target: folderOf(item.recipe.folder) });
   }
@@ -213,8 +219,8 @@ export default function Workspaces({ registry, onOpen }) {
     : show === 'backgrounds' ? (auth.user ? t('Готовое видео хранится в этом браузере, настройки — в аккаунте: на другом устройстве фон собирается заново.') : t('Фоны хранятся в этом браузере. Войди, чтобы настройки фонов были и на других устройствах.'))
     : t('Сетки героев и фоны главного меню.');
   const gridCard = (item) => { const locked = working || uploading(item); return <article className="workspace-file" key={item.id}>
-        <WorkspacePreview item={item} disabled={archive || locked} onOpen={index => onOpen({ ...item, openConfigIndex: index })}/>
-        <div className="workspace-file-info"><button disabled={archive || locked} onClick={() => onOpen(item)}><h2>{item.name}</h2></button><time dateTime={new Date(item.updated).toISOString()}>{day(item.updated)}</time></div>
+        <WorkspacePreview item={item} disabled={archive || locked} onOpen={index => openFile({ ...item, openConfigIndex: index })}/>
+        <div className="workspace-file-info"><button disabled={archive || locked} onClick={() => openFile(item)}><h2>{item.name}</h2></button><time dateTime={new Date(item.updated).toISOString()}>{day(item.updated)}</time></div>
         <div className="workspace-file-actions">{!archive && <><button className="catalog-icon" aria-label={t('Переименовать {name}', { name: item.name })} disabled={locked} onClick={() => { setRename(item); setName(item.name); }}><Icon name="edit"/></button><button className="catalog-icon" aria-label={t('Создать копию {name}', { name: item.name })} disabled={locked} onClick={() => run(() => copy(item))}><Icon name="copy"/></button></>}
         <button className="catalog-icon" aria-label={t(archive ? 'Восстановить {name}' : 'В архив {name}', { name: item.name })} disabled={locked} onClick={() => run(async () => {
           let revision = item.cloudRevision;
@@ -232,7 +238,8 @@ export default function Workspaces({ registry, onOpen }) {
         <div style={{ marginTop: 12 }}><LanguageSwitch className="workspace-language"/></div></div></div>
     </aside><main className="workspace-main"><header className="files-heading"><div><div className="files-title"><span className="win-icon page-icon" aria-hidden="true"><Icon name={archive ? 'archive' : 'studio'}/></span><h1>{archive ? t('Архив') : t('Студия')}</h1>{!archive && <SegmentSwitch label={t('Что показать')} value={show} options={SHOWS.map(([id, label]) => [id, t(label)])} onChange={choose}/>}<span className="workspace-file-count" aria-live="polite">{t(show === 'backgrounds' && !archive ? 'Фонов: {count}' : 'Файлов: {count}', { count: entries.length })}</span></div><p>{lead}</p></div><div className="workspace-actions"><div className="workspace-import-actions"><label className="catalog-search workspace-search"><Icon name="search"/><input placeholder={t('Поиск файлов')} aria-label={t('Поиск файлов')} value={query} onChange={e => setQuery(e.target.value)}/></label><label className="catalog-button workspace-import"><Icon name="download"/>{t('Импорт файла')}<input type="file" accept=".json,application/json" multiple className="catalog-file" disabled={working} onChange={event => {
       const files = Array.from(event.target.files || []); event.target.value = ''; if (!files.length) return;
-      run(async () => { const imported = await readGridFiles(files); for (const file of imported) await registry.create(file.name.replace(/\.json$/i, '').slice(0, 100), file.doc, auth.user?.id || null); });
+      run(async () => { const imported = await readGridFiles(files); for (const file of imported) await registry.create(file.name.replace(/\.json$/i, '').slice(0, 100), file.doc, auth.user?.id || null);
+        for (const kind of new Set(imported.map(file => (file.project ? 'project' : 'json')))) track('editor.import', { kind }); });
     }}/></label></div><CreateMenu disabled={working} onGrid={newGrid}/></div></header>
       {incoming && <Notice>{t('Выбери файл, в который добавить сетку из мастерской, или создай новый.')}</Notice>}
       {sending !== null && <p className="catalog-muted workspace-sending" role="status">{t('Отправляем фон на GridStudio… {percent}%', { percent: Math.round(sending * 100) })}</p>}

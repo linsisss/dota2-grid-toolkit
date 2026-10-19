@@ -14,7 +14,7 @@ import { CommunityLink } from '../Community.jsx';
 import LanguageSwitch from '../LanguageSwitch.jsx';
 import { useLanguage } from '../useLanguage.js';
 import { useAppMotion } from '../useAppMotion.js';
-import { countAction } from '../site-stats.js';
+import { countVisit, track } from '../site-stats.js';
 import { locale, t } from '../../scripts/i18n.mjs';
 import { GAMES } from './games/index.js';
 import { HUB, KINDS, LAST_KEY, bestUnit, hubArt, inKind } from './hub.mjs';
@@ -169,12 +169,15 @@ function Shell() {
   }, []);
   // A closed game may have left a new record.
   useEffect(() => { if (!game) setVersion((v) => v + 1); }, [game]);
+  // A game opened or closed without a reload is a page view of its own (main.jsx counts the first).
+  const shown = useRef(game);
+  useEffect(() => { if (shown.current === game) return; shown.current = game; countVisit(game ? `minigames:${game}` : 'minigames'); }, [game]);
   useEffect(() => { document.body.classList.toggle('mg-locked', !!game); return () => document.body.classList.remove('mg-locked'); }, [game]);
   const open = useCallback((id) => {
     if (!playable(id)) return;
     const url = new URL(location.href); url.searchParams.set('game', id);
     history.pushState({ minigame: id }, '', url);
-    setGame(id); countAction(`minigame:${id}`);
+    setGame(id); track('minigames.open', { game: id });
     remember(LAST_KEY, id); setLast(hubGame(id));
   }, []);
   const close = () => {

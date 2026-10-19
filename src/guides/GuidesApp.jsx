@@ -1,6 +1,6 @@
 import { Fragment, Suspense, lazy, useEffect, useState } from 'react';
 import { Spot } from '../Spot.jsx';
-import { Brand, Icon, Notice } from '../catalog/Common.jsx';
+import { Brand, Icon, Notice, useSearchCount } from '../catalog/Common.jsx';
 import { AccountButton, AccountProvider, useAccount } from '../catalog/Account.jsx';
 import { CATALOG_PATH, STUDIO_PATH } from '../catalog/api.js';
 import { CommunityLink } from '../Community.jsx';
@@ -10,6 +10,7 @@ import { useLanguage } from '../useLanguage.js';
 import { useAppMotion } from '../useAppMotion.js';
 import { GUIDE_CATEGORIES } from '../../scripts/guide-document.mjs';
 import { t } from '../../scripts/i18n.mjs';
+import { track } from '../site-stats.js';
 import { GUIDES_PATH, guidesAPI } from './api.js';
 import GuidePage from './GuidePage.jsx';
 import { GuideCard } from './GuideParts.jsx';
@@ -24,6 +25,7 @@ function GuideList({ mine: startMine }) {
   const params = new URLSearchParams(location.search);
   const [category, setCategory] = useState(() => params.get('category') || ''), [mine, setMine] = useState(startMine);
   const [sort, setSort] = useState('new'), [query, setQuery] = useState(''), [data, setData] = useState(null), [error, setError] = useState(''), [retry, setRetry] = useState(0), [extra, setExtra] = useState({ page: 0, items: [] });
+  const searched = useSearchCount('guides'), filtered = (filter, value) => track('workshop.filter', { section: 'guides', filter, value });
   useEffect(() => { document.title = `${t('Гайды')} — GridStudio`; });
   useEffect(() => {
     const controller = new AbortController();
@@ -31,7 +33,7 @@ function GuideList({ mine: startMine }) {
     const timer = setTimeout(async () => {
       try {
         if (mine) setData(auth.user ? await guidesAPI('/mine', { signal: controller.signal }) : { items: [] });
-        else setData(await guidesAPI(`?${new URLSearchParams({ category, q: query, sort })}`, { signal: controller.signal }));
+        else { const found = await guidesAPI(`?${new URLSearchParams({ category, q: query, sort })}`, { signal: controller.signal }); setData(found); searched(query, found?.total); }
       } catch (e) { if (!controller.signal.aborted) { setError(e.message); setData({ items: [] }); } }
     }, query ? 220 : 0);
     return () => { clearTimeout(timer); controller.abort(); };
@@ -42,6 +44,7 @@ function GuideList({ mine: startMine }) {
     if (own) url.searchParams.set('mine', '1'); else if (next) url.searchParams.set('category', next);
     history.replaceState(history.state, '', url);
     setData(null); setMine(own); setCategory(next);
+    if (own) filtered('tab', 'mine'); else filtered('category', next || 'all');
   };
   async function more() {
     try { const next = await guidesAPI(`?${new URLSearchParams({ category, q: query, sort, page: String(extra.page + 1) })}`); setExtra((current) => ({ page: current.page + 1, items: [...current.items, ...next.items] })); }
@@ -60,13 +63,13 @@ function GuideList({ mine: startMine }) {
         <button aria-pressed={mine} onClick={() => choose('', true)}>{t('Мои гайды')}</button>
       </div>
       {!mine && <div className="guide-toolbar-end">
-        <div className="catalog-tabs is-small" aria-label={t('Порядок')}><button aria-pressed={sort === 'new'} onClick={() => setSort('new')}>{t('Новые')}</button><button aria-pressed={sort === 'popular'} onClick={() => setSort('popular')}>{t('Популярные')}</button></div>
+        <div className="catalog-tabs is-small" aria-label={t('Порядок')}><button aria-pressed={sort === 'new'} onClick={() => { setSort('new'); filtered('sort', 'new'); }}>{t('Новые')}</button><button aria-pressed={sort === 'popular'} onClick={() => { setSort('popular'); filtered('sort', 'popular'); }}>{t('Популярные')}</button></div>
         <label className="catalog-search"><Icon name="search"/><input aria-label={t('Поиск гайдов')} placeholder={t('Название или текст')} value={query} maxLength={80} onChange={(e) => setQuery(e.target.value)}/></label>
       </div>}
     </div>
     {error && <Notice error report>{error}<button className="catalog-link" onClick={() => setRetry((x) => x + 1)}>{t('Попробовать снова')}</button></Notice>}
     {mine && !auth.user && !auth.loading ? <section className="catalog-empty"><h2>{t('Войди, чтобы увидеть свои гайды')}</h2><p>{t('Гайды привязаны к аккаунту: так их можно писать и править с любого устройства.')}</p>
-      <button className="catalog-button primary" onClick={() => auth.requestLogin()}><Icon name="user"/>{t('Войти')}</button></section>
+      <button className="catalog-button primary" onClick={() => auth.requestLogin('', 'mine')}><Icon name="user"/>{t('Войти')}</button></section>
     : !items ? <p role="status">{t('Загружаем гайды…')}</p>
     : items.length ? <>
       <section className="guide-grid" aria-label={mine ? t('Мои гайды') : t('Гайды')}>{items.map((item, i) => <Fragment key={item.id}><GuideCard item={item} mine={mine}/>{i === 0 && !mine && <Spot place="guides" className="is-in-grid"/>}</Fragment>)}</section>

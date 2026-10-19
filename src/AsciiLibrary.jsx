@@ -7,6 +7,7 @@ import { catalogAPI } from './catalog/api.js';
 import { setAdult, useAdultConfirmed } from './adult-consent.js';
 import { isAdultArt } from '../scripts/art-document.mjs';
 import { t } from '../scripts/i18n.mjs';
+import { track } from './site-stats.js';
 
 // 'Все' and PLAYERS are the filter's values; t() turns them, the categories and the built-in arts'
 // names into labels (users' arts keep their names).
@@ -76,7 +77,9 @@ function ArtDialog({ art, editor, canvas, close }) {
           className="button primary"
           disabled={hidden}
           onClick={() => {
-            if (editor.addAsciiArt(art)) close();
+            if (!editor.addAsciiArt(art)) return;
+            track('editor.import', { kind: art.player ? 'art' : 'library' }); // users' arts from the workshop, or built-in
+            close();
           }}
         >
           {t('Добавить на холст')}

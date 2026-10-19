@@ -20,8 +20,12 @@ export const STAT_EVENTS = Object.freeze(['grid-export', 'background-pack', 'fon
 export const STAT_PERIODS = Object.freeze([7, 30, 90, 365]);
 // User-Agents of robots, crawlers, link previews, monitors and scripts: their hits are not counted.
 export const STAT_ROBOT = /bot\b|bot\/|crawl|spider|slurp|headless|lighthouse|phantom|puppeteer|playwright|selenium|python|curl|wget|httpclient|java\/|go-http|okhttp|axios|libwww|preview|scanner|monitor|uptime|facebookexternalhit|telegrambot|whatsapp|discordbot/i;
+// The mini-games' names (server/minigames.mjs MINIGAME_NAMES, kept here so this module loads nothing more).
+const MINIGAME_LABELS = { sweeper: 'Сапёр Сплин', race: 'Крылатые гонки', spoon: 'Подрывник Спун', fishing: 'Рыбалка', zaug: 'Логово Зауга',
+  chess: 'Драконьи шахматы', thorns: 'Терновый трон', fighter: 'Сосулечный боец', castle: 'Замкобой' };
 const PAGE_LABELS = { home: 'Главная', editor: 'Студия и редактор', workshop: 'Мастерская: сетки', 'workshop:backgrounds': 'Мастерская: фоны', rules: 'Правила мастерской',
-  background: 'Фон главного меню', font: 'Шрифт', guides: 'Гайды', dotadle: 'Dotadle' };
+  background: 'Фон главного меню', font: 'Шрифт', guides: 'Гайды', dotadle: 'Dotadle', studio: 'Студия', customize: 'Оформление Dota', minigames: 'Мини-игры',
+  advertise: 'Реклама на сайте', 'workshop:arts': 'Мастерская: арты', 'guides:write': 'Гайды: новый гайд' };
 // Where people come from: a site (its host, or the name in utm_source) as one of these; any other site
 // is 'other' (its host kept), no site at all 'direct', an account from before 03.10.2026 'unknown'.
 export const SOURCES = Object.freeze({ telegram: 'Telegram', tiktok: 'TikTok', youtube: 'YouTube', google: 'Google', yandex: 'Яндекс', vk: 'ВКонтакте', discord: 'Discord',
@@ -89,7 +93,8 @@ export class SiteStats {
     if (!page) return '';
     if (PAGE_LABELS[page]) return PAGE_LABELS[page];
     const [kind, id] = String(page).split(':'), title = this.itemTitle(kind, id);
-    return { work: `Сетка «${title || '—'}»`, guide: `Гайд «${title || '—'}»`, profile: `Профиль ${title || '—'}`, seo: `Страница для поиска /${String(id).replace(/^guide\//, '')}` }[kind] || page;
+    return { work: `Сетка «${title || '—'}»`, guide: `Гайд «${title || '—'}»`, profile: `Профиль ${title || '—'}`, seo: `Страница для поиска /${String(id).replace(/^guide\//, '')}`,
+      minigames: `Мини-игра «${MINIGAME_LABELS[id] || id}»`, customize: `Оформление Dota: ${id}` }[kind] || page;
   }
   // The period's numbers, days [start, end).
   kpi(start, end) {

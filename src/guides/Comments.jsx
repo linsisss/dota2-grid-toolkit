@@ -4,6 +4,7 @@ import { useAccount } from '../catalog/Account.jsx';
 import { GUIDE_LIMITS } from '../../scripts/guide-document.mjs';
 import { t, tn } from '../../scripts/i18n.mjs';
 import { Author, ago } from './GuideParts.jsx';
+import { track } from '../site-stats.js';
 
 // Comments (asked for on 2026-10-02 under guides, on 2026-10-03 under grids and backgrounds): published
 // at once, threads oldest first, 50 at a time. Replies sit under the comment that started their thread,
@@ -11,7 +12,7 @@ import { Author, ago } from './GuideParts.jsx';
 // and admins delete; others report. The text is plain and never a link: links are refused on the server
 // (scripts/comment-links.mjs, asked for on 2026-10-03), and older comments' addresses stay text. `api`: load(offset) → { items, more, total }, add({ body, reply }) → item, remove(id);
 // `Report`: the report window for a comment ({ comment, onClose }); `id`: what is commented (reloads);
-// `authorLabel`: the crown's words by the comments of what is commented's author («Автор гайда»). A link
+// `kind`: what is commented for the analytics (workshop.comment: 'guide', 'grid', 'background'); `authorLabel`: the crown's words by the comments of what is commented's author («Автор гайда»). A link
 // to #comment-<id> (the bot's messages about comments) scrolls to that comment and lights it up.
 
 function Comment({ item, nested, onReply, onRemove, onReport, flash, authorLabel }) {
@@ -43,7 +44,7 @@ function threads(items) {
   return roots.filter((item) => !item.deleted || replies.get(item.id)?.length).map((item) => ({ item, replies: replies.get(item.id) || [] }));
 }
 
-export default function Comments({ id, api, Report, total: initial = 0, onCount, authorLabel = t('Автор') }) {
+export default function Comments({ id, api, Report, total: initial = 0, onCount, authorLabel = t('Автор'), kind = 'guide' }) {
   const auth = useAccount();
   const [items, setItems] = useState(null), [more, setMore] = useState(false), [total, setTotal] = useState(initial), [error, setError] = useState('');
   const [text, setText] = useState(''), [reply, setReply] = useState(null), [busy, setBusy] = useState(false), [report, setReport] = useState(null), [fresh, setFresh] = useState(0);
@@ -72,8 +73,9 @@ export default function Comments({ id, api, Report, total: initial = 0, onCount,
     setBusy(true); setError('');
     try {
       const item = await api.add({ body: text, reply: reply?.id || null });
+      track('workshop.comment', { kind });
       setItems((current) => [...(current || []), item]); setTotal((n) => n + 1); setText(''); setReply(null); setFresh(item.id);
-    } catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin(); } finally { setBusy(false); }
+    } catch (e) { setError(e.message); if (e.status === 401) auth.requestLogin('', 'comment'); } finally { setBusy(false); }
   }
   async function remove(item) {
     try { await api.remove(item.id); setItems((current) => current.map((row) => (row.id === item.id ? { ...row, deleted: true, body: '' } : row))); setTotal((n) => n - 1); }

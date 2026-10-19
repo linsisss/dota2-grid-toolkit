@@ -18,6 +18,9 @@ import { StudioBackgrounds } from './studio-backgrounds.mjs';
 import { pickSafeGrid, renderSpaceThumbnail } from './catalog-preview.mjs';
 import { pageMeta, tabOf } from '../scripts/og-pages.mjs';
 import { STAT_ROBOT, SiteStats } from './site-stats.mjs';
+import { Analytics } from './analytics.mjs';
+import { periodOf, dayISO } from './analytics-math.mjs';
+import { Metrika } from './metrika.mjs';
 import { adminUsers } from './admin-users.mjs';
 import { InstallPacks, PACK_LIMITS } from './install-packs.mjs';
 import { PREVIEW_TEXT, authorOf, backgroundPreviewImage, dotadlePreviewImage, gridPreviewImage, guidePreviewImage, previewTitle, profilePreviewImage, sitePage, withPreview } from './link-preview.mjs';
@@ -78,6 +81,8 @@ export function catalogConfig(env = process.env) {
   return { development, origin, salt, admins: new Set(adminIds), unlimited: new Set(unlimitedIds), botUsername, steamApiKey: env.STEAM_WEB_API_KEY || '',
     // STRATZ's key for the hero meta (server/hero-meta.mjs); without it the meta answers 503.
     stratzToken: env.STRATZ_API_TOKEN || '',
+    // Yandex Metrika's OAuth token (metrika:read) for «Аналитика → Метрика» (server/metrika.mjs); server only.
+    metrikaToken: env.METRIKA_TOKEN || '',
     // Cap Standalone (server/catalog-captcha.mjs CapCaptcha, /home/code/gridstudio/cap): all three set — the
     // forms use Cap; otherwise ALTCHA as before (tests, local runs).
     cap: env.CATALOG_CAP_URL && env.CATALOG_CAP_SITE_KEY && env.CATALOG_CAP_SECRET
@@ -131,8 +136,8 @@ const BACKGROUND_FILE = /^\/backgrounds\/([1-9]\d{0,12})\/(poster\.jpg|video\.we
 // The landing's picture sizes (server/editor-showcase.mjs SHOWCASE_WIDTHS), kept here so the API
 // module does not load the canvas renderer until a picture is asked for.
 const LANDING_WIDTHS = [1440, 2160, 2880];
-export function createCatalogAPI(config, { dotaTexts = null, store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null, heroMeta = new HeroMeta({ token: config.stratzToken }), dotadle = new Dotadle({ secret: config.salt, store }) } = {}) {
-  const accounts = new Accounts(store), boards = new MinigameBoards(store), arts = new CatalogArts(store), stats = new SiteStats(store), moderators = new Moderators(store), spot = new SiteSpot(store), packs = new InstallPacks(store, { dir: config.packs || join(tmpdir(), 'gridstudio-install-packs') });
+export function createCatalogAPI(config, { dotaTexts = null, store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null, heroMeta = new HeroMeta({ token: config.stratzToken }), dotadle = new Dotadle({ secret: config.salt, store }), metrika = new Metrika({ token: config.metrikaToken || '' }) } = {}) {
+  const accounts = new Accounts(store), boards = new MinigameBoards(store), arts = new CatalogArts(store), stats = new SiteStats(store), analytics = new Analytics(store, stats, { timers: !config.development || config.analyticsTimers === true }), moderators = new Moderators(store), spot = new SiteSpot(store), packs = new InstallPacks(store, { dir: config.packs || join(tmpdir(), 'gridstudio-install-packs') });
   // Shared menu backgrounds keep files next to the database (config.media).
   let galleries = backgrounds;
   const gallery = () => (galleries ||= new CatalogBackgrounds(store, { dir: config.media || mkdtempSync(join(tmpdir(), 'gridstudio-backgrounds-')) }));
@@ -207,7 +212,14 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
       const forwarded = config.trustProxy && ['127.0.0.1','::1','::ffff:127.0.0.1'].includes(remote);
       const ip = forwarded ? String(request.headers['x-forwarded-for'] || remote).split(',').at(-1).trim() : remote;
       const ipHash = store.identity('ip', ip);
-      if (!['GET','HEAD'].includes(method)) {
+      // The analytics' beacons (sendBeacon may come without an Origin) and the installers' reports (PowerShell
+      // sends none) are counted, not trusted: a foreign Origin or a cross-site request is still refused, and their
+      // limits live in memory (server/analytics.mjs).
+      const counted = method === 'POST' && (path === '/collect' || path === '/install/report');
+      if (counted) {
+        if ((request.headers.origin && request.headers.origin !== config.origin) || request.headers['sec-fetch-site'] === 'cross-site') fail(403, 'Отправка разрешена только с сайта GridStudio.');
+        store.burst(`${path}:${ipHash}`, path === '/collect' ? 240 : 30, 60_000);
+      } else if (!['GET','HEAD'].includes(method)) {
         if (request.headers.origin !== config.origin || request.headers['sec-fetch-site'] === 'cross-site') fail(403, 'Отправка разрешена только с сайта GridStudio.');
         store.rate(`http:${ipHash}`, 90, 60_000);
       } else store.burst(`read:${ipHash}`, 600, 60_000);
@@ -257,14 +269,33 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
         }
         response.writeHead(204); return response.end();
       }
+      // The analytics' batch from a page (src/site-stats.js; server/analytics.mjs collect).
+      if (path === '/collect') {
+        const body = await readJSON(request, 24_000), agent = String(request.headers['user-agent'] || '');
+        if (agent && !STAT_ROBOT.test(agent) && /^[A-Za-z0-9_-]{22}$/.test(String(body.v || '')))
+          analytics.collect(body, { who: store.identity('visitor', body.v), account: user?.id || null, agent, country: String(request.headers['cf-ipcountry'] || '').toUpperCase() });
+        response.writeHead(204); return response.end();
+      }
+      // What a PowerShell installer reports at its end (scripts/installer.mjs REPORT): the pack and ok/fail/removed.
+      if (path === '/install/report') {
+        const body = await readJSON(request, 1_000);
+        analytics.install(body.pack, body.result, body.error);
+        response.writeHead(204); return response.end();
+      }
       // A background's or font's pack for its PowerShell command (server/install-packs.mjs): sent in parts,
       // checked, kept a week; the command's script downloads it from /install/file/<id>.
       if (path === '/install/packs' && method === 'POST') {
         const body = await readJSON(request);
-        return send(200, packs.start(body.kind, body.sha256, Number(body.size), ipHash));
+        const state = packs.start(body.kind, body.sha256, Number(body.size), ipHash);
+        if (state.ready) analytics.serverEvent('install.command', { kind: body.kind }, { account: user?.id });
+        return send(200, state);
       }
       const packPart = /^\/install\/packs\/((?:bg|font|all)-[0-9a-f]{64})$/.exec(path);
-      if (packPart && method === 'PUT') return send(200, packs.write(packPart[1], Number(url.searchParams.get('offset')), await readBytes(request, PACK_LIMITS.part)));
+      if (packPart && method === 'PUT') {
+        const state = packs.write(packPart[1], Number(url.searchParams.get('offset')), await readBytes(request, PACK_LIMITS.part));
+        if (state.ready) analytics.serverEvent('install.command', { kind: packPart[1].split('-')[0] }, { account: user?.id });
+        return send(200, state);
+      }
       // The grid's hero_grid_config.json for its command's script (server/grid-installs.mjs), as bytes.
       const gridFile = /^\/install\/file\/grid-([A-Za-z0-9_-]{16})$/.exec(path);
       if (gridFile && ['GET', 'HEAD'].includes(method)) {
@@ -284,6 +315,7 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
       if (path === '/install' && method === 'POST') {
         store.rate(`install:${ipHash}`, 60, 600_000);
         const body = await readJSON(request, GRID_INSTALL_BYTES + 4096), saved = gridInstalls.save(body.grid, body.lang);
+        analytics.serverEvent('install.command', { kind: 'grid' }, { account: user?.id });
         return send(201, { ...saved, address: `${config.origin}/api/catalog/install/${saved.id}` });
       }
       const installMatch = /^\/install\/([A-Za-z0-9_-]{1,96})$/.exec(path);
@@ -361,6 +393,7 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
         const fresh = !store.get('SELECT 1 x FROM accounts WHERE id=?', String(body.userId));
         const result = accounts.finish(login.id, login.verifier, body.userId, session);
         stats.event('login', result.user?.id);
+        if (result.user) analytics.serverEvent('auth.login', { fresh }, { account: result.user.id });
         if (fresh && result.user) stats.signup(result.user.id, body.source, /^[A-Za-z0-9_-]{22}$/.test(String(body.source?.visitor || '')) ? store.identity('visitor', body.source.visitor) : identity.browser);
         setCookie(cookie('gs_account', result.session, SESSION_AGE)); setCookie(cookie('gs_login', '', 0));
         return send(200, { user: result.user });
@@ -381,7 +414,7 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
       if (spaceMatch) {
         const member = requireUser(), id = spaceMatch[1];
         if (method === 'GET') return send(200, accounts.space(id, member));
-        if (method === 'PUT') { const body = await readJSON(request, 20_500_000), saved = accounts.saveSpace(id, member, body); stats.event('studio-save', member.id); return send(200, saved); }
+        if (method === 'PUT') { const body = await readJSON(request, 20_500_000), saved = accounts.saveSpace(id, member, body); stats.event('studio-save', member.id); analytics.serverEvent('studio.save', {}, { account: member.id }); return send(200, saved); }
         if (method === 'PATCH') { const body = await readJSON(request); if (typeof body.archived !== 'boolean') fail(400, 'Неверная настройка архива.'); return send(200, accounts.archiveSpace(id, member, body.revision, body.archived)); }
       }
       // «Студия» backgrounds of the signed-in account: recipes and posters only (server/studio-backgrounds.mjs).
@@ -436,6 +469,7 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
         const member = requireUser(); store.rate(`dotadle:${member.id}`, 30, 60_000);
         const body = await readJSON(request, 2_000), result = await dotadle.guess(member.id, body.number, body.hero);
         if (result.error) fail(400, result.error);
+        if (result.done) analytics.serverEvent('dotadle.guess', { solved: !!result.solved }, { account: member.id });
         return send(200, result);
       }
       if (path === '/dotadle/reminder' && method === 'POST') {
@@ -464,11 +498,16 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
       if (path === '/minigames/runs' && method === 'POST') {
         const member = requireUser(); store.rate(`minigame-run:${member.id}`, 240, 600_000);
         const body = await readJSON(request, 500);
-        return send(200, boards.start(member.id, String(body.game || ''), String(body.board || '')));
+        const run = boards.start(member.id, String(body.game || ''), String(body.board || ''));
+        analytics.serverEvent('minigames.run', { game: String(body.game || '') }, { account: member.id });
+        return send(200, run);
       }
       if (path === '/minigames/submit' && method === 'POST') {
         const member = requireUser(); store.rate(`minigame-submit:${member.id}`, 120, 600_000, { message: 'Слишком много результатов подряд. Подожди немного.' });
-        return send(200, boards.submit(member.id, await readJSON(request, 2_000)));
+        const body = await readJSON(request, 2_000), game = store.get('SELECT game FROM minigame_runs WHERE token=?', String(body.token || ''))?.game;
+        const result = boards.submit(member.id, body);
+        if (game) analytics.serverEvent('minigames.record', { game }, { account: member.id });
+        return send(200, result);
       }
       // «Прислать на ПК» (scripts/pc-link.mjs): to the bot with the page's code; the bot sends the link.
       const toPC = /^\/pc\/([\w-]{1,64})$/.exec(path);
@@ -822,6 +861,19 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
         // «Статистика» (server/site-stats.mjs): visits, sign-ups, downloads and activity for 7, 30, 90 or 365 days.
         if (path === '/admin/stats' && method === 'GET') return send(200, stats.report(Number(url.searchParams.get('days')) || 30));
         if (path === '/admin/stats/live' && method === 'GET') return send(200, stats.live());
+        // «Аналитика» (server/analytics.mjs, docs/analytics.md): admins only, never moderators.
+        if (path.startsWith('/admin/analytics') && role !== 'admin') fail(403, 'Аналитика доступна только администраторам.');
+        if (path === '/admin/analytics' && method === 'GET') {
+          const p = periodOf({ days: url.searchParams.get('days'), from: url.searchParams.get('from'), to: url.searchParams.get('to') }, store.now());
+          const result = analytics.report(url.searchParams.get('tab') || 'overview', p, { device: url.searchParams.get('device') || '', source: url.searchParams.get('source') || '' });
+          if (!result) fail(404, 'Нет такой вкладки.');
+          return send(200, result);
+        }
+        // Yandex Metrika for the same period (server/metrika.mjs): kept an hour; without METRIKA_TOKEN, { configured: false }.
+        if (path === '/admin/analytics/metrika' && method === 'GET') {
+          const p = periodOf({ days: url.searchParams.get('days'), from: url.searchParams.get('from'), to: url.searchParams.get('to') }, store.now());
+          return send(200, await metrika.report(dayISO(p.from), dayISO(p.to)));
+        }
         // What Dotadle's hero search did not find this week (server/dotadle.mjs miss).
         if (path === '/admin/dotadle/misses' && method === 'GET') return send(200, { items: dotadle.misses(7) });
         // «Пользователи» (server/admin-users.mjs): everyone who signed in with Telegram, their profile and Telegram.
@@ -848,6 +900,7 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
       fail(404, 'Не найдено.');
     } catch (error) {
       const status = error instanceof CatalogError || error.status === 400 ? error.status : 500;
+      if (status >= 500) { try { analytics.serverError(request.method, new URL(request.url, config.origin).pathname.replace(/^\/api\/catalog/, ''), status); } catch { /* Never in the way. */ } }
       if (error.extra?.retryAfter) response.setHeader('Retry-After', error.extra.retryAfter);
       send(status, { error: status === 500 ? 'Не удалось сохранить данные. Попробуй ещё раз.' : error.message, ...(error.extra || {}) });
     }
@@ -892,7 +945,7 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
       minigames: boards.placements(account) };
   }
   const server = createServer(handler); server.requestTimeout = 15000; server.headersTimeout = 10000;
-  return { server, dotaText, store, accounts, handler, gallery };
+  return { server, dotaText, store, accounts, handler, gallery, analytics };
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const config = catalogConfig();

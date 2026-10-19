@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Icon, Notice, SegmentSwitch } from './Common.jsx';
 import { catalogAPI, CATALOG_PATH, CUSTOMIZE_PATH, GUIDES_PATH } from './api.js';
 import WorkCard from './WorkCard.jsx';
@@ -13,6 +13,7 @@ import '../guides/guides.css';
 import { bioParts } from '../../scripts/profile-links.mjs';
 import { locale, t } from '../../scripts/i18n.mjs';
 import { HUB } from '../minigames/hub.mjs';
+import { track } from '../site-stats.js';
 
 // A creator's public profile (asked for on 2026-10-02; /workshop?creator=<key>, server/profiles.mjs):
 // the nickname, avatar, a few lines about them, the Telegram @username if they chose to show it, how many
@@ -30,10 +31,11 @@ const telegramLink = (name) => `https://t.me/${name.replace(/^@/, '')}`;
 export default function CreatorProfile({ id }) {
   const auth = useAccount();
   const [profile, setProfile] = useState(null), [error, setError] = useState(''), [retry, setRetry] = useState(0), [kind, setKind] = useState(''), [settings, setSettings] = useState(false), [badges, setBadges] = useState(false);
-  const [liked, setLiked] = useState(null), [likedError, setLikedError] = useState('');
+  const [liked, setLiked] = useState(null), [likedError, setLikedError] = useState(''), opened = useRef('');
   useEffect(() => {
     const controller = new AbortController(); setError('');
     catalogAPI(`/profiles/${encodeURIComponent(id)}`, { signal: controller.signal }).then((value) => {
+      if (opened.current !== id) { opened.current = id; track('workshop.open', { kind: 'profile', id }); }
       setProfile(value);
       setKind((current) => current && (current !== 'liked' || value.mine) ? current : askedTab() === 'liked' && value.mine ? 'liked' : KINDS.find((name) => value[name].length) || 'grids');
       if (!value.mine) { setLiked(null); return; }
@@ -98,7 +100,7 @@ function Works({ kind, items, onUpdate }) {
   if (kind === 'backgrounds') return <section className="background-grid" aria-label={t('Фоны')}>{items.map((item) => <BackgroundCard key={item.id} item={item}><div className="background-card-actions">
     <LikeButton item={item} path={`/backgrounds/${item.id}/like`} onChange={(value) => onUpdate('backgrounds', item.id, value)}/>
     <BackgroundCommentsButton item={item} onCount={(comments) => onUpdate('backgrounds', item.id, { comments })}/>
-    <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`}>{t('Использовать')}</a></div></BackgroundCard>)}</section>;
+    <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`} onClick={() => track('workshop.download', { kind: 'background', way: 'builder', id: String(item.id) })}>{t('Использовать')}</a></div></BackgroundCard>)}</section>;
   return <section className="guide-grid creator-guides" aria-label={t('Гайды')}>{items.map((item) => <GuideCard key={item.id} item={item}/>)}</section>;
 }
 

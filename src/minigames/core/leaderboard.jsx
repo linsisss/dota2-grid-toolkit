@@ -7,6 +7,7 @@ import { catalogAPI } from '../../catalog/api.js';
 import { useAccount } from '../../catalog/Account.jsx';
 import { profilePath } from '../../catalog/Creator.jsx';
 import { locale, t } from '../../../scripts/i18n.mjs';
+import { track } from '../../site-stats.js';
 
 // A result recorded somewhere: open tables and the hub read theirs again.
 const bus = typeof EventTarget === 'function' ? new EventTarget() : null;
@@ -49,20 +50,27 @@ export function useRanks(refresh = 0) {
   return ranks;
 }
 
+// The analytics' score buckets (minigames.finish).
+const scoreBucket = (score) => { const n = Number(score) || 0; return n <= 0 ? '0' : n < 10 ? '1-9' : n < 100 ? '10-99' : n < 1000 ? '100-999' : n <= 10000 ? '1k-10k' : '10k+'; };
+
 // A run of a game for the tables. start(board) when it begins (nothing for a guest), submit({ score, stats })
 // at its end; `outcome` is what <BoardOutcome> shows: { guest } | { sending } | { result } | { error }.
+// Every game goes through here, so the analytics' minigames.start / finish / submit do too (guests included).
 export function useRun(game) {
   const auth = useAccount(), user = auth?.user || null;
-  const run = useRef(null), [outcome, setOutcome] = useState(null);
+  const run = useRef(null), began = useRef(0), [outcome, setOutcome] = useState(null);
   const start = useCallback((board = '') => {
     setOutcome(null);
+    began.current = performance.now(); track('minigames.start', { game });
     if (!user) { run.current = null; return; }
     const started = performance.now();
     run.current = { started, token: catalogAPI('/minigames/runs', { method: 'POST', body: { game, board } }).then((value) => value.token, () => null) };
   }, [game, user]);
-  const cancel = useCallback(() => { run.current = null; setOutcome(null); }, []);
+  const cancel = useCallback(() => { run.current = null; began.current = 0; setOutcome(null); }, []);
   const submit = useCallback(async ({ score, stats = {} }) => {
     const current = run.current; run.current = null;
+    // Once per run: a game that ends twice (the fighter's last round) reports the first.
+    if (began.current) { track('minigames.finish', { game, seconds: (performance.now() - began.current) / 1000, score: scoreBucket(score) }); began.current = 0; }
     if (!(score > 0)) { setOutcome(null); return null; }
     if (!user) { setOutcome({ guest: true }); return null; }
     if (!current) { setOutcome(null); return null; }
@@ -72,10 +80,11 @@ export function useRun(game) {
     const duration = Math.round((performance.now() - current.started) / 100) / 10;
     try {
       const result = await catalogAPI('/minigames/submit', { method: 'POST', body: { token, score: Math.round(score), duration, stats } });
+      track('minigames.submit', { game });
       setOutcome({ result }); notifyBoards();
       return result;
     } catch (error) { setOutcome({ error: error.message }); return null; }
-  }, [user]);
+  }, [user, game]);
   return { start, submit, cancel, outcome, clear: () => setOutcome(null) };
 }
 
@@ -95,6 +104,7 @@ export function BoardOutcome({ outcome, className = '' }) {
   return all?.rank ? box(t('#{rank} в таблице рекордов', { rank: all.rank })) : null;
 }
 
+const ranksSeen = new Set();
 // The table. `boards`: [[id, label]] when a game has several (a switch above the list); `format(score, row)`
 // writes a score (board: the one shown), `detail(row, board)` a short note beside the name; `local` is this browser's best (a line under
 // the list); `headClass` / `rowClass` are the game's own classes of Valve's leaderboard list; `hint` — a line
@@ -107,6 +117,8 @@ export function Leaderboard({ game, boards = null, board: initial = '', format =
   const setPeriod = (value) => { setPeriodState(value); remember(value); };
   const { data, error } = useBoard(game, board, period);
   const list = useRef(null);
+  // minigames.ranks: the table shown — it stands in each game's menu, so once per game and page load.
+  useEffect(() => { if (!ranksSeen.has(game)) { ranksSeen.add(game); track('minigames.ranks', { game }); } }, [game]);
   // The viewer's own row in view once the table arrives.
   useEffect(() => { const mine = list.current?.querySelector('.is-mine'); if (mine && list.current) list.current.scrollTop = Math.max(0, mine.offsetTop - list.current.clientHeight / 2); }, [data]);
   const remove = async (row) => {

@@ -45,27 +45,29 @@ export class GridInstalls {
   }
   // The script an address answers: the grid's, the restore one ('restore', 'restore-en'), or a line
   // that the command is out of date (in the page's language when it was made, else Russian).
+  // Every script reports how it went to <restoreAddress>report (scripts/installer.mjs REPORT; server/analytics.mjs install).
   script(id, restoreAddress) {
-    if (id === 'restore' || id === 'restore-en') return gridRestoreScript(id === 'restore-en' ? 'en' : 'ru');
-    if (id === 'bg-remove' || id === 'bg-remove-en') return backgroundRemoveScript(id === 'bg-remove-en' ? 'en' : 'ru');
+    const report = (pack) => ({ url: `${restoreAddress}report`, pack });
+    if (id === 'restore' || id === 'restore-en') return gridRestoreScript(id === 'restore-en' ? 'en' : 'ru', report('grid-remove'));
+    if (id === 'bg-remove' || id === 'bg-remove-en') return backgroundRemoveScript(id === 'bg-remove-en' ? 'en' : 'ru', report('bg-remove'));
     const pack = /^bg-([0-9a-f]{64})-([1-9][0-9]{0,8})(-en)?$/.exec(id);
     if (pack) return backgroundScript({ sha256: pack[1], size: Number(pack[2]), url: `${restoreAddress}file/bg-${pack[1]}` },
-      { language: pack[3] ? 'en' : 'ru', remove: `${restoreAddress}${pack[3] ? 'bg-remove-en' : 'bg-remove'}` });
+      { language: pack[3] ? 'en' : 'ru', remove: `${restoreAddress}${pack[3] ? 'bg-remove-en' : 'bg-remove'}`, report: report(`bg-${pack[1]}`) });
     // The font's archive, the same way (font-<sha256>-<size>, font-remove).
-    if (id === 'font-remove' || id === 'font-remove-en') return fontRemoveScript(id === 'font-remove-en' ? 'en' : 'ru');
+    if (id === 'font-remove' || id === 'font-remove-en') return fontRemoveScript(id === 'font-remove-en' ? 'en' : 'ru', report('font-remove'));
     const font = /^font-([0-9a-f]{64})-([1-9][0-9]{0,8})(-en)?$/.exec(id);
     if (font) return fontScript({ sha256: font[1], size: Number(font[2]), url: `${restoreAddress}file/font-${font[1]}` },
-      { language: font[3] ? 'en' : 'ru', remove: `${restoreAddress}${font[3] ? 'font-remove-en' : 'font-remove'}` });
+      { language: font[3] ? 'en' : 'ru', remove: `${restoreAddress}${font[3] ? 'font-remove-en' : 'font-remove'}`, report: report(`font-${font[1]}`) });
     // The customization page's one file (all-<sha256>-<size>, all-remove; scripts/customize-pack.mjs).
-    if (id === 'all-remove' || id === 'all-remove-en') return customizeRemoveScript(id === 'all-remove-en' ? 'en' : 'ru');
+    if (id === 'all-remove' || id === 'all-remove-en') return customizeRemoveScript(id === 'all-remove-en' ? 'en' : 'ru', report('all-remove'));
     const all = /^all-([0-9a-f]{64})-([1-9][0-9]{0,9})(-en)?$/.exec(id);
     if (all) return customizeScript({ sha256: all[1], size: Number(all[2]), url: `${restoreAddress}file/all-${all[1]}` },
-      { language: all[3] ? 'en' : 'ru', remove: `${restoreAddress}${all[3] ? 'all-remove-en' : 'all-remove'}` });
+      { language: all[3] ? 'en' : 'ru', remove: `${restoreAddress}${all[3] ? 'all-remove-en' : 'all-remove'}`, report: report(`all-${all[1]}`) });
     const row = /^[A-Za-z0-9_-]{16}$/.test(id) && this.store.get('SELECT grid, lang FROM installs WHERE id=? AND expires>=?', id, this.store.now());
     if (!row) return gridExpiredScript('ru');
     const bytes = gridBytes(row.grid);
     return gridScript({ url: `${restoreAddress}file/grid-${id}`, sha256: createHash('sha256').update(bytes).digest('hex'), size: bytes.length },
-      { language: row.lang, restore: `${restoreAddress}${row.lang === 'en' ? 'restore-en' : 'restore'}` });
+      { language: row.lang, restore: `${restoreAddress}${row.lang === 'en' ? 'restore-en' : 'restore'}`, report: report(`grid-${id}`) });
   }
   // The hero_grid_config.json the script downloads (…/install/file/grid-<id>), while the command lives.
   file(id) {

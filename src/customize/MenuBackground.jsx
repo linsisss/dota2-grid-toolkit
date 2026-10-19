@@ -20,6 +20,7 @@ import { backgroundMedia, useBackgrounds } from '../catalog/BackgroundGallery.js
 import profilePreview from '../../assets/dota-menu/ui/profile-preview.webp';
 import { CATALOG_PATH, STUDIO_PATH, countDownload } from '../catalog/api.js';
 import { lang, locale, t } from '../../scripts/i18n.mjs';
+import { track } from '../site-stats.js';
 
 // The main-menu background, made entirely in the browser: the file becomes a WebM
 // (menu-video.js, loaded on first use) and then pakNN_dir.vpk with Valve's dashboard pointing at it
@@ -578,6 +579,8 @@ export function MenuThumb({ bg, page }) {
 }
 
 // ——— The page's sections: each the fields of one module.
+// A workshop background picked for a module (bg, grid, hero, loading), for the statistics.
+const pickedWorkshop = (section, item) => track('customize.preset', { section, preset: `workshop:${item.id}` });
 const MenuError = ({ bg }) => bg.error ? <Notice error report={bg.failed}>{bg.error}</Notice> : null;
 // «Готовые в мастерской»: three popular backgrounds for this screen and the whole list in a window.
 function WorkshopRow({ bg }) {
@@ -585,7 +588,7 @@ function WorkshopRow({ bg }) {
   const chosen = bg.origin?.kind === 'workshop' ? bg.origin.id : null;
   return <Field label={t('Готовые в мастерской')} aside={<a className="catalog-link" href={`${CATALOG_PATH}?backgrounds`}>{t('Мастерская')}</a>}>
     <div className="cz-picks">{(items || [null, null, null]).slice(0, 3).map((item, i) => item
-      ? <button key={item.id} type="button" aria-pressed={chosen === item.id} title={item.title} disabled={!!bg.fetching} onClick={() => bg.setPick(item)}><img src={backgroundMedia(item.id, 'poster.jpg')} alt={item.title} loading="lazy"/></button>
+      ? <button key={item.id} type="button" aria-pressed={chosen === item.id} title={item.title} disabled={!!bg.fetching} onClick={() => { pickedWorkshop('bg', item); bg.setPick(item); }}><img src={backgroundMedia(item.id, 'poster.jpg')} alt={item.title} loading="lazy"/></button>
       : <span key={i} className="cz-picks-empty"/>)}
       <button type="button" className="cz-picks-more" onClick={() => bg.setBrowsing('menu')}>{t('Все фоны')}</button></div>
   </Field>;
@@ -667,7 +670,7 @@ export function MenuWindows({ bg }) {
     {bg.sources && <Sources onClose={() => bg.setSources(false)}/>}
     {bg.picking && <GridPicker chosen={bg.preview.choice} onChoose={bg.preview.choose} onClose={() => bg.setPicking(false)}/>}
     {bg.browsing && <BackgroundPicker aspect={bg.aspect} where={where[bg.browsing]} onClose={() => bg.setBrowsing(null)}
-      onChoose={(item) => { if (bg.browsing === 'menu') bg.setPick(item); else ({ hero: bg.heroOwn, grid: bg.gridOwn, loading: bg.loadingOwn })[bg.browsing].pickWorkshop(item); bg.setBrowsing(null); }}/>}
+      onChoose={(item) => { pickedWorkshop(bg.browsing === 'menu' ? 'bg' : bg.browsing, item); if (bg.browsing === 'menu') bg.setPick(item); else ({ hero: bg.heroOwn, grid: bg.gridOwn, loading: bg.loadingOwn })[bg.browsing].pickWorkshop(item); bg.setBrowsing(null); }}/>}
     {bg.share && bg.result?.webm && <ShareBackground video={bg.result.webm} aspect={bg.result.aspect} onSent={(published) => bg.saving.current?.then((record) => markPublished(record.id, published)).catch(() => {})} onClose={() => bg.setShare(false)}/>}
   </>;
 }

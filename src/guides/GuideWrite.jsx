@@ -6,6 +6,7 @@ import { t, translateMessage } from '../../scripts/i18n.mjs';
 import { GUIDES_PATH, guidesAPI, uploadMedia } from './api.js';
 import GuideContent from './GuideContent.jsx';
 import GuideEditor from './GuideEditor.jsx';
+import { track } from '../site-stats.js';
 
 // Writing a guide (?write, ?write=<id>): the title, the section, the text in the visual editor
 // (src/guides/GuideEditor.jsx). The draft saves itself to the account a moment after each change
@@ -33,8 +34,10 @@ export default function GuideWrite({ id: startId }) {
   // The mark «модификация файлов игры»: `kept` — on in the account already, so only a moderator takes it off.
   const [modding, setModding] = useState(false), [kept, setKept] = useState(false);
   const [uploads, setUploads] = useState(0), [save, setSave] = useState({ state: 'idle' }), [preview, setPreview] = useState(false), [sent, setSent] = useState(false), [sending, setSending] = useState(false);
-  const meta = useRef({ id: startId, revision: null }), dirty = useRef(false), timer = useRef(0), saving = useRef(null);
+  const meta = useRef({ id: startId, revision: null }), dirty = useRef(false), timer = useRef(0), saving = useRef(null), opened = useRef(false);
   useEffect(() => { document.title = `${startId ? t('Правка гайда') : t('Новый гайд')} — GridStudio`; });
+  // guides.write: the editor shown (signed in, the draft loaded), once per page load.
+  useEffect(() => { if (auth.user && loaded && !opened.current) { opened.current = true; track('guides.write', { action: 'open' }); } }, [auth.user, loaded]);
   useEffect(() => {
     if (!startId || !auth.user) return;
     guidesAPI(`/${startId}/edit`).then((data) => {
@@ -87,6 +90,7 @@ export default function GuideWrite({ id: startId }) {
       if (!(await store())) throw new Error(t('Черновик не сохранился. Попробуй ещё раз.'));
       if (foreign) { await guidesAPI(`/${meta.current.id}/publish`, { method: 'POST', body: {} }); dirty.current = false; return location.assign(`${GUIDES_PATH}?id=${meta.current.id}`); }
       await guidesAPI(`/${meta.current.id}/submit`, { method: 'POST', body: {} });
+      track('guides.write', { action: 'submit' });
       setSent(true); scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) { setError(e.message); } finally { setSending(false); }
   }

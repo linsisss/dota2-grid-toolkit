@@ -1,6 +1,7 @@
 import { lang, t, translateMessage } from '../../scripts/i18n.mjs';
 import { installCommand } from '../../scripts/installer.mjs';
 import { GRID_NOTE, withGridNote } from '../../scripts/grid-note.mjs';
+import { trackApiFailure } from '../site-stats.js';
 // The workshop lives at /workshop; nginx sends the former /catalog links there with their query and #hash.
 export const CATALOG_PATH = `./${import.meta.env.VITE_EDITOR_ENTRY ? 'catalog.html' : 'workshop'}`;
 export const RULES_PATH = `${CATALOG_PATH}?rules`;
@@ -25,7 +26,9 @@ export async function catalogAPI(path, { method = 'GET', body, raw, token, signa
   try { response = await fetch(`/api/catalog${path}`, { method, credentials: 'same-origin', referrerPolicy: 'no-referrer',
     headers: { ...(body ? { 'Content-Type': 'application/json' } : raw ? { 'Content-Type': 'application/octet-stream' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     ...(json ? { body: json } : raw ? { body: raw } : {}), signal: signal || AbortSignal.timeout(raw ? 60000 : 15000) }); }
-  catch (error) { if (signal?.aborted) throw error; throw new Error(t('Нет связи с мастерской. Проверь подключение и попробуй ещё раз.')); }
+  catch (error) { if (signal?.aborted) throw error; trackApiFailure(path, 0); throw new Error(t('Нет связи с мастерской. Проверь подключение и попробуй ещё раз.')); }
+  // Failed calls go to the analytics' «Ошибки» (src/site-stats.js); «not signed in» and «not allowed» are answers, not failures.
+  if (!response.ok && response.status !== 401 && response.status !== 403) trackApiFailure(path, response.status);
   let value;
   // Not JSON: nginx itself answered (body over its limit, API restarting).
   try { value = await response.json(); } catch { throw Object.assign(new Error(t(response.status === 413 ? TOO_LARGE : 'Мастерская сейчас недоступна. Редактор и скачивание файла продолжают работать.')), { status: response.status }); }

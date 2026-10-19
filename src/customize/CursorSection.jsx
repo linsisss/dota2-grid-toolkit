@@ -8,6 +8,7 @@ import { Field, Segmented } from './ui.jsx';
 import { guideURL, pictureOf, placed, roleRGBA, roleURL } from './cursor-render.js';
 import { keepPictures, loadPictures, newPictureKey, savePicture } from './cursor-store.js';
 import { loadPack, loadPacks } from './d2pfx.js';
+import { track } from '../site-stats.js';
 
 // «Курсор» (2026-10-17, the owner: «Создание курсора сделай примерно как тут в Cursor Creator… Вариант
 // стрелка убери, вместо нее сделай d2pfx… Обязательно указывай автора»): «Вид» is Dota's cursors (nothing
@@ -139,6 +140,8 @@ export function useCursors() {
 export { PackCredits };
 
 // The packs: d2pfx's own picture, the name and the credit; a press takes the pack.
+// A pack's id for the statistics: its ZIP's name, as an id.
+const packId = (pack) => pack.file.split('/').pop().replace(/\.zip$/i, '').replace(/[^A-Za-z0-9_.-]+/g, '_').slice(0, 50);
 function PackGallery({ cur }) {
   const [list, setList] = useState(null), [error, setError] = useState('');
   useEffect(() => { cur.packs().then(setList, (problem) => setError(problem.message)); }, []);
@@ -147,7 +150,7 @@ function PackGallery({ cur }) {
   return <ul className="cur-packs" aria-label={t('Паки курсоров d2pfx')}>{list.map((pack) => {
     const chosen = cur.pack?.file === pack.file, loading = cur.packLoad.file === pack.file;
     return <li key={pack.file} className={`cur-pack${chosen ? ' is-chosen' : ''}`}>
-      <button type="button" aria-pressed={chosen} disabled={loading} onClick={() => cur.choosePack(pack)}>
+      <button type="button" aria-pressed={chosen} disabled={loading} onClick={() => { track('customize.preset', { section: 'cursor', preset: `cursor:${packId(pack)}` }); cur.choosePack(pack); }}>
         <span className="cur-pack-shot">{pack.preview && <img src={pack.preview} alt="" loading="lazy" decoding="async"/>}{loading && <span className="cur-pack-busy"><Icon name="loader"/></span>}{chosen && <span className="cur-pack-check"><Icon name="check" size={14}/></span>}</span>
         <b>{pack.name}</b></button>
       <PackCredits pack={pack} compact/>

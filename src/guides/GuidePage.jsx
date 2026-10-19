@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Icon, Modal, Notice } from '../catalog/Common.jsx';
 import { LikeButton, useAccount } from '../catalog/Account.jsx';
 import { CATALOG_PATH, catalogAPI } from '../catalog/api.js';
 import { quickReasons } from '../catalog/ModerationQueue.jsx';
 import ReportDialog from '../catalog/ReportDialog.jsx';
 import { t } from '../../scripts/i18n.mjs';
+import { track } from '../site-stats.js';
 import { GUIDES_PATH, guidesAPI } from './api.js';
 import GuideContent, { guideHeadings } from './GuideContent.jsx';
 import GuideComments from './GuideComments.jsx';
@@ -97,16 +98,42 @@ function AdminTools({ guide, onChanged }) {
   </section>;
 }
 
+// guides.read: how far into a published guide's text the window's bottom got — past 25, 50, 75 and 100 %,
+// each once per guide and page load.
+const READ_DEPTHS = [25, 50, 75, 100], readDepths = new Map();
+function useReadDepth(id, on) {
+  useEffect(() => {
+    if (!on) return undefined;
+    const sent = readDepths.get(id) || new Set(); readDepths.set(id, sent);
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      const box = document.querySelector('.guide-article .guide-content')?.getBoundingClientRect();
+      if (!box?.height) return;
+      const seen = (innerHeight - box.top) / box.height * 100;
+      for (const depth of READ_DEPTHS) if (seen >= depth && !sent.has(depth)) { sent.add(depth); track('guides.read', { id, depth: String(depth) }); }
+    };
+    const soon = () => { if (!frame) frame = requestAnimationFrame(check); };
+    soon();
+    addEventListener('scroll', soon, { passive: true }); addEventListener('resize', soon);
+    return () => { cancelAnimationFrame(frame); removeEventListener('scroll', soon); removeEventListener('resize', soon); };
+  }, [id, on]);
+}
+
 export default function GuidePage({ id, review }) {
   const auth = useAccount();
   const [guide, setGuide] = useState(null), [error, setError] = useState(''), [reporting, setReporting] = useState(false), [deleting, setDeleting] = useState(false), [busy, setBusy] = useState(false);
-  const [reload, setReload] = useState(0);
+  const [reload, setReload] = useState(0), opened = useRef('');
   useEffect(() => {
     const controller = new AbortController();
-    guidesAPI(`/${id}${review ? `?review=${encodeURIComponent(review)}` : ''}`, { signal: controller.signal }).then(setGuide, (e) => { if (!controller.signal.aborted) setError(e.message); });
+    guidesAPI(`/${id}${review ? `?review=${encodeURIComponent(review)}` : ''}`, { signal: controller.signal }).then((value) => {
+      if (!review && opened.current !== id) { opened.current = id; track('workshop.open', { kind: 'guide', id }); }
+      setGuide(value);
+    }, (e) => { if (!controller.signal.aborted) setError(e.message); });
     return () => controller.abort();
   }, [id, review, auth.user?.id, reload]);
   useEffect(() => { if (guide) document.title = `${guide.title} — ${t('Гайды')} — GridStudio`; });
+  useReadDepth(id, !!guide?.public && !review);
   if (error) return <section className="catalog-empty guide-empty"><Icon name="guides" size={30}/><h1>{t('Гайд не найден')}</h1><p>{error}</p><a className="catalog-button" href={GUIDES_PATH}>{t('Все гайды')}</a></section>;
   if (!guide) return <p role="status">{t('Открываем гайд…')}</p>;
   // The author and admins see the version's state: hidden, waiting, turned down, a draft.

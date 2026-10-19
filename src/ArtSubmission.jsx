@@ -6,6 +6,7 @@ import { Captcha, Icon, Modal, Notice, useCatalogConfig } from './catalog/Common
 import { CreditField } from './catalog/Creator.jsx';
 import { catalogAPI, RULES_PATH } from './catalog/api.js';
 import { t, translateMessage } from '../scripts/i18n.mjs';
+import { track } from './site-stats.js';
 
 // A user offers an art for everyone's library. It is checked by the same rules as on the
 // server, previewed as it will be inserted and then waits for a moderator. Two ways: an art drawn
@@ -47,6 +48,7 @@ export function ArtSubmission({ onClose, editor = null }) {
       const body = artSubmission(fromEditor ? { ...meta, rows: checked.rows } : { ...meta, text });
       await catalogAPI('/arts', { method: 'POST', body: { ...meta, ...(body.rows ? { rows: body.rows } : { text: body.text }), captcha } });
       setSent(true);
+      track('editor.publish', { kind: 'art' });
     } catch (problem) { setError(translateMessage(problem.message)); setReset(value => value + 1); }
     finally { setBusy(false); }
   }

@@ -6,6 +6,7 @@ import { TEXT_LIMITS, heroNames, parseTexts, splitTexts } from '../../scripts/do
 import { catalogAPI } from '../catalog/api.js';
 import { locale, t } from '../../scripts/i18n.mjs';
 import { md5 } from '../../scripts/md5.mjs';
+import { track } from '../site-stats.js';
 import { CursorFields, useCursors } from './CursorSection.jsx';
 import { Field, Segmented } from './ui.jsx';
 import customUI from '../../assets/dota-menu/custom_ui.css?raw';
@@ -41,7 +42,7 @@ export function HudFields({ ui }) {
   const settings = ui.hud, set = (patch) => ui.setHud(hudSettings({ ...settings, ...patch }));
   return <>
     <Field label={t('Пресет')}><div className="catalog-tags" role="group" aria-label={t('Пресет')}>{PRESETS().map(([key, label]) =>
-      <button key={key} type="button" aria-pressed={presetOf(settings) === key} onClick={() => ui.setHud(hudSettings({ ...HUD_PRESETS[key], chat: settings.chat }))}>{label}</button>)}</div></Field>
+      <button key={key} type="button" aria-pressed={presetOf(settings) === key} onClick={() => { track('customize.preset', { section: 'hud', preset: `hud:${key}` }); ui.setHud(hudSettings({ ...HUD_PRESETS[key], chat: settings.chat })); }}>{label}</button>)}</div></Field>
     <Field label={t('Подложки')} aside={t('фон панелей, не иконки')}>
       <div className="custom-effects has-zoom"><Range label={t('Видимость')} value={settings.opacity} min={0} max={100} onChange={(opacity) => set({ opacity })}/>
         <Range label={t('Оттенок')} value={settings.tintStrength} min={0} max={100} onChange={(tintStrength) => set({ tintStrength })}/>
@@ -60,12 +61,13 @@ export function HudFields({ ui }) {
 export { CursorFields };
 
 // «Чат»: one click to a ready place, or two sliders; the chat itself is dragged in the preview (HudCanvas).
+const choosePlace = (ui, key) => { track('customize.preset', { section: 'chat', preset: `chat:${key}` }); ui.setChat({ ...CHAT_PRESETS[key] }); };
 const CHAT_PLACES = () => [['dota', t('Как в Dota')], ['up', t('Выше')], ['left', t('Слева')], ['own', t('Своё')]];
 const chatPlace = (chat) => Object.keys(CHAT_PRESETS).find((key) => JSON.stringify(chatSettings(CHAT_PRESETS[key])) === JSON.stringify(chatSettings(chat))) || 'own';
 export function ChatFields({ ui }) {
   const c = chatSettings(ui.hud.chat), set = (patch) => ui.setChat({ ...c, ...patch });
   return <>
-    <Field label={t('Место')}><Segmented label={t('Место чата')} value={chatPlace(c)} onChange={(key) => key !== 'own' && ui.setChat({ ...CHAT_PRESETS[key] })} options={CHAT_PLACES()}/></Field>
+    <Field label={t('Место')}><Segmented label={t('Место чата')} value={chatPlace(c)} onChange={(key) => key !== 'own' && choosePlace(ui, key)} options={CHAT_PLACES()}/></Field>
     <div className="custom-effects"><Range label={t('Над низом')} value={c.y} min={CHAT_LIMITS.y[0]} max={700} step={10} unit=" px" onChange={(y) => set({ y })}/>
       <Range label={t('Ширина')} value={c.width} min={CHAT_LIMITS.width[0]} max={CHAT_LIMITS.width[1]} step={10} unit=" px" onChange={(width) => set({ width })}/></div>
     <p className="custom-hint">{t('Тяни чат за рамку прямо в превью, за правый край — ширина. У центра и у места «как в Dota» он прилипает. Стрелки двигают на 10 px, с Shift — на 1 px.')}</p>
@@ -204,7 +206,7 @@ export function MatchUnder({ ui, chat = false }) {
   };
   return <div className="cz-chat-bar">
     <span className="catalog-muted">{t('Чат:')}</span>
-    <Segmented compact label={t('Место чата')} value={place === 'own' ? '' : place} onChange={(key) => ui.setChat({ ...CHAT_PRESETS[key] })} options={CHAT_PLACES().slice(0, 3)}/>
+    <Segmented compact label={t('Место чата')} value={place === 'own' ? '' : place} onChange={(key) => choosePlace(ui, key)} options={CHAT_PLACES().slice(0, 3)}/>
     <span className="cz-nudge" role="group" aria-label={t('Подвинуть чат')}>
       {[['chevronLeft', -10, 0, t('Левее')], ['chevronUp', 0, -10, t('Выше')], ['chevron', 0, 10, t('Ниже')], ['chevronRight', 10, 0, t('Правее')]].map(([icon, dx, dy, label]) =>
         <button key={icon} type="button" aria-label={label} title={label} onClick={(event) => nudge(event.shiftKey ? Math.sign(dx) : dx, event.shiftKey ? Math.sign(dy) : dy)}><Icon name={icon}/></button>)}

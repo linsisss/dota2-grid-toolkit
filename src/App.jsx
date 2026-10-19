@@ -8,6 +8,7 @@ import { openWorkspaceRegistry, openWorkspace, registerActiveWorkspace, remember
 import Workspaces from './Workspaces.jsx';
 import { AccountProvider, useAccount } from './catalog/Account.jsx';
 import { catalogAPI } from './catalog/api.js';
+import { countVisit, track } from './site-stats.js';
 import './catalog/catalog.css';
 import './workspaces.css';
 import C from '../scripts/core.mjs';
@@ -34,6 +35,7 @@ function WorkspaceApp() {
     if (!entry.current) {
       const isNew = new URLSearchParams(location.search).get('new') === '1';
       entry.current = enterWorkspace(registry, auth.user).then(meta => {
+        if (isNew && meta) track('editor.file', { action: 'create' }); // a blank file from the landing (?new=1)
         if (isNew && auth.user) auth.syncFiles();
         return meta;
       });
@@ -43,6 +45,10 @@ function WorkspaceApp() {
       .finally(() => { if (active) setResumed(true); });
     return () => { active = false; };
   }, [registry, auth.loading, auth.user?.id, resumed]);
+  // The page view once the first screen is known — «Студия» (the file list) or a file — and again on
+  // each switch between them, which happens without a reload.
+  const shown = error ? 'editor' : registry && resumed ? (selected ? 'editor' : 'studio') : '';
+  useEffect(() => { if (shown) countVisit(shown); }, [shown]);
   function open(meta) { rememberWorkspace({ id: meta.id, configIndex: meta.openConfigIndex }); setSelected(meta); }
   function back() { rememberWorkspace(null); setSelected(null); }
   if (error) return <div className="workspace-loading" role="alert"><p>{error}</p><button className="catalog-button" onClick={() => location.reload()}>{t('Попробовать снова')}</button></div>;

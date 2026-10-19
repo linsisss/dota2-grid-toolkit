@@ -1,7 +1,7 @@
-import { Fragment, Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { Fragment, Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { Spot } from '../Spot.jsx';
 import { CATALOG_TAGS, normalizeCatalogGrid } from '../../scripts/catalog-document.mjs';
-import { Brand, Icon, Modal, Notice, SegmentSwitch, Stats } from './Common.jsx';
+import { Brand, Icon, Modal, Notice, SegmentSwitch, Stats, useSearchCount } from './Common.jsx';
 import { ADVERTISE_PATH, catalogAPI, CATALOG_PATH, CUSTOMIZE_PATH, EDITOR_PATH, GUIDES_PATH, RULES_PATH, STUDIO_PATH, countDownload, downloadGrid, forgetWork, managementLink, ownedWorks, rememberWork } from './api.js';
 import GridPreview from './GridPreview.jsx';
 import { foreignNoticeable, foreignSample, gridForeignGlyphs } from '../../scripts/dota-rendering.mjs';
@@ -29,8 +29,16 @@ import { GridBackgroundSwitch } from './GridBackgroundSwitch.jsx';
 import { BackgroundCard, BackgroundScreenFilter, BackgroundTagFilter, useBackgrounds } from './BackgroundGallery.jsx';
 import LanguageSwitch from '../LanguageSwitch.jsx';
 import { locale, t, translateMessage } from '../../scripts/i18n.mjs';
+import { track } from '../site-stats.js';
 // «Реклама» loads only when it is opened.
 const Advertise = lazy(() => import('./Advertise.jsx'));
+
+// The workshop's analytics (scripts/analytics-events.mjs): ids there are ASCII, so a tag goes as a slug.
+const TAG_IDS = { 'Аниме': 'anime', 'Милота': 'cute', '18+': 'adult', 'Рамки': 'frames', 'С упором на героя': 'hero-focus', 'Мемы': 'memes', 'Dead inside': 'dead-inside',
+  'Dota 2': 'dota-2', 'Игры': 'games', 'Природа': 'nature', 'Космос': 'space', 'Абстракция': 'abstract' };
+const tagId = (tag) => (tag ? TAG_IDS[tag] || tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'other' : 'all');
+const filtered = (section, filter, value) => track('workshop.filter', { section, filter, value: value || 'all' });
+const usedBackground = (item) => track('workshop.download', { kind: 'background', way: 'builder', id: String(item.id) });
 
 // A report on a grid or (kind 'background') a menu background; signed-in only since 2026-10-07 (no captcha).
 function Report({ item, onClose, kind = 'grid' }) {
@@ -43,15 +51,16 @@ function WorkDetail({ id, ownerToken, managing }) {
   const auth = useAccount();
   const [item, setItem] = useState(null), [error, setError] = useState(''), [editing, setEditing] = useState(false), [replacement, setReplacement] = useState(null);
   const [deleting, setDeleting] = useState(false), [deleted, setDeleted] = useState(false), [busy, setBusy] = useState(false), [report, setReport] = useState(false), [copied, setCopied] = useState(false);
-  const foreign = useMemo(() => gridForeignGlyphs(item?.grid), [item?.grid]);
+  const foreign = useMemo(() => gridForeignGlyphs(item?.grid), [item?.grid]), opened = useRef('');
   async function reload() { setError(''); try { setItem(await catalogAPI(managing ? `/manage/${id}` : `/works/${id}`, { token: ownerToken })); } catch (e) { setError(e.message); } }
   useEffect(() => { const c = new AbortController(); setItem(null); setError(''); catalogAPI(managing ? `/manage/${id}` : `/works/${id}`, { token: ownerToken, signal: c.signal }).then(value => {
     // A secret management link opened in this browser also lets the editor update the draft.
     if (managing && ownerToken) rememberWork({ id, token: ownerToken, title: value.title });
+    if (!managing && opened.current !== id) { opened.current = id; track('workshop.open', { kind: 'grid', id }); }
     setItem(value);
   }).catch(e => { if (!c.signal.aborted) setError(e.message); }); return () => c.abort(); }, [id, ownerToken, managing, auth.user?.id]);
   if (deleted) return <section className="catalog-empty"><h1>{t('Публикация удалена')}</h1><p>{t('Она больше не доступна в мастерской. Файлы в редакторе не изменены.')}</p><a className="catalog-button" href={CATALOG_PATH}>{t('Вернуться в мастерскую')}</a></section>;
-  if (!item) return <section className="catalog-empty">{error ? <><Notice error report>{error}</Notice>{managing && !auth.user && <button className="catalog-button" onClick={() => auth.requestLogin()}>{t('Войти')}</button>}<button className="catalog-button" onClick={reload}>{t('Попробовать снова')}</button></> : <p role="status">{t('Загружаем сетку…')}</p>}</section>;
+  if (!item) return <section className="catalog-empty">{error ? <><Notice error report>{error}</Notice>{managing && !auth.user && <button className="catalog-button" onClick={() => auth.requestLogin('', 'manage')}>{t('Войти')}</button>}<button className="catalog-button" onClick={reload}>{t('Попробовать снова')}</button></> : <p role="status">{t('Загружаем сетку…')}</p>}</section>;
   return <>
     <a className="catalog-back" href={managing ? `${CATALOG_PATH}?mine=1` : CATALOG_PATH}><Icon name="back"/>{managing ? t('Мои публикации') : t('Все сетки')}</a>
     <section className="catalog-detail"><div>{managing ? <GridPreview grid={item.grid} title={item.title} large/> : <SensitiveArt item={item}><GridPreview grid={item.grid} title={item.title} large/></SensitiveArt>}
@@ -69,8 +78,8 @@ function WorkDetail({ id, ownerToken, managing }) {
           {item.published && !item.blocked && <a className="catalog-button" href={`${CATALOG_PATH}?id=${id}`}>{t('Открыть публичную страницу')}</a>}
           <p className="catalog-muted">{item.linked ? t('Управление доступно только из твоего аккаунта.') : t('Секретная ссылка подтверждает владение сеткой. Сохрани её для привязки к аккаунту.')}</p>
           <button className="catalog-link danger" onClick={() => setDeleting(true)}>{t('Удалить публикацию')}</button>
-        </> : <><LikeButton item={item} onChange={value => setItem(current => ({...current,...value}))}/><SubscribeButton item={item} onChange={value => setItem(current => ({...current,...value}))}/><AdminEditButton item={item} onSaved={value => setItem(current => ({...current,...value}))}/>{item.mine && <a className="catalog-button" href={`${CATALOG_PATH}?id=${id}&manage=1`}>{t('Управлять публикацией')}</a>}<button className="catalog-button primary" onClick={() => { downloadGrid(item.grid); countDownload('work', item.id); }}><Icon name="download"/>{t('Скачать грид')}</button><InstallButton item={item}/>
-          <a className="catalog-button" href={`${EDITOR_PATH}?catalog=${id}`}>{t('Открыть в редакторе')}<Icon name="arrow"/></a><p className="catalog-muted">{t('В редакторе сетка добавится к твоему файлу после подтверждения.')}</p>
+        </> : <><LikeButton item={item} onChange={value => setItem(current => ({...current,...value}))}/><SubscribeButton item={item} onChange={value => setItem(current => ({...current,...value}))}/><AdminEditButton item={item} onSaved={value => setItem(current => ({...current,...value}))}/>{item.mine && <a className="catalog-button" href={`${CATALOG_PATH}?id=${id}&manage=1`}>{t('Управлять публикацией')}</a>}<button className="catalog-button primary" onClick={() => { downloadGrid(item.grid); countDownload('work', item.id); track('workshop.download', { kind: 'grid', way: 'file', id: item.id }); }}><Icon name="download"/>{t('Скачать грид')}</button><InstallButton item={item}/>
+          <a className="catalog-button" href={`${EDITOR_PATH}?catalog=${id}`} onClick={() => track('workshop.download', { kind: 'grid', way: 'editor', id: item.id })}>{t('Открыть в редакторе')}<Icon name="arrow"/></a><p className="catalog-muted">{t('В редакторе сетка добавится к твоему файлу после подтверждения.')}</p>
           <button className="catalog-link" onClick={() => (auth.user ? setReport(true) : auth.requestLogin(t('Войди, чтобы пожаловаться.')))}>{t('Пожаловаться')}</button></>}
         {error && <Notice error>{error}</Notice>}
       </div></section>
@@ -110,8 +119,8 @@ const sortNote = (sort) => (SORT_NOTES[sort] ? ` · ${t(SORT_NOTES[sort])}` : ''
 // «Мои публикации» (?backgrounds&mine=1) are the author's own, with statuses, as for grids.
 function Backgrounds({ mine, onMine, auth }) {
   const [tag, setTag] = useState(''), [aspect, setAspect] = useState(''), [query, setQuery] = useState(''), [sort, setSort] = useState('popular'), [report, setReport] = useState(null);
-  const { items, total, aspects, error, more, update } = useBackgrounds({ tag, query, sort, aspect });
-  const pick = (value) => { setSort(value); onMine(false); };
+  const { items, total, aspects, error, more, update } = useBackgrounds({ tag, query, sort, aspect, onSearch: useSearchCount('backgrounds') });
+  const pick = (value) => { setSort(value); onMine(false); filtered('backgrounds', 'sort', value); };
   // ?comments=<id> (the bot's message about a comment): that background's comments open at once.
   const [linked, setLinked] = useState(null);
   useEffect(() => {
@@ -121,10 +130,10 @@ function Backgrounds({ mine, onMine, auth }) {
   const closeLinked = () => { setLinked(null); const url = new URL(location.href); url.searchParams.delete('comments'); url.hash = ''; history.replaceState(history.state, '', url); };
   return <>
     {linked && <BackgroundCommentsWindow item={linked} onClose={closeLinked} onCount={(comments) => update(linked.id, { comments })}/>}
-    <div className="catalog-toolbar"><SortTabs sort={sort} mine={mine} onSort={pick} onMine={() => onMine(true)}/>
+    <div className="catalog-toolbar"><SortTabs sort={sort} mine={mine} onSort={pick} onMine={() => { onMine(true); filtered('backgrounds', 'tab', 'mine'); }}/>
       {!mine && <label className="catalog-search"><Icon name="search"/><input aria-label={t('Поиск фонов')} placeholder={t('Название или автор')} value={query} maxLength={80} onChange={e => setQuery(e.target.value)}/></label>}</div>
     {mine ? <OwnedBackgrounds auth={auth}/> : <>
-    <div className="background-filters"><BackgroundTagFilter value={tag} onChange={setTag}/><BackgroundScreenFilter value={aspect} onChange={setAspect} counts={aspects}/></div>
+    <div className="background-filters"><BackgroundTagFilter value={tag} onChange={(value) => { setTag(value); filtered('backgrounds', 'tag', tagId(value)); }}/><BackgroundScreenFilter value={aspect} onChange={(value) => { setAspect(value); filtered('backgrounds', 'aspect', value || 'any'); }} counts={aspects}/></div>
     {error && <Notice error>{error}</Notice>}
     {!items ? !error && <p role="status">{t('Загружаем фоны…')}</p> : items.length ? <>
       <div className="catalog-results"><span>{t('Фонов: {count}', { count: total })}{sortNote(sort)}</span><HideAdultButton/></div>
@@ -132,7 +141,7 @@ function Backgrounds({ mine, onMine, auth }) {
         <LikeButton item={item} path={`/backgrounds/${item.id}/like`} onChange={value => update(item.id, value)}/>
         <BackgroundCommentsButton item={item} onCount={(comments) => update(item.id, { comments })}/>
         <button className="catalog-icon" aria-label={t('Пожаловаться на фон {title}', { title: item.title })} title={t('Пожаловаться')} onClick={() => (auth.user ? setReport(item) : auth.requestLogin(t('Войди, чтобы пожаловаться.')))}><Icon name="flag"/></button>
-        <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`}>{t('Использовать')}</a></div></BackgroundCard>{i === 0 && <Spot place="backgrounds" className="is-in-grid"/>}</Fragment>)}</section>
+        <a className="catalog-button" href={`${CUSTOMIZE_PATH}?background=${item.id}`} onClick={() => usedBackground(item)}>{t('Использовать')}</a></div></BackgroundCard>{i === 0 && <Spot place="backgrounds" className="is-in-grid"/>}</Fragment>)}</section>
       {items.length < total && <button className="catalog-button background-more" onClick={more}>{t('Показать ещё')}</button>}
     </> : <section className="catalog-empty"><h2>{query || tag || aspect ? t('Таких фонов пока нет') : t('Здесь появятся фоны пользователей')}</h2><p>{query || tag || aspect ? `${t('Попробуй другой запрос.')} ` : ''}{t('Собери фон из GIF или видео и нажми «Опубликовать в мастерскую».')}</p><a className="catalog-button" href={CUSTOMIZE_PATH}>{t('Собрать фон')}</a></section>}
     </>}
@@ -144,14 +153,14 @@ function Gallery() {
   const [kind, setKind] = useState(() => new URLSearchParams(location.search).has('backgrounds') ? 'backgrounds' : 'grids');
   const [query, setQuery] = useState(''), [tag, setTag] = useState(''), [sort, setSort] = useState('popular'), [mine, setMine] = useState(() => new URLSearchParams(location.search).has('mine')), [page, setPage] = useState(0);
   const [data, setData] = useState(null), [privateItems, setPrivateItems] = useState([]), [error, setError] = useState(''), [retry, setRetry] = useState(0), [loading, setLoading] = useState(true);
-  const owned = ownedWorks().filter(x => !privateItems.some(item => item.id === x.id));
+  const owned = ownedWorks().filter(x => !privateItems.some(item => item.id === x.id)), searched = useSearchCount('grids');
   useEffect(() => {
     if (kind !== 'grids') return;
     const controller = new AbortController(); setLoading(true); setError('');
     const timer = setTimeout(async () => {
       try {
         if (mine) { setPrivateItems(auth.user ? (await catalogAPI('/mine', {signal:controller.signal})).items : []); }
-        else setData(await catalogAPI('/works?' + new URLSearchParams({q:query,tag,sort,page:String(page)}), {signal:controller.signal}));
+        else { const found = await catalogAPI('/works?' + new URLSearchParams({q:query,tag,sort,page:String(page)}), {signal:controller.signal}); setData(found); searched(query, found?.total); }
       } catch(e) { if (!controller.signal.aborted) setError(e.message); }
       finally { if (!controller.signal.aborted) setLoading(false); }
     }, query && !mine ? 220 : 0);
@@ -166,6 +175,7 @@ function Gallery() {
     const url = new URL(location.href); url.searchParams.delete('mine');
     if (value === 'backgrounds') url.searchParams.set('backgrounds', ''); else url.searchParams.delete('backgrounds');
     history.replaceState(history.state, '', url.href.replace(/backgrounds=(&|$)/, 'backgrounds$1')); setMine(false); setKind(value);
+    if (value !== kind) filtered(value, 'tab', value);
   }
   const backgrounds = kind === 'backgrounds';
   const filter = (fn,value) => {fn(value);setPage(0);showMine(false);};
@@ -179,9 +189,9 @@ function Gallery() {
       <p>{mine ? (backgrounds ? t('Опубликованные фоны и заявки на проверке.') : t('Опубликованные сетки и заявки на проверке.')) : backgrounds ? t('Фоны главного меню от пользователей. Возьми готовый или собери свой.') : t('Найди свой вариант. Открой в редакторе и сделай по-своему.')}</p></div>
       <div className="catalog-actions">{backgrounds ? <a className="catalog-button primary" href={CUSTOMIZE_PATH}><Icon name="plus"/>{t('Собрать фон')}</a> : <>{!mine && <InstallButton/>}<a className="catalog-button primary" href={`${EDITOR_PATH}?new=1`}><Icon name="plus"/>{t('Создать сетку')}</a></>}</div></header>
     <div key={kind} className="workshop-switch-view">{backgrounds ? <Backgrounds key={auth.user?.id || 'guest'} mine={mine} onMine={showMine} auth={auth}/> : <>
-    <div className="catalog-toolbar"><SortTabs sort={sort} mine={mine} categories onSort={value=>filter(setSort,value)} onMine={()=>showMine(true)}/>
+    <div className="catalog-toolbar"><SortTabs sort={sort} mine={mine} categories onSort={value=>{filter(setSort,value);filtered('grids','sort',value);}} onMine={()=>{showMine(true);filtered('grids','tab','mine');}}/>
       {!mine && <label className="catalog-search"><Icon name="search"/><input aria-label={t('Поиск сеток')} placeholder={t('Название или автор')} value={query} maxLength={80} onChange={e=>filter(setQuery,e.target.value)}/></label>}</div>
-    {!mine && <div className="catalog-tags catalog-filters"><button aria-pressed={!tag} onClick={()=>filter(setTag,'')}>{t('Все теги')}</button>{CATALOG_TAGS.map(value=><button key={value} aria-pressed={tag===value} onClick={()=>filter(setTag,tag===value?'':value)}>{t(value)}</button>)}</div>}
+    {!mine && <div className="catalog-tags catalog-filters"><button aria-pressed={!tag} onClick={()=>{filter(setTag,'');filtered('grids','tag','all');}}>{t('Все теги')}</button>{CATALOG_TAGS.map(value=><button key={value} aria-pressed={tag===value} onClick={()=>{filter(setTag,tag===value?'':value);filtered('grids','tag',tagId(tag===value?'':value));}}>{t(value)}</button>)}</div>}
     {error && <Notice error report>{error}<button className="catalog-link" onClick={()=>setRetry(x=>x+1)}>{t('Попробовать снова')}</button></Notice>}
     {loading ? <p role="status">{t('Загружаем сетки…')}</p> : mine ? <OwnedPublications items={privateItems} guestItems={owned} auth={auth}/> : data?.items.length ? <>
       <div className="catalog-results"><span>{t('Сеток: {count}', { count: data.total })}{sortNote(sort)}</span><HideAdultButton/><GridBackgroundSwitch/></div>

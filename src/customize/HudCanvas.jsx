@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DotaCursorLayer, canHover, cursorOf, onHero } from './DotaCursor.jsx';
 import { t } from '../../scripts/i18n.mjs';
+import { track } from '../site-stats.js';
 import { CHAT_DEFAULTS, CHAT_LIMITS } from '../../scripts/hud-style.mjs';
 import { LIN, SCREEN, atlasPlate, buildLower, chatPlates, commonFromAtlas, composeScreen, hudChatBox, hudLayers, linearToSrgb, lowerFromAtlas } from '../../scripts/hud-capture/compose.mjs';
 import { applyDelta, grow, hiddenDecor, reskinLower } from '../../scripts/hud-capture/reskin.mjs';
@@ -82,11 +83,12 @@ function ChatHandle({ chat, label, onDraft, onMove }) {
     onDraft(d.place);
   };
   // The exact picture is composed once, on release; while dragging, a light copy of the lines moves.
-  const end = () => { const d = drag.current; drag.current = null; setMode(''); onDraft(null); if (d?.place) onMove(d.place); };
+  const end = () => { const d = drag.current; drag.current = null; setMode(''); onDraft(null); if (d?.place) { onMove(d.place); track('customize.chat-drag'); } };
   const key = (event) => {
     const step = event.shiftKey ? 1 : 10, by = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] }[event.key];
     if (!by) return;
     event.preventDefault();
+    track('customize.chat-drag');
     // Up and down keep a centred chat centred.
     if (chat.align === 'center' && !by[0]) return onMove({ align: 'center', y: clamp(chat.y + by[1], CHAT_LIMITS.y), width: box.width });
     onMove(placeChat(box.x + by[0], chat.y + by[1], box.width, false));

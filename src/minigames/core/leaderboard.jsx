@@ -63,8 +63,10 @@ export function useRun(game) {
     setOutcome(null);
     began.current = performance.now(); track('minigames.start', { game });
     if (!user) { run.current = null; return; }
-    const started = performance.now();
-    run.current = { started, token: catalogAPI('/minigames/runs', { method: 'POST', body: { game, board } }).then((value) => value.token, () => null) };
+    // The run's time counts from when the server has issued the token, the moment the server counts from.
+    const current = { started: performance.now() };
+    current.token = catalogAPI('/minigames/runs', { method: 'POST', body: { game, board } }).then((value) => { current.started = performance.now(); return value.token; }, () => null);
+    run.current = current;
   }, [game, user]);
   const cancel = useCallback(() => { run.current = null; began.current = 0; setOutcome(null); }, []);
   const submit = useCallback(async ({ score, stats = {} }) => {

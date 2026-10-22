@@ -28,11 +28,13 @@ test('a token is single use, the account’s own, and its age is the run’s tim
   advance(20_000);
   refused(() => boards.submit('1', { token: 'x'.repeat(24), score: 100, stats: { catches: 1 } }), 404);
   refused(() => boards.submit('1', { score: 100, stats: { catches: 1 } }), 422);
-  // The page claims more time than the server saw.
+  // A broken time is refused (a page clock ahead of the server's is not: it is cut to the server's, below).
   const second = boards.start('1', 'fishing').token; advance(5_000);
-  refused(() => boards.submit('1', { token: second, score: 100, duration: 60, stats: { catches: 1 } }), 422);
+  refused(() => boards.submit('1', { token: second, score: 100, duration: -1, stats: { catches: 1 } }), 422);
   // A refused token is spent too: no second try with other numbers.
   refused(() => boards.submit('1', { token: second, score: 100, duration: 5, stats: { catches: 1 } }), 409);
+  const ahead = boards.start('3', 'fishing').token; advance(10_000);
+  assert.ok(boards.submit('3', { token: ahead, score: 100, duration: 60, stats: { catches: 1 } }).all.improved, 'a page clock ahead of the server is not refused');
   const result = boards.submit('1', { token, score: 3_000, duration: 20, stats: { catches: 2 } });
   assert.equal(result.all.improved, true); assert.equal(result.all.rank, 1);
   refused(() => boards.submit('1', { token, score: 3_000, duration: 20, stats: { catches: 2 } }), 409);

@@ -171,9 +171,13 @@ export class MinigameBoards {
       const elapsed = (now - run.started) / 1000;
       if (elapsed > RUN_TTL / 1000) fail(410, 'Забег слишком долгий для таблицы.');
       if (this.store.get('SELECT 1 x FROM minigame_bans WHERE account=? AND game=?', id, run.game)) fail(403, 'Таблица рекордов этой игры для тебя закрыта.');
-      const value = Number(score), time = Number(duration ?? 0);
+      const value = Number(score), sent = Number(duration ?? 0);
       if (!Number.isSafeInteger(value) || value < 1 || value > 1e9) bad();
-      if (!Number.isFinite(time) || time < 0 || time > elapsed + 5) bad('Время забега не сходится.');
+      if (!Number.isFinite(sent) || sent < 0) bad('Время забега не сходится.');
+      // The page's own clock may run ahead of the server's (it starts before the token arrives, a slow network
+      // or a sleeping laptop): never refuse for that (2026-10-22), keep the server's time as the upper bound —
+      // the checks below lean on `elapsed` anyway.
+      const time = Math.min(sent, elapsed);
       const rule = ruleOf(run.game, run.board);
       const checked = rule.check(value, { elapsed, duration: time, stats: stats && typeof stats === 'object' ? stats : {} });
       if (rule.levels) return this.submitLevel(id, run, value, time, checked);

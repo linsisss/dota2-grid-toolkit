@@ -1,4 +1,4 @@
-import { MENU_FRAME, MENU_FRAME_ZOOM, MENU_HIDE, MENU_SIZES } from './menu-background.mjs';
+import { GLASS_KEYS, MENU_FRAME, MENU_FRAME_ZOOM, MENU_HIDE, MENU_SIZES } from './menu-background.mjs';
 
 // A menu background kept in «Студия» (docs/customize.md «Фоны в студии»). The browser keeps the
 // built WebM with it (scripts/background-library.mjs), so it downloads again at once; an account
@@ -24,7 +24,7 @@ const percent = (value) => Number.isInteger(value) && value >= 0 && value <= 100
 const seconds = (value) => Number.isFinite(value) && value >= 0 && value <= 86_400 ? Math.round(value * 1000) / 1000 : broken();
 
 // What was built from: a workshop background (by id) or the user's own file (by name and size).
-function studioSource(source) {
+export function studioSource(source) {
   if (source?.kind === 'workshop') {
     if (!Number.isInteger(source.id) || source.id < 1) broken();
     return { kind: 'workshop', id: source.id, title: String(source.title ?? '').slice(0, 60) };
@@ -37,7 +37,7 @@ function studioSource(source) {
 }
 
 // The framing (1.6.1; recipes before it have none: the middle, not enlarged).
-function studioFrame(value) {
+export function studioFrame(value) {
   if (value == null) return { zoom: MENU_FRAME.zoom, x: MENU_FRAME.x, y: MENU_FRAME.y };
   const number = (v, low, high) => (Number.isFinite(v) && v >= low && v <= high ? Math.round(v * 1000) / 1000 : broken());
   // Turned and mirrored since 2026-10-05; recipes before have neither.
@@ -47,7 +47,7 @@ function studioFrame(value) {
   // Kept only when set, so recipes without them stay as they were.
   return { ...frame, ...(rotate ? { rotate } : {}), ...(flipX ? { flipX } : {}), ...(flipY ? { flipY } : {}) };
 }
-function studioPiece(value) {
+export function studioPiece(value) {
   if (value == null) return null;
   const piece = { start: seconds(value.start), end: seconds(value.end) };
   if (piece.end <= piece.start) broken();
@@ -91,6 +91,14 @@ function studioHide(input) {
   if (!Array.isArray(input) || input.length > Object.keys(MENU_HIDE).length || input.some((key) => !Object.hasOwn(MENU_HIDE, key))) broken();
   return [...new Set(input)];
 }
+// The see-through panels (MENU_GLASS percents, 2026-10-22: the top bar, the friends rail, the news column, the
+// mini-profile's header and picture, the party bar); kept only when one is below 100, a key missing reads as 100.
+function studioGlass(input) {
+  if (input == null) return null;
+  if (typeof input !== 'object') broken();
+  const glass = Object.fromEntries(GLASS_KEYS.map((key) => [key, input[key] == null ? 100 : percent(input[key])]));
+  return Object.values(glass).some((value) => value < 100) ? glass : null;
+}
 
 export function studioRecipe(input) {
   if (!input || typeof input !== 'object') broken();
@@ -101,7 +109,7 @@ export function studioRecipe(input) {
   const news = input.news == null ? null : (typeof input.news === 'object' && typeof input.news.carnival === 'boolean' && typeof input.news.season === 'boolean' ? { carnival: input.news.carnival, season: input.news.season } : broken());
   return { aspect: input.aspect, fit: input.fit, blur: percent(input.blur), dim: percent(input.dim), frame: studioFrame(input.frame), clean: input.clean, ...(news ? { news } : {}), folder: input.folder,
     delivery: input.delivery, piece: studioPiece(input.piece), crossfade: input.crossfade, source: studioSource(input.source), hero: studioHero(input.hero), event: studioSwitch(input.event), profile: studioSwitch(input.profile), grid: studioGrid(input.grid),
-    loading: studioLoading(input.loading), hide: studioHide(input.hide) };
+    loading: studioLoading(input.loading), hide: studioHide(input.hide), ...(studioGlass(input.glass) ? { glass: studioGlass(input.glass) } : {}) };
 }
 
 // A workshop submission of the background: its gallery id and the status token.

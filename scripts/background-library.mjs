@@ -2,9 +2,11 @@
 // (scripts/studio-background.mjs), a JPEG poster and the built WebM, so a background downloads
 // again without building. A record:
 //   { id, name, account (Telegram account id or null), recipe, poster: Blob, video: Blob | null,
-//     codec, seconds, created, updated, synced (the recipe is on the account's server copy) }
+//     codec, seconds, created, updated, synced (the recipe is on the account's server copy),
+//     encoder (VIDEO_ENCODER of the build that made the videos; none before 22.10.2026) }
 // `video` is null when the recipe came from another device and was never built here.
 import { t } from './i18n.mjs';
+import { freshVideo } from './video-resample.mjs';
 
 const DATABASE = 'gridstudio-backgrounds', STORE = 'items';
 
@@ -39,6 +41,10 @@ export async function updateBackground(id, patch) {
   await putBackground(next);
   return next;
 }
+// The videos kept were built before the builder's fix of 22.10.2026 (scripts/video-resample.mjs): jerky in
+// Dota. A record without videos has nothing stale.
+export const BUILT_FIELDS = Object.freeze(['video', 'heroVideo', 'gridVideo', 'loadingVideo']);
+export const staleBuilt = (record) => !!record && BUILT_FIELDS.some((field) => record[field] instanceof Blob) && !freshVideo(record.encoder);
 // Built WebMs are big; ask the browser not to clear them under storage pressure (it may say no).
 export async function keepBackgrounds() {
   try { return await navigator.storage?.persist?.(); } catch { return false; }

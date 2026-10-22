@@ -5,6 +5,8 @@
 //   game/dota_russian/pak03_dir.vpk          — the match: HUD, chat, texts (scripts/interface-modules.mjs)
 //   game/dota_russian/pak04_dir.vpk          — the chosen Dota2PornFX mods: HUD skin, parts, click, pings, deny,
 //                                              voice icon (scripts/d2pfx-mods.mjs; read after ours, shares no path)
+//   game/dota_russian/pak05_dir.vpk          — the heroes' own portraits: pictures and movies at Valve's paths
+//                                              (scripts/hero-portraits.mjs; no other pack has those paths)
 //   game/dota_russian/resource/cursor/…      — the cursor, loose files (scripts/dota-cursor.mjs)
 //   game/dota/panorama/fonts/<Valve's>.otf   — the font (scripts/dota-font.mjs)
 //   OFL.txt, ПРОЧТИ.txt (README.txt in English)
@@ -14,14 +16,14 @@
 // command only an archive of these names (server/install-packs.mjs).
 export const CUSTOMIZE_FILE = 'gridstudio-dota.zip';
 export const CUSTOMIZE_DIRS = Object.freeze({ russian: 'game/dota_russian/', fonts: 'game/dota/panorama/fonts/' });
-export const CUSTOMIZE_PAKS = Object.freeze({ menu: 'pak02_dir.vpk', match: 'pak03_dir.vpk', d2pfx: 'pak04_dir.vpk' });
+export const CUSTOMIZE_PAKS = Object.freeze({ menu: 'pak02_dir.vpk', match: 'pak03_dir.vpk', d2pfx: 'pak04_dir.vpk', portraits: 'pak05_dir.vpk' });
 export const CUSTOMIZE_LIST = 'gridstudio-installed.txt';
 // A file under dota_russian the archive may hold (its path there, with forward slashes).
-export const RUSSIAN_FILE = /^(?:pak0[234]_dir\.vpk|resource\/cursor\/[a-z0-9_]+\.(?:bmp|res))$/;
+export const RUSSIAN_FILE = /^(?:pak0[2-5]_dir\.vpk|resource\/cursor\/[a-z0-9_]+\.(?:bmp|res))$/;
 export const FONT_FILE = /^[a-z0-9._-]+\.otf$/;
 export const CUSTOMIZE_TEXTS = Object.freeze(['OFL.txt', 'ПРОЧТИ.txt', 'README.txt']);
 // The modules of the page, in its order; the statistics count which of them a file had.
-export const CUSTOMIZE_PARTS = Object.freeze(['bg', 'grid', 'hero', 'loading', 'buttons', 'menuparts', 'hud', 'hudskin', 'hudparts', 'chat', 'cursor', 'click', 'pings', 'deny', 'font', 'texts', 'voice']);
+export const CUSTOMIZE_PARTS = Object.freeze(['bg', 'grid', 'hero', 'loading', 'buttons', 'menuparts', 'hud', 'hudskin', 'hudparts', 'chat', 'cursor', 'click', 'pings', 'deny', 'font', 'texts', 'voice', 'portraits']);
 // Where an archive entry goes: { kind: 'russian' | 'fonts' | 'text', path } or null for one that may not be there.
 export function customizeEntry(name) {
   if (name.startsWith(CUSTOMIZE_DIRS.russian) && RUSSIAN_FILE.test(name.slice(CUSTOMIZE_DIRS.russian.length))) return { kind: 'russian', path: name.slice(CUSTOMIZE_DIRS.russian.length) };

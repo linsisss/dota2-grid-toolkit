@@ -198,4 +198,6 @@ export default {
   'Без пароля, почты и номера телефона: сайт получит только имя, ник и аватар. Файлы этого браузера сохранятся в аккаунте.': 'No password, email or phone number: the site gets only your name, username and avatar. This browser’s files will be saved to your account.',
   'Перейти в бота': 'Go to the bot', 'Готовим вход…': 'Preparing sign-in…',
   'Прислать': 'Send',
+  // A «Студия» background built before the smoothness fix of 22.10.2026 (src/studio-rebuild.js), on /editor and /background
+  'Этот фон собран старой версией и может дёргаться в Dota — открой его и выбери исходный файл, чтобы пересобрать': 'This background was built by an older version and may stutter in Dota — open it and choose the source file to rebuild it',
 };

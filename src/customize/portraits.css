@@ -1,0 +1,53 @@
+/* «Портреты героев» (HeroPortraits.jsx): the heroes chosen, the search, the card to frame, the other
+   places at their size, and the hover card in the grid scene (DotaGridPage.jsx). */
+.hp-list { display:grid; gap:6px; margin:0; padding:0; list-style:none; }
+.hp-list li { display:flex; align-items:center; gap:6px; padding:4px 6px 4px 4px; border:1px solid var(--cat-line); border-radius:9px; background:var(--cat-field); transition:border-color 160ms ease; }
+.hp-list li.is-active { border-color:var(--cat-accent); }
+.hp-pick { display:flex; flex:1; align-items:center; gap:10px; min-width:0; padding:0; border:0; background:none; color:inherit; text-align:left; cursor:pointer; }
+.hp-pick :is(img, canvas) { flex:none; width:36px; height:48px; border-radius:4px; object-fit:cover; background:#202831; }
+.hp-pick span { display:grid; min-width:0; }
+.hp-pick b { overflow:hidden; font-weight:600; white-space:nowrap; text-overflow:ellipsis; }
+.hp-pick small { color:var(--cat-muted); font-size:12px; }
+
+.hp-find { position:relative; }
+.hp-find-field { display:flex; align-items:center; gap:8px; min-height:44px; padding:0 12px; border:1px solid var(--cat-line); border-radius:9px; background:var(--cat-field); color:var(--cat-muted); }
+.hp-find-field:focus-within { border-color:var(--cat-accent); }
+.hp-find-field input { flex:1; min-width:0; height:42px!important; margin:0!important; padding:0!important; border:0!important; border-radius:0!important; background:none!important; box-shadow:none!important; color:var(--cat-ink); font:inherit; outline:none; }
+.hp-find-list { position:absolute; z-index:5; left:0; right:0; top:calc(100% + 4px); max-height:300px; margin:0; padding:4px; overflow:auto; border:1px solid var(--cat-line); border-radius:9px; background:var(--cat-panel); box-shadow:0 14px 40px #0009; list-style:none; }
+.hp-find-list li { display:flex; align-items:center; gap:10px; padding:4px 8px; border-radius:6px; cursor:pointer; }
+.hp-find-list li[aria-selected='true'] { background:#ffffff12; }
+.hp-find-list img { width:21px; height:28px; border-radius:3px; object-fit:cover; }
+
+.hp-editor { display:flex; flex-wrap:wrap; align-items:flex-start; gap:14px; }
+.hp-frame { position:relative; flex:none; overflow:hidden; border:2px solid #000; border-radius:3px; box-shadow:0 0 0 1px var(--cat-line); cursor:grab; touch-action:none; user-select:none; }
+.hp-frame:active { cursor:grabbing; }
+.hp-frame canvas { display:block; width:100%; height:100%; }
+/* What a card of the hero grid shows of it (gridCardRect): the middle, between the dashed lines. */
+.hp-frame-grid { position:absolute; inset:0; pointer-events:none; box-shadow:inset var(--side) 0 0 #0007, inset calc(-1 * var(--side)) 0 0 #0007; }
+.hp-frame-grid::before, .hp-frame-grid::after { content:''; position:absolute; top:0; bottom:0; border-left:1px dashed #ffffffb3; }
+.hp-frame-grid::before { left:var(--side); }
+.hp-frame-grid::after { right:var(--side); }
+.hp-side { display:grid; flex:1; min-width:128px; gap:12px; }
+.hp-side .hp-places canvas { max-width:100%; height:auto; }
+.hp-places { display:flex; flex-wrap:wrap; align-items:flex-end; gap:10px; }
+.hp-places figure { display:grid; gap:4px; margin:0; justify-items:start; }
+.hp-places canvas { display:block; border:1px solid #000; background:#202831; }
+.hp-places canvas.is-topbar { clip-path:polygon(8% 0, 100% 0, 92% 100%, 0 100%); }
+.hp-places figcaption { color:var(--cat-muted); font-size:12px; }
+
+/* Dota's hover card (tooltip_hero_card.css): 151 × 200 in a black 2 px frame, the name on #000c at the bottom. */
+.hp-hover { position:absolute; z-index:3; width:155px; height:204px; border:2px solid #000; background:#000; box-shadow:0 0 24px #000c; animation:hp-hover-in 260ms var(--ease, ease) both; }
+.hp-hover-image { position:absolute; inset:0; overflow:hidden; }
+.hp-hover-image > :is(video, img) { position:absolute; max-width:none; }
+.hp-hover-image > canvas { display:block; width:100%; height:100%; }
+.hp-hover-name { position:absolute; left:0; right:0; bottom:0; padding:5px 4px 2px; background:#000c; color:#fff; font:600 16px/1.3 StudioRadiance, Radiance, Arial, sans-serif; letter-spacing:2px; text-align:center; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* The hero's card in the grid: pointing at it opens the hover card, as in Dota. */
+.hp-hotspot { position:absolute; z-index:2; pointer-events:auto; }
+/* The hero is not in the grid shown: its grid card and its hover card wait in the middle, saying so. */
+.hp-away { position:absolute; z-index:3; display:flex; align-items:center; gap:28px; transform:translate(-50%, -50%); animation:hp-hover-in 260ms var(--ease, ease) both; }
+.hp-away figure { display:grid; justify-items:center; gap:8px; margin:0; }
+.hp-away figcaption { padding:2px 8px; border-radius:4px; background:#000b; color:#cfd6de; font:500 18px/1.4 StudioRadiance, Radiance, Arial, sans-serif; }
+.hp-away .hp-hover { position:relative; animation:none; }
+.hp-away-grid { display:block; box-shadow:0 2px 12px -1px #0000004d; }
+.hp-hover-note { position:absolute; left:50%; bottom:calc(100% + 10px); transform:translateX(-50%); padding:3px 10px; border-radius:4px; background:#000b; color:#cfd6de; font:500 20px/1.4 StudioRadiance, Radiance, Arial, sans-serif; white-space:nowrap; }
+@keyframes hp-hover-in { from { opacity:0; transform:scale(.92); } }

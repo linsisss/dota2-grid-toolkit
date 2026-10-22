@@ -1,0 +1,49 @@
+{
+  "version": "2.1.0",
+  "date": "2026-10-23",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v2.1.0",
+  "sections": [
+    {
+      "title": "Оформление Dota",
+      "changes": [
+        { "text": "Фоны в Dota снова плавные и тех же цветов, что на сайте", "children": ["Уже установленный фон нужно собрать и поставить заново"] },
+        { "text": "Меню меньше нагружает компьютер: фон за героем больше не запускает второе видео" },
+        { "text": "Прозрачность панелей меню: верхняя панель, друзья, профиль, мини-профиль, пати и новости" },
+        { "text": "Свои портреты героев: картинка, GIF или видео вместо портрета во всей Dota", "children": ["Сетка героев, карточка при наведении, верхняя панель, таблица счёта, значки"] },
+        { "text": "Оформление целиком сохраняется в Студию и в файл .gsdota — можно поделиться и донастроить" },
+        { "text": "Страница помнит все настройки с прошлого раза, фоны больше не пропадают" },
+        { "text": "HUD-скин Fluttershy больше не закрывает портрет героя серой плашкой" },
+        { "text": "Установка командой предупреждает о старых паках других сайтов, из-за которых ломался HUD" }
+      ]
+    },
+    {
+      "title": "Мини-игры",
+      "changes": [
+        { "text": "«Сапёр Сплин»: после Echo Slash по мине поле открывается до конца, как положено" }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Dota customization",
+        "changes": [
+          { "text": "Backgrounds in Dota play smoothly again and in the same colours as on the site", "children": ["Rebuild and reinstall a background you already installed"] },
+          { "text": "The menu is lighter on the PC: the hero page no longer starts a second video" },
+          { "text": "Menu panel transparency: top bar, friends, profile, mini-profile, party and news" },
+          { "text": "Your own hero portraits: a picture, GIF or video instead of the portrait across Dota", "children": ["Hero grid, hover card, top bar, scoreboard, icons"] },
+          { "text": "The whole customization saves to Studio and to a .gsdota file — share it and tweak it" },
+          { "text": "The page remembers all settings from last time; backgrounds no longer get lost" },
+          { "text": "The Fluttershy HUD skin no longer covers the hero portrait with a grey slab" },
+          { "text": "The install command warns about old packs from other sites that broke the HUD" }
+        ]
+      },
+      {
+        "title": "Minigames",
+        "changes": [
+          { "text": "Spleen Sweeper: after Echo Slash on a mine the field opens fully, as it should" }
+        ]
+      }
+    ]
+  }
+}

@@ -11,6 +11,7 @@ import { CURSOR_IDS as CURSOR_ID_LIST, CURSOR_SIZES } from '../scripts/dota-curs
 import { CUSTOMIZE_PAKS, customizeEntry } from '../scripts/customize-pack.mjs';
 import { DOTA_FONT_FILES } from '../scripts/dota-font.mjs';
 import { D2PFX_FILE } from '../scripts/d2pfx-mods.mjs';
+import { portraitsPackProblem } from '../scripts/hero-portraits.mjs';
 
 // The menu background's and the font's packs for their PowerShell commands (asked for on 2026-10-03:
 // «чтобы скрипт сам качал выбранный фон, а не брал из загрузок — чтобы юзер не мог ошибиться»). The
@@ -24,7 +25,8 @@ import { D2PFX_FILE } from '../scripts/d2pfx-mods.mjs';
 // `storage`: 15 GB since 2026-10-07 (5 GB filled up and every new pack was refused for a day); when a
 // new pack does not fit, the oldest ready ones make room (evict).
 // 'all': the customization page's one file (scripts/customize-pack.mjs): a background's videos, the
-// interface, the cursor, the d2pfx mods and a font together (200 MB since the d2pfx mods, 2026-10-17: a HUD
+// interface, the cursor, the d2pfx mods, the heroes' portraits (pak05: only Valve's hero picture and movie
+// paths, pictures exactly as scripts/hero-portraits.mjs writes them) and a font together (200 MB since the d2pfx mods, 2026-10-17: a HUD
 // skin and a play-panel background alone may be 25 MB each).
 export const PACK_LIMITS = Object.freeze({ bg: 80_000_000, font: 30_000_000, all: 200_000_000, part: 4 * 1024 * 1024, days: 7, storage: 15_000_000_000, startsHourly: 30 });
 const EXT = { bg: 'vpk', font: 'zip', all: 'zip' };
@@ -128,7 +130,8 @@ function cursorProblem(path, data) {
 }
 // The d2pfx mods' pak04 (scripts/d2pfx-mods.mjs): only d2pfx's own files, byte for byte — every path and
 // SHA-256 is one of those the page's list was made from (server/d2pfx-files.json, scripts/make-d2pfx-catalog.mjs),
-// so nothing but the mods the page offers can be handed out under gridstudio.me.
+// or one of our few fixed files (D2PFX_FIXES, whose hashes are listed there too), so nothing but the mods the
+// page offers can be handed out under gridstudio.me.
 let d2pfxKnown = null;
 const d2pfxFiles = () => (d2pfxKnown ||= JSON.parse(readFileSync(new URL('./d2pfx-files.json', import.meta.url), 'utf8')).files);
 export function d2pfxProblem(bytes) {
@@ -158,6 +161,7 @@ function customizeProblem(bytes) {
     else if (entry.path === CUSTOMIZE_PAKS.menu) problem = backgroundProblem(data, { whole: false });
     else if (entry.path === CUSTOMIZE_PAKS.match) problem = interfaceProblem(data);
     else if (entry.path === CUSTOMIZE_PAKS.d2pfx) problem = d2pfxProblem(data);
+    else if (entry.path === CUSTOMIZE_PAKS.portraits) problem = portraitsPackProblem(data);
     else problem = cursorProblem(entry.path, data);
     if (problem) return problem;
   }

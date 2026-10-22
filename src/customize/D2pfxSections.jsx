@@ -4,7 +4,7 @@ import { Icon } from '../catalog/Common.jsx';
 import { lang, t } from '../../scripts/i18n.mjs';
 import { D2PFX_SECTIONS, D2PFX_SECTION_IDS, cleanChoice, d2pfxPlan } from '../../scripts/d2pfx-mods.mjs';
 import { catalog, d2pfxPack } from './d2pfx-pack.js';
-import { D2pfxAbout, D2pfxNote, PackCredits, creditLine, creditLines } from './d2pfx-ui.jsx';
+import { D2pfxAbout, D2pfxNote, FixNote, PackCredits, creditLine, creditLines } from './d2pfx-ui.jsx';
 import { Field, rich, sizeText } from './ui.jsx';
 import { skinRender, skinThumb } from './d2pfx-hud.js';
 import { track } from '../site-stats.js';
@@ -115,7 +115,7 @@ function ModCard({ mod, chosen, onChoose }) {
     <button type="button" aria-pressed={chosen} onClick={onChoose}>
       <span className="cur-pack-shot"><Picture mod={mod}/>{chosen && <span className="cur-pack-check"><Icon name="check" size={14}/></span>}</span>
       <b title={mod.label}>{mod.label}</b></button>
-    <PackCredits pack={mod} compact/>
+    <PackCredits pack={mod} compact/><FixNote mod={mod} compact/>
   </li>;
 }
 function DotaCard({ chosen, onChoose, section }) {
@@ -157,7 +157,7 @@ function Chosen({ mod, d2, section }) {
     {media && <div className="d2-chosen-media">{media}<button type="button" className="d2-chosen-expand" onClick={() => setZoom(true)} aria-label={t('Открыть крупно')} title={t('Открыть крупно')}><Icon name="expand" size={15}/></button></div>}
     {zoom && <Zoom mod={mod} onClose={() => setZoom(false)}/>}
     <div className="d2-chosen-text">
-      <b>{mod.label}</b><PackCredits pack={mod}/>
+      <b>{mod.label}</b><PackCredits pack={mod}/><FixNote mod={mod}/>
       <small>{t('Файлов: {count}', { count: mod.count })} · {sizeText(mod.bytes)} · <a href={mod.page} target="_blank" rel="noopener noreferrer">{t('мод на d2pfx')}</a>{mod.youtube && <> · <a href={mod.youtube} target="_blank" rel="noopener noreferrer">{t('видео')}</a></>}</small>
       {render === 'drawn' && <small className="d2-ok"><Icon name="check" size={13}/>{t('В превью матча слева: его текстуры, стили и разметку раскладывает эмулятор Panorama, а на снятый HUD Dota переносится только то, что мод меняет.')} <button type="button" className="d2-link" onClick={() => setZoom(true)}>{mod.video ? t('видео d2pfx') : t('картинка d2pfx')}</button></small>}
       {render === 'none' && <small className="d2-warn">{mod.section === 'hudparts' && /minimap/.test(mod.id) ? t('Цвет миникарты рисует сам движок Dota, не интерфейс — в превью его нет, поэтому здесь картинка d2pfx.') : mod.section === 'hudparts' ? t('Таблица счёта и магазин в превью закрыты — поэтому здесь картинка d2pfx.') : t('Этот мод в превью не нарисовать — поэтому здесь картинка d2pfx.')}</small>}

@@ -244,3 +244,17 @@ test('time running out loses the game', async () => {
   tick(game, 180);
   assert.equal(game.phase, 'lost'); assert.equal(game.lost, 'time');
 });
+
+test('Echo Slash on a mine: opened cells that drop to 0 open their closed neighbours (no 0 left next to a closed cell)', async () => {
+  const L = await logic;
+  for (let seed = 1; seed < 120; seed++) {
+    const config = L.sweeperConfig(data.game); config.items.timer.chance = 0; config.items.mana.chance = 0;
+    const game = L.createGame(config, seeded(seed)), board = game.board;
+    L.reveal(game, 40);
+    const mine = board.cells.findIndex((cell, i) => cell.mine && !cell.revealed && L.neighbours(board, i).some((n) => board.cells[n].revealed));
+    if (mine < 0) continue;
+    L.toggleIllusion(game); L.echoSlash(game, mine);
+    const stuck = board.cells.findIndex((cell, i) => cell.revealed && !cell.mine && cell.adjacent === 0 && L.neighbours(board, i).some((n) => !board.cells[n].revealed && !board.cells[n].flagged));
+    assert.equal(stuck, -1, `seed ${seed}: a 0 at ${stuck} next to a closed cell`);
+  }
+});

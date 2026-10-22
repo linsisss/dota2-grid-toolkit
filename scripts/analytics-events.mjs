@@ -30,6 +30,8 @@ export const ANALYTICS_EVENTS = Object.freeze({
   'customize.chat-drag': { area: 'customize', props: {}, once: true },
   'customize.cursor-creator': { area: 'customize', props: { action: oneOf('open', 'save') }, key: 'action' },
   'customize.mod': { area: 'customize', props: { section: id(), mod: id(60) }, key: 'mod' },
+  // «Портреты героев» (HeroPortraits.jsx): a hero picked, a file given for it (picture or moving).
+  'customize.portrait': { area: 'customize', props: { action: oneOf('hero', 'file'), kind: oneOf('image', 'video') }, key: 'action' },
   'customize.inside': { area: 'customize', props: {}, once: true },
   'customize.build-start': { area: 'customize', props: { delivery: oneOf('command', 'file'), parts: ids }, key: 'delivery' },
   'customize.build-done': { area: 'customize', props: { delivery: oneOf('command', 'file'), parts: ids, mb: int(0, 1000), pack: id(80) }, key: 'parts' },

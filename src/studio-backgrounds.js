@@ -2,6 +2,7 @@ import { catalogAPI } from './catalog/api.js';
 import { getBackground, keepBackgrounds, putBackground, updateBackground } from '../scripts/background-library.mjs';
 import { defaultStudioName, studioRecipe } from '../scripts/studio-background.mjs';
 import { t } from '../scripts/i18n.mjs';
+import { VIDEO_ENCODER } from '../scripts/video-resample.mjs';
 
 // «Студия» backgrounds between this browser and a Telegram account: the browser keeps the built
 // WebM (scripts/background-library.mjs), the account only the recipe and a poster
@@ -84,6 +85,8 @@ export async function saveBuiltBackground({ id = null, recipe, video, heroVideo 
     gridVideo: gridVideo ? new Blob([gridVideo], { type: 'video/webm' }) : null,
     // The loading screen's own video (recipe.loading.mode 'own', 2026-10-16), the same way.
     loadingVideo: loadingVideo ? new Blob([loadingVideo], { type: 'video/webm' }) : null,
+    // The builder that made these videos (scripts/video-resample.mjs): older ones are built again on reuse.
+    encoder: VIDEO_ENCODER,
     created: old?.created || now, updated: now, synced: false };
   await putBackground(record);
   keepBackgrounds();

@@ -107,3 +107,75 @@ test('HUD mods in the preview: Valve’s layers at every captured scale, each dr
     for (const files of Object.values(mod.layers)) for (const file of Object.values(files)) assert.ok(fs.existsSync(path.join(root, 'assets/d2pfx-hud', file)), file);
   }
 });
+
+// Our fixes to d2pfx's files (D2PFX_FIXES, 2026-10-22: Fluttershy Hud greyed the hero's 3D portrait).
+test('a fix: rules added after the mod\'s, the rest of the compiled file byte for byte, blocks after DATA still aligned', async () => {
+  const { appendPanoramaText, panoramaResource, panoramaSource, crc32 } = await import('../scripts/vpk.mjs');
+  const { d2pfxFixed } = await import('../scripts/d2pfx-mods.mjs');
+  // A resource like d2pfx's, with a block after DATA (their SrMa source map): a classic one whose first
+  // entry (REDI) is pointed at 40 bytes put after DATA, on 16 bytes.
+  const base = panoramaResource('panorama/styles/hud/x.vcss_c', '.Reborn #a{color: red;}'), tail = new Uint8Array(40).map((_, i) => i + 1);
+  const tailAt = Math.ceil(base.length / 16) * 16, file = new Uint8Array(tailAt + tail.length), view = new DataView(file.buffer);
+  file.set(base); file.set(tail, tailAt);
+  view.setUint32(0, file.length, true);
+  file.set(new TextEncoder().encode('SrMa'), 16); view.setUint32(20, tailAt - 20, true); view.setUint32(24, tail.length, true);
+  const fixed = appendPanoramaText(file, '/* fix */.Reborn #a{color: blue;}'), fv = new DataView(fixed.buffer);
+  assert.equal(panoramaSource(fixed), '.Reborn #a{color: red;}/* fix */.Reborn #a{color: blue;}');
+  const srma = 20 + fv.getUint32(20, true), dataAt = 32 + fv.getUint32(32, true);
+  assert.equal(srma % 16, 0, 'the block after DATA stays on 16 bytes');
+  assert.deepEqual([...fixed.subarray(srma, srma + tail.length)], [...tail], 'the block after DATA unchanged');
+  assert.equal(fv.getUint32(0, true), fixed.length, 'the size in the header');
+  assert.equal(fv.getUint32(36, true), view.getUint32(36, true) + 33, 'DATA grew by the text');
+  assert.deepEqual([...fixed.subarray(40, dataAt + 4)], [...file.subarray(40, dataAt + 4)], 'from the block table to DATA\'s CRC as it was');
+  // d2pfxFixed: only the very file (CRC) that still has the rule; other files and other mods untouched.
+  const rule = '.Reborn #a{color: red;}', table = { m: [{ path: 'panorama/styles/hud/x.vcss_c', crc: crc32(file), rule, append: '/* fix */.Reborn #a{color: blue;}' }] };
+  const other = { path: 'panorama/images/x.vtex_c', data: new Uint8Array(4) };
+  const out = d2pfxFixed('m', [{ path: 'panorama/styles/hud/x.vcss_c', data: file }, other], table);
+  assert.deepEqual(out[0].data, fixed); assert.equal(out[1], other);
+  assert.equal(d2pfxFixed('m', [{ path: 'panorama/styles/hud/x.vcss_c', data: base }], table)[0].data, base, 'another file at that path: left alone');
+  assert.equal(d2pfxFixed('n', [{ path: 'panorama/styles/hud/x.vcss_c', data: file }], table)[0].data, file, 'another mod: left alone');
+});
+
+test('Fluttershy Hud: the portrait fix is ASCII, credited on the page, and the server takes the fixed file', async () => {
+  const { D2PFX_FIXES, D2PFX_FILE, d2pfxFixNotes } = await import('../scripts/d2pfx-mods.mjs');
+  const catalog = json('src/customize/d2pfx-mods.json'), server = json('server/d2pfx-files.json'), en = fs.readFileSync(path.join(root, 'src/i18n/en/customize.js'), 'utf8');
+  assert.deepEqual(Object.keys(D2PFX_FIXES), ['fluttershy-hud']);
+  for (const [id, fixes] of Object.entries(D2PFX_FIXES)) {
+    assert.ok(catalog.mods[id], id);
+    for (const fix of fixes) {
+      assert.ok(D2PFX_FILE.test(fix.path) && fix.path.endsWith('.vcss_c'), fix.path);
+      assert.ok(!/[^\x20-\x7e]/.test(fix.append), 'Panorama wants ASCII');
+      assert.equal(fix.append.split('{').length, fix.append.split('}').length, 'balanced braces');
+      assert.ok(server.files[fix.path].includes(fix.sha256), `${id}: the server knows the fixed ${fix.path}`);
+      assert.ok(en.includes(`'${fix.note}':`), `${fix.note}: in English too`);
+    }
+  }
+  assert.deepEqual(d2pfxFixNotes('fluttershy-hud'), ['портрет героя']);
+  assert.deepEqual(d2pfxFixNotes('black-hud'), []);
+  // Over the portrait: the mod's flat #16171dec, ours clear on the hero's 40 % and the mod's colour under the numbers.
+  const fix = D2PFX_FIXES['fluttershy-hud'][0];
+  assert.equal(fix.rule, '.Reborn #stats_container_bg{background-image: none;background-color: #16171dec;}');
+  assert.match(fix.append, /\.Reborn #stats_container_bg\{background-color: gradient\( linear, 0% 0%, 100% 0%, from\( #16171d00 \), color-stop\( \.4, #16171d00 \),.*to\( #16171dec \) \);\}$/);
+});
+
+// With the mod in the local download cache (make-d2pfx-catalog.mjs / make-d2pfx-hud.mjs fill it): the real file.
+test('Fluttershy Hud\'s real hud_reborn.vcss_c: fixed to the pinned SHA-256, d2pfx\'s text kept, pak04 passes', async (t) => {
+  const catalog = json('src/customize/d2pfx-mods.json'), mod = catalog.mods['fluttershy-hud'];
+  const cached = path.join(root, 'node_modules/.cache/d2pfx', catalog.commit, createHash('sha1').update(mod.file).digest('hex'));
+  if (!fs.existsSync(cached)) return t.skip('Fluttershy Hud is not in node_modules/.cache/d2pfx');
+  const { readZip } = await import('../scripts/zip.mjs');
+  const { readVPK, buildVPK, panoramaSource } = await import('../scripts/vpk.mjs');
+  const { D2PFX_FIXES, D2PFX_FILE, d2pfxFixed } = await import('../scripts/d2pfx-mods.mjs');
+  const { d2pfxProblem } = await import('../server/install-packs.mjs');
+  const vpk = (await readZip(new Uint8Array(fs.readFileSync(cached)), { want: (name) => name === mod.inner, limit: 300_000_000 })).find((entry) => entry.name === mod.inner).data;
+  const files = readVPK(vpk).files.filter((file) => D2PFX_FILE.test(file.path)).map((file) => ({ path: file.path, data: file.data }));
+  const fixed = d2pfxFixed('fluttershy-hud', files), fix = D2PFX_FIXES['fluttershy-hud'][0];
+  const changed = fixed.filter((file, i) => file !== files[i]);
+  assert.deepEqual(changed.map((file) => file.path), [fix.path], 'only hud_reborn.vcss_c');
+  const before = files.find((file) => file.path === fix.path).data, after = changed[0].data;
+  assert.equal(createHash('sha256').update(after).digest('hex'), fix.sha256);
+  assert.equal(panoramaSource(after), panoramaSource(before) + fix.append);
+  assert.deepEqual([...after.subarray(after.length - 64440)], [...before.subarray(before.length - 64440)], 'the SrMa source map as it was');
+  assert.equal(d2pfxProblem(buildVPK(fixed, { md5 })), '', 'the fixed pak04 passes the server');
+  assert.equal(d2pfxProblem(buildVPK(files, { md5 })), '', 'd2pfx\'s own still passes (pages built before the fix)');
+});

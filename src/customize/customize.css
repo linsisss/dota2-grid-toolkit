@@ -241,10 +241,19 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .dm-bar-right { right:0; width:432px; height:61px; background-size:1920px 73px; background-position:-1488px 0; }
 /* The friends rail: one picture at 2× (scripts/make-menu-rail.mjs), cut at the party bar. */
 .dm-rail { position:absolute; left:32px; top:100px; bottom:91px; width:366px; overflow:hidden; background:#0a0806; }
-.dm-rail img { display:block; width:366px; height:auto; }
+.dm-rail img { position:relative; display:block; width:366px; height:auto; }
+/* The see-through panels (DotaMenu.jsx glass): the bar's ground and what lies on it, and the friend search's black row. */
+.dm-bar-layer { position:absolute; inset:0; pointer-events:none; }
+.dm-rail-head { position:absolute; left:0; top:314px; width:100%; height:47px; background:#000; }
 .dm-party { position:absolute; left:32px; bottom:21px; width:366px; height:70px; }
 .dm-party > img:first-child { display:block; }
 .dm-party-me { position:absolute; left:16px; top:13px; width:42px; height:42px; object-fit:cover; }
+.dm-party-glass { position:absolute; left:0; top:0; }
+.dm-rail img.dm-profile-head, .dm-rail img.dm-profile-showcase { position:absolute; left:0; top:0; height:74px; }
+.dm-rail img.dm-profile-showcase { top:74px; height:240px; }
+.dm-news-column { position:absolute; inset:0; pointer-events:none; }
+.dm-news-column .dm-news { box-shadow:0 6px 48px -4px rgb(0 0 0 / .5); }
+.dm-news-column.is-glass .dm-news { box-shadow:none; }
 .dm-news { position:absolute; right:58px; top:100px; width:330px; height:484px; transform-origin:100% 0;
   transition:opacity 340ms var(--ease) 140ms, transform 440ms var(--ease) 140ms; }
 /* Hiding the news: the card leaves first and the event button glides up into its place; showing
@@ -708,6 +717,8 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .cur-credits a { color:var(--cat-accent); text-decoration:underline; text-underline-offset:2px; text-decoration-color:#c4b5ed66; }
 .cur-credits a:hover { text-decoration-color:currentColor; }
 .cur-credits.is-compact { font-size:11.5px; }
+.cur-credits.d2-fixed { gap:4px; align-items:center; color:#bfe3c4; }
+.cur-credits.d2-fixed svg { flex:none; color:#7fd18b; }
 .cur-packs { list-style:none; margin:0; padding:2px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; max-height:430px; overflow:auto; scrollbar-width:thin; scrollbar-color:#3a3445 transparent; }
 .cur-pack { display:grid; gap:4px; min-width:0; }
 .cur-pack > button { display:grid; gap:6px; padding:0; border:0; background:none; color:var(--cat-ink); text-align:left; cursor:pointer; min-width:0; }
@@ -866,3 +877,18 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 
 /* macOS and Linux (src/system.js, 2026-10-19): the command is Windows only — a word instead of the switch. */
 .cz-os-note { margin:0; padding:9px 12px; border:1px solid #c4b5ed40; border-radius:10px; background:#c4b5ed10; color:var(--cat-ink, #efeaf5); font-size:13px; line-height:1.45; }
+
+/* «Оформление» (2026-10-22, LookBar.jsx): «Сохранить в Студию», the settings file both ways, where the state is kept. */
+.cz-look { margin-top:12px; }
+.cz-look-actions { display:flex; align-items:center; gap:6px; }
+.cz-look-save { flex:1 1 auto; justify-content:center; min-height:38px; }
+.cz-look-actions .catalog-icon { flex:none; width:38px; height:38px; border:1px solid #ffffff14; border-radius:10px; }
+.cz-head p.cz-look-line, .cz-head p.cz-look-note { display:block; margin:8px 2px 0; font-size:12.5px; line-height:1.45; }
+.cz-look-line a { color:var(--cat-ink); }
+.cz-look .catalog-notice { margin-top:8px; }
+.cz-look-notice { display:flex; align-items:center; gap:10px; margin-top:10px; padding:9px 10px 9px 12px; border:1px solid #c4b5ed40; border-radius:12px; background:#c4b5ed12; font-size:13px; line-height:1.4; }
+.cz-look-notice > svg { flex:none; width:16px; height:16px; color:#c4b5ed; }
+.cz-look-notice > span { flex:1; min-width:0; }
+.cz-look-notice .catalog-link { flex:none; font-size:13px; }
+.cz-look-notice .catalog-icon { flex:none; width:28px; height:28px; }
+.cz-holding { display:grid; place-items:center; min-height:60vh; }

@@ -20,6 +20,8 @@
 // a play-panel background and a play button both bring play.vcss_c). Only one file can be in the pack:
 // the choice of the section higher in D2PFX_PRIORITY keeps it (parts over the whole HUD skin, as d2pfx's
 // own builder puts «parts» first), and the page says so at both choices (d2pfxPlan conflicts).
+import { appendPanoramaText, crc32, panoramaSource } from './vpk.mjs';
+
 export const D2PFX_PAK = 'pak04_dir.vpk';
 // The game files a mod may bring; anything else in its pack (a read-me) stays out.
 export const D2PFX_FILE = /^(?:panorama\/(?:images|styles|layout)|particles|materials)\/[a-z0-9_./-]+\.(?:vtex_c|vcss_c|vxml_c|vpcf_c|vmat_c)$/;
@@ -74,6 +76,38 @@ export function d2pfxPlan(choice, catalog) {
   }
   return { picks, conflicts: [...pairs.values()] };
 }
+
+// Our fixes to d2pfx's files (2026-10-22). A fix adds a few rules at the end of one stylesheet of one mod,
+// after the mod's own rules (same selector, so the later rule wins); the rest of the file stays byte for
+// byte d2pfx's (appendPanoramaText). It applies only to the very file the list was made from (its CRC-32)
+// that still has the rule it corrects; the server knows the fixed file's SHA-256 (`sha256`) too
+// (make-d2pfx-catalog.mjs adds it to server/d2pfx-files.json). `note` is shown at the mod's credit: «исправлено GridStudio: {note}».
+//   Fluttershy Hud: `.Reborn #stats_container_bg { background-image: none; background-color: #16171dec; }`
+//   paints the stats panel a flat 93 % dark grey — but Valve's #stats_container is the portrait's own box
+//   (159 × 145, margin-left 52px, z-index 5 over #PortraitContainer, since 2023), so the animated 3D portrait
+//   went grey under it (a user's report, 2026-10-22; d2pfx's own preview shows it too). The fix keeps the
+//   mod's colour on Valve's gradient: clear over the hero, the mod's #16171dec under the numbers.
+const PORTRAIT_FIX = '/* GridStudio fix: the hero portrait (#stats_container_bg lies over it) */'
+  + '.Reborn #stats_container_bg{background-color: gradient( linear, 0% 0%, 100% 0%, from( #16171d00 ), color-stop( .4, #16171d00 ), color-stop( .6, #16171d88 ), color-stop( .7, #16171dc8 ), color-stop( .8, #16171de8 ), to( #16171dec ) );}';
+export const D2PFX_FIXES = Object.freeze({
+  'fluttershy-hud': Object.freeze([Object.freeze({
+    path: 'panorama/styles/hud/hud_reborn.vcss_c', crc: 0xe5202c05, note: 'портрет героя',
+    rule: '.Reborn #stats_container_bg{background-image: none;background-color: #16171dec;}', append: PORTRAIT_FIX,
+    sha256: '88ea1488c1aed0f70d917bd0464ce532cad6eee74fa3c6c5965ee104e6af9025' // the fixed file (tests check it)
+  })])
+});
+// A mod's files with our fixes: [{ path, data }] → the same list, a fixed file in place of d2pfx's.
+export function d2pfxFixed(id, files, table = D2PFX_FIXES) {
+  const fixes = table[id];
+  if (!fixes) return files;
+  return files.map((file) => {
+    const fix = fixes.find((item) => item.path === file.path.toLowerCase());
+    if (!fix || crc32(file.data) !== fix.crc || !panoramaSource(file.data).includes(fix.rule)) return file;
+    return { ...file, data: appendPanoramaText(file.data, fix.append) };
+  });
+}
+// The notes of a mod's fixes («портрет героя»), or none.
+export const d2pfxFixNotes = (id) => (D2PFX_FIXES[id] || []).map((fix) => fix.note);
 
 // The pack's files: each pick's files ([{ mod, files: [{ path, data }] }] in plan order); the first to bring
 // a path keeps it. Only game files (D2PFX_FILE) go in.

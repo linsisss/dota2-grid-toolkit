@@ -29,6 +29,7 @@ import { readVPK, buildVPK, panoramaSource } from './vpk.mjs';
 import { readZip } from './zip.mjs';
 import { md5 } from './md5.mjs';
 import { hudRules, HUD_DEFAULTS } from './hud-style.mjs';
+import { d2pfxFixed } from './d2pfx-mods.mjs';
 import { atlasPlate, buildLower, encodeFast, lowerFromAtlas } from './hud-capture/compose.mjs';
 import { layerAt } from './hud-capture/reskin.mjs';
 
@@ -49,7 +50,8 @@ async function modFiles(mod) {
   let bytes = existsSync(file) ? new Uint8Array(readFileSync(file)) : new Uint8Array(await (await fetch(mod.file)).arrayBuffer());
   if (mod.inner) bytes = (await readZip(bytes, { want: (name) => name === mod.inner, limit: 300_000_000 })).find((entry) => entry.name === mod.inner).data;
   // Only proper game paths (a mod may carry stray copies like «inventory_bg_psd (2).vtex_c»).
-  const files = readVPK(bytes).files.filter((f) => f.path.startsWith('panorama/') && /^[a-z0-9_./-]+$/.test(f.path));
+  // With our fixes (D2PFX_FIXES), as the page builds the mod.
+  const files = d2pfxFixed(mod.id, readVPK(bytes).files.filter((f) => f.path.startsWith('panorama/') && /^[a-z0-9_./-]+$/.test(f.path)));
   const textures = {}, sources = {}, unread = [];
   const work = mkdtempSync(join(tmpdir(), 'd2pfx-hud-'));
   try {

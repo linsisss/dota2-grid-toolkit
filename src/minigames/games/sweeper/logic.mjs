@@ -294,6 +294,15 @@ export function echoSlash(game, index) {
     events.push({ type: 'illusionExplode', index });
   }
   const opened = flood(game, index);
+  // A mine gone lowers the numbers around it: an opened cell that is now 0 opens its closed neighbours the
+  // way a 0 always does (the owner, 2026-10-22: «клетки всё ещё не до конца открываются»).
+  if (cell.blast) {
+    for (const near of neighbours(board, index)) {
+      const around = board.cells[near];
+      if (!around.revealed || around.adjacent !== 0) continue;
+      for (const other of neighbours(board, near)) if (!board.cells[other].revealed && !board.cells[other].flagged) opened.push(...flood(game, other));
+    }
+  }
   events.push({ type: 'reveal', cells: opened });
   afterClick(game, opened, events);
   return events;

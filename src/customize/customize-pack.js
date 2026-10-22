@@ -11,15 +11,18 @@ import { creditsClosing } from './d2pfx-ui.jsx';
 export const customizeRemoveCommand = () => installCommand(`${location.origin}/api/catalog/install/all-remove${lang === 'en' ? '-en' : ''}`);
 
 // The archive's read-me in the site's language (Windows line ends, with a BOM for Notepad).
-function readme({ titles, russian, fonts, credits = [] }) {
+function readme({ titles, russian, fonts, credits = [], portraits = [] }) {
   const lines = [t('Оформление Dota от GridStudio — одним файлом.'), t('В сборке: {list}.', { list: titles.join(', ') }), '',
     t('Проще всего — командой PowerShell с сайта (gridstudio.me/background → «Командой PowerShell»): она сама найдёт Dota, поставит всё и запомнит, что вернуть.'), '',
+    ...(portraits.length ? [t('Портреты героев ({list}) меняются во всей Dota: карточки в сетке и при выборе героя, анимация при наведении, верхняя панель, таблица счёта, маленькие значки. 3D-портрет внизу экрана и миникарта остаются как в Dota. Файл: game\\dota_russian\\pak05_dir.vpk.', { list: portraits.join(', ') }), ''] : []),
     t('Установка вручную:'), t('1. Закрой Dota 2.'), t('2. В Steam: Dota 2 -> «Свойства» -> «Установленные файлы» -> «Обзор». Откроется папка dota 2 beta.')];
   let step = 3;
   if (fonts) lines.push(t('{n}. На всякий случай скопируй куда-нибудь папку game\\dota\\panorama\\fonts: шрифт из сборки заменит шрифты Dota.', { n: step++ }));
+  if (russian) lines.push(t('{n}. Если уже ставил сборку GridStudio вручную, сначала удали из game\\dota_russian {files} и папку resource\\cursor от прошлой: копирование не убирает то, чего в новой сборке нет.', { n: step++, files: Object.values(CUSTOMIZE_PAKS).join(', ') }));
   lines.push(t('{n}. Скопируй папку game из этого архива в dota 2 beta С ЗАМЕНОЙ.', { n: step++ }));
   if (fonts) lines.push(t('{n}. Если есть папка %TEMP%\\fontconfig (вставь %TEMP% в адресную строку проводника), удали её.', { n: step++ }));
   if (russian) lines.push(t('{n}. В Dota должен быть русский язык озвучки: моды Dota читает только из папки dota_russian. Интерфейс можно оставить английским. Если в параметрах запуска Dota есть -language (кроме -language russian), убери его.', { n: step++ }));
+  if (russian) lines.push(t('Если в game\\dota_russian уже лежат другие pakNN_dir.vpk (например, pak10 от Dota2PornFX), Dota смешает их со сборкой: HUD может выглядеть сломанным, а меню — тормозить. Убери их, если они не нужны.'));
   lines.push(t('{n}. Запусти Dota 2.', { n: step++ }), '', t('Вернуть как было:'));
   if (russian) lines.push(t('— удали из game\\dota_russian файлы {files} и папку resource\\cursor, если они из этой сборки;', { files: Object.values(CUSTOMIZE_PAKS).join(', ') }));
   if (fonts) lines.push(t('— шрифты: Steam -> Dota 2 -> «Свойства» -> «Установленные файлы» -> «Проверить целостность файлов игры»;'));
@@ -33,20 +36,22 @@ function readme({ titles, russian, fonts, credits = [] }) {
 }
 
 // menu: pak02 (Blob) or null; match: { pak03: Uint8Array | null, cursors: [{ name: 'resource/cursor/…', data }] };
-// d2pfx: pak04 (Uint8Array) with the chosen d2pfx mods, or null; fonts: [{ name: 'fonts/<file>.otf' | 'OFL.txt',
+// d2pfx: pak04 (Uint8Array) with the chosen d2pfx mods, or null; portraits: pak05 (Uint8Array) with the
+// heroes' own portraits (scripts/hero-portraits.mjs), or null, and portraitNames those heroes for the read-me; fonts: [{ name: 'fonts/<file>.otf' | 'OFL.txt',
 // data }]; titles: the modules in it, for the read-me; credits: lines naming whose work is inside (the cursor's
 // d2pfx pack and its author); modCredits: the same for the d2pfx mods of pak04.
 // → { blob, entries: [{ name, size }] }, or null when nothing differs from Dota.
-export async function customizeZip({ menu = null, match = { pak03: null, cursors: [] }, d2pfx = null, fonts = [], titles = [], credits = [], modCredits = [] }) {
+export async function customizeZip({ menu = null, match = { pak03: null, cursors: [] }, d2pfx = null, portraits = null, portraitNames = [], fonts = [], titles = [], credits = [], modCredits = [] }) {
   const entries = [];
   if (menu) entries.push({ name: `${CUSTOMIZE_DIRS.russian}${CUSTOMIZE_PAKS.menu}`, data: new Uint8Array(await menu.arrayBuffer()) });
   if (match.pak03) entries.push({ name: `${CUSTOMIZE_DIRS.russian}${CUSTOMIZE_PAKS.match}`, data: match.pak03 });
   if (d2pfx) entries.push({ name: `${CUSTOMIZE_DIRS.russian}${CUSTOMIZE_PAKS.d2pfx}`, data: d2pfx });
+  if (portraits) entries.push({ name: `${CUSTOMIZE_DIRS.russian}${CUSTOMIZE_PAKS.portraits}`, data: portraits });
   for (const file of match.cursors) entries.push({ name: `${CUSTOMIZE_DIRS.russian}${file.name}`, data: file.data });
   for (const file of fonts) entries.push(file.name.startsWith('fonts/') ? { name: `${CUSTOMIZE_DIRS.fonts}${file.name.slice(6)}`, data: file.data } : file);
   if (!entries.length) return null;
   const russian = entries.some((entry) => entry.name.startsWith(CUSTOMIZE_DIRS.russian)), withFonts = entries.some((entry) => entry.name.startsWith(CUSTOMIZE_DIRS.fonts));
-  entries.push({ name: t('ПРОЧТИ.txt'), data: readme({ titles, russian, fonts: withFonts, credits: [...(match.cursors.length ? credits : []), ...(d2pfx ? modCredits : [])] }) });
+  entries.push({ name: t('ПРОЧТИ.txt'), data: readme({ titles, russian, fonts: withFonts, portraits: portraits ? portraitNames : [], credits: [...(match.cursors.length ? credits : []), ...(d2pfx ? modCredits : [])] }) });
   return { blob: await buildZip(entries), entries: entries.map((entry) => ({ name: entry.name, size: entry.data.length })) };
 }
 

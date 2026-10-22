@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, Modal, Notice } from '../catalog/Common.jsx';
-import { GRID_DIM, MENU_FRAME, MENU_FRAME_ZOOM, MENU_LIMITS, MENU_SIZES, fitPiece, framePlacement, mediaKind, menuBitrate, menuFrame, menuLook, pieceLength } from '../../scripts/menu-background.mjs';
+import { GRID_DIM, MENU_FRAME, MENU_FRAME_ZOOM, MENU_GLASS, MENU_LIMITS, MENU_SIZES, fitPiece, framePlacement, mediaKind, menuBitrate, menuFrame, menuLook, pieceLength, menuGlass, glassChanged } from '../../scripts/menu-background.mjs';
 import menuMeta from '../../assets/dota-menu/meta.json';
 import { SEASON_EVENT, folderOf, packBackground } from './background-pack.js';
 import { getBackground } from '../../scripts/background-library.mjs';
 import { claimBuiltBackground, markPublished, pullRecipes, rememberDownload, saveBuiltBackground } from '../studio-backgrounds.js';
 import { useAccount } from '../catalog/Account.jsx';
 import { Field, Segmented, rich } from './ui.jsx';
+import { findMedia, keepMedia, mediaFiles } from './look-store.js';
+import { readMenuState, writeMenuState } from './look-state.js';
 import DotaMenu from './DotaMenu.jsx';
 import DotaHeroPage from './DotaHeroPage.jsx';
 import DotaGridPage from './DotaGridPage.jsx';
@@ -83,11 +85,17 @@ function Effects({ blur, onBlur, dim, onDim, frame = null, onFrame }) {
     {frame && <p className="custom-hint">{t('Тяни картинку в превью, чтобы выбрать кадр.')}{moved && <> <button type="button" className="catalog-link" onClick={() => onFrame(MENU_FRAME)}>{t('Сбросить кадр')}</button></>}</p>}
   </>;
 }
-// A 0–100 % slider in the panel; 0 reads «нет».
-function Slider({ label, value, onChange }) {
+// A 0–100 % slider in the panel; 0 reads «нет» (`zero`: what it reads instead).
+// «Фон панелей»: each MENU_GLASS key, its slider's name and its line in the module's summary.
+const GLASS_SLIDERS = () => [
+  ['bar', t('Верхняя панель'), (percent) => t('верхняя панель {percent}%', { percent })], ['friends', t('Панель друзей'), (percent) => t('панель друзей {percent}%', { percent })],
+  ['header', t('Шапка профиля'), (percent) => t('шапка профиля {percent}%', { percent })], ['showcase', t('Мини-профиль'), (percent) => t('мини-профиль {percent}%', { percent })],
+  ['party', t('Пати внизу'), (percent) => t('пати внизу {percent}%', { percent })], ['news', t('Новости справа'), (percent) => t('новости справа {percent}%', { percent })]];
+const glassLines = (glass) => GLASS_SLIDERS().filter(([key]) => glass[key] < 100).map(([key, , line]) => line(glass[key]));
+function Slider({ label, value, onChange, zero = t('нет') }) {
   return <label className="custom-slider"><span>{label}</span>
     <input type="range" min="0" max="100" step="1" value={value} onChange={(event) => onChange(Number(event.target.value))} style={{ '--fill': `${value}%` }}/>
-    <output>{value ? `${value}%` : t('нет')}</output></label>;
+    <output>{value ? `${value}%` : zero}</output></label>;
 }
 
 // `preset`: a workshop background to start from; `studioItem`: a «Студия» background to change
@@ -126,6 +134,8 @@ function useOwnBackground(setError) {
   // `fetching`: a workshop background on its way ({ title, progress }), shown over the preview.
   const [fetching, setFetching] = useState(null);
   const input = useRef(null), playhead = useRef(null), pending = useRef(null), seek = useRef(null), loading = useRef(null);
+  // A workshop background on its way, for the kept state (look-state.js) until its file is here.
+  const picked = useRef(null);
   useEffect(() => () => source && URL.revokeObjectURL(source), [source]);
   useEffect(() => () => loading.current?.abort(), []);
   // `from`: a workshop background (or the menu's, see `adopt`); otherwise the user's own file.
@@ -137,7 +147,7 @@ function useOwnBackground(setError) {
     if (!detected) return setError(t('Подойдёт картинка (PNG, JPEG, WebP), GIF или видео (MP4, WebM).'));
     if (!pending.current) setFrame(MENU_FRAME);
     if (detected.type !== 'video') pending.current = null;
-    setWanted(null);
+    setWanted(null); picked.current = null;
     setOrigin(from || { kind: 'file', name: next.name, size: next.size, type: detected.type, label: detected.label });
     setFile(next); setKind(detected); setRatio(0); setDuration(0); setSource(URL.createObjectURL(next));
   }
@@ -145,6 +155,7 @@ function useOwnBackground(setError) {
   function pickWorkshop(item) {
     loading.current?.abort();
     const controller = new AbortController(); loading.current = controller;
+    picked.current = { kind: 'workshop', id: item.id, title: item.title || '' };
     setError(''); setFetching({ title: item.title || '', progress: 0 });
     downloadWorkshop(item, { signal: controller.signal, onProgress: (progress, full) => setFetching({ title: full.title, progress }) })
       .then(({ file: next, origin: from }) => choose(next, from))
@@ -158,11 +169,20 @@ function useOwnBackground(setError) {
     pending.current = menu.piece ? { piece: menu.piece, crossfade: menu.crossfade } : null;
     return choose(menu.file, menu.origin);
   }
-  function remove() { loading.current?.abort(); setFetching(null); setFile(null); setKind(null); setSource(''); setRatio(0); setDuration(0); setOrigin(null); pending.current = null; }
-  // A workshop source comes back by itself; a file of the user's is asked for (`wanted`).
-  function restore(saved) {
+  function remove() { loading.current?.abort(); setFetching(null); setFile(null); setKind(null); setSource(''); setRatio(0); setDuration(0); setOrigin(null); setWanted(null); pending.current = null; picked.current = null; }
+  // A workshop source comes back by itself; a file of the user's comes from this browser (`file`,
+  // look-store.js) or is asked for (`wanted`).
+  function restore(saved, kept = null) {
     setFit(saved.fit); setBlur(saved.blur); setDim(saved.dim); setFrame(menuFrame(saved.frame)); pending.current = saved;
-    if (saved.source?.kind === 'workshop') pickWorkshop({ id: saved.source.id, title: saved.source.title }); else setWanted(saved.source);
+    if (saved.source?.kind === 'workshop') pickWorkshop({ id: saved.source.id, title: saved.source.title }); else if (kept) return choose(kept, saved.source); else setWanted(saved.source);
+    return Promise.resolve();
+  }
+  // The kept state of this page's own background (scripts/customize-look.mjs Bg), or null.
+  async function snapshot() {
+    const settings = { fit, blur, dim, frame, piece: duration ? piece : pending.current?.piece ?? null, crossfade: duration ? crossfade : pending.current?.crossfade ?? 0 };
+    if (file) return { ...settings, source: origin?.kind === 'workshop' ? origin : { ...origin, media: await keepMedia(file) } };
+    const later = wanted || picked.current;
+    return later ? { ...settings, source: later } : null;
   }
   function onMeta(element) {
     if (element.videoWidth && element.videoHeight) setRatio(element.videoWidth / element.videoHeight);
@@ -172,7 +192,8 @@ function useOwnBackground(setError) {
     if (restored) { setCrossfade(restored.crossfade); pending.current = null; }
   }
   return { file, kind, source, video: kind?.type === 'video', fit, setFit, blur, setBlur, dim, setDim, frame, setFrame, ratio, setRatio, wanted, duration, piece, setPiece, crossfade, setCrossfade, input, playhead, seek,
-    origin, fetching, choose, pickWorkshop, adopt, remove, restore, onMeta,
+    origin, fetching, choose, pickWorkshop, adopt, remove, restore, onMeta, snapshot,
+    key: JSON.stringify([file && [file.name, file.size, file.lastModified], origin, wanted, fetching?.title, fit, blur, dim, frame, duration ? piece : null, crossfade]),
     // What the encoder and the studio recipe take, and what makes a built result stale.
     encoding: { fit, effects: { blur: blur / 100, dim: dim / 100 }, frame, piece: duration ? piece : null, crossfade },
     recipe: { fit, blur, dim, frame, piece: duration ? piece : null, crossfade: duration ? crossfade : 0, source: origin },
@@ -246,13 +267,15 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
   const setError = (message, failure = false) => { setErrorText(message); setFailed(failure); };
   const heroOwn = useOwnBackground(setError), gridOwn = useOwnBackground(setError), loadingOwn = useOwnBackground(setError), preview = usePreviewGrid(page === 'grid');
   const [loadingMode, setLoadingMode] = useState('off'), [hide, setHide] = useState([]);
+  // The see-through panels (MENU_GLASS, 2026-10-22): { bar, friends, news, header, showcase, party }, percents.
+  const [glass, setGlass] = useState(MENU_GLASS);
   const studioId = useRef(null), pending = useRef(null), saving = useRef(null);
   useEffect(() => { setPick(preset); }, [preset]);
   useEffect(() => () => source && URL.revokeObjectURL(source), [source]);
   useEffect(() => () => { if (result) for (const url of [result.url, result.heroUrl, result.gridUrl, result.loadingUrl]) if (url) URL.revokeObjectURL(url); }, [result]);
   // Changing anything that is baked into the videos or the pack makes the result stale.
   useEffect(() => { setResult(null); }, [file, aspect, fit, blur, dim, carnival, seasonCard, seasonButton, profileLinks, piece.start, piece.end, crossfade, frame,
-    heroMode, ...heroOwn.stale, gridMode, gridDim, ...gridOwn.stale, loadingMode, ...loadingOwn.stale, hide.join()]);
+    heroMode, ...heroOwn.stale, gridMode, gridDim, ...gridOwn.stale, loadingMode, ...loadingOwn.stale, hide.join(), ...Object.values(glass)]);
   useEffect(() => () => running.current?.abort(), []);
   // A background from the studio: settings now, the source next (see `pending`).
   useEffect(() => {
@@ -265,20 +288,58 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
       const recipe = record.recipe;
       setAspect(recipe.aspect); setFit(recipe.fit); setBlur(recipe.blur); setDim(recipe.dim); setCarnival(recipe.news?.carnival ?? !recipe.clean); setSeasonCard(recipe.news?.season ?? !recipe.clean); setSeasonButton(recipe.event ?? true); setProfileLinks(recipe.profile ?? true); setFolder(folderOf(recipe.folder).client); setFrame(menuFrame(recipe.frame));
       pending.current = recipe; studioId.current = record.id; setStudio({ id: record.id, name: record.name, saved: false });
-      const hero = recipe.hero || { mode: 'menu' }, grid = recipe.grid || { mode: 'menu' };
+      const hero = recipe.hero || { mode: 'menu' }, grid = recipe.grid || { mode: 'menu' }, loading = recipe.loading || { mode: 'off' };
+      // The user's own files, when this browser still keeps them (look-store.js, 2026-10-22): no need to choose them again.
+      const [menuFile, heroFile, gridFile, loadingFile] = await Promise.all([recipe.source, hero.mode === 'own' && hero.source, grid.mode === 'own' && grid.source, loading.mode === 'own' && loading.source].map(findMedia));
+      if (stopped) return;
       setHeroMode(hero.mode);
-      if (hero.mode === 'own') heroOwn.restore(hero);
+      if (hero.mode === 'own') heroOwn.restore(hero, heroFile);
       setGridMode(grid.mode);
       if (grid.mode === 'dim') setGridDim(grid.dim);
-      if (grid.mode === 'own') gridOwn.restore(grid);
-      const loading = recipe.loading || { mode: 'off' };
+      if (grid.mode === 'own') gridOwn.restore(grid, gridFile);
       setLoadingMode(loading.mode);
-      if (loading.mode === 'own') loadingOwn.restore(loading);
-      setHide(recipe.hide || []);
-      if (recipe.source.kind === 'workshop') setPick({ id: recipe.source.id }); else setWanted(recipe.source);
+      if (loading.mode === 'own') loadingOwn.restore(loading, loadingFile);
+      setHide(recipe.hide || []); setGlass(menuGlass(recipe.glass));
+      if (recipe.source.kind === 'workshop') setPick({ id: recipe.source.id }); else if (menuFile) choose(menuFile, recipe.source); else setWanted(recipe.source);
     })();
     return () => { stopped = true; };
   }, [studioItem]);
+  // Back from the last visit (2026-10-22; «тут только фоны не сохраняются с прошлого раза»): every setting of
+  // the menu's modules from gridstudio.menu, the user's files from this browser (look-store.js), a workshop
+  // background downloaded again. A «Студия» background (?item) brings its own; a workshop link (?background)
+  // replaces only the menu's background. Nothing is written back before this is done (`restored`).
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    const saved = studioItem ? null : readMenuState();
+    if (!saved) { setRestored(true); return undefined; }
+    let stopped = false;
+    const parts = [saved.background, saved.grid.own, saved.hero.own, saved.loading.own];
+    mediaFiles(parts.map((part) => part?.source.kind === 'file' ? part.source.media : null)).catch(() => ({})).then(async (files) => {
+      if (stopped) return;
+      const kept = (part) => (part?.source.kind === 'file' && files[part.source.media]) || null;
+      setFolder(saved.folder); setSeasonButton(saved.event);
+      setHide(saved.buttons.hide); setCarnival(saved.buttons.news.carnival); setSeasonCard(saved.buttons.news.season); setProfileLinks(saved.buttons.profile); setGlass(menuGlass(saved.buttons.glass));
+      setGridMode(saved.grid.mode); setGridDim(saved.grid.dim); setHeroMode(saved.hero.mode); setLoadingMode(saved.loading.mode);
+      // The files are read before anything is written back, so a quick save never misses one.
+      const waits = [];
+      for (const [own, part] of [[gridOwn, saved.grid.own], [heroOwn, saved.hero.own], [loadingOwn, saved.loading.own]]) if (part) waits.push(own.restore(part, kept(part)));
+      const menu = saved.background;
+      if (!preset) {
+        setAspect(saved.aspect);
+        if (menu) {
+          setFit(menu.fit); setBlur(menu.blur); setDim(menu.dim); setFrame(menuFrame(menu.frame));
+          pending.current = { ...menu, aspect: saved.aspect };
+          if (menu.source.kind === 'workshop') setPick({ id: menu.source.id, title: menu.source.title });
+          else if (kept(menu)) waits.push(choose(kept(menu), menu.source));
+          else setWanted(menu.source);
+        }
+      }
+      await Promise.all(waits).catch(() => {});
+      if (stopped) return;
+      setRestored(true);
+    });
+    return () => { stopped = true; };
+  }, []);
   // A background taken from the gallery: its screen at once, its video downloaded here with progress.
   useEffect(() => {
     const preset = pick;
@@ -329,18 +390,18 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
     grid: ownOn(gridMode, gridOwn) || gridMode === 'dim' ? 'changed' : file ? 'follow' : 'default',
     hero: ownOn(heroMode, heroOwn) ? 'changed' : heroMode !== 'off' && file ? 'follow' : 'default',
     loading: ownOn(loadingMode, loadingOwn) ? 'changed' : loadingMode !== 'off' && file ? 'follow' : 'default',
-    buttons: hide.length || !carnival || !seasonCard || profileLinks ? 'changed' : 'default'
+    buttons: hide.length || !carnival || !seasonCard || profileLinks || glassChanged(glass) ? 'changed' : 'default'
   };
   // The settings the pack is made of (packBackground), for the videos that are there.
   const ownHero = ownOn(heroMode, heroOwn), ownGrid = ownOn(gridMode, gridOwn), ownLoading = ownOn(loadingMode, loadingOwn);
-  const packSettings = () => ({ news: { carnival, season: seasonCard }, event: seasonButton, profile: profileLinks, hide,
+  const packSettings = () => ({ news: { carnival, season: seasonCard }, event: seasonButton, profile: profileLinks, hide, glass,
     hero: ownHero ? { mode: 'own', ...heroOwn.recipe } : { mode: heroMode !== 'off' && file ? 'menu' : 'off' },
     grid: ownGrid ? { mode: 'own', ...gridOwn.recipe } : gridMode === 'dim' ? { mode: 'dim', dim: gridDim } : { mode: 'menu' },
     loading: ownLoading ? { mode: 'own', ...loadingOwn.recipe } : { mode: loadingMode !== 'off' && file ? 'menu' : 'off' } });
   const included = Object.values(states).some((state) => state !== 'default');
   // Sizes before anything is encoded: the pack made with stand-in videos (it is only Panorama text, made
   // in a moment) plus each video — its real size once built, the encoder's aim until then (`estimate`).
-  const sizeKey = JSON.stringify([states, hide, carnival, seasonCard, profileLinks, seasonButton, gridDim, file && videoGuess({ kind, duration, piece, crossfade }),
+  const sizeKey = JSON.stringify([states, hide, glass, carnival, seasonCard, profileLinks, seasonButton, gridDim, file && videoGuess({ kind, duration, piece, crossfade }),
     ownHero && videoGuess(heroOwn), ownGrid && videoGuess(gridOwn), ownLoading && videoGuess(loadingOwn), result && [result.blob?.size, result.video, result.heroVideo, result.gridVideo, result.loadingVideo]]);
   const sizes = useMemo(() => {
     const videos = { bg: file ? { bytes: result?.video ?? videoGuess({ kind, duration, piece, crossfade }), estimate: !result } : null,
@@ -350,7 +411,7 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
     const dry = (settings) => { try { return packBackground(file ? PLACEHOLDER : null, settings, ownHero ? PLACEHOLDER : null, ownGrid ? PLACEHOLDER : null, ownLoading ? PLACEHOLDER : null)?.size ?? 0; } catch { return 0; } };
     const all = included ? dry(packSettings()) : 0;
     // What the buttons and the darker grid page add: the pack without them, the difference.
-    const without = { buttons: { news: { carnival: true, season: true }, profile: false, hide: [] }, grid: { grid: { mode: 'menu' } } };
+    const without = { buttons: { news: { carnival: true, season: true }, profile: false, hide: [], glass: MENU_GLASS }, grid: { grid: { mode: 'menu' } } };
     const extra = Object.fromEntries(Object.entries(without).map(([id, patch]) => [id, (id === 'grid' ? gridMode === 'dim' : states[id] === 'changed') ? Math.max(1, all - dry({ ...packSettings(), ...patch })) : 0]));
     const plain = all - extra.buttons - extra.grid;
     const placeholders = Object.values(videos).filter(Boolean).length * PLACEHOLDER.length;
@@ -364,6 +425,24 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
     const bytes = result ? result.blob?.size ?? 0 : all ? all - placeholders + Object.values(videos).reduce((sum, video) => sum + (video?.bytes || 0), 0) : 0;
     return { pak02: bytes ? { bytes, estimate: !result && Object.values(videos).some(Boolean) } : null, parts };
   }, [sizeKey]);
+  // The kept state of the menu's modules (scripts/customize-look.mjs `menu`): written to gridstudio.menu a
+  // moment after a change, and taken by an «Оформление» (look-state.js). The user's files are kept by hash;
+  // a background still asked for (`wanted`) or on its way from the workshop (`pick`) stays named.
+  async function snapshot() {
+    const settings = { fit, blur, dim, frame, piece: duration ? piece : pending.current?.piece ?? null, crossfade: duration ? crossfade : pending.current?.crossfade ?? 0 };
+    const background = file ? { ...settings, source: origin?.kind === 'workshop' ? origin : { ...(origin || { kind: 'file', name: file.name, size: file.size, type: kind?.type, label: kind?.label }), media: await keepMedia(file) } }
+      : wanted ? { ...settings, source: wanted } : pick?.id ? { ...settings, source: { kind: 'workshop', id: pick.id, title: pick.title || '' } } : null;
+    return { aspect, folder, event: seasonButton, background, buttons: { hide, news: { carnival, season: seasonCard }, profile: profileLinks, glass },
+      grid: { mode: gridMode, dim: gridDim, own: await gridOwn.snapshot() }, hero: { mode: heroMode, own: await heroOwn.snapshot() }, loading: { mode: loadingMode, own: await loadingOwn.snapshot() } };
+  }
+  const key = JSON.stringify([aspect, folder, seasonButton, file && [file.name, file.size, file.lastModified], origin, wanted, pick?.id, fit, blur, dim, frame, duration ? piece : null, crossfade,
+    hide, glass, carnival, seasonCard, profileLinks, gridMode, gridDim, heroMode, loadingMode, gridOwn.key, heroOwn.key, loadingOwn.key]);
+  useEffect(() => {
+    if (!restored) return undefined;
+    let gone = false;
+    const timer = setTimeout(() => snapshot().then((menu) => { if (!gone) writeMenuState(menu); }).catch(() => {}), 400);
+    return () => { gone = true; clearTimeout(timer); };
+  }, [restored, key]);
   // The pack for the one file: the videos encoded (each in turn, `progress` 0…1 over all of them), the
   // studio copy saved; the result stays until a setting changes. null when nothing here differs from Dota.
   async function prepare({ delivery = 'file' } = {}) {
@@ -386,7 +465,7 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
       const blob = packBackground(encoded?.video ?? null, settings, heroEncoded?.video, gridEncoded?.video, loadingEncoded?.video);
       // Kept in the studio (a menu background only): this browser gets the WebMs, a signed-in account the recipe.
       if (encoded) {
-        const recipe = { aspect, fit, blur, dim, frame, clean, news: settings.news, event: seasonButton, profile: profileLinks, folder, delivery, piece: duration ? piece : null, crossfade: duration ? crossfade : 0, source: origin, hero: settings.hero, grid: settings.grid, loading: settings.loading, hide };
+        const recipe = { aspect, fit, blur, dim, frame, clean, news: settings.news, event: seasonButton, profile: profileLinks, folder, delivery, piece: duration ? piece : null, crossfade: duration ? crossfade : 0, source: origin, hero: settings.hero, grid: settings.grid, loading: settings.loading, hide, glass };
         saving.current = saveBuiltBackground({ id: studioId.current, recipe, video: encoded.video, heroVideo: heroEncoded?.video, gridVideo: gridEncoded?.video, loadingVideo: loadingEncoded?.video, codec: encoded.codec, seconds: encoded.seconds });
         saving.current.then((record) => { studioId.current = record.id; setStudio({ id: record.id, name: record.name, saved: true, account: record.account }); })
           .catch(() => setStudio((current) => ({ ...current, failed: true })));
@@ -421,7 +500,7 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
     if (id === 'grid') { setGridMode('menu'); setGridDim(55); gridOwn.remove(); }
     if (id === 'hero') { setHeroMode('menu'); heroOwn.remove(); }
     if (id === 'loading') { setLoadingMode('off'); loadingOwn.remove(); }
-    if (id === 'buttons') { setHide([]); setCarnival(true); setSeasonCard(true); setProfileLinks(false); }
+    if (id === 'buttons') { setHide([]); setCarnival(true); setSeasonCard(true); setProfileLinks(false); setGlass(MENU_GLASS); }
   }
   // A line for each module: what it is now (the page's rows and its list of what goes into the file).
   const ownLine = (own) => own.origin?.kind === 'workshop' ? t('«{title}» из мастерской', { title: own.origin.title }) : own.file ? own.file.name : '';
@@ -431,7 +510,8 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
     grid: ownGrid ? t('Свой фон: {name}', { name: ownLine(gridOwn) }) : gridMode === 'dim' ? (file ? t('Фон меню, темнее на {percent}%', { percent: gridDim }) : t('Фон Dota темнее на {percent}%', { percent: gridDim })) : file ? t('Тот же фон, что в меню') : '',
     hero: ownHero ? t('Свой фон: {name}', { name: ownLine(heroOwn) }) : states.hero === 'follow' ? t('Тот же фон, что в меню') : '',
     loading: ownLoading ? t('Свой фон: {name}', { name: ownLine(loadingOwn) }) : states.loading === 'follow' ? t('Тот же фон, что в меню') : '',
-    buttons: [hide.length && t('скрыто кнопок: {count}', { count: hide.length }), (!carnival || !seasonCard) && t('скрыто карточек: {count}', { count: !carnival + !seasonCard }), profileLinks && t('Stratz и Dotabuff в профилях')].filter(Boolean).join(', ')
+    buttons: [hide.length && t('скрыто кнопок: {count}', { count: hide.length }), (!carnival || !seasonCard) && t('скрыто карточек: {count}', { count: !carnival + !seasonCard }), profileLinks && t('Stratz и Dotabuff в профилях'),
+      ...glassLines(glass)].filter(Boolean).join(', ')
   };
   if (summary.buttons) summary.buttons = summary.buttons[0].toUpperCase() + summary.buttons.slice(1);
 
@@ -489,8 +569,8 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
     page, file, kind, source, aspect, setAspect, fit, setFit, blur, setBlur, dim, setDim, frame, setFrame, framing, carnival, setCarnival, seasonCard, setSeasonCard, seasonButton, setSeasonButton,
     profileLinks, setProfileLinks, folder, setFolder, target, duration, piece, setPiece, crossfade, setCrossfade, mediaRatio, setMediaRatio, progress, result, error, failed, setError,
     sources, setSources, share, setShare, dragging, fetching, input, playhead, seek, origin, studio, wanted, note, auth, heroMode, setHeroMode, gridMode, setGridMode, gridDim, setGridDim,
-    picking, setPicking, browsing, setBrowsing, heroOwn, gridOwn, loadingOwn, preview, loadingMode, setLoadingMode, hide, setHide, saving, setPick,
-    states, summary, sizes, included, choose, remove, reset, prepare, delivered, publish, cancel: () => running.current?.abort(), view, second, ownShown, video, shown, look,
+    picking, setPicking, browsing, setBrowsing, heroOwn, gridOwn, loadingOwn, preview, loadingMode, setLoadingMode, hide, setHide, glass, setGlass, saving, setPick,
+    states, summary, sizes, included, choose, remove, reset, prepare, delivered, publish, cancel: () => running.current?.abort(), view, second, ownShown, video, shown, look, snapshot, key, restored,
     mediaFrame, ownFramed, ownLook, screenRatio, frameTarget, frameDown, frameMove, frameUp, drop, onMeta, keep, still: !!kind?.still
   };
 }
@@ -538,7 +618,7 @@ export function MenuScreen({ bg, page }) {
     {page === 'hero' ? <DotaHeroPage interactive={heroOff || Boolean(bg.heroMode === 'own' ? ownShown : shown)}/>
       : page === 'grid' ? <DotaGridPage grid={bg.preview.grid} name={bg.preview.name}/>
       : page === 'loading' ? <DotaLoadingPage/>
-      : <DotaMenu news={{ carnival: bg.carnival, season: bg.seasonCard }} event={SEASON_EVENT && bg.file ? bg.seasonButton : null} hide={bg.hide}/>}
+      : <DotaMenu news={{ carnival: bg.carnival, season: bg.seasonCard }} event={SEASON_EVENT && bg.file ? bg.seasonButton : null} hide={bg.hide} glass={bg.glass}/>}
     {loadingNow && <div className="custom-fetching" role="status"><b>{loadingNow.title ? t('Загружаем «{title}»', { title: loadingNow.title }) : t('Загружаем фон…')}</b><span><i style={{ width: `${Math.round(loadingNow.progress * 100)}%` }}/></span></div>}
   </div>;
 }
@@ -574,7 +654,7 @@ export function MenuThumb({ bg, page }) {
     {media ? media.video ? <video src={media.url} muted playsInline preload="metadata"/> : <img src={media.url} alt=""/> : <i className={`cz-thumb-empty is-${page}`}/>}
     {page === 'grid' && bg.gridMode === 'dim' && <i className="cz-thumb-veil" style={{ opacity: (bg.gridDim / 100) * GRID_DIM.max }}/>}
     {page === 'hero' ? <DotaHeroPage interactive={false} model={false}/> : page === 'grid' ? <DotaGridPage grid={null}/> : page === 'loading' ? <DotaLoadingPage/>
-      : <DotaMenu news={{ carnival: bg.carnival, season: bg.seasonCard }} hide={bg.hide}/>}
+      : <DotaMenu news={{ carnival: bg.carnival, season: bg.seasonCard }} hide={bg.hide} glass={bg.glass}/>}
   </span>;
 }
 
@@ -596,7 +676,7 @@ function WorkshopRow({ bg }) {
 export function BackgroundFields({ bg }) {
   const { file, kind } = bg;
   return <>
-    {bg.wanted && <Notice>{rich(t('Чтобы изменить «{title}», выбери исходный файл: {name}, {size}. Настройки фона уже стоят.'), { title: bg.studio?.name, name: <b>{bg.wanted.name}</b>, size: fileSize(bg.wanted.size) })}</Notice>}
+    {bg.wanted && <Notice>{rich(bg.studio ? t('Чтобы изменить «{title}», выбери исходный файл: {name}, {size}. Настройки фона уже стоят.') : t('Файла фона нет в этом браузере — выбери его снова: {name}, {size}. Настройки фона уже стоят.'), { title: bg.studio?.name, name: <b>{bg.wanted.name}</b>, size: fileSize(bg.wanted.size) })}</Notice>}
     {bg.note && <Notice>{bg.note}</Notice>}
     <MenuError bg={bg}/>
     <Field label={t('Файл')} hint={!file && <>{t('PNG, JPEG, WebP, GIF, MP4, WebM до {size} МБ. Из видео выбираешь отрезок до {seconds} с на шкале под превью, звук убирается.', { size: megabytes(MENU_LIMITS.bytes), seconds: MENU_LIMITS.seconds })} <button type="button" className="catalog-link" onClick={() => bg.setSources(true)}>{t('Где взять фон?')}</button></>}>
@@ -649,6 +729,14 @@ export function ButtonsFields({ bg }) {
       <div className="catalog-tags custom-hide" role="group" aria-label={t('Какие кнопки верхней панели скрыть')}>{HIDE_OPTIONS().map(([key, label]) =>
         <button key={key} type="button" aria-pressed={bg.hide.includes(key)} onClick={() => bg.setHide((value) => value.includes(key) ? value.filter((x) => x !== key) : [...value, key])}>{bg.hide.includes(key) && <Icon name="eyeOff" size={14}/>}{label}</button>)}</div>
       {bg.hide.length > 0 && <p className="custom-hint">{t('Скрытые кнопки пропадут из верхней панели Dota, остальные сдвинутся. «Играть», настройки и выход не скрываются. Ещё не проверено в игре.')}</p>}
+    </Field>
+    {/* The see-through panels (MENU_GLASS): how much of each stays; 100 % is Dota's own. In the order they lie on the
+        screen: the top bar, the friends rail and the mini-profile at its top, the party bar under it, the news on the right. */}
+    <Field label={t('Фон панелей')} aside={t('100% — как в Dota')} hint={glassChanged(bg.glass)
+      ? t('Сквозь панели виден фон меню. Текст, иконки, аватарки и медаль остаются как были, а мини-профиль и новости — картинки, они бледнеют целиком. Шапку, мини-профиль, пати и новости ещё не проверили в игре.') : t('Меньше — и сквозь панель виден фон меню.')}>
+      <div className="custom-effects">
+        {GLASS_SLIDERS().map(([key, label]) => <Slider key={key} label={label} value={bg.glass[key]} zero="0%" onChange={(percent) => bg.setGlass((value) => ({ ...value, [key]: percent }))}/>)}
+      </div>
     </Field>
     <div className="custom-switches">
       {/* The news column's two cards, each its own switch (2026-10-08): Dark Carnival and Valve's own «Диковинки Квортеро». */}

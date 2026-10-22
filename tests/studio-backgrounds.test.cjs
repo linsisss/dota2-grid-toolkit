@@ -80,9 +80,9 @@ test('studio recipes: behind the hero — the menu video by default, a video of 
     assert.throws(() => studioRecipe(recipe({ hero: wrong })), /не читаются/, JSON.stringify(wrong));
 });
 
-test('the pack: Valve\'s hero page plays the menu video, a video of its own, or is left alone', async () => {
+test('the pack: Valve\'s hero page shows the menu video through, plays a video of its own, or is left alone', async () => {
   const { readFileSync } = require('node:fs');
-  const { menuBackgroundPack, HERO_PAGE, HERO_VIDEO, MENU_VIDEO } = await import('../scripts/menu-background.mjs');
+  const { menuBackgroundPack, HERO_PAGE, HERO_STYLE, HERO_VIDEO, HERO_OPACITY, MENU_VIDEO } = await import('../scripts/menu-background.mjs');
   const { readVPK, panoramaSource } = await import('../scripts/vpk.mjs');
   const { md5 } = await import('../scripts/md5.mjs');
   const layout = (name) => readFileSync(require('node:path').join(__dirname, '../assets/dota-menu', name), 'utf8');
@@ -91,10 +91,37 @@ test('the pack: Valve\'s hero page plays the menu video, a video of its own, or 
   assert.ok(!paths(pack(null)).includes(HERO_PAGE), 'off: Valve\'s page untouched');
   const same = pack({ page: layout('dashboard_page_hero_new_v2.xml') });
   assert.ok(!paths(same).includes(HERO_VIDEO), 'the menu video is not stored twice');
-  assert.ok(panoramaSource(same.find((file) => file.path === HERO_PAGE).data).includes(`<MoviePanel id="GridStudioHeroMovie" src="s2r://${MENU_VIDEO}"`));
+  // The menu's video is not decoded a second time (2026-10-22, «фоны с грида лагают»): the page stops
+  // hiding the menu's background and a veil dims it as the movie at HERO_OPACITY did.
+  const samePage = panoramaSource(same.find((file) => file.path === HERO_PAGE).data), sameStyle = panoramaSource(same.find((file) => file.path === HERO_STYLE).data);
+  assert.ok(!samePage.includes('<MoviePanel') && !samePage.includes(MENU_VIDEO), 'no second movie of the menu video');
+  assert.ok(!samePage.includes('hidebackground="true"'), 'the menu background shows through');
+  assert.equal(samePage.replace(/\n\t\t<include src="s2r:\/\/panorama\/styles\/gridstudio_hero_background\.vcss_c" \/>/, '').replace('<DOTAHeroPageNewV2 class="DashboardPage CanRandomize"', '<DOTAHeroPageNewV2 class="DashboardPage CanRandomize" hidebackground="true"'), layout('dashboard_page_hero_new_v2.xml'), 'otherwise Valve\'s page');
+  assert.match(sameStyle, /#HeroLoadoutBackgroundImageContainer\s*\{\s*background-color: #00000066;/);
+  assert.ok(Math.abs(0x66 / 255 - (1 - HERO_OPACITY)) < 0.003);
   const own = pack({ page: layout('dashboard_page_hero_new_v2.xml'), video: new Uint8Array([9]) });
   assert.deepEqual([...own.find((file) => file.path === HERO_VIDEO).data], [9]);
-  assert.ok(panoramaSource(own.find((file) => file.path === HERO_PAGE).data).includes(`src="s2r://${HERO_VIDEO}"`));
+  const ownPage = panoramaSource(own.find((file) => file.path === HERO_PAGE).data);
+  assert.ok(ownPage.includes(`<MoviePanel id="GridStudioHeroMovie" src="s2r://${HERO_VIDEO}"`) && ownPage.includes('hidebackground="true"'));
+  assert.match(panoramaSource(own.find((file) => file.path === HERO_STYLE).data), /#GridStudioHeroMovie\s*\{[^}]*opacity: 0\.6;/);
+});
+
+test('the pack plays as few movies as it can: the menu video once, whatever page shows it', async () => {
+  // d2pfx's menu backgrounds play one MoviePanel; ours played the same 1080p video twice (menu and hero
+  // page) in 1576 of 2112 packs of a week (2026-10-22), and decoders of pages once opened keep running.
+  const { readFileSync } = require('node:fs');
+  const { menuBackgroundPack } = await import('../scripts/menu-background.mjs');
+  const { readVPK, panoramaSource } = await import('../scripts/vpk.mjs');
+  const { md5 } = await import('../scripts/md5.mjs');
+  const layout = (name) => readFileSync(require('node:path').join(__dirname, '../assets/dota-menu', name), 'utf8');
+  const movies = (options) => readVPK(menuBackgroundPack({ video: new Uint8Array([1]), dashboard: layout('dashboard.xml'), md5, ...options })).files
+    .filter((file) => file.path.endsWith('.vxml_c')).reduce((sum, file) => sum + (panoramaSource(file.data).match(/<MoviePanel\b/g) || []).length, 0);
+  const hero = layout('dashboard_page_hero_new_v2.xml'), heroes = layout('dashboard_page_heroes.xml'), loading = layout('loading_screen_background_image.xml');
+  assert.equal(movies({ hero: { page: hero } }), 1, 'menu + «За героем» as in the menu (the default): one movie');
+  assert.equal(movies({ hero: { page: hero }, grid: { page: heroes, dim: 0.5 } }), 1, 'a darker grid page plays nothing');
+  assert.equal(movies({ hero: { page: hero, video: new Uint8Array([2]) } }), 2, 'a video of its own behind the hero is a movie of its own');
+  // The loading screen is not part of the menu: it needs its own movie even with the menu video.
+  assert.equal(movies({ hero: { page: hero }, loading: { page: loading } }), 2);
 });
 
 test('studio backgrounds API: signed-in only, per account, recipes and posters without video', async t => {

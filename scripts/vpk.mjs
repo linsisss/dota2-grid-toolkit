@@ -30,7 +30,9 @@ export function concat(parts) {
 }
 
 // files: [{ path: 'panorama/layout/x.vxml_c', data: Uint8Array }]; md5(Uint8Array) → Uint8Array(16) for v2.
-export function buildVPK(files, { version = 2, md5 = null } = {}) {
+// `share`: entries given the very same Uint8Array point at one copy of its bytes (the hero portraits'
+// variants, scripts/hero-portraits.mjs); off, every entry has its own copy, as before.
+export function buildVPK(files, { version = 2, md5 = null, share = false } = {}) {
   if (version === 2 && !md5) throw new Error('VPK v2 needs an MD5 function.');
   const tree = new Map(); // extension → directory → entries, the order the tree is written in
   for (const file of files) {
@@ -44,7 +46,7 @@ export function buildVPK(files, { version = 2, md5 = null } = {}) {
     if (!dirs.has(dir)) dirs.set(dir, []);
     dirs.get(dir).push({ name, data: file.data });
   }
-  const parts = [], data = [];
+  const parts = [], data = [], placed = new Map();
   const string = (value) => parts.push(text(value), new Uint8Array([0]));
   let offset = 0;
   for (const [ext, dirs] of tree) {
@@ -53,14 +55,15 @@ export function buildVPK(files, { version = 2, md5 = null } = {}) {
       string(dir);
       for (const entry of entries) {
         string(entry.name);
-        const record = new Uint8Array(18), view = new DataView(record.buffer);
+        const record = new Uint8Array(18), view = new DataView(record.buffer), shared = share ? placed.get(entry.data) : undefined;
         view.setUint32(0, crc32(entry.data), true);
         view.setUint16(4, 0, true);            // preload bytes
         view.setUint16(6, 0x7fff, true);       // archive index: the data follows the tree in this file
-        view.setUint32(8, offset, true);
+        view.setUint32(8, shared ?? offset, true);
         view.setUint32(12, entry.data.length, true);
         view.setUint16(16, 0xffff, true);
-        parts.push(record); data.push(entry.data); offset += entry.data.length;
+        parts.push(record);
+        if (shared === undefined) { if (share) placed.set(entry.data, offset); data.push(entry.data); offset += entry.data.length; }
       }
       parts.push(new Uint8Array([0]));
     }
@@ -123,6 +126,11 @@ function editInfo({ path, kind, sourceCRC, searchPath }) {
     { records: [['IsChildResource', 0]], order: [0] },                                 // searchable user data (int)
     { records: [] }, { records: [] }
   ];
+  return resourceEditInfo(lists);
+}
+// The REDI block from its ten lists ({ records: [[field…]], order: the string columns in storage order });
+// shared with the textures (scripts/dota-vtex.mjs).
+export function resourceEditInfo(lists) {
   const chunks = [];
   let size = lists.length * 8;
   const head = new DataView(new ArrayBuffer(size));
@@ -185,4 +193,31 @@ export function panoramaSource(bytes) {
     return new TextDecoder().decode(bytes.subarray(offset + 6, offset + size));
   }
   throw new Error('В ресурсе нет блока DATA.');
+}
+// Text added at the end of a compiled Panorama resource's source text, everything else kept byte for byte
+// (d2pfx's fixes, scripts/d2pfx-mods.mjs): the header and the blocks before DATA as they are, DATA's own
+// leading CRC as it is (the game does not check it against the text: d2pfx's resourcecompiler files carry
+// the original source's CRC over minified text), and the blocks after it (the newer RED2 files' SrMa source
+// map, whose offsets only cover the old text) moved by a multiple of 16, so they keep their alignment.
+export function appendPanoramaText(bytes, extra) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength), count = view.getUint32(12, true);
+  const blocks = [];
+  for (let i = 0; i < count; i++) {
+    const at = 16 + i * 12;
+    blocks.push({ at, name: new TextDecoder().decode(bytes.subarray(at, at + 4)), offset: at + 4 + view.getUint32(at + 4, true), size: view.getUint32(at + 8, true) });
+  }
+  const data = blocks.find((block) => block.name === 'DATA');
+  if (!data) throw new Error('В ресурсе нет блока DATA.');
+  if (view.getUint16(data.offset + 4, true)) throw new Error('Ресурс с таблицей картинок не поддерживается.');
+  const added = text(extra), end = data.offset + data.size, after = blocks.filter((block) => block.offset >= end);
+  const rest = after.length ? Math.min(...after.map((block) => block.offset)) : bytes.length;
+  const shift = after.length ? Math.ceil(Math.max(0, added.length - (rest - end)) / 16) * 16 : added.length - (rest - end);
+  const out = new Uint8Array(Math.max(end + added.length, rest + shift + (bytes.length - rest))), outView = new DataView(out.buffer);
+  out.set(bytes.subarray(0, end));
+  out.set(added, end);
+  out.set(bytes.subarray(rest), rest + shift);
+  outView.setUint32(data.at + 8, data.size + added.length, true);
+  for (const block of after) outView.setUint32(block.at + 4, block.offset + shift - (block.at + 4), true);
+  if (view.getUint32(0, true) === bytes.length) outView.setUint32(0, out.length, true);
+  return out;
 }

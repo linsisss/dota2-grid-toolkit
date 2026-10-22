@@ -69,13 +69,18 @@ export function useCursors() {
   const packWanted = mode === 'd2pfx' && pack && !Object.keys(packBase).length;
   useEffect(() => { if (packWanted && !packLoad.file) applyPack(pack, tweaks.current); }, [packWanted]);
 
+  // What is kept (and what an «Оформление» takes: look-state.js): the way, the pack, each cursor's place and picture key.
+  const stateOf = () => {
+    const ownOut = Object.fromEntries(Object.entries(own).filter(([, role]) => role?.image).map(([id, role]) => [id, { ...place(role), key: role.key, name: role.name }]));
+    const packedOut = Object.keys(packBase).length ? Object.fromEntries(Object.entries(packed).filter(([, role]) => role === null || role.edited)
+      .map(([id, role]) => [id, role === null ? { gone: true } : { ...place(role), ...(role.key ? { key: role.key, name: role.name } : {}) }])) : tweaks.current;
+    return { mode, pack, own: ownOut, packed: packedOut };
+  };
   // Saved a moment after a change; pictures no cursor uses any more leave IndexedDB.
   useEffect(() => {
     if (!ready) return undefined;
     const timer = setTimeout(() => {
-      const ownOut = Object.fromEntries(Object.entries(own).filter(([, role]) => role?.image).map(([id, role]) => [id, { ...place(role), key: role.key, name: role.name }]));
-      const packedOut = Object.keys(packBase).length ? Object.fromEntries(Object.entries(packed).filter(([, role]) => role === null || role.edited)
-        .map(([id, role]) => [id, role === null ? { gone: true } : { ...place(role), ...(role.key ? { key: role.key, name: role.name } : {}) }])) : tweaks.current;
+      const { own: ownOut, packed: packedOut } = stateOf();
       tweaks.current = packedOut;
       try { localStorage.setItem(SAVED, JSON.stringify({ mode, pack, own: ownOut, packed: packedOut })); } catch { /* This visit only. */ }
       keepPictures([...Object.values(ownOut), ...Object.values(packedOut)].map((role) => role?.key).filter(Boolean));
@@ -132,7 +137,10 @@ export function useCursors() {
     creditsClosing()] : [];
   const key = JSON.stringify([mode, pack?.file, active.map(([id, role]) => [id, role.key || role.pack, role.scale, role.x, role.y, role.rot, role.hot])]);
   const preview = roleURL((roles.cursor_default?.image && roles.cursor_default) || active[0]?.[1], 32);
-  return { mode, setMode, roles, active, setRole, pickPicture, resetRole, pack, packs: loadPacks, choosePack, packLoad, ready, edited, fromPack,
+  // For an «Оформление»: the kept state (before the pictures are back, what was saved) and the live pictures by key.
+  const snapshot = () => ({ ...(ready ? stateOf() : readSaved()),
+    images: Object.fromEntries([...Object.values(own), ...Object.values(packed)].filter((role) => role?.key && role.image).map((role) => [role.key, role.image])) });
+  return { mode, setMode, roles, active, setRole, pickPicture, resetRole, pack, packs: loadPacks, choosePack, packLoad, ready, edited, fromPack, snapshot,
     state: active.length ? 'changed' : 'default', summary, credits, creditLine, files, key, preview, reset };
 }
 

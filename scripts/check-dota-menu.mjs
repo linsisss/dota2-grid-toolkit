@@ -1,7 +1,7 @@
 // Watches Valve's layouts that the menu-background pack is built from (assets/dota-menu/*.xml):
 // the main menu, its home page, since 1.6.1 the hero page (the background behind the hero) and,
 // since 1.6.4, the player profile (showcase/, the Stratz and Dotabuff buttons) and the «Герои» page
-// (the background under the hero grid). The client is decompiled daily into
+// (the background under the hero grid), since 2026-10-22 the friends rail and its mini-profile (see-through panels). The client is decompiled daily into
 // github.com/spirit-bear-productions/dota_vpk_updates; this compares its files with ours:
 //   same            nothing changed
 //   override-only   only dashboard.xml's override-background changed: Valve moved on to another
@@ -19,6 +19,11 @@ import { createHash } from 'node:crypto';
 
 const SOURCE = 'https://raw.githubusercontent.com/spirit-bear-productions/dota_vpk_updates/main/panorama/layout/';
 const FILES = ['dashboard.xml', 'dashboard_page_home.xml', 'dashboard_page_hero_new_v2.xml', 'showcase/dashboard_page_showcase.xml', 'dashboard_page_heroes.xml', 'loading_screen_background_image.xml',
+  // The friends rail (2026-10-22): replaced for its see-through ground (menu-background.mjs friendsPage), and
+  // the mini-profile at its top (miniProfilePage), for its header row's ground and its picture.
+  'friend_menu.xml', 'showcase/mini_showcase.xml',
+  // Not replaced: the news column's cells, whose places the see-through column's masks follow (NEWS_COLUMN).
+  'frontpage_contents.xml',
   // Not a layout: the interface builder's HUD hook (scripts/interface-modules.mjs), given back with our rules.
   '../styles/custom_ui.css'];
 const local = (file) => file.split('/').pop();  // our copies lie flat in assets/dota-menu/
@@ -45,6 +50,32 @@ for (const file of FILES) {
   let status = fresh[file] === ours ? 'same' : withoutOverride(fresh[file]) === withoutOverride(ours) ? 'override-only' : 'changed';
   if (file === 'dashboard.xml' && !/<DOTADashboardBackgroundManager\b[^>]*\boverride-background="/.test(fresh[file])) status = 'changed';
   report.files[file] = status;
+}
+// The see-through panels repeat Valve's colours of the rail's ground (RAIL_GROUNDS) and of the party bar's border
+// (PARTY_BORDERS), the mini-profile header's black ground and rock picture, and name the panels they thin (the top
+// bar's ground, the news column): a new colour or a renamed panel is a change for a person to carry over into
+// menu-background.mjs.
+{
+  const { RAIL_GROUNDS, RAIL_SHADOW, PARTY_BORDERS, NEWS_COLUMN } = await import('./menu-background.mjs');
+  const styles = async (file) => (await fetchText(new URL(`../styles/${file}`, SOURCE).href)).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').trim();
+  const ruleIn = (css) => (selector) => css.match(new RegExp(`(?:^|[}] )${selector.replace(/[.#]/g, '\\$&')} \\{([^}]*)\\}`))?.[1] ?? null;
+  const rule = ruleIn(await styles('friend_menu.css')), board = ruleIn(await styles('dashboard.css'));
+  const mini = ruleIn(await styles('showcase/mini_showcase.css')), home = ruleIn(await styles('dashboard_page_home.css'));
+  const grounds = RAIL_GROUNDS.every(([selector, colour, alpha, word]) => (rule(selector) || '').includes(`background-color: ${word || `#${colour}${alpha.toString(16).padStart(2, '0')}`};`))
+    && (rule('.LeftRailContain') || '').includes(`box-shadow: fill #000000${RAIL_SHADOW.toString(16)} 0px 0px 24px 0px;`);
+  const bar = board('#TopBarBackground') !== null;
+  const party = PARTY_BORDERS.every(([selector, colour, alpha]) => (board(selector) || '').includes(`border: 1px solid #${colour}${alpha.toString(16)};`))
+    && /background-image: url\("s2r:\/\/panorama\/images\/textures\/miniprofile_rock/.test(board('#FriendlistBottom') || '') && !/background-img-opacity/.test(board('#FriendlistBottom') || '');
+  const header = mini('.Header') || '', showcase = mini('.ShowcaseData') || '';
+  const profile = header.includes('background-color: black;') && header.includes('border-bottom: 1px solid black;') && header.includes('miniprofile_rock_psd') && !/background-img-opacity|opacity:/.test(header)
+    && showcase.includes('miniprofile_rock_psd') && !/opacity/.test(showcase);
+  const shared = ruleIn(await styles('frontpage_shared.css')), contents = await styles('frontpage_contents.css');
+  const cell = shared('.FrontpageCell') || '', { width, cell: cellWidth, top, bottom, shadow } = NEWS_COLUMN;
+  const news = home('#RightColumn') !== null && !/opacity|width/.test(home('#RightColumn') || '') && !/opacity|height/.test(home('#FrontpageContents') || '')
+    && (home('#FrontpageContents') || '').includes(`width: ${width}px;`) && cell.includes(`width: ${cellWidth}px;`) && cell.includes(`height: ${bottom[1] - bottom[0]}px;`)
+    && cell.includes(`box-shadow: ${shadow};`) && (shared('.TallCell') || '').includes(`height: ${top[1] - top[0]}px;`)
+    && contents.includes(`@define firstRow: ${top[0]}px;`) && contents.includes(`@define thirdRow: ${bottom[0]}px;`);
+  report.files['friend_menu.css + dashboard.css + mini_showcase.css + dashboard_page_home.css + frontpage_*.css (see-through panels)'] = grounds && bar && party && profile && news ? 'same' : 'changed';
 }
 report.status = Object.values(report.files).includes('changed') ? 'changed' : Object.values(report.files).includes('override-only') ? 'override-only' : 'same';
 console.log(JSON.stringify(report));

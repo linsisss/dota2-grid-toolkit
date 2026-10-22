@@ -36,9 +36,10 @@ test('the one file: its layout, and only what the site makes passes for the comm
   const { buildVPK } = await import('../scripts/vpk.mjs');
   const { buildZip } = await import('../scripts/zip.mjs');
   const { DOTA_FONT_FILES } = await import('../scripts/dota-font.mjs');
-  assert.equal(CUSTOMIZE_PARTS.length, 17);
+  assert.equal(CUSTOMIZE_PARTS.length, 18);
   assert.deepEqual(customizeEntry('game/dota_russian/pak04_dir.vpk'), { kind: 'russian', path: 'pak04_dir.vpk' }, 'the d2pfx mods');
-  assert.equal(customizeEntry('game/dota_russian/pak05_dir.vpk'), null);
+  assert.deepEqual(customizeEntry('game/dota_russian/pak05_dir.vpk'), { kind: 'russian', path: 'pak05_dir.vpk' }, 'the heroes\' portraits');
+  assert.equal(customizeEntry('game/dota_russian/pak06_dir.vpk'), null);
   assert.deepEqual(customizeEntry('game/dota_russian/pak02_dir.vpk'), { kind: 'russian', path: 'pak02_dir.vpk' });
   assert.deepEqual(customizeEntry('game/dota_russian/resource/cursor/cursor_default_vsz1.bmp'), { kind: 'russian', path: 'resource/cursor/cursor_default_vsz1.bmp' });
   assert.deepEqual(customizeEntry('game/dota/panorama/fonts/radiance-bold.otf'), { kind: 'fonts', path: 'radiance-bold.otf' });
@@ -80,7 +81,7 @@ test('the one file by a PowerShell command: installs everything, takes away what
     assert.match(body, /^# GridStudio[^\n]*\n& \{\n\$ErrorActionPreference = 'Stop'\n/, 'its own scope');
     assert.match(body, /libraryfolders\.vdf/);
     assert.match(body, /'gridstudio-installed\.txt'/);
-    assert.match(body, /\$pattern = '\^\(pak0\[234\]_dir\\\.vpk\|resource\/cursor\/\[a-z0-9_\]\+\\\.\(bmp\|res\)\)\$'/, 'only our own names are ever removed');
+    assert.match(body, /\$pattern = '\^\(pak0\[2-5\]_dir\\\.vpk\|resource\/cursor\/\[a-z0-9_\]\+\\\.\(bmp\|res\)\)\$'/, 'only our own names are ever removed');
     assert.doesNotMatch(body, /UILanguage|DownloadString|Start-Process|shell:Downloads|OpenFileDialog/);
     assert.doesNotMatch(body, /[‘’“”]/);
   }

@@ -1,6 +1,8 @@
-import { ALL_FORMATS, BlobSource, BufferTarget, CanvasSource, Input, Output, VideoSampleSink, WebMOutputFormat, canEncodeVideo } from 'mediabunny';
+import { ALL_FORMATS, BlobSource, BufferTarget, Input, Output, VideoSampleSink, WebMOutputFormat, canEncodeVideo } from 'mediabunny';
 import { MENU_LIMITS, framePlacement, mediaKind, menuBitrate, menuLook } from '../../scripts/menu-background.mjs';
 import { t } from '../../scripts/i18n.mjs';
+import { dotaCanvasSource } from './dota-frames.js';
+import { sampleNudge, sampleTimes } from '../../scripts/video-resample.mjs';
 
 // The upload becomes the menu's WebM right in the browser (WebCodecs through Mediabunny): VP9, or
 // VP8 where the browser has no VP9 encoder, no sound (Dota has no Opus decoder), 30 fps, at most
@@ -10,6 +12,8 @@ import { t } from '../../scripts/i18n.mjs';
 // (Trim.jsx), resampled to 30 fps; with a crossfade of f seconds the clip starts f seconds into the
 // piece and its last f seconds fade into the piece's first f, so the loop has no seam. Blur and dim
 // (menuLook) are drawn into every frame, and so is the framing (framePlacement: zoom and place).
+// Colours (22.10.2026): the frames go to the encoder as BT.601 I420 made here (dota-frames.js), the
+// matrix Dota reads every video with; the browser's own conversion of a canvas may be BT.709.
 //
 // Quality (measured 01.10.2026, docs/customize.md «Качество видео»): the browser's VP9 does as well
 // as ffmpeg's two-pass libvpx at the same size, and colours stay within a level. What costs quality
@@ -101,7 +105,7 @@ async function encodePicture(file, kind, canvas, fit, look, onProgress, signal, 
   const still = first.value.duration === null, seconds = still ? STILL_SECONDS : MENU_LIMITS.seconds;
   const options = await encoderOptions(canvas, seconds, tune);
   const output = new Output({ format: new WebMOutputFormat(), target: new BufferTarget() });
-  const source = new CanvasSource(canvas, options);
+  const { source, add } = dotaCanvasSource(canvas, options);
   output.addVideoTrack(source, { frameRate: still ? 1 : 30 });
   await output.start();
   let time = 0, trimmed = false;
@@ -110,7 +114,7 @@ async function encodePicture(file, kind, canvas, fit, look, onProgress, signal, 
       paint(context, first.value.image, first.value.width, first.value.height, fit, look); veil(context, look); first.value.close();
       for (let second = 0; second < STILL_SECONDS; second++) {
         if (signal?.aborted) throw new DOMException('Отменено', 'AbortError');
-        await source.add(second, 1); onProgress(second / STILL_SECONDS);
+        await add(second, 1); onProgress(second / STILL_SECONDS);
       }
       time = STILL_SECONDS;
     } else {
@@ -119,7 +123,7 @@ async function encodePicture(file, kind, canvas, fit, look, onProgress, signal, 
         if (time >= MENU_LIMITS.seconds) { frame.value.close(); trimmed = true; break; }
         paint(context, frame.value.image, frame.value.width, frame.value.height, fit, look); veil(context, look); frame.value.close();
         const duration = Math.min(frame.value.duration, MENU_LIMITS.seconds - time);
-        await source.add(time, duration); time += duration; onProgress(time / MENU_LIMITS.seconds);
+        await add(time, duration); time += duration; onProgress(time / MENU_LIMITS.seconds);
       }
     }
     await output.finalize();
@@ -134,8 +138,9 @@ async function encodeVideo(file, kind, canvas, fit, look, onProgress, signal, { 
     const track = await input.getPrimaryVideoTrack().catch(() => null);
     if (!track) throw new MenuVideoError(t('В файле {kind} не нашлось видео, которое браузер может прочитать.', { kind: kind.label }));
     if (!(await track.canDecode())) throw new MenuVideoError(t('Браузер не может прочитать это видео. Пересохрани его в MP4 (H.264) или WebM.'));
-    // Media time 0 is the first frame, as in a <video> element.
-    const first = await track.getFirstTimestamp(), length = Math.max(0.1, (await input.computeDuration()) - first);
+    // Media time 0 is the first frame, as in a <video> element. The clip ends with its video, not with a
+    // longer sound track (that held the last frame for the rest: a still tail at every loop).
+    const first = await track.getFirstTimestamp(), length = Math.max(0.1, (await track.computeDuration()) - first);
     const start = Math.max(0, Math.min(piece?.start ?? 0, length - 0.1));
     const end = Math.min(length, piece?.end ?? length, start + MENU_LIMITS.seconds);
     const fade = Math.max(0, Math.min(crossfade, (end - start) / 3));
@@ -143,13 +148,16 @@ async function encodeVideo(file, kind, canvas, fit, look, onProgress, signal, { 
     const options = await encoderOptions(canvas, seconds, tune);
     const context = canvas.getContext('2d');
     const output = new Output({ format: new WebMOutputFormat(), target: new BufferTarget() });
-    const source = new CanvasSource(canvas, options);
+    const { source, add } = dotaCanvasSource(canvas, options);
     output.addVideoTrack(source, { frameRate: FPS });
     await output.start();
-    // One decoder walks the clip frame by frame; a second one, the piece's start for the blend.
-    const times = Array.from({ length: frames }, (_, k) => start + fade + k / FPS), blendFrom = end - fade;
-    const main = new VideoSampleSink(track).samplesAtTimestamps(times.map((t) => first + t));
-    const head = fade ? new VideoSampleSink(track).samplesAtTimestamps(times.filter((t) => t >= blendFrom).map((t) => first + t - (end - start - fade))) : null;
+    // One decoder walks the clip frame by frame; a second one, the piece's start for the blend. Each output
+    // frame takes the source frame nearest to its time (sampleNudge: the container's rounded timestamps
+    // made every third frame of a 30 fps WebM a repeat, and Dota showed the clip jerky).
+    const nudge = sampleNudge((await track.computePacketStats(120).catch(() => null))?.averagePacketRate, FPS);
+    const times = sampleTimes({ from: start + fade, frames, fps: FPS }), blendFrom = end - fade;
+    const main = new VideoSampleSink(track).samplesAtTimestamps(times.map((t) => first + t + nudge));
+    const head = fade ? new VideoSampleSink(track).samplesAtTimestamps(times.filter((t) => t >= blendFrom).map((t) => first + t + nudge - (end - start - fade))) : null;
     try {
       for (const [k, t] of times.entries()) {
         if (signal?.aborted) throw new DOMException('Отменено', 'AbortError');
@@ -164,7 +172,7 @@ async function encodeVideo(file, kind, canvas, fit, look, onProgress, signal, { 
           }
         }
         veil(context, look);
-        await source.add(k / FPS, 1 / FPS);
+        await add(k / FPS, 1 / FPS);
         onProgress((k + 1) / frames);
       }
       await output.finalize();

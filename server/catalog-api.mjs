@@ -15,6 +15,7 @@ import { ART_CATEGORIES, ART_LIMITS, artSubmission } from '../scripts/art-docume
 import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
 import { DOTA_TEXTS_LANGUAGES, DotaTexts } from './dota-texts.mjs';
 import { StudioBackgrounds } from './studio-backgrounds.mjs';
+import { StudioLooks } from './studio-looks.mjs';
 import { pickSafeGrid, renderSpaceThumbnail } from './catalog-preview.mjs';
 import { pageMeta, tabOf } from '../scripts/og-pages.mjs';
 import { STAT_ROBOT, SiteStats } from './site-stats.mjs';
@@ -153,6 +154,9 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
   setInterval(() => { try { guideStore?.cleanup(); } catch { /* Next hour. */ } }, 3_600_000).unref();
   let studios = null;
   const studio = () => (studios ||= new StudioBackgrounds(store));
+  // «Оформление» items of «Студия» (server/studio-looks.mjs, 2026-10-22).
+  let lookStore = null;
+  const looks = () => (lookStore ||= new StudioLooks(store));
   // Landing pictures (the grid opened in the editor) by work revision, up to 24 grids (~0.4 MB each
   // for all sizes); the renderer loads on first use.
   const landingImages = new Map();
@@ -439,6 +443,20 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
         }
         if (!studioMatch[2] && method === 'PUT') return send(200, studio().save(member, id, await readJSON(request, 120_000)));
         if (!studioMatch[2] && method === 'DELETE') return send(200, studio().remove(member, id));
+      }
+      // «Оформление» items of the signed-in account: the documents (up to 1.5 MB each) and posters (server/studio-looks.mjs).
+      if (path === '/studio/looks' && method === 'GET') return send(200, { items: looks().list(requireUser()) });
+      const lookMatch = /^\/studio\/looks\/([a-f0-9-]{36})(\/poster\.jpg)?$/.exec(path);
+      if (lookMatch) {
+        const member = requireUser(), id = lookMatch[1];
+        if (lookMatch[2] && method === 'GET') {
+          const image = looks().poster(member, id);
+          response.writeHead(200, { 'Content-Type': 'image/jpeg', 'Content-Length': image.length, 'Cache-Control': 'private, no-cache', 'X-Content-Type-Options': 'nosniff' });
+          return response.end(image);
+        }
+        if (!lookMatch[2] && method === 'GET') return send(200, looks().get(member, id));
+        if (!lookMatch[2] && method === 'PUT') return send(200, looks().save(member, id, await readJSON(request, 2_200_000)));
+        if (!lookMatch[2] && method === 'DELETE') return send(200, looks().remove(member, id));
       }
       if (path === '/captcha/challenge' && method === 'GET') {
         if (request.headers['sec-fetch-site'] === 'cross-site' || (request.headers.origin && request.headers.origin !== config.origin)) fail(403, 'Проверка доступна только на GridStudio.');

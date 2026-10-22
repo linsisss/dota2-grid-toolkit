@@ -242,6 +242,16 @@ const messages = {
   'Время забега не сходится.': 'The run’s time doesn’t add up.', 'Нет такого уровня.': 'No such level.', 'Нет такой таблицы.': 'No such table.', 'Нет такой игры.': 'No such game.',
   'Слишком много результатов подряд. Подожди немного.': 'Too many results in a row. Wait a little.',
   'Укажи полный путь к папке Steam, например ~/.local/share/Steam.': 'Enter the full path to the Steam folder, for example ~/.local/share/Steam.',
+
+  // server/studio-looks.mjs, scripts/customize-look.mjs: «Оформление» (2026-10-22).
+  'Файл оформления не читается.': 'The customization file can’t be read.',
+  'Файл сделан в более новой версии GridStudio. Обнови страницу и открой его снова.': 'The file was made by a newer GridStudio. Reload the page and open it again.',
+  'Оформление больше 1,5 МБ: убери лишние картинки курсора.': 'The customization is over 1.5 MB: remove some cursor pictures.',
+  'Файл слишком большой для файла оформления.': 'The file is too large for a customization file.',
+  'Этого оформления нет в аккаунте.': 'This customization isn’t in the account.',
+  'Укажи название оформления.': 'Give the customization a name.',
+  'В студии уже 100 оформлений. Удали ненужные.': 'Studio already has 100 customizations. Delete the ones you don’t need.',
+  'Оформления этого аккаунта заняли 50 МБ. Удали ненужные или скачай их файлами.': 'This account’s customizations take 50 MB. Delete some or download them as files.',
 };
 export default messages;
 

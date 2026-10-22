@@ -13,6 +13,10 @@ import { customizeRemoveCommand, customizeZip, deliverCustomize, CUSTOMIZE_FILE 
 import { D2PFX_MODULES, D2pfxFields, useD2pfx } from './D2pfxSections.jsx';
 import { creditLine } from './d2pfx-ui.jsx';
 import { BY_HAND, SYSTEM, SYSTEM_NAMES } from '../system.js';
+import { PortraitsFields, useHeroPortraits } from './HeroPortraits.jsx';
+import { PortraitPreview } from './portrait-preview.js';
+import { LookBar, LookNotice, isLookFile, useLooks } from './LookBar.jsx';
+import { readPrevious } from './look-state.js';
 import matchThumb from '../../assets/customize/match-thumb.webp';
 
 // «Твоя Dota» (/background, 2026-10-17; the owner's «A · Сцена» of three mockups): everything about Dota
@@ -29,7 +33,7 @@ export const MODULES = () => [
   { id: 'grid', group: 'menu', icon: 'grid', scene: 'grid', title: t('Под сеткой героев'), text: t('Фон страницы «Герои», чтобы сетка читалась') },
   { id: 'hero', group: 'menu', icon: 'user', scene: 'hero', title: t('За героем'), text: t('«Герои» → «Снаряжение», за моделью') },
   { id: 'loading', group: 'menu', icon: 'film', scene: 'loading', title: t('Экран загрузки'), text: t('Пока грузится матч') },
-  { id: 'buttons', group: 'menu', icon: 'layers', scene: 'menu', title: t('Кнопки меню'), text: t('Лишние кнопки и карточки на главной') },
+  { id: 'buttons', group: 'menu', icon: 'layers', scene: 'menu', title: t('Кнопки меню'), text: t('Лишние кнопки, карточки на главной, прозрачные панели') },
   { id: 'menuparts', group: 'menu', icon: 'template', scene: 'menu', title: t('Детали меню'), d2pfx: true, text: t('Верхняя панель, поиск игры, кнопка «Играть» — с d2pfx') },
   { id: 'hud', group: 'match', icon: 'sliders', scene: 'match', title: t('Вид HUD'), text: t('Подложки, украшения, размер панелей') },
   { id: 'hudskin', group: 'match', icon: 'brush', scene: 'match', title: t('HUD-скин'), d2pfx: true, text: t('Готовые скины HUD с d2pfx') },
@@ -41,6 +45,7 @@ export const MODULES = () => [
   { id: 'deny', group: 'match', icon: 'swords', scene: 'match', title: t('Денай'), d2pfx: true, text: t('Знак над добитым своим крипом — с d2pfx') },
   { id: 'font', group: 'all', icon: 'font', scene: 'font', title: t('Шрифт'), text: t('Любой шрифт с кириллицей в чате и меню') },
   { id: 'texts', group: 'all', icon: 'languages', scene: 'menu', title: t('Тексты'), text: t('Свои названия героев, вкладок и кнопок') },
+  { id: 'portraits', group: 'all', icon: 'idCard', scene: 'grid', title: t('Портреты героев'), text: t('Своя картинка или видео вместо портрета героя') },
   { id: 'voice', group: 'all', icon: 'volume', scene: 'match', title: t('Иконка голоса'), d2pfx: true, text: t('Значок говорящего в голосовом чате — с d2pfx') }
 ];
 const STATE_LABELS = () => ({ changed: t('Своё'), follow: t('Как в меню'), default: t('Как в Dota') });
@@ -94,7 +99,7 @@ function Receipt({ rows, files, total, onOpen }) {
   </div>;
 }
 
-export default function CustomizePage({ preset, studioItem, onRemove }) {
+export default function CustomizePage({ preset, studioItem, onRemove, replace, notice = null, onNotice = () => {}, openError = '' }) {
   const query = useMemo(() => new URLSearchParams(location.search), []);
   const MODS = MODULES(), find = (id) => MODS.find((module) => module.id === id);
   const [open, setOpen] = useState(() => startSection(query)), [scene, setScene] = useState(() => find(startSection(query)).scene);
@@ -105,6 +110,22 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
   const ui = useInterface({ open });
   const font = useFont();
   const d2 = useD2pfx();
+  const pt = useHeroPortraits({ open: open === 'portraits' });
+  // «Оформление»: «Сохранить в Студию», the settings file both ways (LookBar.jsx).
+  const looks = useLooks({ bg, ui, font, d2, pt, replace, suggested: notice?.from === 'file' ? notice.name : '' });
+  const undoLook = async () => {
+    const previous = await readPrevious();
+    if (!previous?.look) return onNotice(null);
+    const before = await looks.snapshot().catch(() => null);
+    replace(previous.look, { link: previous.link, from: 'previous', before, beforeLink: looks.link });
+  };
+  // A .gsdota dropped anywhere on the page opens; other files go where they always went (the preview).
+  const dropLook = (event) => {
+    const file = event.dataTransfer?.files?.[0];
+    if (!isLookFile(file)) return;
+    event.preventDefault(); event.stopPropagation(); bg.drop.onDragLeave();
+    looks.importFile(file);
+  };
   // The address names the open section (a reload or a shared link opens it); «Студия»'s ?item stays.
   useEffect(() => {
     const url = new URL(location.href);
@@ -118,12 +139,12 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
     const timer = setTimeout(() => document.querySelector(`.cz-mod[data-id="${open}"]`)?.scrollIntoView({ block: 'nearest' }), 450);
     return () => clearTimeout(timer);
   }, []);
-  const states = { ...bg.states, ...ui.states, ...d2.states, font: font.state };
-  const summary = { ...bg.summary, ...ui.summary, ...d2.summary, font: font.summary };
+  const states = { ...bg.states, ...ui.states, ...d2.states, font: font.state, portraits: pt.state };
+  const summary = { ...bg.summary, ...ui.summary, ...d2.summary, font: font.summary, portraits: pt.summary };
   const changed = MODS.filter((module) => states[module.id] === 'changed');
   // Each part's size: the menu's from its pack (videos as the encoder aims until built), the match's and
   // the font's made a moment after a change.
-  const partSize = (id) => bg.sizes.parts[id] || ui.sizes.parts?.[id] || d2.sizes.parts[id] || (id === 'font' ? font.size : null);
+  const partSize = (id) => bg.sizes.parts[id] || ui.sizes.parts?.[id] || d2.sizes.parts[id] || (id === 'font' ? font.size : id === 'portraits' ? pt.size : null);
   const rows = MODS.filter((module) => states[module.id] !== 'default').map((module) => {
     const size = partSize(module.id);
     return { id: module.id, icon: module.icon, title: module.title, line: summary[module.id] || module.text, state: states[module.id],
@@ -133,6 +154,7 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
   const files = [
     bg.sizes.pak02 && { path: 'dota_russian/pak02_dir.vpk', icon: 'archive', what: t('меню, фоны, кнопки'), ...bg.sizes.pak02 },
     ui.sizes.pak03 && { path: 'dota_russian/pak03_dir.vpk', icon: 'archive', what: t('HUD, чат, тексты'), ...ui.sizes.pak03 },
+    pt.size && { path: 'dota_russian/pak05_dir.vpk', icon: 'archive', what: t('портреты героев: {list}', { list: pt.names.join(', ') }), ...pt.size },
     d2.sizes.pak && { path: 'dota_russian/pak04_dir.vpk', icon: 'archive', what: t('моды d2pfx: {list}', { list: d2.plan.picks.map((mod) => `«${mod.label}» (${creditLine(mod.credits)})`).join(', ') }), ...d2.sizes.pak },
     ui.sizes.cursors && { path: 'dota_russian/resource/cursor/', icon: 'cursor', what: `${t('курсор, файлов: {count}', { count: ui.sizes.cursors.count })}${ui.cursors.fromPack ? ` · ${t('пак «{name}» с d2pfx, автор: {author}', { name: ui.cursors.pack.name, author: ui.cursors.creditLine })}` : ''}`, ...ui.sizes.cursors },
     font.size && { path: 'dota/panorama/fonts/', icon: 'font', what: t('шрифт, файлов: {count}', { count: font.size.count }), bytes: font.size.bytes }
@@ -160,10 +182,11 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
     try {
       const menu = await bg.prepare({ delivery });
       setBusy({ label: t('Собираем…') });
-      const [match, fonts, mods] = await Promise.all([ui.files(), font.files(),
-        d2.files((share) => setBusy({ label: t('Скачиваем моды с Dota2PornFX… {percent}%', { percent: Math.round(share * 100) }), progress: share }))]);
+      const [match, fonts, mods, portraits] = await Promise.all([ui.files(), font.files(),
+        d2.files((share) => setBusy({ label: t('Скачиваем моды с Dota2PornFX… {percent}%', { percent: Math.round(share * 100) }), progress: share })),
+        pt.files((share) => setBusy({ label: t('Собираем портреты героев… {percent}%', { percent: Math.round(share * 100) }), progress: share }))]);
       setBusy({ label: t('Собираем…') });
-      const zip = await customizeZip({ menu: menu?.blob ?? null, match, d2pfx: mods, fonts, titles, credits: ui.cursors.credits, modCredits: d2.credits });
+      const zip = await customizeZip({ menu: menu?.blob ?? null, match, d2pfx: mods, portraits, portraitNames: pt.names, fonts, titles, credits: ui.cursors.credits, modCredits: d2.credits });
       if (!zip) return;
       const given = await deliverCustomize(zip.blob, { delivery, onProgress: (share) => setBusy({ label: t('Отправляем на GridStudio… {percent}%', { percent: Math.round(share * 100) }), progress: share }) });
       bg.delivered({ delivery });
@@ -189,9 +212,9 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
   };
   const chooseScene = (id) => { track('customize.scene', { scene: id }); setScene(id); if (open === 'font') setOpen(''); };
   const fields = { bg: <BackgroundFields bg={bg}/>, grid: <GridFields bg={bg}/>, hero: <HeroFields bg={bg}/>, loading: <LoadingFields bg={bg}/>, buttons: <ButtonsFields bg={bg}/>,
-    hud: <HudFields ui={ui}/>, chat: <ChatFields ui={ui}/>, cursor: <CursorFields cur={ui.cursors}/>, font: <FontFields font={font}/>, texts: <TextsFields ui={ui}/>,
+    hud: <HudFields ui={ui}/>, chat: <ChatFields ui={ui}/>, cursor: <CursorFields cur={ui.cursors}/>, font: <FontFields font={font}/>, texts: <TextsFields ui={ui}/>, portraits: <PortraitsFields pt={pt}/>,
     ...Object.fromEntries(D2PFX_MODULES.map((id) => [id, <D2pfxFields d2={d2} section={id}/>])) };
-  const reset = (id) => (id === 'font' ? font.reset() : ['hud', 'chat', 'cursor', 'texts'].includes(id) ? ui.reset(id) : D2PFX_MODULES.includes(id) ? d2.reset(id) : bg.reset(id));
+  const reset = (id) => (id === 'portraits' ? pt.reset() : id === 'font' ? font.reset() : ['hud', 'chat', 'cursor', 'texts'].includes(id) ? ui.reset(id) : D2PFX_MODULES.includes(id) ? d2.reset(id) : bg.reset(id));
   const thumb = (id) => id === 'match' ? <span className="cz-thumb-screen"><img src={hudThumb || matchThumb} alt=""/></span> : <MenuThumb bg={bg} page={id}/>;
   // The d2pfx mods the shown scene does not draw (the click plays in the match: DotaCursor.jsx; a HUD skin
   // and HUD parts the emulator can draw are in it: HudCanvas).
@@ -201,8 +224,9 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
     : follow ? t('Пока всё как в Dota.') : t('Пока всё как в Dota. Открой любой раздел справа.');
   const sizeLine = changed.length ? `${t('изменений: {count}', { count: changed.length })} · ${sizeText(total, estimate)}` : t('пока ничего не изменено');
 
-  return <main className={`cz-work${bg.dragging ? ' is-over' : ''}`} onPointerDownCapture={touch} onKeyDownCapture={touch} onDropCapture={touch}>
-    <section className="cz-stage" aria-label={t('Превью')} {...(scene !== 'match' && scene !== 'font' ? bg.drop : {})}>
+  return <main className={`cz-work${bg.dragging ? ' is-over' : ''}`} onPointerDownCapture={touch} onKeyDownCapture={touch} onDropCapture={(event) => { touch(); dropLook(event); }}
+    onDragOver={(event) => { if ([...(event.dataTransfer?.types || [])].includes('Files')) event.preventDefault(); }} onDrop={(event) => event.preventDefault()}>
+    <section className="cz-stage" aria-label={t('Превью')} {...(open === 'portraits' && pt.active ? pt.drop : scene !== 'match' && scene !== 'font' ? bg.drop : {})}>
       <div className="cz-scenebar">
         <Scenes scene={scene} onScene={chooseScene} thumb={thumb} dots={dots}/>
         <div className="cz-meta">
@@ -210,16 +234,19 @@ export default function CustomizePage({ preset, studioItem, onRemove }) {
           <span>{t('Изменено {count} из {all}', { count: changed.length, all: MODS.length })}</span>
         </div>
       </div>
-      <div className="custom-stage-area cz-area">
+      <PortraitPreview.Provider value={pt.preview}><div className="custom-stage-area cz-area">
         {scene === 'match' ? <MatchScreen ui={ui} chat={open === 'chat'} onFrame={setHudThumb} mods={d2.hudMods}/> : scene === 'font' ? <FontScreen font={font}/> : <MenuScreen bg={bg} page={menuPage}/>}
-      </div>
+      </div></PortraitPreview.Provider>
       <div className="cz-under">{scene === 'match' ? <MatchUnder ui={ui} chat={open === 'chat'}/> : scene === 'font' ? <p className="custom-caption">{fontCaption()}</p> : <MenuUnder bg={bg} page={menuPage}/>}
         {unseen.length > 0 && open !== 'chat' && <p className="custom-caption d2-under"><Icon name="help" size={13}/>{t('Моды d2pfx ({list}) в этом превью не рисуются — их картинки и видео в разделах справа.', { list: unseen.map((mod) => mod.label).join(', ') })}</p>}</div>
     </section>
     <aside className="cz-panel">
       <div className="cz-panel-body">
         <header className="cz-head"><h1>{t('Оформление Dota')}</h1>
-          <p>{t('Фон, интерфейс, шрифт и тексты — на одной странице. Меняй что хочешь: превью само покажет нужный экран, а скачается всё одним файлом.')}</p></header>
+          <p>{t('Фон, интерфейс, шрифт и тексты — на одной странице. Меняй что хочешь: превью само покажет нужный экран, а скачается всё одним файлом.')}</p>
+          <LookBar looks={looks} auth={bg.auth}/>
+          {openError && <Notice error>{openError}</Notice>}
+          <LookNotice notice={notice} onUndo={undoLook} onClose={() => onNotice(null)}/></header>
         {GROUPS().map(([group, title]) => {
           const list = MODS.filter((module) => module.group === group), count = list.filter((module) => states[module.id] === 'changed').length;
           return <section key={group} className="cz-group">

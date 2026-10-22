@@ -11,6 +11,7 @@ import { installCommand } from '../../scripts/installer.mjs';
 import { lang, t } from '../../scripts/i18n.mjs';
 import { CopyField, Field, rich } from './ui.jsx';
 import { track } from '../site-stats.js';
+import { keepMedia, mediaFiles } from './look-store.js';
 
 // «Шрифт» of the one-page customization (CustomizePage.jsx; its own page /background?tab=font until
 // 2026-10-17): a catalog font (assets/dota-fonts, data/dota-fonts.json) or the user's own .ttf/.otf
@@ -57,7 +58,8 @@ export function FontRestore({ onClose }) {
   </div></Modal>;
 }
 
-// Remembered in this browser: the catalog font, the roles, the grid option (one's own font file is not).
+// Remembered in this browser: the catalog font, the roles, the grid option and (2026-10-22) one's own
+// font: its files are kept by hash in IndexedDB gridstudio-looks (look-store.js), `own` names them.
 const SAVED = 'gridstudio.font';
 const readSaved = () => { try { return JSON.parse(localStorage.getItem(SAVED) || '{}') || {}; } catch { return {}; } };
 
@@ -68,7 +70,28 @@ export function useFont() {
   const [roles, setRoles] = useState(() => ({ Radiance: true, Reaver: true, RadianceM: true, ...(saved.roles || {}) })), [keepGrid, setKeepGrid] = useState(!!saved.keepGrid);
   const [previewFamily, setPreviewFamily] = useState(''), [error, setError] = useState(''), [restore, setRestore] = useState(false);
   const chosen = own ? null : catalog.fonts.find((font) => font.id === selected) || null;
-  useEffect(() => { try { localStorage.setItem(SAVED, JSON.stringify({ selected, roles, keepGrid })); } catch { /* This visit only. */ } }, [selected, roles, keepGrid]);
+  // One's own font as kept: { name, faces: [{ media, name, size }] }; until its files are back, what was saved.
+  const [ownSaved, setOwnSaved] = useState(() => saved.own?.faces?.length ? saved.own : null), [ownBack, setOwnBack] = useState(!saved.own?.faces?.length);
+  useEffect(() => {
+    if (ownBack) return undefined;
+    let gone = false;
+    mediaFiles(saved.own.faces.map((face) => face.media)).then(async (files) => {
+      if (gone) return;
+      const faces = [];
+      for (const face of saved.own.faces) {
+        const file = files[face.media];
+        if (!file) continue;
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        try { faces.push({ name: face.name || file.name, bytes, font: readFont(bytes) }); } catch { /* That face is left out. */ }
+      }
+      if (gone) return;
+      if (faces.length) { faces.sort((a, b) => a.font.weight - b.font.weight); setOwn({ family: `GSFont-own-${Date.now()}`, name: saved.own.name || faces[0].name, faces }); }
+      else setOwnSaved(null);
+      setOwnBack(true);
+    }).catch(() => { if (!gone) { setOwnSaved(null); setOwnBack(true); } });
+    return () => { gone = true; };
+  }, []);
+  useEffect(() => { try { localStorage.setItem(SAVED, JSON.stringify({ selected, roles, keepGrid, ...(ownSaved ? { own: ownSaved } : {}) })); } catch { /* This visit only. */ } }, [selected, roles, keepGrid, ownSaved]);
   // The preview family: every weight of the chosen font, so bold and semi-bold text look right.
   useEffect(() => {
     let cancelled = false; setPreviewFamily('');
@@ -94,7 +117,11 @@ export function useFont() {
       }
       if (!faces.length) return;
       faces.sort((a, b) => a.font.weight - b.font.weight);
-      setOwn({ family: `GSFont-own-${Date.now()}`, name: faces[0].font.names[16] || faces[0].font.names[1] || faces[0].name, faces });
+      const next = { family: `GSFont-own-${Date.now()}`, name: faces[0].font.names[16] || faces[0].font.names[1] || faces[0].name, faces };
+      setOwn(next); setOwnBack(true);
+      // Kept for the next visit (and an «Оформление»); without room only this visit has it.
+      const kept = await Promise.all(files.filter((file) => faces.some((face) => face.name === file.name)).map(async (file) => ({ media: await keepMedia(file), name: file.name, size: file.size })));
+      setOwnSaved(kept.length && kept.every((face) => face.media) ? { name: next.name, faces: kept } : null);
     } catch (e) { setError(e.message); }
   }
   const families = ROLES().map(([role]) => role).filter((role) => roles[role]);
@@ -129,10 +156,12 @@ export function useFont() {
   }, [changed, selected, own, roles.Radiance, roles.Reaver, roles.RadianceM, keepGrid]);
   const name = own ? own.name : chosen?.family || '';
   const summary = changed ? `${name} · ${ROLES().filter(([role]) => roles[role]).map(([, label]) => label.toLowerCase()).join(', ')}` : '';
-  const choose = (id) => { setOwn(null); setSelected(id); };
-  const reset = () => { setOwn(null); setSelected(null); };
+  const choose = (id) => { setOwn(null); setOwnSaved(null); setOwnBack(true); setSelected(id); };
+  const reset = () => { setOwn(null); setOwnSaved(null); setOwnBack(true); setSelected(null); };
+  // For an «Оформление» (look-state.js): what is kept, one's own font by its files' hashes.
+  const snapshot = () => ({ selected, roles, keepGrid, own: ownSaved });
   return { selected, choose, own, setOwn, upload, roles, setRoles, keepGrid, setKeepGrid, previewFamily, warnings, error, changed, files, size, summary, name, license: own ? 'own' : chosen?.license || '', reset,
-    restore, setRestore, state: changed ? 'changed' : 'default', families };
+    restore, setRestore, state: changed ? 'changed' : 'default', families, snapshot, key: JSON.stringify([selected, roles, keepGrid, ownSaved]) };
 }
 
 export function FontFields({ font }) {

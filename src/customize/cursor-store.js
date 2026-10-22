@@ -49,3 +49,15 @@ export async function keepPictures(keys) {
     if (gone.length) await run('readwrite', (store) => { gone.forEach((key) => store.delete(key)); return null; });
   } catch { /* Nothing to clean. */ }
 }
+// The pictures of these keys as they are kept (PNG blobs), for «Оформление» (look-state.js): { key: Blob }.
+export async function pictureBlobs(keys) {
+  const out = {};
+  for (const key of new Set(keys)) {
+    try { const blob = await run('readonly', (store) => store.get(key)); if (blob) out[key] = blob; } catch { /* Gone: left out. */ }
+  }
+  return out;
+}
+// A picture that came with an «Оформление» (a .gsdota or a «Студия» item), under its own key.
+export async function putPictureBlob(key, blob) {
+  await run('readwrite', (store) => store.put(blob, key));
+}

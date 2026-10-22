@@ -355,7 +355,9 @@ export function menuDashboard(dashboard) {
 // home page, so the style reaches them from it.
 export const HOME_STYLE = 'panorama/styles/gridstudio_home.vcss_c';
 export const NEWS_CELLS = Object.freeze({ carnival: 'FrontPageDarkCarnivalCell', season: 'FrontPageSeasonalRewardLineCell' });
-const HOME_STYLE_TEXT = (hidden) => `/* GridStudio: news cards hidden on the home page. */\n${hidden.map((cell) => `.${NEWS_CELLS[cell]}\n{\n\tvisibility: collapse;\n}\n`).join('\n')}`;
+// The same style carries the see-through news column (MENU_GLASS.news, 2026-10-22): `news` is its percent.
+const HOME_STYLE_TEXT = (hidden, news = 100) => [hidden.length && `/* GridStudio: news cards hidden on the home page. */\n${hidden.map((cell) => `.${NEWS_CELLS[cell]}\n{\n\tvisibility: collapse;\n}\n`).join('\n')}`,
+  news < 100 && GLASS_NEWS_TEXT(news)].filter(Boolean).join('\n');
 export function newsHomePage(home) {
   const styled = home.replace(/(\n[ \t]*)<\/styles>/, `$1\t<include src="s2r://${HOME_STYLE}" />$1</styles>`);
   if (styled === home) throw new Error('В dashboard_page_home.xml не найден блок <styles>.');
@@ -372,6 +374,12 @@ export function cleanHomePage(home) {
 // (#HeroLoadoutBackgroundImage, hero_loadout_background_images.css) at 0.3 opacity with a vignette
 // and the hero model transparently over it. Our copy of the page plays a video there instead:
 // the menu's own WebM, or one of its own.
+// The menu's own WebM is not played a second time (2026-10-22, a user's report «фоны с грида лагают, а
+// с фонами из pornfx всё нормально»): a second MoviePanel of the same file is a second 1080p VP9 decoder,
+// and a page stays loaded once opened, so the menu kept two videos going (d2pfx's packs play one). The
+// page lets the menu's background show through instead, as the «Герои» page does (Valve's page hides it,
+// hidebackground="true"), and a black veil of 1 − HERO_OPACITY over it looks the same as the movie at
+// HERO_OPACITY over black. Only a video of its own (mode 'own') still plays on the page.
 export const HERO_PAGE = 'panorama/layout/dashboard_page_hero_new_v2.vxml_c';
 export const HERO_STYLE = 'panorama/styles/gridstudio_hero_background.vcss_c';
 export const HERO_VIDEO = 'panorama/videos/gridstudio_hero_background.webm';
@@ -406,14 +414,41 @@ const HERO_STYLE_TEXT = `/* GridStudio: a video behind the hero instead of Valve
 	transform: translateX( -60px );
 }
 `;
+// The menu's video seen through the page (no movie of the page's own): the veil instead of the black ground.
+const veilHex = (alpha) => Math.round(alpha * 255).toString(16).padStart(2, '0');
+const HERO_SEE_THROUGH_TEXT = `/* GridStudio: the menu's video behind the hero instead of Valve's seasonal picture (seen through the page). */
+.DashboardPage #HeroLoadoutBackgroundImageContainer
+{
+	background-color: #000000${veilHex(1 - HERO_OPACITY)};
+	blur: gaussian(0px);
+	saturation: 1;
+	transition-property: background-color;
+	transition-duration: 1s;
+	transition-timing-function: cubic-bezier(0, 1, 0, 1);
+}
+
+.DashboardPage #HeroLoadoutBackgroundImageContainer #HeroLoadoutBackgroundImage
+{
+	visibility: collapse;
+}
+
+.EnableHeroCustomize #HeroLoadoutBackgroundImageContainer
+{
+	background-color: #000000${veilHex(0.9)};
+}
+`;
+export const heroStyleText = (own) => (own ? HERO_STYLE_TEXT : HERO_SEE_THROUGH_TEXT);
 const HERO_INCLUDE = '<include src="s2r://panorama/styles/hero_loadout_background_images.vcss_c" />';
 const HERO_CONTAINER = /(<Panel id="HeroLoadoutBackgroundImageContainer" hittest="false">\n)/;
-// Valve's hero page with our style after theirs and the movie first in the picture's container
-// (so Valve's vignette stays on top).
-export function heroPage(page, video) {
-  if (page.split(HERO_INCLUDE).length !== 2 || !HERO_CONTAINER.test(page)) throw new Error('В dashboard_page_hero_new_v2.xml не найден фон за героем.');
-  return page.replace(HERO_INCLUDE, `${HERO_INCLUDE}\n\t\t<include src="s2r://${HERO_STYLE}" />`)
-    .replace(HERO_CONTAINER, `$1\t\t\t<MoviePanel id="GridStudioHeroMovie" src="s2r://${video}" repeat="true" autoplay="onload" hittest="false" />\n`);
+const HERO_ROOT = /(<DOTAHeroPageNewV2 [^>]*?) hidebackground="true"/;
+// Valve's hero page with our style after theirs and, for a video of its own (`video`: its path), the movie
+// first in the picture's container (so Valve's vignette stays on top). Without `video` the page no longer
+// hides the menu's background, which plays behind it.
+export function heroPage(page, video = null) {
+  if (page.split(HERO_INCLUDE).length !== 2 || !HERO_CONTAINER.test(page) || (page.match(new RegExp(HERO_ROOT.source, 'g')) || []).length !== 1) throw new Error('В dashboard_page_hero_new_v2.xml не найден фон за героем.');
+  const styled = page.replace(HERO_INCLUDE, `${HERO_INCLUDE}\n\t\t<include src="s2r://${HERO_STYLE}" />`);
+  return video ? styled.replace(HERO_CONTAINER, `$1\t\t\t<MoviePanel id="GridStudioHeroMovie" src="s2r://${video}" repeat="true" autoplay="onload" hittest="false" />\n`)
+    : styled.replace(HERO_ROOT, '$1');
 }
 
 // The «Герои» page, the hero grid (dashboard_page_heroes.xml; 1.6.4, from a user's report: a menu
@@ -597,17 +632,172 @@ ${hide.flatMap((key) => MENU_HIDE[key]).join(',\n')}
 }
 `;
 const DASHBOARD_STYLES_END = /(\n\t<\/styles>)/;
-export function hideDashboard(dashboard) {
+// Valve's dashboard with our styles (the hidden buttons, the see-through top bar) after all of theirs.
+export function styleDashboard(dashboard, styles) {
   if (!DASHBOARD_STYLES_END.test(dashboard)) throw new Error('В dashboard.xml не найдены стили.');
-  for (const ids of Object.values(MENU_HIDE)) for (const id of ids) if (!dashboard.includes(`id="${id.slice(1)}"`)) throw new Error(`В dashboard.xml нет ${id}.`);
-  return dashboard.replace(DASHBOARD_STYLES_END, `\n\t\t<include src="s2r://${MENU_HIDE_STYLE}" />$1`);
+  if (styles.includes(MENU_HIDE_STYLE)) for (const ids of Object.values(MENU_HIDE)) for (const id of ids) if (!dashboard.includes(`id="${id.slice(1)}"`)) throw new Error(`В dashboard.xml нет ${id}.`);
+  if (styles.includes(GLASS_STYLE) && !(dashboard.includes('id="TopBarBackground"') && dashboard.includes('class="TopPixelFix"'))) throw new Error('В dashboard.xml нет подложки верхней панели.');
+  if (styles.includes(GLASS_STYLE) && !dashboard.includes('<Panel id="FriendlistBottom">')) throw new Error('В dashboard.xml нет панели группы.');
+  return dashboard.replace(DASHBOARD_STYLES_END, () => `${styles.map((style) => `\n\t\t<include src="s2r://${style}" />`).join('')}\n\t</styles>`);
+}
+export const hideDashboard = (dashboard) => styleDashboard(dashboard, [MENU_HIDE_STYLE]);
+
+// See-through panels (2026-10-22, «Кнопки меню» → «Фон панелей»): the user's menu background shows through
+// the top bar and the friends rail. Each is a percent, 100 (the default) as in Dota. Only the panels'
+// grounds change, never their content (texts, icons, avatars, the mini-profile), and with static rules
+// only (nothing animated: Dota crashes on animated properties Valve does not animate).
+// The top bar (dashboard.css): its ground is one panel, #TopBarBackground — Valve's picture of the bar
+// (topbar_*_png, the tab separators painted in) with the right-hand plates (.TopBarRightBackground) and
+// the hover glows inside it — plus .TopPixelFix, a 2-px black line over it. The tabs, the buttons and the
+// Dota logo (#HomeButtonMap) are its siblings, so `opacity` on these two leaves them as they are.
+// The friends rail is a layout of its own (friend_menu.xml: our style is included there, as Dota's styles
+// stay inside the layout that includes them): its ground is .LeftRailContain's background colour with a
+// filled shadow (friend_menu.css; another colour on the home page and in two seasons) and the black row
+// of the friend search (#FriendsPanelHeader). Its content is inside the same panels, so these colours
+// lose alpha instead (the same colour, its alpha × the percent). The mini-profile card is its own layout
+// and its own sliders (below).
+// More panels (2026-10-22, the owner's second round, from his screenshot): the news column on the right, the
+// mini-profile's header row and its picture, the party bar. Each again in the scope of the layout that makes
+// it (Panorama styles stay inside the layout that includes them; a layout's root panel also takes the rules
+// of the layout it is declared in, as dashboard_page_home.css sizes #FrontpageContents):
+// - news (dashboard_page_home.xml, our HOME_STYLE): the cards are artwork through and through (Dark Carnival
+//   is a 3D scene with its pictures, Quartero a picture with hero models), with no ground of their own to
+//   thin, and each card is a layout of its own inside frontpage_contents.xml (which changes with every event
+//   and nests the event's layouts: a stale copy of it would ask Dota for layouts that are gone). So the
+//   whole column fades: `opacity` on #RightColumn, a plain panel of the home page that Valve neither fades
+//   nor animates (#TodayPages around it has Valve's own opacity transition on the first show).
+//   Each card casts Valve's soft shadow (frontpage_shared.css .FrontpageCell: 0 6 48 −4 px, black at 0.5). Under the
+//   opaque cards it never showed, but faded the column read as one grey box (the owner's in-game screenshot of
+//   2026-10-22): the two shadows fill the 16-px gap between the cards and the column's free right edge. So the
+//   column also masks them out with `opacity-brush` (Valve's own property, a gradient of alpha over the panel):
+//   #FrontpageContents, the root of frontpage_contents.xml that the home page's style already sizes, gets a
+//   fixed height (what its cells give it now) and a vertical brush clear over the gap; #RightColumn around it a
+//   horizontal one clear right of the cards. The places are Valve's (NEWS_COLUMN; check-dota-menu.mjs watches
+//   them). Where our style reaches the cells themselves, their shadow goes too (#FrontpageContents
+//   .FrontpageCell: the cells are frontpage_contents.xml's panels, so likely only the brushes do the work).
+// - header and showcase (showcase/mini_showcase.xml, a layout of Valve's own path we replace with our style
+//   after theirs, MINI_PROFILE_PAGE): the header row's ground is .Header's black and its rock picture, with
+//   the avatar, the name and the status inside it, so the ground thins with `background-img-opacity` (Valve's
+//   own property, the picture's alpha only) and alpha on the black; the rank medal is beside it and stays.
+//   The picture under it (.ShowcaseData: the rock, the user's showcase background, stickers and texts on it) is
+//   artwork, so it fades whole. Both only under .LeftRailContain: the same layout makes the mini-profiles
+//   shown elsewhere (context menus, other users'), which stay as Dota draws them.
+// - party (dashboard.xml, GLASS_STYLE with the top bar): #FriendlistBottom's rock picture and hairline
+//   border; the slots, avatars and buttons are its children and stay.
+export const MENU_GLASS = Object.freeze({ bar: 100, friends: 100, news: 100, header: 100, showcase: 100, party: 100 });
+export const GLASS_KEYS = Object.freeze(Object.keys(MENU_GLASS));
+export const GLASS_STYLE = 'panorama/styles/gridstudio_menu_glass.vcss_c';
+export const FRIENDS_PAGE = 'panorama/layout/friend_menu.vxml_c';
+export const FRIENDS_STYLE = 'panorama/styles/gridstudio_friends_glass.vcss_c';
+export const MINI_PROFILE_PAGE = 'panorama/layout/showcase/mini_showcase.vxml_c';
+export const MINI_PROFILE_STYLE = 'panorama/styles/gridstudio_mini_profile_glass.vcss_c';
+// A percent from anything: whole, 0 to 100, 100 when it is not a number.
+export const glassPercent = (value) => (value == null || value === '' || !Number.isFinite(Number(value)) ? 100 : Math.max(0, Math.min(100, Math.round(Number(value)))));
+export const menuGlass = (glass) => Object.fromEntries(GLASS_KEYS.map((key) => [key, glassPercent(glass?.[key])]));
+// Whether any panel differs from Dota.
+export const glassChanged = (glass) => Object.values(menuGlass(glass)).some((percent) => percent < 100);
+// Valve's grounds of the rail (friend_menu.css, client of 2026-10-22): selector, colour, alpha and, where Valve
+// writes it otherwise, its own word (scripts/check-dota-menu.mjs looks for them in Valve's file).
+export const RAIL_GROUNDS = Object.freeze([
+  ['.LeftRailContain', '000000', 0xfe], ['.OnHomePage .LeftRailContain', '000000', 0xee],
+  ['.Season_MonsterHunter .LeftRailContain', '0b0c12', 0xf9], ['.Season_Dark_Carnival .LeftRailContain', '090706', 0xf9],
+  ['#FriendsPanelHeader', '000000', 0xff, 'black']
+].map(Object.freeze));
+export const RAIL_SHADOW = 0x33;
+const alphaHex = (alpha, percent) => Math.round(alpha * percent / 100).toString(16).padStart(2, '0');
+const GLASS_BAR_TEXT = (percent) => `/* GridStudio: the top bar's ground at ${percent} percent, so the menu background shows through. */
+#TopBarBackground,
+#TopBarContent .TopPixelFix
+{
+	opacity: ${(percent / 100).toFixed(2)};
+}
+`;
+const GLASS_FRIENDS_TEXT = (percent) => `/* GridStudio: the friends rail's ground at ${percent} percent, so the menu background shows through. */
+${RAIL_GROUNDS.map(([selector, colour, alpha], i) => `${selector}
+{
+	background-color: #${colour}${alphaHex(alpha, percent)};${i ? '' : `
+	box-shadow: fill #000000${alphaHex(RAIL_SHADOW, percent)} 0px 0px 24px 0px;`}
+}
+`).join('\n')}`;
+// Valve's party bar (dashboard.css #FriendlistBottom): its border, elsewhere and on the home page (where the
+// picture is miniprofile_rock_psd instead of the darker one); the picture loses alpha by background-img-opacity.
+export const PARTY_BORDERS = Object.freeze([['#FriendlistBottom', '3D4144', 0x50], ['.OnHomePage #FriendlistBottom', '3D4144', 0x90]].map(Object.freeze));
+const GLASS_PARTY_TEXT = (percent) => `/* GridStudio: the party bar's ground at ${percent} percent, so the menu background shows through. */
+${PARTY_BORDERS.map(([selector, colour, alpha], i) => `${selector}
+{${i ? '' : `
+	background-img-opacity: ${(percent / 100).toFixed(2)};`}
+	border: 1px solid #${colour}${alphaHex(alpha, percent)};
+}
+`).join('\n')}`;
+// The news column as Valve lays it out (dashboard_page_home.css #FrontpageContents width; frontpage_shared.css
+// .FrontpageCell width, .TallCell height, .FrontpageCell height; frontpage_contents.css rows; the shadow): px.
+export const NEWS_COLUMN = Object.freeze({ width: 388, cell: 330, top: Object.freeze([0, 484]), bottom: Object.freeze([500, 734]), shadow: '0px 6px 48px -4px rgba(0, 0, 0, 0.5)' });
+// A stop at px of the panel's size, 4 decimals, rounded towards `side` (−1 down, 1 up) so a card's edge stays inside its opaque part.
+const stop = (px, of, side) => ((side < 0 ? Math.floor : Math.ceil)(px / of * 10_000) / 10_000).toFixed(4);
+const GLASS_NEWS_TEXT = (percent) => {
+  const { width, cell, top, bottom } = NEWS_COLUMN, height = bottom[1];
+  return `/* GridStudio: the news column at ${percent} percent, so the menu background shows through. */
+#RightColumn
+{
+	width: ${width}px;
+	opacity: ${(percent / 100).toFixed(2)};
+	opacity-brush: gradient( linear, 0% 0%, 100% 0%, from( white ), color-stop( ${stop(cell, width, 1)}, white ), color-stop( ${stop(cell + 1, width, 1)}, #ffffff00 ), to( #ffffff00 ) );
+}
+
+/* The cards' shadows stay out of the gap between them (and, on the right, of the column's free edge). */
+#FrontpageContents
+{
+	height: ${height}px;
+	opacity-brush: gradient( linear, 0% 0%, 0% 100%, from( white ), color-stop( ${stop(top[1], height, 1)}, white ), color-stop( ${stop(top[1] + 1, height, 1)}, #ffffff00 ), color-stop( ${stop(bottom[0] - 1, height, -1)}, #ffffff00 ), color-stop( ${stop(bottom[0], height, -1)}, white ), to( white ) );
+}
+
+#FrontpageContents .FrontpageCell
+{
+	box-shadow: 0px 6px 48px -4px rgba( 0, 0, 0, 0 );
+}
+`;
+};
+// The mini-profile in the friends rail (mini_showcase.css .Header: background-color black, the rock picture,
+// a black bottom line; .ShowcaseData: the picture under it).
+const GLASS_MINI_PROFILE_TEXT = (header, showcase) => [header < 100 && `/* GridStudio: the mini-profile's header row, its ground at ${header} percent (the avatar, the name and the medal stay). */
+.LeftRailContain .Header
+{
+	background-color: #000000${alphaHex(0xff, header)};
+	background-img-opacity: ${(header / 100).toFixed(2)};
+	border-bottom: 1px solid #000000${alphaHex(0xff, header)};
+}
+`, showcase < 100 && `/* GridStudio: the mini-profile's picture at ${showcase} percent, whole, so the menu background shows through. */
+.LeftRailContain .ShowcaseData
+{
+	opacity: ${(showcase / 100).toFixed(2)};
+}
+`].filter(Boolean).join('\n');
+// Each style's text for the panels below 100 (an empty string where none is): `dashboard` (the top bar and the
+// party bar), `friends` (the rail), `home` (the news column), `miniProfile` (the header row and the picture).
+export const menuGlassText = (glass) => {
+  const see = menuGlass(glass);
+  return { bar: see.bar < 100 ? GLASS_BAR_TEXT(see.bar) : '', party: see.party < 100 ? GLASS_PARTY_TEXT(see.party) : '',
+    dashboard: [see.bar < 100 && GLASS_BAR_TEXT(see.bar), see.party < 100 && GLASS_PARTY_TEXT(see.party)].filter(Boolean).join('\n'),
+    friends: see.friends < 100 ? GLASS_FRIENDS_TEXT(see.friends) : '', home: see.news < 100 ? GLASS_NEWS_TEXT(see.news) : '', miniProfile: GLASS_MINI_PROFILE_TEXT(see.header, see.showcase) };
+};
+const FRIENDS_INCLUDE = '<include src="s2r://panorama/styles/friend_menu_home.vcss_c" />';
+// Valve's friends menu with our style after theirs; the rest is theirs.
+export function friendsPage(page) {
+  if (page.split(FRIENDS_INCLUDE).length !== 2 || !page.includes('<Panel class="LeftRailContain">') || !page.includes('<Panel id="FriendsPanelHeader">')) throw new Error('В friend_menu.xml не найдена панель друзей.');
+  return page.replace(FRIENDS_INCLUDE, () => `${FRIENDS_INCLUDE}\n\t\t<include src="s2r://${FRIENDS_STYLE}" />`);
+}
+const MINI_PROFILE_INCLUDE = '<include src="s2r://panorama/styles/showcase/mini_showcase.vcss_c" />';
+// Valve's mini-profile with our style after theirs; the rest is theirs.
+export function miniProfilePage(page) {
+  if (page.split(MINI_PROFILE_INCLUDE).length !== 2 || !page.includes('<Panel class="Header">') || !page.includes('<AsyncDataPanel class="ShowcaseData"')) throw new Error('В mini_showcase.xml не найден мини-профиль.');
+  return page.replace(MINI_PROFILE_INCLUDE, () => `${MINI_PROFILE_INCLUDE}\n\t\t<include src="s2r://${MINI_PROFILE_STYLE}" />`);
 }
 
 // Every file menuBackgroundPack may write: the server takes a pack for the PowerShell command only with
 // these (server/install-packs.mjs), so nobody can hand out anything else under gridstudio.me.
 export const MENU_PACK_PATHS = Object.freeze(['panorama/layout/dashboard.vxml_c', 'panorama/layout/dashboard_page_home.vxml_c', HOME_STYLE, MENU_LAYOUT, MENU_STYLE, MENU_UI_STYLE,
   MENU_VIDEO, HERO_PAGE, HERO_STYLE, HERO_VIDEO, GRID_PAGE, GRID_STYLE, GRID_VIDEO, PROFILE_PAGE, PROFILE_STYLE, ...Object.values(PROFILE_ICONS),
-  LOADING_PAGE, LOADING_STYLE, LOADING_VIDEO, MENU_HIDE_STYLE]);
+  LOADING_PAGE, LOADING_STYLE, LOADING_VIDEO, MENU_HIDE_STYLE, GLASS_STYLE, FRIENDS_PAGE, FRIENDS_STYLE, MINI_PROFILE_PAGE, MINI_PROFILE_STYLE]);
 export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDEO, LOADING_VIDEO]);
 
 // video: WebM bytes (VP8/VP9, no Opus audio); dashboard/home/hero.page: Valve's current layouts as
@@ -621,26 +811,36 @@ export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDE
 // `home` hides the whole column, as before 2026-10-08.
 // loading: null keeps Valve's loading screen; { page } plays the menu video there, { page, video } its own.
 // hide: keys of MENU_HIDE, top bar buttons to hide.
+// glass: { bar, friends, news, header, showcase, party } — how much of each panel stays, in percent (MENU_GLASS,
+// 100 as in Dota); a see-through rail needs `friends`, Valve's friend_menu.xml, the mini-profile `miniProfile`,
+// Valve's showcase/mini_showcase.xml, the news column `home` (with no column at all, nothing to fade).
 // video: null (the one-page customization, 2026-10-17) keeps Valve's own menu background: the pack then
 // carries only the other parts (hidden buttons and news cards, profiles, a page's own video, the darker
 // grid page); the dashboard is written only to hide buttons, and nothing may play the menu's video.
-export function menuBackgroundPack({ video, dashboard, home = null, news = null, hero = null, event = null, profile = null, grid = null, loading = null, hide = [], md5 }) {
+export function menuBackgroundPack({ video, dashboard, home = null, news = null, hero = null, event = null, profile = null, grid = null, loading = null, hide = [], glass = null, friends = null, miniProfile = null, md5 }) {
   const hidden = home ? (news ? Object.keys(NEWS_CELLS).filter((cell) => news[cell] === false) : Object.keys(NEWS_CELLS)) : [];
   const clean = hidden.length === Object.keys(NEWS_CELLS).length;
   const off = Object.keys(MENU_HIDE).filter((key) => hide.includes(key));
+  const see = menuGlass(glass), glassText = menuGlassText(see);
   if (!video && ((hero && !hero.video) || (loading && !loading.video))) throw new Error('Без фона меню видео меню негде взять.');
-  const season = video ? menuEvent(dashboard, event) : null, menu = video ? menuDashboard(season ? eventDashboard(dashboard, season) : dashboard) : dashboard, board = off.length ? hideDashboard(menu) : menu;
+  if (see.friends < 100 && !friends) throw new Error('Для прозрачной панели друзей нужен friend_menu.xml.');
+  if ((see.header < 100 || see.showcase < 100) && !miniProfile) throw new Error('Для прозрачного мини-профиля нужен mini_showcase.xml.');
+  if (see.news < 100 && !home) throw new Error('Для прозрачных новостей нужен dashboard_page_home.xml.');
+  const styles = [off.length && MENU_HIDE_STYLE, glassText.dashboard && GLASS_STYLE].filter(Boolean);
+  // The news column fades only where it is (both cards hidden: no column).
+  const newsGlass = clean ? 100 : see.news;
+  const season = video ? menuEvent(dashboard, event) : null, menu = video ? menuDashboard(season ? eventDashboard(dashboard, season) : dashboard) : dashboard, board = styles.length ? styleDashboard(menu, styles) : menu;
   const files = video ? [
     panoramaFile('panorama/layout/dashboard.vxml_c', board, true),
     panoramaFile(MENU_LAYOUT, LAYOUT(season)),
     panoramaFile(MENU_STYLE, STYLE(season)),
     { path: MENU_VIDEO, data: video }
-  ] : off.length ? [panoramaFile('panorama/layout/dashboard.vxml_c', board, true)] : [];
+  ] : styles.length ? [panoramaFile('panorama/layout/dashboard.vxml_c', board, true)] : [];
   if (season) files.splice(3, 0, panoramaFile(MENU_UI_STYLE, MENU_UI(season, clean)));
   if (clean) files.splice(1, 0, panoramaFile('panorama/layout/dashboard_page_home.vxml_c', cleanHomePage(home), true));
-  else if (hidden.length) files.splice(1, 0, panoramaFile('panorama/layout/dashboard_page_home.vxml_c', newsHomePage(home), true), panoramaFile(HOME_STYLE, HOME_STYLE_TEXT(hidden)));
+  else if (hidden.length || newsGlass < 100) files.splice(1, 0, panoramaFile('panorama/layout/dashboard_page_home.vxml_c', newsHomePage(home), true), panoramaFile(HOME_STYLE, HOME_STYLE_TEXT(hidden, newsGlass)));
   if (hero) {
-    files.push(panoramaFile(HERO_PAGE, heroPage(hero.page, hero.video ? HERO_VIDEO : MENU_VIDEO), true), panoramaFile(HERO_STYLE, HERO_STYLE_TEXT));
+    files.push(panoramaFile(HERO_PAGE, heroPage(hero.page, hero.video ? HERO_VIDEO : null), true), panoramaFile(HERO_STYLE, heroStyleText(!!hero.video)));
     if (hero.video) files.push({ path: HERO_VIDEO, data: hero.video });
   }
   if (grid) {
@@ -654,6 +854,9 @@ export function menuBackgroundPack({ video, dashboard, home = null, news = null,
     if (loading.video) files.push({ path: LOADING_VIDEO, data: loading.video });
   }
   if (off.length) files.push(panoramaFile(MENU_HIDE_STYLE, MENU_HIDE_TEXT(off)));
+  if (glassText.dashboard) files.push(panoramaFile(GLASS_STYLE, glassText.dashboard));
+  if (glassText.friends) files.push(panoramaFile(FRIENDS_PAGE, friendsPage(friends), true), panoramaFile(FRIENDS_STYLE, glassText.friends));
+  if (glassText.miniProfile) files.push(panoramaFile(MINI_PROFILE_PAGE, miniProfilePage(miniProfile), true), panoramaFile(MINI_PROFILE_STYLE, glassText.miniProfile));
   if (!files.length) return null;
   return buildVPK(files, { version: 2, md5 });
 }

@@ -10,6 +10,8 @@ import season from '../../assets/dota-menu/event.json';
 import showcase from '../../assets/dota-menu/dashboard_page_showcase.xml?raw';
 import heroesPage from '../../assets/dota-menu/dashboard_page_heroes.xml?raw';
 import loadingPage from '../../assets/dota-menu/loading_screen_background_image.xml?raw';
+import friendMenu from '../../assets/dota-menu/friend_menu.xml?raw';
+import miniShowcase from '../../assets/dota-menu/mini_showcase.xml?raw';
 import stratz from '../../assets/dota-menu/icons/stratz.svg?raw';
 import dotabuff from '../../assets/dota-menu/icons/dotabuff.svg?raw';
 
@@ -44,11 +46,12 @@ const gridOption = (grid, gridVideo) => grid?.mode === 'dim' ? { page: heroesPag
 // news: { carnival, season } — the home page's news cards that stay (2026-10-08); `clean` (before it)
 // hides both. recipe.loading (2026-10-16): Valve's loading screen ('off', the default and for recipes
 // before it), the menu video ('menu') or `loadingVideo` ('own'; without it, the menu video).
-// recipe.hide: top bar buttons to hide (MENU_HIDE).
+// recipe.hide: top bar buttons to hide (MENU_HIDE). recipe.glass (2026-10-22): { bar, friends, news, header, showcase, party },
+// how much of each panel stays, in percent (MENU_GLASS; 100, as in Dota, for recipes before it and keys they lack).
 const loadingOption = (loading, loadingVideo) => loading?.mode === 'menu' || loading?.mode === 'own' ? { page: loadingPage, video: loading.mode === 'own' ? loadingVideo : null } : null;
 // `video` null: no menu background of ours (the one-page customization); the pack is then null when
 // nothing else in it differs from Dota.
-export const packBackground = (video, { clean, news = null, hero = { mode: 'menu' }, event = true, profile = true, grid = { mode: 'menu' }, loading = { mode: 'off' }, hide = [] }, heroVideo = null, gridVideo = null, loadingVideo = null) => blobOf(menuBackgroundPack({ video, dashboard, home,
+export const packBackground = (video, { clean, news = null, hero = { mode: 'menu' }, event = true, profile = true, grid = { mode: 'menu' }, loading = { mode: 'off' }, hide = [], glass = null }, heroVideo = null, gridVideo = null, loadingVideo = null) => blobOf(menuBackgroundPack({ video, dashboard, home, glass, friends: friendMenu, miniProfile: miniShowcase,
   news: clean ? { carnival: false, season: false } : { carnival: news?.carnival !== false, season: news?.season !== false },
   hero: hero?.mode === 'off' ? null : { page: heroPage, video: hero?.mode === 'own' ? heroVideo : null }, event: event ? season : null,
   profile: profile ? { page: showcase, icons: { stratz, dotabuff } } : null, grid: gridOption(grid, gridVideo), loading: loadingOption(loading, loadingVideo), hide, md5 }));

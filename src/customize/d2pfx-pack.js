@@ -1,10 +1,10 @@
 // The d2pfx mods in the browser (scripts/d2pfx-mods.mjs says what and why): the list made by
 // scripts/make-d2pfx-catalog.mjs, each chosen mod downloaded from d2pfx's GitHub at the list's commit
 // (raw.githubusercontent.com answers with Access-Control-Allow-Origin: *), its VPK opened, its game files
-// checked against their CRC, and all chosen mods put into one pak04_dir.vpk — the first choice in
-// D2PFX_PRIORITY keeps a file two of them bring.
+// checked against their CRC, our few fixes applied (D2PFX_FIXES), and all chosen mods put into one
+// pak04_dir.vpk — the first choice in D2PFX_PRIORITY keeps a file two of them bring.
 import catalog from './d2pfx-mods.json';
-import { D2PFX_FILE, d2pfxFiles, d2pfxPlan } from '../../scripts/d2pfx-mods.mjs';
+import { D2PFX_FILE, d2pfxFiles, d2pfxFixed, d2pfxPlan } from '../../scripts/d2pfx-mods.mjs';
 import { buildVPK, crc32, readVPK } from '../../scripts/vpk.mjs';
 import { readZip } from '../../scripts/zip.mjs';
 import { md5 } from '../../scripts/md5.mjs';
@@ -23,7 +23,8 @@ export function loadMod(mod) {
       if (!bytes) throw new Error(t('в архиве нет VPK'));
       const files = readVPK(bytes).files.filter((file) => D2PFX_FILE.test(file.path));
       if (!files.length || files.some((file) => crc32(file.data) !== file.crc)) throw new Error(t('файл мода повреждён'));
-      return files.map((file) => ({ path: file.path, data: file.data }));
+      // Our fixes (D2PFX_FIXES: Fluttershy Hud's portrait) — the server knows the fixed files too.
+      return d2pfxFixed(mod.id, files.map((file) => ({ path: file.path, data: file.data })));
     })().catch((problem) => { loads.delete(mod.id); throw new Error(t('Не удалось скачать мод «{name}» с Dota2PornFX: {error}', { name: mod.label || mod.name, error: problem.message })); }));
   }
   return loads.get(mod.id);

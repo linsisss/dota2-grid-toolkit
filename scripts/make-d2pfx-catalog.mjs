@@ -5,8 +5,9 @@
 //   src/customize/d2pfx-mods.json — for the page: each mod's names, d2pfx's picture and video, its credits
 //     (scripts/d2pfx.mjs d2pfxCredits), the file's address at that commit, sizes, and the paths two slots'
 //     mods share (for the «one file, one winner» notes);
-//   server/d2pfx-files.json — for the server: every game file's path and SHA-256, so the PowerShell
-//     command's pack carries only d2pfx's own files, byte for byte (server/install-packs.mjs).
+//   server/d2pfx-files.json — for the server: every game file's path and SHA-256 (and of our few fixed
+//     files, D2PFX_FIXES in scripts/d2pfx-mods.mjs), so the PowerShell command's pack carries only d2pfx's
+//     own files, byte for byte, or our fixed ones (server/install-packs.mjs).
 // A mod whose Panorama files call out to the web or run scripts is left out (none did on 2026-10-17).
 // Run it again to take d2pfx's newer mods; the page then fetches them at the new commit.
 import { createHash } from 'node:crypto';
@@ -14,7 +15,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { D2PFX, d2pfxCredits, d2pfxPath } from './d2pfx.mjs';
-import { D2PFX_FILE, D2PFX_SECTIONS, d2pfxSlug } from './d2pfx-mods.mjs';
+import { D2PFX_FILE, D2PFX_SECTIONS, d2pfxFixed, d2pfxSlug } from './d2pfx-mods.mjs';
 import { crc32, readVPK } from './vpk.mjs';
 import { readZip } from './zip.mjs';
 
@@ -74,7 +75,8 @@ for (const [section, def] of Object.entries(D2PFX_SECTIONS)) {
       const problem = game.map((file) => (crc32(file.data) !== file.crc ? `${file.path}: CRC` : unsafe(file.path, file.data))).find(Boolean);
       if (!game.length || problem) { left.push(`${want} — ${problem || 'no game files'}`); continue; }
       const id = d2pfxSlug(name, style), video = (mod.links || []).find((link) => link.type === 'preview')?.url || '';
-      for (const file of game) {
+      // d2pfx's files and our fixed ones (D2PFX_FIXES: the page builds those in their place).
+      for (const file of [...game, ...d2pfxFixed(id, game).filter((fixed, i) => fixed !== game[i])]) {
         const sha = createHash('sha256').update(file.data).digest('hex');
         if (!(files[file.path] ||= []).includes(sha)) files[file.path].push(sha);
         if (!slotsOf.has(file.path)) slotsOf.set(file.path, new Set());

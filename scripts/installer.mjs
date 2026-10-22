@@ -64,7 +64,9 @@ const TEXTS = {
       gone: 'Убрал то, чего больше нет в сборке: ', fonts: 'Шрифты Dota сохранены в panorama\\fonts\\gridstudio-backup.', fontsBack: 'Вернул шрифты Dota.',
       done: 'Готово. Файлов поставлено: ', launch: 'Если в Steam в параметрах запуска Dota 2 есть -language (кроме -language russian), убери его: с ним Dota не читает dota_russian.',
       restart: 'Перезапусти Dota 2.', back: 'Вернуть всё как было — вставь в PowerShell: ',
-      removed: 'Всё от GridStudio убрано, файлы Dota на месте. Перезапусти Dota 2.', nothing: 'Нечего убирать: сборка GridStudio не ставилась этой командой.'
+      removed: 'Всё от GridStudio убрано, файлы Dota на месте. Перезапусти Dota 2.', nothing: 'Нечего убирать: сборка GridStudio не ставилась этой командой.',
+      foreign: 'В dota_russian есть ещё моды не от GridStudio: ',
+      foreignHow: 'Dota смешивает их с этой сборкой: если HUD выглядит сломанным или меню тормозит, убери эти файлы (например, pak10 от Dota2PornFX) или выбери такие моды на сайте GridStudio.'
     }
   },
   en: {
@@ -117,7 +119,9 @@ const TEXTS = {
       gone: 'Took away what is no longer in the build: ', fonts: 'Dota fonts are saved in panorama\\fonts\\gridstudio-backup.', fontsBack: 'Dota fonts are back.',
       done: 'Done. Files installed: ', launch: 'If Dota 2 has -language in its Steam launch options (other than -language russian), remove it: with it, Dota does not read dota_russian.',
       restart: 'Restart Dota 2.', back: 'To put everything back, paste into PowerShell: ',
-      removed: 'Everything from GridStudio is gone, the Dota files are back. Restart Dota 2.', nothing: 'Nothing to take away: no GridStudio build was installed by this command.'
+      removed: 'Everything from GridStudio is gone, the Dota files are back. Restart Dota 2.', nothing: 'Nothing to take away: no GridStudio build was installed by this command.',
+      foreign: 'There are other mods in dota_russian, not from GridStudio: ',
+      foreignHow: 'Dota mixes them with this build: if the HUD looks broken or the menu lags, take these files away (for example pak10 from Dota2PornFX) or pick such mods on the GridStudio site.'
     }
   }
 };
@@ -505,13 +509,13 @@ ${FONT_CACHE}
 
 // The one file of the customization page (scripts/customize-pack.mjs, /background «Командой PowerShell»):
 // the zip the page uploaded, by its SHA-256 and size (DOWNLOAD), installed in one go. Files for
-// game/dota_russian (pak02, pak03, pak04 of the d2pfx mods, the cursor's) go there — a file one replaces is kept once beside it as
+// game/dota_russian (pak02, pak03, pak04 of the d2pfx mods, pak05 of the heroes' portraits, the cursor's) go there — a file one replaces is kept once beside it as
 // .gridstudio-backup, as the background's script does — and their list is kept in CUSTOMIZE_LIST: the next
 // install takes away the files of the last one it does not have (and puts back what they replaced), so
 // what the page shows «как в Dota» is Dota's again. The fonts go over Valve's in game/dota/panorama/fonts,
 // each original kept once in gridstudio-backup; Valve's come back for the ones no longer chosen. Russian
 // becomes the audio language while anything lies in dota_russian (AUDIO).
-const RUSSIAN_PATTERN = "'^(pak0[234]_dir\\.vpk|resource/cursor/[a-z0-9_]+\\.(bmp|res))$'";
+const RUSSIAN_PATTERN = "'^(pak0[2-5]_dir\\.vpk|resource/cursor/[a-z0-9_]+\\.(bmp|res))$'";
 const CUSTOMIZE_COMMON = (a) => String.raw`
   $russian = Join-Path $dota 'game\dota_russian'
   $fonts = Join-Path $dota 'game\dota\panorama\fonts'
@@ -532,6 +536,17 @@ const CUSTOMIZE_COMMON = (a) => String.raw`
     if (-not (Test-Path -LiteralPath $fontBackup)) { return }
     Get-ChildItem -LiteralPath $fontBackup -File | Where-Object { $keep -notcontains $_.Name } | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $fonts $_.Name) -Force }
     if ($env:TEMP) { $cache = Join-Path $env:TEMP 'fontconfig'; if (Test-Path -LiteralPath $cache) { Remove-Item -LiteralPath $cache -Recurse -Force -ErrorAction SilentlyContinue } }
+  }`;
+// Other mods in dota_russian (2026-10-22, «худ Флаттершай … в доте багнутый худ»): Dota reads every pakNN_dir.vpk
+// there, and a pack of another site (Dota2PornFX's VPKMerge pak10, Dota 2 Mod Manager) mixes its files with ours —
+// a second HUD skin's pictures under our skin's styles, its menu background's styles beside ours. The lower
+// number wins only on the very same file. Nothing of theirs is touched; the user is told what is there.
+// Valve's own pak01 (the Russian voice-over) and our names ($pattern) are not listed.
+const FOREIGN = (a) => String.raw`  $foreign = @(Get-ChildItem -LiteralPath $russian -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^pak\d+_dir\.vpk$' -and $_.Name -notmatch '^pak01_' -and $_.Name -notmatch $pattern } | ForEach-Object { $_.Name })
+  if ($foreign.Count -gt 0) {
+    Write-Host ''
+    Write-Host (${quote(a.foreign)} + ($foreign -join ', ')) -ForegroundColor Yellow
+    Write-Host ${quote(a.foreignHow)} -ForegroundColor Yellow
   }`;
 export function customizeScript({ sha256, size, url }, { remove = '', language = lang, report = null } = {}) {
   if (!validDownload(sha256, size, url)) throw new Error('Unknown customization file.');
@@ -591,6 +606,7 @@ ${CUSTOMIZE_COMMON(a)}
   elseif (Test-Path -LiteralPath $list) { Remove-Item -LiteralPath $list -Force }
   if ($now.Count -gt 0) { Set-RussianAudio } elseif ($before.Count -gt 0) { Restore-Audio }
   Write-Host (${quote(a.done)} + ($now.Count + $ourFonts.Count)) -ForegroundColor Green
+${FOREIGN(a)}
   Send-Report 'ok'
   Write-Host ''
   if ($now.Count -gt 0) { Write-Host ${quote(a.launch)} }

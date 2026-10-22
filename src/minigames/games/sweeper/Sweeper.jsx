@@ -245,11 +245,12 @@ function Scene({ game, valve, handle, fx, hints, paused, onLeave, sound }) {
       <div className="ms-board-border">
         <div className="ms-board" style={{ '--cols': board.cols, '--rows': board.rows }}>
           {board.cells.map((cell, index) => {
-            const classes = ['ms-cell', `v${cell.variant}`, cell.revealed && 'ms-revealed', cell.revealed && cell.adjacent && !cell.blast && `n${cell.adjacent}`, cell.blast && 'ms-mine',
+            const classes = ['ms-cell', `v${cell.variant}`, cell.revealed && 'ms-revealed', cell.revealed && cell.adjacent && `n${cell.adjacent}`, cell.blast && 'ms-mine',
               cell.flagged && !cell.revealed && 'ms-flag', cell.item && `ms-item ms-item-${cell.item.type}`, hinted.has(index) && 'ms-hint'].filter(Boolean).join(' ');
             return <button type="button" key={`${game.stage}-${index}`} className={classes} onClick={() => onClick(index)} onPointerDown={(event) => onPointerDown(event, index)}
               onPointerUp={cancelPress} onPointerLeave={cancelPress} aria-label={cell.revealed ? String(cell.adjacent) : cell.flagged ? t('Флаг') : t('Закрытая клетка')}>
-              {cell.revealed && cell.adjacent > 0 && !cell.blast && <b className="ms-count">{cell.adjacent}</b>}
+              {/* A mine Echo Slash blew up is an opened cell too: its number shows over the crater (the owner, 2026-10-22). */}
+              {cell.revealed && cell.adjacent > 0 && <b className="ms-count">{cell.adjacent}</b>}
               {cell.flagged && !cell.revealed && <i className="ms-flag-icon"/>}
               {cell.item && <><i className={`ms-strip ms-strip-${cell.item.type}`}/><em className="ms-clicks">{cell.item.clicks}</em></>}
             </button>;

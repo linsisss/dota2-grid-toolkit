@@ -87,6 +87,8 @@
 .ms-cell.ms-revealed { background: #efb5890e; border: 1px solid #321c025f; filter: none; cursor: default; }
 .ms-board .ms-cell.ms-revealed:hover { animation: ms-glow-dirt 2.5s ease-in-out infinite; }
 .ms-cell.ms-mine { background: red url('../../../../assets/minigames/sweeper/images/cell_background_mine_revealed.webp') center / contain; }
+/* Over the crater of a mine Echo Slash blew up the number needs a darker edge to read. */
+.ms-mine .ms-count { text-shadow: 0 0 3px #000, 0 2px 2px #000; }
 .ms-count { font: 700 24px/1 'MGRadiance', sans-serif; margin-top: -2px; text-shadow: 0 2px 2px #0000005e; animation: ms-bounce 0.55s ease-in-out; pointer-events: none; }
 .n1 .ms-count { color: rgba(135, 181, 55, 0.92); }
 .n2 .ms-count { color: rgb(197, 224, 48); }

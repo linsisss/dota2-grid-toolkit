@@ -48,7 +48,9 @@ test('plausibility bounds from the rules of every game', async (t) => {
   // Сапёр: the score must add up; a win is five fields; cells within the fields reached.
   assert.ok(play('1', 'sweeper', '', 150, 15 * 806 + 5 * 4000 + 20 * 40, { cells: 806, stages: 5, seconds: 40, won: true }).all.improved);
   refused(() => play('1', 'sweeper', '', 150, 30_000, { cells: 806, stages: 5, seconds: 40, won: true }), 422);
-  refused(() => play('1', 'sweeper', '', 150, 15 * 200, { cells: 200, stages: 0, seconds: 0, won: false }), 422); // 71 safe cells on the first field
+  refused(() => play('1', 'sweeper', '', 150, 15 * 200, { cells: 200, stages: 0, seconds: 0, won: false }), 422); // 81 cells on the first field
+  // Echo Slash on a mine opens that cell too: the first field cleared with two mines blown up is 73 cells.
+  assert.ok(play('2', 'sweeper', '', 150, 15 * 73 + 4000, { cells: 73, stages: 1, seconds: 0, won: false }).all.improved);
   refused(() => play('1', 'sweeper', '', 150, 4000 + 15 * 71 + 20, { cells: 71, stages: 1, seconds: 1, won: false }), 422); // seconds only for a win
   refused(() => play('1', 'sweeper', '', 10, 15 * 300 + 4 * 4000, { cells: 300, stages: 4, seconds: 0, won: false }), 422); // four fields in 10 s
   // Гонки: 224 points a second at most; a race time between 35 and 90 s and not shorter than the run.

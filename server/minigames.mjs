@@ -20,8 +20,10 @@ export const RUN_TTL = 3 * 3_600_000;
 const int = (value, min, max) => (Number.isSafeInteger(value) && value >= min && value <= max ? value : null);
 const bad = (message = 'Результат не похож на настоящий.') => fail(422, message);
 
-// Sweeper's five fields (vdata m_vecStages): cells without a mine.
-const SWEEPER_SAFE = [[9, 9, 10], [11, 12, 19], [13, 15, 32], [14, 18, 47], [16, 20, 66]].map(([r, c, m]) => r * c - m);
+// Sweeper's five fields (vdata m_vecStages): every cell of a field can count as opened — Echo Slash on a mine
+// opens that cell too (it was refused as «не похож на настоящий» before, 2026-10-22), so the bound is the
+// field's size, not its mine-free cells.
+const SWEEPER_CELLS = [[9, 9], [11, 12], [13, 15], [14, 18], [16, 20]].map(([r, c]) => r * c);
 let castle = null;
 const castleData = () => (castle ||= castleConfig(JSON.parse(readFileSync(new URL('../assets/minigames/castle/data.json', import.meta.url), 'utf8'))));
 // The most a Castle Carnage level gives: completion, the full time bonus at that time, every shot kept.
@@ -40,7 +42,7 @@ export const MINIGAME_BOARDS = {
     const cells = int(stats.cells, 0, 1000), stages = int(stats.stages, 0, 5), seconds = int(stats.seconds, 0, 1200), won = stats.won === true;
     if (cells === null || stages === null || seconds === null) bad();
     if (won !== (stages === 5) || (!won && seconds)) bad();
-    if (cells > SWEEPER_SAFE.slice(0, Math.min(5, stages + 1)).reduce((a, b) => a + b, 0)) bad();
+    if (cells > SWEEPER_CELLS.slice(0, Math.min(5, stages + 1)).reduce((a, b) => a + b, 0)) bad();
     if (score !== cells * 15 + stages * 4000 + seconds * 20) bad();
     if (elapsed < 3 + stages * 4) bad('Слишком быстро для такого счёта.');
     return { extra: 0, stats: { cells, stages, seconds, won } };

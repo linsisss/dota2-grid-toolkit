@@ -29,8 +29,8 @@ export default {
   'Не получилось открыть файл.': 'Couldn’t open the file.',
   'Нужна картинка (PNG, JPEG, WebP), GIF или видео (MP4, WebM).': 'A picture (PNG, JPEG, WebP), GIF or video (MP4, WebM) is needed.',
   'Открываем файл…': 'Opening the file…',
-  'Портрет меняется во всей Dota, а не в одной сетке: карточки в сетке и при выборе героя, анимация при наведении, верхняя панель, таблица счёта, значки в чате и ленте убийств. Остаются как в Dota: 3D-портрет внизу экрана и миникарта. Видишь только ты.':
-    'The portrait changes all over Dota, not in one grid: the cards in the grid and in hero pick, the hover animation, the top bar, the scoreboard, the icons in chat and the kill feed. The 3D portrait at the bottom of the screen and the minimap stay as in Dota. Only you see it.',
+  'Портрет меняется во всей Dota, а не в одной сетке: карточки в сетке и при выборе героя, анимация при наведении, верхняя панель, таблица счёта, значки в чате и ленте убийств. 3D-портрет внизу экрана — по галочке у героя, миникарта остаётся как в Dota. Видишь только ты.':
+    'The portrait changes all over Dota, not in one grid: the cards in the grid and in hero pick, the hover animation, the top bar, the scoreboard, the icons in chat and the kill feed. The 3D portrait at the bottom of the screen changes if you tick it for the hero; the minimap stays as in Dota. Only you see it.',
   'Приблизить': 'Zoom',
   'Таблица счёта': 'Scoreboard',
   'Тяни карточку, чтобы выбрать кадр, колесо — приблизить. Видео или GIF оживят карточку при наведении.': 'Drag the card to frame the picture, the wheel zooms. A video or GIF brings the card to life on hover.',
@@ -47,5 +47,23 @@ export default {
   'видео': 'video',
   'картинка': 'picture',
   'открываем…': 'opening…',
-  'файла нет в браузере — выбери снова': 'the file is gone from this browser: choose it again'
+  'файла нет в браузере — выбери снова': 'the file is gone from this browser: choose it again',
+  // The HUD portrait (2026-10-24).
+  'Также использовать свой портрет в игре (портрет в HUD)': 'Also use my portrait in the game (HUD portrait)',
+  'Кадр портрета в HUD': 'HUD portrait frame',
+  'Как у карточки': 'Same as the card',
+  'Посмотреть в превью матча': 'See it in the match preview',
+  'Видео в HUD можно поставить {count} героям — у каждого свой плеер в матче. Выключи HUD у другого героя или дай этому картинку.': 'A HUD video fits {count} heroes: each one is its own player in the match. Turn the HUD off for another hero or give this one a picture.',
+  'В HUD видео играет по кругу (до {seconds} с, без звука) вместо 3D-модели {hero}.': 'In the HUD the video loops (up to {seconds} s, no sound) instead of {hero}’s 3D model.',
+  'В HUD картинка стоит вместо 3D-модели {hero}.': 'In the HUD the picture stands instead of {hero}’s 3D model.',
+  'Квадрат — весь портрет; затемнённые края Dota обрезает, низ и правый край она затемняет сама, справа поверх лягут цифры урона, брони и скорости. Портрет виден, когда выбран этот герой — твой, союзника или врага.':
+    'The square is the whole portrait: Dota cuts the dimmed edges, darkens the bottom and the right edge itself, and puts the damage, armor and speed numbers over the right side. The portrait shows whenever this hero is selected: yours, an ally’s or an enemy’s.',
+  'HUD-скин {skin} тоже приносит файл портрета HUD — копию файла Valve без изменений. В сборку пойдёт наш файл (с твоими портретами), вид скина от этого не меняется.':
+    'The HUD skin {skin} brings the HUD portrait file too, an unchanged copy of Valve’s. The build takes ours (with your portraits); the skin looks the same.',
+  'в HUD: {list}': 'in the HUD: {list}',
+  '{hero} на месте Keeper of the Light — только в превью': '{hero} in Keeper of the Light’s place: preview only',
+  'Портреты героев ({list}) меняются во всей Dota: карточки в сетке и при выборе героя, анимация при наведении, верхняя панель, таблица счёта, маленькие значки. Миникарта остаётся как в Dota. Файл: game\\dota_russian\\pak05_dir.vpk.':
+    'The hero portraits ({list}) change all over Dota: the cards in the grid and in hero pick, the hover animation, the top bar, the scoreboard, the small icons. The minimap stays as in Dota. File: game\\dota_russian\\pak05_dir.vpk.',
+  'Портрет внизу экрана в матче (вместо 3D-модели) свой у героев: {list}. Если Dota вылетает при входе в матч, удали game\\dota_russian\\pak05_dir.vpk (и pak03_dir.vpk, если он из этой сборки) и проверь целостность файлов игры в Steam.':
+    'The portrait at the bottom of the screen in a match (instead of the 3D model) is your own for: {list}. If Dota crashes when a match starts, delete game\\dota_russian\\pak05_dir.vpk (and pak03_dir.vpk if it is from this build) and verify the game files in Steam.'
 };

@@ -14,6 +14,7 @@ export default {
   'В файле слишком много сеток (максимум 100).': 'The file has too many grids (100 at most).',
   'У сетки должны быть config_name и categories.': 'A grid needs config_name and categories.',
   'В одной сетке допускается до 10 000 объектов.': 'A grid can have up to 10,000 objects.',
+  'Убраны пустые места в списках героев ({count}): Dota записывает их как -1, когда героя убирают из категории.': 'Removed empty hero slots ({count}): Dota writes them as -1 when a hero is taken out of a category.',
   'Сетка «{grid}», категория {category}: координаты и размеры должны быть конечными числами, hero_ids — массивом положительных целых ID.': 'Grid “{grid}”, category {category}: positions and sizes must be finite numbers, and hero_ids an array of positive whole IDs.',
   'Сетка не найдена.': 'Grid not found.',
   'После разделения текста получается больше 10 000 категорий. Уменьши количество символов.': 'Split into symbols, the text makes more than 10,000 categories. Use fewer symbols.',

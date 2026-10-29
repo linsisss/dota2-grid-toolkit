@@ -500,20 +500,31 @@ export const PROFILE_SITES = Object.freeze([
   { id: 'Stratz', icon: 'stratz', label: 'STRATZ', url: 'https://stratz.com/players/' },
   { id: 'Dotabuff', icon: 'dotabuff', label: 'DOTABUFF', url: 'https://www.dotabuff.com/players/' }
 ]);
+// The background under a profile (2026-10-29, a user's question: the menu's background shows through the
+// profile, which is a see-through dashboard page in Dota too): 'menu' as in Dota, 'dim' a black veil of
+// PROFILE_DIM under the page (sized like the hero grid's veil), 'hide' the menu's background hidden there
+// (hidebackground, as Valve's hero and guild pages do), so the profile is on black.
+export const PROFILE_BG_MODES = Object.freeze(['menu', 'dim', 'hide']);
+export const PROFILE_DIM = 0.7;
 const PROFILE_INCLUDE = '<include src="s2r://panorama/styles/showcase/dashboard_page_showcase.vcss_c" />';
+const PROFILE_ROOT = '<DOTAShowcasePage class="DashboardPage">';
 // The end of the status line, then of #ProfileMainCorner: the buttons go between them.
 const PROFILE_ROW = `						</Panel>
 					</Panel>
 				</Panel>
 			</Panel>
 			<Label id="PendingApprovalLabel"`;
-export function profilePage(page) {
-  if (page.split(PROFILE_INCLUDE).length !== 2 || page.split(PROFILE_ROW).length !== 2) throw new Error('В dashboard_page_showcase.xml не найдена строка статуса профиля.');
+// links: the Stratz and Dotabuff buttons; bg: PROFILE_BG_MODES.
+export function profilePage(page, { links = true, bg = 'menu' } = {}) {
+  if (page.split(PROFILE_INCLUDE).length !== 2 || page.split(PROFILE_ROW).length !== 2 || page.split(PROFILE_ROOT).length !== 2) throw new Error('В dashboard_page_showcase.xml не найдена строка статуса профиля.');
+  if (!PROFILE_BG_MODES.includes(bg)) throw new Error(`Неизвестный фон профиля: ${bg}`);
   const buttons = PROFILE_SITES.map(({ id, icon, label, url }) => `						<Button id="GridStudio${id}" class="GridStudioStatsLink" onactivate="$.DispatchEvent( 'ExternalBrowserGoToURL', '${url}' + $.Localize( '{s:account_id}', $.GetContextPanel() ) );">
 							<Image src="s2r://${PROFILE_ICONS[icon].replace(/_c$/, '')}" texturewidth="48px" textureheight="48px" scaling="stretch-to-fit-preserve-aspect" hittest="false" />
 							<Label text="${label}" hittest="false" />
 						</Button>`).join('\n');
-  return page.replace(PROFILE_INCLUDE, () => `${PROFILE_INCLUDE}\n\t\t<include src="s2r://${PROFILE_STYLE}" />`)
+  const root = bg === 'hide' ? PROFILE_ROOT.replace('>', ' hidebackground="true">') : bg === 'dim' ? `${PROFILE_ROOT}\n\t\t<Panel id="GridStudioProfileVeil" hittest="false" />` : PROFILE_ROOT;
+  const styled = page.replace(PROFILE_INCLUDE, () => `${PROFILE_INCLUDE}\n\t\t<include src="s2r://${PROFILE_STYLE}" />`).replace(PROFILE_ROOT, () => root);
+  return !links ? styled : styled
     .replace(PROFILE_ROW, () => `						</Panel>
 					</Panel>
 					<Panel id="GridStudioStatsLinks" hittest="false">
@@ -525,7 +536,7 @@ ${buttons}
 }
 // Like the event button: the dark ground, a hairline border, LighterGrey uppercase text of the
 // status line; 22 px down, so the row sits under the header's separator line.
-const PROFILE_STYLE_TEXT = `/* GridStudio: buttons to the player's Stratz and Dotabuff pages, under the status line. */
+const PROFILE_LINKS_TEXT = `/* GridStudio: buttons to the player's Stratz and Dotabuff pages, under the status line. */
 #GridStudioStatsLinks
 {
 	flow-children: right;
@@ -589,6 +600,16 @@ const PROFILE_STYLE_TEXT = `/* GridStudio: buttons to the player's Stratz and Do
 	transform: translateY( 1px );
 }
 `;
+const PROFILE_VEIL_TEXT = `/* GridStudio: the menu's background darker under the profile. */
+#GridStudioProfileVeil
+{
+	width: 100%;
+	height: 1080px;
+	margin-top: -120px;
+	background-color: #000000${Math.round(PROFILE_DIM * 255).toString(16).padStart(2, '0')};
+}
+`;
+const profileStyleText = (links, bg) => [links && PROFILE_LINKS_TEXT, bg === 'dim' && PROFILE_VEIL_TEXT].filter(Boolean).join('\n') || '/* GridStudio */\n';
 
 // The loading screen of a match (2026-10-16, «Интерфейс»: the first module of the interface builder,
 // built into this pack, since it is a background too). Valve's loading_screen_background_image.xml
@@ -803,8 +824,9 @@ export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDE
 // video: WebM bytes (VP8/VP9, no Opus audio); dashboard/home/hero.page: Valve's current layouts as
 // text. hero: null keeps Valve's picture behind the hero; { page } shows the menu video there;
 // { page, video } a video of its own. event: assets/dota-menu/event.json for the event button, or
-// null for none (also none when it is not the dashboard's current event). profile: { page, icons }
-// (Valve's showcase layout and the logos' SVG text) for the Stratz and Dotabuff buttons, or null.
+// null for none (also none when it is not the dashboard's current event). profile: { page, icons, links, bg }
+// (Valve's showcase layout and the logos' SVG text): `links` (default true) the Stratz and Dotabuff buttons,
+// `bg` the background under the profile (PROFILE_BG_MODES, default 'menu'), or null for Valve's profile.
 // grid: null keeps the «Герои» page as it is; { page, dim } darkens the menu's background there,
 // { page, video } shows a video of its own.
 // news: { carnival, season } — which news cards stay on the home page (needs `home`); without it, a given
@@ -847,8 +869,9 @@ export function menuBackgroundPack({ video, dashboard, home = null, news = null,
     files.push(panoramaFile(GRID_PAGE, gridPage(grid.page, !!grid.video), true), panoramaFile(GRID_STYLE, GRID_STYLE_TEXT(grid.video ? null : grid.dim ?? GRID_DIM.default)));
     if (grid.video) files.push({ path: GRID_VIDEO, data: grid.video });
   }
-  if (profile) files.push(panoramaFile(PROFILE_PAGE, profilePage(profile.page), true), panoramaFile(PROFILE_STYLE, PROFILE_STYLE_TEXT),
-    ...Object.entries(PROFILE_ICONS).map(([name, path]) => panoramaFile(path, profile.icons[name])));
+  const links = profile?.links !== false, profileBg = profile?.bg ?? 'menu';
+  if (profile && (links || profileBg !== 'menu')) files.push(panoramaFile(PROFILE_PAGE, profilePage(profile.page, { links, bg: profileBg }), true), panoramaFile(PROFILE_STYLE, profileStyleText(links, profileBg)),
+    ...(links ? Object.entries(PROFILE_ICONS).map(([name, path]) => panoramaFile(path, profile.icons[name])) : []));
   if (loading) {
     files.push(panoramaFile(LOADING_PAGE, loadingPage(loading.page, loading.video ? LOADING_VIDEO : MENU_VIDEO), true), panoramaFile(LOADING_STYLE, LOADING_STYLE_TEXT));
     if (loading.video) files.push({ path: LOADING_VIDEO, data: loading.video });

@@ -26,10 +26,14 @@ import { portraitsPackProblem } from '../scripts/hero-portraits.mjs';
 // new pack does not fit, the oldest ready ones make room (evict).
 // 'all': the customization page's one file (scripts/customize-pack.mjs): a background's videos, the
 // interface, the cursor, the d2pfx mods, the heroes' portraits (pak05: only Valve's hero picture and movie
-// paths, pictures exactly as scripts/hero-portraits.mjs writes them) and a font together (200 MB since the d2pfx mods, 2026-10-17: a HUD
+// paths, pictures exactly as scripts/hero-portraits.mjs writes them; since 2026-10-24 also the HUD portrait:
+// its media at our paths and Valve's portrait layout with exactly our lines) and a font together (200 MB since the d2pfx mods, 2026-10-17: a HUD
 // skin and a play-panel background alone may be 25 MB each).
 export const PACK_LIMITS = Object.freeze({ bg: 80_000_000, font: 30_000_000, all: 200_000_000, part: 4 * 1024 * 1024, days: 7, storage: 15_000_000_000, startsHourly: 30 });
 const EXT = { bg: 'vpk', font: 'zip', all: 'zip' };
+// Valve's HUD portrait layout our pak05 may replace (scripts/hero-portraits.mjs hudPortraitFiles): the server
+// rebuilds the layout and the style for the heroes in a pack and takes only exactly those.
+const HUD_VALVE = readFileSync(new URL('../assets/dota-menu/dota_hud_portrait.xml', import.meta.url), 'utf8');
 const DAY = 86_400_000;
 
 // ——— What a pack may hold.
@@ -161,7 +165,7 @@ function customizeProblem(bytes) {
     else if (entry.path === CUSTOMIZE_PAKS.menu) problem = backgroundProblem(data, { whole: false });
     else if (entry.path === CUSTOMIZE_PAKS.match) problem = interfaceProblem(data);
     else if (entry.path === CUSTOMIZE_PAKS.d2pfx) problem = d2pfxProblem(data);
-    else if (entry.path === CUSTOMIZE_PAKS.portraits) problem = portraitsPackProblem(data);
+    else if (entry.path === CUSTOMIZE_PAKS.portraits) problem = portraitsPackProblem(data, { hudValve: HUD_VALVE });
     else problem = cursorProblem(entry.path, data);
     if (problem) return problem;
   }

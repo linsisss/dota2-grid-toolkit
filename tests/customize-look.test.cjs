@@ -12,7 +12,7 @@ const full = () => ({
   menu: {
     aspect: '21:9', folder: 'english', event: false,
     background: { source: { kind: 'file', name: 'Лес.mp4', size: 1234, type: 'video', label: 'MP4', media: HASH('a') }, fit: 'contain', blur: 30, dim: 40, frame: { zoom: 1.5, x: 0.25, y: 0.75, rotate: 90, flipX: true }, piece: { start: 2, end: 12.5 }, crossfade: 1 },
-    buttons: { hide: ['plus', 'shards'], news: { carnival: false, season: true }, profile: true, glass: { bar: 40, friends: 70 } },
+    buttons: { hide: ['plus', 'shards'], news: { carnival: false, season: true }, profile: true, profileBg: 'dim', glass: { bar: 40, friends: 70 } },
     grid: { mode: 'dim', dim: 70, own: { source: { kind: 'workshop', id: 12, title: 'Корги' }, fit: 'cover', blur: 0, dim: 0, frame: { zoom: 1, x: 0.5, y: 0.5 }, piece: null, crossfade: 0 } },
     hero: { mode: 'own', own: { source: { kind: 'file', name: 'hero.gif', size: 99, type: 'image', label: 'GIF', media: HASH('b') }, fit: 'cover', blur: 10, dim: 0, frame: { zoom: 1, x: 0.5, y: 0.5 }, piece: null, crossfade: 0 } },
     loading: { mode: 'menu', own: null }
@@ -42,14 +42,14 @@ test('the document: every section kept as it is, the rest as in Dota; broken one
   // Nothing but the header: everything as in Dota.
   const empty = look.emptyLook();
   assert.deepEqual(look.lookParts(empty), []);
-  assert.deepEqual(empty.menu.buttons, { hide: [], news: { carnival: true, season: true }, profile: false, glass: { bar: 100, friends: 100, news: 100, header: 100, showcase: 100, party: 100 } });
+  assert.deepEqual(empty.menu.buttons, { hide: [], news: { carnival: true, season: true }, profile: false, profileBg: 'menu', glass: { bar: 100, friends: 100, news: 100, header: 100, showcase: 100, party: 100 } });
   // Unknown fields go; pictures no cursor uses go.
   const extra = look.lookDocument({ ...full(), secret: 1, pictures: { pabc123: PNG, pzzzzz9: PNG }, menu: { ...full().menu, path: 'C:/x' } });
   assert.equal(extra.secret, undefined); assert.equal(extra.menu.path, undefined); assert.deepEqual(Object.keys(extra.pictures), ['pabc123']);
   const wrong = [
     { format: 'other' }, { version: 0 }, { menu: { aspect: '5:4' } }, { menu: { background: { source: { kind: 'url', href: 'x' } } } },
     { menu: { background: { ...full().menu.background, source: { ...full().menu.background.source, media: 'nope' } } } }, { menu: { buttons: { hide: ['play'] } } },
-    { menu: { buttons: { glass: { bar: 150 } } } }, { menu: { grid: { mode: 'dark' } } }, { cursor: { mode: 'arrow' } }, { cursor: { own: { cursor_nope: { scale: 1 } } } },
+    { menu: { buttons: { glass: { bar: 150 } } } }, { menu: { buttons: { profileBg: 'blur' } } }, { menu: { grid: { mode: 'dark' } } }, { cursor: { mode: 'arrow' } }, { cursor: { own: { cursor_nope: { scale: 1 } } } },
     { cursor: { own: { cursor_default: { scale: 50 } } } }, { cursor: { mode: 'd2pfx', pack: { name: 'x', file: 'https://evil.example/pack.zip', credits: [] } } },
     { pictures: { pabc123: 'data:image/svg+xml;base64,PHN2Zz4=' } }, { font: { selected: '../x' } }, { font: { own: { name: 'x', faces: [{ media: 'x', size: 1 }] } } },
     { d2pfx: { choice: { nope: { skin: 'x' } } } }, { texts: { 'bad token': 'x' } }
@@ -101,7 +101,7 @@ test('a «Студия» background as an «Оформление»: its menu, it
   const made = look.lookFromRecipe(recipe, { built: { bg: { media: HASH('e'), size: 5_000_000 } } });
   assert.deepEqual(made.menu.background, { source: { kind: 'file', name: 'Лес.webm', size: 5_000_000, type: 'video', label: 'WEBM', media: HASH('e') }, fit: 'cover', blur: 0, dim: 0, frame: { zoom: 1, x: 0.5, y: 0.5 }, piece: null, crossfade: 0 });
   assert.deepEqual([made.menu.aspect, made.menu.event, made.menu.hero.mode, made.menu.loading.mode], ['16:10', false, 'off', 'menu']);
-  assert.deepEqual(made.menu.buttons, { hide: ['plus'], news: { carnival: false, season: true }, profile: true, glass: { bar: 100, friends: 100, news: 100, header: 100, showcase: 100, party: 100 } });
+  assert.deepEqual(made.menu.buttons, { hide: ['plus'], news: { carnival: false, season: true }, profile: true, profileBg: 'menu', glass: { bar: 100, friends: 100, news: 100, header: 100, showcase: 100, party: 100 } });
   assert.deepEqual(made.menu.grid.own.source, { kind: 'workshop', id: 3, title: 'Лес' }, 'a workshop background stays a reference');
   assert.equal(made.menu.grid.own.dim, 30);
   // Not built here (another device): the recipe as it is, the file asked for.

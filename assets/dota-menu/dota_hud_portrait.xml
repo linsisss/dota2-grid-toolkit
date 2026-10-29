@@ -1,0 +1,12 @@
+<root>
+	<styles>
+		<include src="s2r://panorama/styles/dotastyles.vcss_c" />
+		<include src="s2r://panorama/styles/hudstyles.vcss_c" />
+		<include src="s2r://panorama/styles/hud/dota_hud_portrait.vcss_c" />
+	</styles>
+	<DOTAPortrait>
+		<Panel id="LowerOverlay" />
+		<Panel id="InspectButton" onactivate="DOTAHUDInspect();" />
+		<Button id="ReportUserButton" class="PortraitButton" onactivate="DOTAHUDShowReportUserPopup();" always-cache-composition-layer="true" />
+	</DOTAPortrait>
+</root>

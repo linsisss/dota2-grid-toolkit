@@ -165,6 +165,28 @@ test('profiles get Stratz and Dotabuff buttons that open the player\'s page', as
   assert.equal(readVPK(menuBackgroundPack({ video: new Uint8Array([1]), dashboard, md5 })).files.some(file => file.path === PROFILE_PAGE), false, 'only when asked');
 });
 
+test('the background under a profile: as in the menu, darker or hidden', async () => {
+  const [{ readVPK, panoramaSource }, { menuBackgroundPack, profilePage, PROFILE_PAGE, PROFILE_STYLE, PROFILE_ICONS, PROFILE_DIM }] = await modules;
+  const read = (file) => readFileSync(`assets/dota-menu/${file}`, 'utf8'), dashboard = read('dashboard.xml'), page = read('dashboard_page_showcase.xml');
+  const icons = { stratz: read('icons/stratz.svg'), dotabuff: read('icons/dotabuff.svg') };
+  const files = (profile) => {
+    const pack = menuBackgroundPack({ video: null, dashboard, profile: { page, icons, ...profile }, md5 });
+    return pack ? Object.fromEntries(readVPK(pack).files.map(file => [file.path, panoramaSource(file.data)])) : {};
+  };
+  const dim = files({ links: false, bg: 'dim' });
+  assert.deepEqual(Object.keys(dim).sort(), [PROFILE_PAGE, PROFILE_STYLE].sort(), 'no buttons, no logos');
+  assert.match(dim[PROFILE_PAGE], /<DOTAShowcasePage class="DashboardPage">\n\t\t<Panel id="GridStudioProfileVeil" hittest="false" \/>/);
+  assert.doesNotMatch(dim[PROFILE_PAGE], /GridStudioStatsLinks/);
+  assert.ok(dim[PROFILE_STYLE].includes(`background-color: #000000${Math.round(PROFILE_DIM * 255).toString(16)};`));
+  const hide = files({ links: true, bg: 'hide' });
+  assert.match(hide[PROFILE_PAGE], /<DOTAShowcasePage class="DashboardPage" hidebackground="true">/);
+  assert.match(hide[PROFILE_PAGE], /GridStudioStatsLinks/);
+  for (const path of Object.values(PROFILE_ICONS)) assert.ok(hide[path], path);
+  assert.deepEqual(files({ links: false, bg: 'menu' }), {}, 'nothing to change: no pack');
+  assert.equal(profilePage(page, { links: false }).replace(/\n\t\t<include src="s2r:\/\/panorama\/styles\/gridstudio_profile\.vcss_c" \/>/, ''), page);
+  assert.throws(() => profilePage(page, { bg: 'blur' }), /фон профиля/);
+});
+
 test('a catalog font becomes Valve\'s font files with Valve\'s names inside', async () => {
   const [, , { readFont, dotaFontPack, fontCoverage, DOTA_FONT_FILES }] = await modules;
   const catalog = JSON.parse(readFileSync('data/dota-fonts.json', 'utf8'));

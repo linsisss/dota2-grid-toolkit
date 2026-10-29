@@ -114,6 +114,7 @@
 - Логотипы — векторные картинки Panorama (`.vsvg_c`, см. выше; `assets/dota-menu/icons/`), их рисует сама Dota (`texturewidth="48px"`, как у иконок Valve). Stratz — их знак с шапки stratz.com в голубом кольце, как на их значке сайта (® убран, координаты пересчитаны в кольцо). Dotabuff — белая «D» на их красном `#ED3B1C`: SVG у них нет, «D» снята по размерам их `favicon-retina.png` (114 px).
 - Отдельный пак тоже работает: третий `pak03_dir.vpk` рядом с `pak02` Dota подключает (так шла проверка). В сборщике всё кладётся в один пак фона.
 - В сборщике это галочка «Кнопки Stratz и Dotabuff в профилях». Отдельной страницы профиля в превью нет: при наведении на галочку (или фокусе) слева от панели всплывает карточка (`Peek` в `MenuBackground.jsx`, `position: fixed`, потому что панель прокручивается) с картинкой шапки профиля. Её рисует `scripts/make-profile-preview.mjs` (`assets/dota-menu/ui/profile-preview.webp`, 2×) по размерам со скриншота профиля с паком: владелец — как в превью меню (dissonance, медаль «Титан»), ID выдуманный; со скриншота взят только значок Steam (отделён от фона по яркости).
+- «Фон в профиле» (29.10.2026, вопрос пользователя: на профиле поверх фона Dota виден фон меню). Профиль — полупрозрачная страница дашборда, так и у Valve: сквозь неё всегда виден фон меню. Варианты в «Кнопки меню»: «Как в меню» (страница Valve), «Темнее» — первым ребёнком `DOTAShowcasePage` чёрная вуаль `#GridStudioProfileVeil` с прозрачностью `PROFILE_DIM` (0,7), того же размера, что вуаль под сеткой героев (1080 px, на 120 px выше страницы), «Скрыть» — `hidebackground="true"` на корне страницы, как у страниц героя и гильдии Valve: фон меню там прячется, под профилем чёрный. Без кнопок Stratz/Dotabuff страница подменяется только ради фона (без ряда кнопок и логотипов). Рецепт и файл оформления хранят `profileBg` (`menu|dim|hide`, по умолчанию `menu`). Ещё не проверено в игре.
 - Рецепт студии хранит `profile`; у рецептов до 1.6.4 его нет — кнопки включены. `check-dota-menu.mjs` следит и за этой страницей (`showcase/dashboard_page_showcase.xml`, у нас — `assets/dota-menu/dashboard_page_showcase.xml`).
 
 - Компиляция без инструментов Valve: `scripts/vpk.mjs` пишет Panorama-ресурсы в классическом формате resourcecompiler (блок REDI + исходный текст в DATA) и VPK v2. Так же устроены векторные картинки Panorama (`.svg` → `.vsvg_c`, версия ресурса 2, в REDI сначала исходник; `CompileVectorGraphic`), их в `<Image src="s2r://….vsvg" texturewidth=… textureheight=…>` рисует сама Dota — так можно класть свои иконки без компиляции текстур. Оба писателя сверены с файлами Valve байт в байт (`tests/customize.test.cjs`, фикстуры `tests/fixtures/valve/` из набора тестов Source 2 Viewer; VPK — с паками D2PFX). Загрузчик разобранной из текста разметки (`CLayoutContentParsed`) в `panorama.dll` есть.
@@ -327,7 +328,7 @@
 | icon | `panorama/images/heroes/icons/npc_dota_hero_<имя>_png.vtex_c` | 32 × 32, BGRA8888 (28), с прозрачностью | `heroimagestyle="icon"`: лента убийств, чат, награды за голову, списки Captain's Mode |
 | movie | `panorama/videos/heroes/npc_dota_hero_<имя>.webm` | 256 × 256 VP8, 30 к/с, 2–23 с, без звука; лежит в игре отдельным файлом (не в pak01) | `DOTAHeroMovie` в `tooltip_hero_card.xml` (карточка 151 × 200 при наведении, видео обрезано по середине: статичная карточка = середина первого кадра) и «любимые герои» профилей |
 
-Не заменяется: 3D-портрет внизу HUD (`DOTAPortrait` рисует модель) и миникарта (один лист всех героев `materials/vgui/hud/minimap_hero_sheet.vtex_c`; заменить одного героя = раздавать изменённый файл Valve целиком, и он ломается с каждым новым героем).
+Не заменяется: миникарта (один лист всех героев `materials/vgui/hud/minimap_hero_sheet.vtex_c`; заменить одного героя = раздавать изменённый файл Valve целиком, и он ломается с каждым новым героем). 3D-портрет внизу HUD — не файл героя, но с 24.10.2026 его можно закрыть своим портретом (ниже, «Портрет в HUD»).
 
 Варианты: у 33 героев есть `_alt1/_alt2/_alt3/_alt`, `_persona1`, `_carnival` (арканы, персоны, ивент) — получают ту же картинку, иначе надетый предмет вернёт портрет Valve. Таблица — `scripts/hero-portraits-data.mjs`, генератор `node scripts/make-hero-portraits.mjs <pak01_dir.vpk> <manifest_373301_*.txt>` (каталог pak01 и манифест депо 373301 из DepotDownloader; перезапускать при новом герое).
 
@@ -344,9 +345,37 @@
 
 Сервер (`server/install-packs.mjs` → `portraitsPackProblem`): в pak05 только пути героев из таблицы; текстура — ровно своего места (размер, формат, флаги, REDI+DATA, целый PNG или w·h·4 байт), видео — WebM ≤ 4 МБ. Установщик: шаблон `pak0[2-5]_dir.vpk`.
 
-Состояние: `localStorage gridstudio.portraits` = `{ heroes: [{ hero, kind, source: { name, size, type, media }, crop: { x, y, zoom }, start }] }` (`portraitsState`), файлы — в IndexedDB `gridstudio-looks` «media» по SHA-256 (`look-store.js`). Для «Оформления в Студии» это готовая секция: `portraitsState` проверяет документ, `media` — хэши файлов.
+Состояние: `localStorage gridstudio.portraits` = `{ heroes: [{ hero, kind, source: { name, size, type, media }, crop: { x, y, zoom }, start, hud?: true, hudCrop? }] }` (`portraitsState`), файлы — в IndexedDB `gridstudio-looks` «media» по SHA-256 (`look-store.js`). Для «Оформления в Студии» это готовая секция: `portraitsState` проверяет документ, `media` — хэши файлов.
 
 В игре не проверено: подмена файлов из pak05 (pak05 рядом с pak02–04 и без них), подмена отдельного видео `panorama/videos/heroes/*.webm` из VPK вместо файла на диске, вид PNG_RGBA8888 на карточке (у базовых карточек Valve PNG_DXT5).
+
+### Портрет в HUD (24.10.2026, dev)
+
+Просьба владельца: галочка при загрузке своего портрета «Также использовать свой портрет в игре (портрет в HUD)» — своё видео/GIF/картинка вместо анимированного 3D-портрета внизу слева (`DOTAPortrait` в `#portraitHUD`) у каждого отмеченного героя. Прежняя запись «3D-модель, не заменить» была неверной: модель не заменить, но закрыть по герою можно.
+
+Как устроено у Valve (dota_vpk_updates, Client 6966–6967, 22–23.10.2026):
+
+- `hud/hud_reborn.xml`: `#PortraitGroup` (159 × 145, margin-left 52px) → `#PortraitBacker`, `#PortraitBackerColor`, `#PortraitContainer` (100 %, `overflow: clip`) → `<DOTAPortrait id="portraitHUD">`, `<DOTAPortrait id="portraitHUDOverlay">`, `<Image id="RightSideHeroBlur" src="panel://portraitHUD">`. `#portraitHUD` 175 × 175, `vertical-align: bottom`, `translate(-16px, 14px)` → видно окно x 16–175, y 16–161 квадрата; `#portraitHUDOverlay` 133 × 145, `opacity: 0`, при оглушении/смерти 0,5.
+- `DOTAPortrait` загружает в себя `hud/dota_hud_portrait.xml` (корень `<DOTAPortrait>`: `#LowerOverlay` — градиент в чёрный на нижние 30 %, `#InspectButton`, `#ReportUserButton`); панели этого layout рисуются поверх модели. Стиль `dota_hud_portrait.css` сам выбирает предков из чужого layout (`#PortraitContainer:hover .PortraitButton`, `.IsLocalPlayerSpectating … #ReportUserButton`) и сам корень (`DOTAPortrait { … }`).
+- Класс героя: `hud_reborn.css` красит `#PortraitBackerColor` (сосед `#PortraitContainer`) 114 правилами `.npc_dota_hero_<имя> #PortraitBackerColor`, панель способностей — `.HasMorph .npc_dota_hero_rubick #Ability3`. Значит, класс `npc_dota_hero_<имя>` выбранного юнита стоит на предке `#PortraitGroup` — и на предке нашей панели внутри `#portraitHUD`.
+- `panel://` копирует панель вместе с детьми (Valve так делает тени и дубли списков: `RightContentShadow src="panel://StickerListPanel"`, `PointesLeaderListLeftDupe`), так что размытая полоса справа размоет и наш портрет.
+- Поверх портрета: `#stats_container` (159 × 145, z-index 5) с градиентом `#stats_container_bg` (прозрачно до 40 %, `#00000088` на 60 %, `#000000c8` 70 %, `#000000e8` 80 %, чёрный на 100 %) и цифрами.
+
+Что делаем (`scripts/hero-portraits.mjs` `HUD_PORTRAIT`, `hudPortraitLayout`, `hudPortraitStyle`, `hudPortraitFiles`), всё в том же `pak05_dir.vpk`:
+
+- `panorama/layout/hud/dota_hud_portrait.vxml_c` — копия Valve (`assets/dota-menu/dota_hud_portrait.xml`, следит `check-dota-menu.mjs`) байт в байт + наши строки: `<include>` нашего стиля после стиля Valve и первыми в `<DOTAPortrait>` (под `#LowerOverlay` и кнопками) панели: одна `<Panel id="GridStudioHudImage">` на все картинки и по `<MoviePanel id="GridStudioHudMovie_<имя>" src="s2r://panorama/videos/gridstudio/hud/npc_dota_hero_<имя>.webm" repeat="true" autoplay="onload" hittest="false">` на каждое видео. Без обработчиков, ASCII.
+- `panorama/styles/hud/gridstudio_hud_portrait.vcss_c` (новый путь): панели 100 % × 100 %, `visibility: collapse`; `.npc_dota_hero_<имя> #GridStudioHudMovie_<имя> { visibility: visible }`; для картинок `.npc_dota_hero_<имя> #GridStudioHudImage { background-image: url("s2r://panorama/images/gridstudio/hud/npc_dota_hero_<имя>_png.vtex_c") }`; `.npc_dota_hero_<имя> #portraitHUDOverlay { visibility: collapse }` — иначе при оглушении/смерти поверх проступит 3D-герой. Ничего не анимируем.
+- Медиа: видео — квадрат 256 × 256 VP8 (BT.601 через `dota-frames.js`/`dota-video-color.mjs`, кадры по `sampleNudge`), 30 к/с, до 8 с от «Начала видео», 1,5 Мбит/с; картинка — текстура 256 × 256 PNG_RGBA8888 (флаги как у wide), чёрный под прозрачным. Кадр свой (`hudCrop`, квадрат), по умолчанию — центр карточки.
+- Состояния Valve действуют и на наш портрет (это правила на `#portraitHUD`): размытие при безмолвии, анимация оглушения, бирюзовый оттенок смерти. 3D-модель под нашей панелью продолжает рендериться (стилем её не выключить).
+- Видео в HUD — не больше `HUD_PORTRAIT.videos` (10) героев: каждый `MoviePanel` грузится в обоих `DOTAPortrait`, свёрнутый; играют ли свёрнутые — не знаем.
+
+d2pfx: `dota_hud_portrait.vxml_c` приносит только «Fluttershy Hud» (копия Valve без изменений; проверено по файлам модов 24.10.2026, `D2PFX_HUD_PORTRAIT_MODS`), `dota_hud_portrait.vcss_c` — anime/crimson/void (наш layout подключает его как у Valve, конфликта нет), `hud_reborn.vcss_c` — почти все (не трогаем). pak04 читается раньше pak05, поэтому при включённом HUD-портрете сборка выкидывает этот один файл из pak04 (`d2pfxPack(…, { skip })`), а в разделе героя — заметка.
+
+Сервер: `portraitsPackProblem(bytes, { hudValve })` пересобирает layout и стиль для героев, чьи медиа лежат в паке, и сверяет байты; медиа только по нашим путям (видео ≤ 4 МБ, текстура ровно 256 × 256 нашего формата). Без медиа нет layout, без layout нет медиа.
+
+Превью: на сцене «Матч» (`HudPortraitLayer.jsx` в `HudCanvas`) в окне портрета (по снимку: x 542, низ экрана, 159 × 145 при 100 %, масштаб — `ui-scale` нижней панели от середины низа) — свой портрет с затемнением Valve, поверх — светлые пиксели HUD в колонке цифр и строке атрибутов и срезанный угол с значком. Снимок HUD — с Keeper of the Light: если у него нет своего HUD-портрета, на его месте показываем портрет редактируемого героя с подписью «… на месте Keeper of the Light — только в превью».
+
+В игре не проверено: всё о HUD-портрете — появится ли он, сменится ли при выборе другого юнита, размытие справа, `visibility` на `#portraitHUDOverlay`, текстура по новому пути из стиля, нагрузка от нескольких `MoviePanel`.
 
 ## Не проверено в игре
 

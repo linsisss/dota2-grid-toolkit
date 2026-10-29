@@ -145,3 +145,20 @@ test('deleting a grid keeps every other grid, its edits and the file metadata', 
   assert.throws(() => C.removeConfig(single, 0), /хотя бы одна/);
   assert.throws(() => C.removeConfig(doc, 9), /не найдена/);
 });
+
+test('a grid saved by Dota with -1 (empty slots) in hero_ids imports; the -1 entries are dropped and reported', () => {
+  const data = {
+    version: 3,
+    configs: [{ config_name: 'noname', categories: [
+      { category_name: 'ok', x_position: 0, y_position: 0, width: 300, height: 100, hero_ids: [65, 52] },
+      { category_name: 'с пустым', x_position: 0, y_position: 360.87, width: 643.48, height: 133.91, hero_ids: [113, 138, -1, 88, -1] }
+    ] }]
+  };
+  const doc = C.importDota(data);
+  const heroes = doc.entities.find((e) => e.name === 'с пустым');
+  assert.deepEqual(heroes.heroIds, [113, 138, 88]);
+  assert.deepEqual(doc.importRepairs, [{ configIndex: 0, categoryIndex: 1, dropped: 2 }]);
+  assert.ok(!JSON.stringify(C.exportDota(doc)).includes('-1'), 'no -1 is written back');
+  // Anything that is not a whole number is still refused.
+  assert.throws(() => C.importDota({ version: 3, configs: [{ config_name: 'x', categories: [{ category_name: 'a', x_position: 0, y_position: 0, width: 1, height: 1, hero_ids: ['1'] }] }] }));
+});

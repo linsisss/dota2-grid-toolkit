@@ -149,3 +149,94 @@ test('the pack: Valve’s sizes at Valve’s paths, variants share one copy, and
   }
   assert.notEqual(packProblem('all', await zip([{ name: `${CUSTOMIZE_DIRS.russian}pak06_dir.vpk`, data: pack }])), '', 'no other pak name');
 });
+
+// The HUD portrait (2026-10-24: «Также использовать свой портрет в игре (портрет в HUD)»).
+const HUD_VALVE = require('node:fs').readFileSync(require('node:path').join(__dirname, '../assets/dota-menu/dota_hud_portrait.xml'), 'utf8');
+
+test('the HUD portrait layout: Valve’s text byte for byte plus our lines, ASCII, no handlers of ours', async () => {
+  const { hudPortraitLayout, hudPortraitStyle, hudPortraitFiles, HUD_PORTRAIT, hudMoviePath, hudImagePath } = await import('../scripts/hero-portraits.mjs');
+  const { panoramaSource } = await import('../scripts/vpk.mjs');
+  assert.match(HUD_VALVE, /^<root>\n\t<styles>/, 'our copy of Valve’s layout (assets/dota-menu, watched by check-dota-menu.mjs)');
+  const heroes = [{ hero: 14, kind: 'image' }, { hero: 90, kind: 'image' }, { hero: 8, kind: 'video' }, { hero: 14, kind: 'video' }, { hero: 127, kind: 'video' }];
+  const layout = hudPortraitLayout(HUD_VALVE, heroes);
+  const added = layout.split('\n').filter((line) => !HUD_VALVE.split('\n').includes(line));
+  assert.deepEqual(added.map((line) => line.trim()), [
+    '<include src="s2r://panorama/styles/hud/gridstudio_hud_portrait.vcss_c" />',
+    '<Panel id="GridStudioHudImage" hittest="false" />',
+    '<MoviePanel id="GridStudioHudMovie_juggernaut" class="GridStudioHudMovie" src="s2r://panorama/videos/gridstudio/hud/npc_dota_hero_juggernaut.webm" repeat="true" autoplay="onload" hittest="false" />',
+    '<MoviePanel id="GridStudioHudMovie_pudge" class="GridStudioHudMovie" src="s2r://panorama/videos/gridstudio/hud/npc_dota_hero_pudge.webm" repeat="true" autoplay="onload" hittest="false" />'
+  ], 'one panel per hero (the last word for a hero wins), a still picture shares one panel, «Мишень» dropped');
+  assert.equal(layout.split('\n').filter((line) => !added.includes(line)).join('\n'), HUD_VALVE, 'without our lines it is Valve’s layout, byte for byte');
+  assert.ok(layout.indexOf('GridStudioHudMovie_pudge') < layout.indexOf('<Panel id="LowerOverlay" />'), 'under Valve’s fade and buttons');
+  assert.ok(layout.indexOf('gridstudio_hud_portrait') > layout.indexOf('hud/dota_hud_portrait.vcss_c'), 'our style after Valve’s');
+  assert.ok(!added.some((line) => /\son[a-z]+=/.test(line)), 'no handlers in our lines');
+  const style = hudPortraitStyle(heroes);
+  for (const text of [layout, style]) assert.ok(!/[^\x00-\x7f]/.test(text), 'ASCII only');
+  assert.match(style, /\.npc_dota_hero_pudge #GridStudioHudMovie_pudge\n\{\n\tvisibility: visible;\n\}/);
+  assert.match(style, /\.npc_dota_hero_keeper_of_the_light #GridStudioHudImage\n\{\n\tbackground-image: url\("s2r:\/\/panorama\/images\/gridstudio\/hud\/npc_dota_hero_keeper_of_the_light_png\.vtex_c"\);\n\tvisibility: visible;\n\}/);
+  assert.match(style, /\.npc_dota_hero_juggernaut #portraitHUDOverlay,\n\.npc_dota_hero_pudge #portraitHUDOverlay,\n\.npc_dota_hero_keeper_of_the_light #portraitHUDOverlay\n\{\n\tvisibility: collapse;\n\}/, 'Valve’s second portrait collapsed for them');
+  assert.ok(!/transition|animation/.test(style), 'nothing animated');
+  assert.equal(hudMoviePath(14), 'panorama/videos/gridstudio/hud/npc_dota_hero_pudge.webm');
+  assert.equal(hudImagePath(90), 'panorama/images/gridstudio/hud/npc_dota_hero_keeper_of_the_light_png.vtex_c');
+  const files = hudPortraitFiles(HUD_VALVE, heroes);
+  assert.deepEqual(files.map((file) => file.path), [HUD_PORTRAIT.layout, HUD_PORTRAIT.style]);
+  assert.equal(panoramaSource(files[0].data), layout);
+  assert.deepEqual(hudPortraitFiles(HUD_VALVE, []), []);
+  assert.throws(() => hudPortraitLayout(HUD_VALVE.replace('<DOTAPortrait>', '<DOTAPortrait class="x">'), heroes), /портрет Valve/, 'a changed Valve layout is refused, not guessed');
+});
+
+test('the HUD portrait in the state: only when on, old entries keep their shape', async () => {
+  const { portraitsState, hudCropFrom } = await import('../scripts/hero-portraits.mjs');
+  const old = { hero: 8, kind: 'image', source: { name: 'a.png', size: 1, type: 'image/png' }, crop: { x: 0.5, y: 0.4, zoom: 1 }, start: 0 };
+  assert.deepEqual(portraitsState({ heroes: [old] }).heroes[0], old, 'an entry of before: the same');
+  const on = portraitsState({ heroes: [{ ...old, hud: true, hudCrop: { x: 0.3, y: 2, zoom: 0.5 } }, { ...old, hero: 14, hud: 'yes', hudCrop: 'x' }] }).heroes;
+  assert.deepEqual([on[0].hud, on[0].hudCrop], [true, { x: 0.3, y: 1, zoom: 1 }]);
+  assert.ok(!('hud' in on[1]) && !('hudCrop' in on[1]), 'anything but true is off');
+  assert.deepEqual(hudCropFrom({ x: 0.2, y: 0.7, zoom: 3 }), { x: 0.2, y: 0.7, zoom: 1 });
+});
+
+test('the pack with HUD portraits, and what the server takes', async () => {
+  const { heroPortraitsPack, portraitsPackProblem, hudPortraitFiles, hudMoviePath, hudImagePath, HUD_PORTRAIT } = await import('../scripts/hero-portraits.mjs');
+  const { readVPK, buildVPK, panoramaResource, panoramaSource } = await import('../scripts/vpk.mjs');
+  const { readVtex, vtexResource } = await import('../scripts/dota-vtex.mjs');
+  const { packProblem } = await import('../server/install-packs.mjs');
+  const { buildZip } = await import('../scripts/zip.mjs');
+  const { CUSTOMIZE_DIRS, CUSTOMIZE_PAKS } = await import('../scripts/customize-pack.mjs');
+  const side = HUD_PORTRAIT.side;
+  const item = (hero, hud) => ({ hero, card: fill(142, 188, 90), wide: fill(128, 72, 120), icon: fill(32, 32, 200), movie: webm(), ...(hud ? { hud } : {}) });
+  const pack = await heroPortraitsPack([item(8, { movie: webm(7000) }), item(90, { image: fill(side, side, 77) }), item(14)], { md5, hudValve: HUD_VALVE });
+  const { files } = readVPK(pack), paths = files.map((file) => file.path);
+  for (const path of [hudMoviePath(8), hudImagePath(90), HUD_PORTRAIT.layout, HUD_PORTRAIT.style]) assert.ok(paths.includes(path), path);
+  assert.ok(!paths.includes(hudMoviePath(14)) && !paths.includes(hudImagePath(14)), 'Pudge without the HUD has no HUD files');
+  const texture = readVtex(files.find((file) => file.path === hudImagePath(90)).data);
+  assert.deepEqual([texture.width, texture.height, texture.flags], [side, side, HUD_PORTRAIT.image.flags]);
+  assert.match(panoramaSource(files.find((file) => file.path === HUD_PORTRAIT.layout).data), /GridStudioHudMovie_juggernaut/);
+  assert.equal(portraitsPackProblem(pack, { hudValve: HUD_VALVE }), '');
+  assert.notEqual(portraitsPackProblem(pack), '', 'without Valve’s layout the server takes no HUD');
+  await assert.rejects(heroPortraitsPack([item(8, { movie: webm() })], { md5 }), /разметки/, 'the HUD needs Valve’s layout');
+  await assert.rejects(heroPortraitsPack(Array.from({ length: HUD_PORTRAIT.videos + 1 }, (_, i) => item([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11][i], { movie: webm() })), { md5, hudValve: HUD_VALVE }), /не больше/);
+
+  const zip = async (entries) => new Uint8Array(await (await buildZip(entries)).arrayBuffer());
+  const name = `${CUSTOMIZE_DIRS.russian}${CUSTOMIZE_PAKS.portraits}`;
+  assert.equal(packProblem('all', await zip([{ name, data: pack }])), '', 'the one file with the HUD passes the command’s check');
+  const ours = hudPortraitFiles(HUD_VALVE, [{ hero: 8, kind: 'video' }]);
+  const layoutWith = (text) => ({ path: HUD_PORTRAIT.layout, data: panoramaResource(HUD_PORTRAIT.layout, text) });
+  const evil = panoramaSource(ours[0].data).replace('hittest="false" />', 'hittest="false" onload="$.DispatchEvent( \'ExternalBrowserGoToURL\', \'https://example.com\' )" />');
+  const refused = {
+    'a layout with a handler of its own': [layoutWith(evil), ours[1], { path: hudMoviePath(8), data: webm() }],
+    'the layout and style without their movie': [...ours],
+    'a movie without the layout': [{ path: hudMoviePath(8), data: webm() }],
+    'the layout of another hero': [...hudPortraitFiles(HUD_VALVE, [{ hero: 14, kind: 'video' }]), { path: hudMoviePath(8), data: webm() }],
+    'a picture where a movie is named': [...hudPortraitFiles(HUD_VALVE, [{ hero: 8, kind: 'image' }]), { path: hudMoviePath(8), data: webm() }],
+    'a HUD picture of the wrong size': [...hudPortraitFiles(HUD_VALVE, [{ hero: 8, kind: 'image' }]),
+      { path: hudImagePath(8), data: await vtexResource({ path: hudImagePath(8), rgba: fill(128, 128, 1), width: 128, height: 128, ...HUD_PORTRAIT.image }) }],
+    'a HUD movie that is not a WebM': [...ours, { path: hudMoviePath(8), data: new Uint8Array(5000) }],
+    'another HUD path': [...ours, { path: hudMoviePath(8), data: webm() }, { path: 'panorama/videos/gridstudio/hud/evil.webm', data: webm() }]
+  };
+  for (const [why, entries] of Object.entries(refused)) {
+    const bad = buildVPK(entries, { md5 });
+    assert.notEqual(portraitsPackProblem(bad, { hudValve: HUD_VALVE }), '', why);
+    assert.notEqual(packProblem('all', await zip([{ name, data: bad }])), '', `${why} (the one file)`);
+  }
+  assert.equal(portraitsPackProblem(buildVPK([...ours, { path: hudMoviePath(8), data: webm() }], { md5 }), { hudValve: HUD_VALVE }), '', 'the HUD alone is fine');
+});

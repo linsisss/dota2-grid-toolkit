@@ -38,6 +38,7 @@ export function saveFile(blob, name) {
 // menu video again), or Valve's picture ('off'). recipe.event: the button to the season event
 // (1.6.4; on for recipes before it), when Valve's menu still has the event of event.json.
 // recipe.profile: Stratz and Dotabuff buttons in players' profiles (1.6.4; on for recipes before it).
+// recipe.profileBg: the background under a profile (2026-10-29, PROFILE_BG_MODES): 'menu' (default), 'dim', 'hide'.
 // recipe.grid: the «Герои» page under the hero grid (1.6.4): the menu's background (default), darker
 // (dim, a percent of GRID_DIM.max), or `gridVideo` (mode 'own'; without it, as in the menu).
 export const SEASON_EVENT = menuEvent(dashboard, season);
@@ -51,10 +52,10 @@ const gridOption = (grid, gridVideo) => grid?.mode === 'dim' ? { page: heroesPag
 const loadingOption = (loading, loadingVideo) => loading?.mode === 'menu' || loading?.mode === 'own' ? { page: loadingPage, video: loading.mode === 'own' ? loadingVideo : null } : null;
 // `video` null: no menu background of ours (the one-page customization); the pack is then null when
 // nothing else in it differs from Dota.
-export const packBackground = (video, { clean, news = null, hero = { mode: 'menu' }, event = true, profile = true, grid = { mode: 'menu' }, loading = { mode: 'off' }, hide = [], glass = null }, heroVideo = null, gridVideo = null, loadingVideo = null) => blobOf(menuBackgroundPack({ video, dashboard, home, glass, friends: friendMenu, miniProfile: miniShowcase,
+export const packBackground = (video, { clean, news = null, hero = { mode: 'menu' }, event = true, profile = true, profileBg = 'menu', grid = { mode: 'menu' }, loading = { mode: 'off' }, hide = [], glass = null }, heroVideo = null, gridVideo = null, loadingVideo = null) => blobOf(menuBackgroundPack({ video, dashboard, home, glass, friends: friendMenu, miniProfile: miniShowcase,
   news: clean ? { carnival: false, season: false } : { carnival: news?.carnival !== false, season: news?.season !== false },
   hero: hero?.mode === 'off' ? null : { page: heroPage, video: hero?.mode === 'own' ? heroVideo : null }, event: event ? season : null,
-  profile: profile ? { page: showcase, icons: { stratz, dotabuff } } : null, grid: gridOption(grid, gridVideo), loading: loadingOption(loading, loadingVideo), hide, md5 }));
+  profile: profile || profileBg !== 'menu' ? { page: showcase, icons: { stratz, dotabuff }, links: !!profile, bg: profileBg } : null, grid: gridOption(grid, gridVideo), loading: loadingOption(loading, loadingVideo), hide, md5 }));
 const blobOf = (bytes) => bytes && new Blob([bytes], { type: 'application/octet-stream' });
 // «Командой PowerShell» (and the .bat installer's 'installer' of before): the pack goes to the site and
 // the command downloads exactly it (src/install-pack.js, scripts/installer.mjs backgroundScript) →

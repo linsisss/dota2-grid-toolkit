@@ -1,4 +1,4 @@
-import { GLASS_KEYS, MENU_FRAME, MENU_HIDE, MENU_SIZES, glassChanged, menuGlass } from './menu-background.mjs';
+import { GLASS_KEYS, MENU_FRAME, MENU_HIDE, MENU_SIZES, PROFILE_BG_MODES, glassChanged, menuGlass } from './menu-background.mjs';
 import { STUDIO_CROSSFADES, STUDIO_FOLDERS, STUDIO_GRID_MODES, STUDIO_HERO_MODES, STUDIO_LOADING_MODES, studioFrame, studioPiece, studioSource } from './studio-background.mjs';
 import { CHAT_DEFAULTS, HUD_DEFAULTS, chatSettings, hudChanged, hudSettings } from './hud-style.mjs';
 import { TEXT_LIMITS } from './dota-texts.mjs';
@@ -17,7 +17,7 @@ import { portraitsState } from './hero-portraits.mjs';
 // Version 1:
 //   { format: 'gridstudio-dota', version: 1,
 //     menu: { aspect, folder, event, background: Bg | null,
-//             buttons: { hide: [MENU_HIDE key], news: { carnival, season }, profile,
+//             buttons: { hide: [MENU_HIDE key], news: { carnival, season }, profile, profileBg: menu|dim|hide,
 //                       glass: { bar, friends, news, header, showcase, party } (percents, MENU_GLASS; a key missing reads as 100) },
 //             grid: { mode: menu|dim|own, dim, own: Bg | null }, hero: { mode: menu|off|own, own }, loading: { mode: off|menu|own, own } },
 //     hud: hudSettings (with the chat), texts: { token: text },
@@ -25,7 +25,7 @@ import { portraitsState } from './hero-portraits.mjs';
 //     pictures: { key: data URL (PNG or WebP) }  — the cursor pictures the roles use,
 //     font: { selected: catalog id | null, roles: { Radiance, Reaver, RadianceM }, keepGrid, own: null | { name, faces: [{ media, name, size }] } },
 //     d2pfx: { choice: { section: { slot: mod id } } },
-//     portraits: { heroes: [{ hero, kind, source: { name, size, type, media? }, crop, start }] } (scripts/hero-portraits.mjs portraitsState) }
+//     portraits: { heroes: [{ hero, kind, source: { name, size, type, media? }, crop, start, hud?, hudCrop? }] } (scripts/hero-portraits.mjs portraitsState) }
 //   Bg: { source: { kind: 'workshop', id, title } | { kind: 'file', name, size, type, label, media? }, fit, blur, dim, frame, piece, crossfade }
 //   Role: { scale, x, y, rot, hot: [x, y] | null, key?, name? }
 // `media` is the SHA-256 of the user's file: the file itself lives in this browser (look-store.js
@@ -84,7 +84,10 @@ function lookButtons(input) {
   // The see-through panels (2026-10-22, MENU_GLASS): percents, 100 as in Dota (and for a key a document lacks).
   const glass = value.glass == null ? {} : object(value.glass);
   for (const key of GLASS_KEYS) if (glass[key] != null) percent(glass[key]);
-  return { hide, news: { carnival: bool(news.carnival, true), season: bool(news.season, true) }, profile: bool(value.profile, false), glass: menuGlass(glass) };
+  // The background under a profile (2026-10-29): PROFILE_BG_MODES, 'menu' as in Dota.
+  const profileBg = value.profileBg ?? 'menu';
+  if (!PROFILE_BG_MODES.includes(profileBg)) broken();
+  return { hide, news: { carnival: bool(news.carnival, true), season: bool(news.season, true) }, profile: bool(value.profile, false), profileBg, glass: menuGlass(glass) };
 }
 function lookMenu(input) {
   const value = input == null ? {} : object(input);
@@ -194,7 +197,7 @@ export function lookParts(look) {
   const cursorRoles = look.cursor.mode === 'own' ? Object.keys(look.cursor.own).length : look.cursor.mode === 'd2pfx' && look.cursor.pack ? 1 : 0;
   const changed = {
     bg: !!menu.background, grid: menu.grid.mode === 'dim' || has(menu.grid), hero: has(menu.hero), loading: has(menu.loading),
-    buttons: b.hide.length > 0 || !b.news.carnival || !b.news.season || b.profile || glassChanged(b.glass),
+    buttons: b.hide.length > 0 || !b.news.carnival || !b.news.season || b.profile || b.profileBg !== 'menu' || glassChanged(b.glass),
     hud: hudChanged({ ...look.hud, chat: CHAT_DEFAULTS }), chat: JSON.stringify(chatSettings(look.hud.chat)) !== JSON.stringify(CHAT_DEFAULTS), cursor: cursorRoles > 0,
     font: (!!look.font.own || !!look.font.selected) && Object.values(look.font.roles).some(Boolean), texts: Object.keys(look.texts).length > 0, portraits: (look.portraits?.heroes || []).length > 0,
     ...Object.fromEntries(Object.keys(D2PFX_SECTIONS).map((section) => [section, Object.keys(look.d2pfx.choice[section] || {}).length > 0]))
@@ -222,7 +225,7 @@ export function lookFromRecipe(recipe, { built = {}, media = {} } = {}) {
   const news = recipe.news || { carnival: !recipe.clean, season: !recipe.clean };
   return lookDocument({ format: LOOK_FORMAT, version: LOOK_VERSION, menu: {
     aspect: recipe.aspect, folder: recipe.folder === 'custom' ? 'russian' : recipe.folder, event: recipe.event ?? true, background: bgOf(recipe, built.bg, media.bg),
-    buttons: { hide: recipe.hide || [], news, profile: recipe.profile ?? false, ...(recipe.glass ? { glass: recipe.glass } : {}) },
+    buttons: { hide: recipe.hide || [], news, profile: recipe.profile ?? false, profileBg: recipe.profileBg ?? 'menu', ...(recipe.glass ? { glass: recipe.glass } : {}) },
     grid: { ...page(recipe.grid, built.grid, media.grid), dim: recipe.grid?.dim ?? 55 }, hero: page(recipe.hero, built.hero, media.hero), loading: { ...page(recipe.loading || { mode: 'off' }, built.loading, media.loading), mode: recipe.loading?.mode || 'off' }
   } });
 }

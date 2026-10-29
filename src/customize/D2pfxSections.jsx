@@ -91,7 +91,7 @@ export function useD2pfx() {
   const reset = (section) => setChoice((now) => { const next = { ...now }; delete next[section]; return next; });
   // The read-me's lines: each chosen mod, where it is from and whose it is.
   const credits = plan.picks.flatMap((mod) => creditLines(SECTION_TITLES()[mod.section], mod));
-  const files = (onProgress) => d2pfxPack(choice, onProgress);
+  const files = (onProgress, options) => d2pfxPack(choice, onProgress, options);
   // What the match preview draws (skinRender, d2pfx-hud.js): the HUD skin, then the HUD parts over it — a part
   // keeps the files it shares with the skin in the game, so it goes last here too.
   // The minimap's colour last: over «Larger Minimap»'s bigger box when that is chosen too.

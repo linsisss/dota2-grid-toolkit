@@ -1,6 +1,6 @@
 import { ALL_FORMATS, BlobSource, BufferTarget, Input, Output, VideoSampleSink, WebMOutputFormat, canEncodeVideo } from 'mediabunny';
 import { mediaKind } from '../../scripts/menu-background.mjs';
-import { PORTRAIT_LIMITS, PORTRAIT_MOVIE, PORTRAIT_PLACES, cropRect, movieRect } from '../../scripts/hero-portraits.mjs';
+import { HUD_PORTRAIT, PORTRAIT_LIMITS, PORTRAIT_MOVIE, PORTRAIT_PLACES, cropRect, hudRect, movieRect } from '../../scripts/hero-portraits.mjs';
 import { t } from '../../scripts/i18n.mjs';
 import { dotaCanvasSource } from './dota-frames.js';
 import { sampleNudge, sampleTimes } from '../../scripts/video-resample.mjs';
@@ -66,12 +66,24 @@ export function placePictures(still, crop) {
     return [kind, canvas];
   }));
 }
+// The HUD portrait's square (HUD_PORTRAIT.side²) from a frame, over black (Dota's portrait has no see-through).
+export function hudPicture(still, crop) {
+  const side = HUD_PORTRAIT.side, canvas = document.createElement('canvas'), r = hudRect(still.width, still.height, crop);
+  canvas.width = side; canvas.height = side;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  context.fillStyle = '#000'; context.fillRect(0, 0, side, side);
+  context.imageSmoothingQuality = 'high';
+  context.drawImage(still, r.x, r.y, r.w, r.h, 0, 0, side, side);
+  return canvas;
+}
 export const pixels = (canvas) => new Uint8Array(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data.buffer);
 
 // One frame of the movie: the card's cut stretched over the whole square, as Valve's movies are (Dota
 // stretches it back into the hover card: scripts/hero-portraits.mjs), so the hover shows the card.
-function paintMovie(context, source, width, height, crop) {
-  const side = PORTRAIT_MOVIE.side, r = movieRect(width, height, crop);
+// The HUD's movie (`hud`): the square cut of its own frame, not stretched.
+function paintMovie(context, source, width, height, crop, hud = false) {
+  const side = hud ? HUD_PORTRAIT.side : PORTRAIT_MOVIE.side, r = hud ? hudRect(width, height, crop) : movieRect(width, height, crop);
+  if (hud) { context.fillStyle = '#000'; context.fillRect(0, 0, side, side); }
   context.drawImage(source, r.x, r.y, r.w, r.h, 0, 0, side, side);
 }
 async function encoder(canvas) {
@@ -83,9 +95,10 @@ async function encoder(canvas) {
   }
   throw new PortraitError(t('Браузер не может кодировать WebM. Открой страницу в Chrome, Edge, Яндекс Браузере или Firefox.'));
 }
-// The movie of a hero: file + its opened source (openPortrait), crop, start → Uint8Array (WebM).
-export async function encodePortraitMovie(file, opened, { crop, start = 0, onProgress = () => {}, signal } = {}) {
-  const side = PORTRAIT_MOVIE.side, canvas = new OffscreenCanvas(side, side), context = canvas.getContext('2d');
+// The movie of a hero: file + its opened source (openPortrait), crop, start → Uint8Array (WebM). `hud`: the HUD
+// portrait's movie (its square frame, scripts/hero-portraits.mjs HUD_PORTRAIT) instead of the hover card's.
+export async function encodePortraitMovie(file, opened, { crop, start = 0, hud = false, onProgress = () => {}, signal } = {}) {
+  const side = hud ? HUD_PORTRAIT.side : PORTRAIT_MOVIE.side, canvas = new OffscreenCanvas(side, side), context = canvas.getContext('2d');
   context.imageSmoothingQuality = 'high';
   const options = await encoder(canvas), output = new Output({ format: new WebMOutputFormat(), target: new BufferTarget() });
   const { source, add } = dotaCanvasSource(canvas, options);
@@ -95,16 +108,16 @@ export async function encodePortraitMovie(file, opened, { crop, start = 0, onPro
   const stop = () => { if (signal?.aborted) throw new DOMException('Отменено', 'AbortError'); };
   try {
     if (still) {
-      paintMovie(context, opened.still, opened.width, opened.height, crop);
+      paintMovie(context, opened.still, opened.width, opened.height, crop, hud);
       for (let second = 0; second < PORTRAIT_MOVIE.stillSeconds; second++) { stop(); await add(second, 1); }
-    } else if (opened.mime === 'image/gif' || opened.mime === 'image/webp') await gifFrames(file, opened, crop, context, add, stop, onProgress);
-    else await videoFrames(file, opened, crop, start, context, add, stop, onProgress);
+    } else if (opened.mime === 'image/gif' || opened.mime === 'image/webp') await gifFrames(file, opened, crop, context, add, stop, onProgress, hud);
+    else await videoFrames(file, opened, crop, start, context, add, stop, onProgress, hud);
     await output.finalize();
   } catch (error) { await output.cancel().catch(() => {}); throw error; }
   onProgress(1);
   return new Uint8Array(output.target.buffer);
 }
-async function gifFrames(file, opened, crop, context, add, stop, onProgress) {
+async function gifFrames(file, opened, crop, context, add, stop, onProgress, hud) {
   const decoder = new ImageDecoder({ data: await file.arrayBuffer(), type: opened.mime });
   try {
     await decoder.tracks.ready;
@@ -112,12 +125,12 @@ async function gifFrames(file, opened, crop, context, add, stop, onProgress) {
     for (let index = 0; index < decoder.tracks.selectedTrack.frameCount && time < PORTRAIT_LIMITS.seconds; index++) {
       stop();
       const { image } = await decoder.decode({ frameIndex: index }), seconds = Math.min(frameSeconds(image), PORTRAIT_LIMITS.seconds - time);
-      paintMovie(context, image, image.displayWidth, image.displayHeight, crop); image.close();
+      paintMovie(context, image, image.displayWidth, image.displayHeight, crop, hud); image.close();
       await add(time, seconds); time += seconds; onProgress(time / PORTRAIT_LIMITS.seconds);
     }
   } finally { decoder.close(); }
 }
-async function videoFrames(file, opened, crop, start, context, add, stop, onProgress) {
+async function videoFrames(file, opened, crop, start, context, add, stop, onProgress, hud) {
   const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
   try {
     const track = await input.getPrimaryVideoTrack(), first = await track.getFirstTimestamp();
@@ -130,7 +143,7 @@ async function videoFrames(file, opened, crop, start, context, add, stop, onProg
       for (let k = 0; k < frames; k++) {
         stop();
         const { value: sample } = await samples.next();
-        if (sample) { paintMovie(context, sample.toCanvasImageSource(), sample.displayWidth, sample.displayHeight, crop); sample.close(); }
+        if (sample) { paintMovie(context, sample.toCanvasImageSource(), sample.displayWidth, sample.displayHeight, crop, hud); sample.close(); }
         await add(k / PORTRAIT_MOVIE.fps, 1 / PORTRAIT_MOVIE.fps);
         onProgress((k + 1) / frames);
       }

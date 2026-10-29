@@ -149,6 +149,14 @@ function importDota(data, index = 0) {
     if (config.categories.length > MAX_ENTITIES)
       throw new Error(t('В одной сетке допускается до 10 000 объектов.'));
     for (const [categoryIndex, c] of config.categories.entries()) {
+      // Dota itself writes -1 (or 0) into hero_ids for an empty slot — a hero dragged out of a category,
+      // a hero Valve removed (user report 2026-10-24: «не могу импортировать свои сетки»). Such entries
+      // are dropped, not refused; other negatives and anything that is not a whole number still are.
+      if (c && Array.isArray(c.hero_ids) && c.hero_ids.some((id) => id === -1 || id === 0)) {
+        const kept = c.hero_ids.filter((id) => id !== -1 && id !== 0);
+        repairs.push({ configIndex, categoryIndex, dropped: c.hero_ids.length - kept.length });
+        c.hero_ids = kept;
+      }
       if (
         !c ||
         typeof c.category_name !== 'string' ||

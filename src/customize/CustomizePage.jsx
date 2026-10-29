@@ -14,6 +14,7 @@ import { D2PFX_MODULES, D2pfxFields, useD2pfx } from './D2pfxSections.jsx';
 import { creditLine } from './d2pfx-ui.jsx';
 import { BY_HAND, SYSTEM, SYSTEM_NAMES } from '../system.js';
 import { PortraitsFields, useHeroPortraits } from './HeroPortraits.jsx';
+import { HUD_PORTRAIT } from '../../scripts/hero-portraits.mjs';
 import { PortraitPreview } from './portrait-preview.js';
 import { LookBar, LookNotice, isLookFile, useLooks } from './LookBar.jsx';
 import { readPrevious } from './look-state.js';
@@ -154,7 +155,7 @@ export default function CustomizePage({ preset, studioItem, onRemove, replace, n
   const files = [
     bg.sizes.pak02 && { path: 'dota_russian/pak02_dir.vpk', icon: 'archive', what: t('меню, фоны, кнопки'), ...bg.sizes.pak02 },
     ui.sizes.pak03 && { path: 'dota_russian/pak03_dir.vpk', icon: 'archive', what: t('HUD, чат, тексты'), ...ui.sizes.pak03 },
-    pt.size && { path: 'dota_russian/pak05_dir.vpk', icon: 'archive', what: t('портреты героев: {list}', { list: pt.names.join(', ') }), ...pt.size },
+    pt.size && { path: 'dota_russian/pak05_dir.vpk', icon: 'archive', what: `${t('портреты героев: {list}', { list: pt.names.join(', ') })}${pt.hudNames.length ? ` · ${t('в HUD: {list}', { list: pt.hudNames.join(', ') })}` : ''}`, ...pt.size },
     d2.sizes.pak && { path: 'dota_russian/pak04_dir.vpk', icon: 'archive', what: t('моды d2pfx: {list}', { list: d2.plan.picks.map((mod) => `«${mod.label}» (${creditLine(mod.credits)})`).join(', ') }), ...d2.sizes.pak },
     ui.sizes.cursors && { path: 'dota_russian/resource/cursor/', icon: 'cursor', what: `${t('курсор, файлов: {count}', { count: ui.sizes.cursors.count })}${ui.cursors.fromPack ? ` · ${t('пак «{name}» с d2pfx, автор: {author}', { name: ui.cursors.pack.name, author: ui.cursors.creditLine })}` : ''}`, ...ui.sizes.cursors },
     font.size && { path: 'dota/panorama/fonts/', icon: 'font', what: t('шрифт, файлов: {count}', { count: font.size.count }), bytes: font.size.bytes }
@@ -183,10 +184,10 @@ export default function CustomizePage({ preset, studioItem, onRemove, replace, n
       const menu = await bg.prepare({ delivery });
       setBusy({ label: t('Собираем…') });
       const [match, fonts, mods, portraits] = await Promise.all([ui.files(), font.files(),
-        d2.files((share) => setBusy({ label: t('Скачиваем моды с Dota2PornFX… {percent}%', { percent: Math.round(share * 100) }), progress: share })),
+        d2.files((share) => setBusy({ label: t('Скачиваем моды с Dota2PornFX… {percent}%', { percent: Math.round(share * 100) }), progress: share }), { skip: pt.hudOn ? [HUD_PORTRAIT.layout] : [] }),
         pt.files((share) => setBusy({ label: t('Собираем портреты героев… {percent}%', { percent: Math.round(share * 100) }), progress: share }))]);
       setBusy({ label: t('Собираем…') });
-      const zip = await customizeZip({ menu: menu?.blob ?? null, match, d2pfx: mods, portraits, portraitNames: pt.names, fonts, titles, credits: ui.cursors.credits, modCredits: d2.credits });
+      const zip = await customizeZip({ menu: menu?.blob ?? null, match, d2pfx: mods, portraits, portraitNames: pt.names, portraitHud: pt.hudNames, fonts, titles, credits: ui.cursors.credits, modCredits: d2.credits });
       if (!zip) return;
       const given = await deliverCustomize(zip.blob, { delivery, onProgress: (share) => setBusy({ label: t('Отправляем на GridStudio… {percent}%', { percent: Math.round(share * 100) }), progress: share }) });
       bg.delivered({ delivery });
@@ -212,7 +213,7 @@ export default function CustomizePage({ preset, studioItem, onRemove, replace, n
   };
   const chooseScene = (id) => { track('customize.scene', { scene: id }); setScene(id); if (open === 'font') setOpen(''); };
   const fields = { bg: <BackgroundFields bg={bg}/>, grid: <GridFields bg={bg}/>, hero: <HeroFields bg={bg}/>, loading: <LoadingFields bg={bg}/>, buttons: <ButtonsFields bg={bg}/>,
-    hud: <HudFields ui={ui}/>, chat: <ChatFields ui={ui}/>, cursor: <CursorFields cur={ui.cursors}/>, font: <FontFields font={font}/>, texts: <TextsFields ui={ui}/>, portraits: <PortraitsFields pt={pt}/>,
+    hud: <HudFields ui={ui}/>, chat: <ChatFields ui={ui}/>, cursor: <CursorFields cur={ui.cursors}/>, font: <FontFields font={font}/>, texts: <TextsFields ui={ui}/>, portraits: <PortraitsFields pt={pt} d2={d2} onMatch={() => chooseScene('match')}/>,
     ...Object.fromEntries(D2PFX_MODULES.map((id) => [id, <D2pfxFields d2={d2} section={id}/>])) };
   const reset = (id) => (id === 'portraits' ? pt.reset() : id === 'font' ? font.reset() : ['hud', 'chat', 'cursor', 'texts'].includes(id) ? ui.reset(id) : D2PFX_MODULES.includes(id) ? d2.reset(id) : bg.reset(id));
   const thumb = (id) => id === 'match' ? <span className="cz-thumb-screen"><img src={hudThumb || matchThumb} alt=""/></span> : <MenuThumb bg={bg} page={id}/>;

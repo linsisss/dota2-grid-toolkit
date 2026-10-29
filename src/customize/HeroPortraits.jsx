@@ -3,13 +3,14 @@ import { Icon, Notice } from '../catalog/Common.jsx';
 import D from '../../scripts/data.mjs';
 import { portraitSource } from '../../scripts/portraits.mjs';
 import { heroIndex, searchHeroes } from '../../scripts/hero-search.mjs';
-import { DEFAULT_CROP, GRID_CARD, HOVER_CARD, PORTRAIT_LIMITS, PORTRAIT_PLACES, cropRect, dragCrop, gridCardRect, heroPortraitsPack, panoramaSaturation, portraitHeroIds, portraitPaths, portraitsState } from '../../scripts/hero-portraits.mjs';
+import { D2PFX_HUD_PORTRAIT_MODS, DEFAULT_CROP, GRID_CARD, HOVER_CARD, HUD_PORTRAIT, PORTRAIT_LIMITS, PORTRAIT_PLACES, cropRect, dragCrop, gridCardRect, heroPortraitsPack, hudCropFrom, hudImagePath, panoramaSaturation, portraitHeroIds, portraitPaths, portraitsState } from '../../scripts/hero-portraits.mjs';
 import { vtexResource } from '../../scripts/dota-vtex.mjs';
 import { md5 } from '../../scripts/md5.mjs';
 import { locale, t } from '../../scripts/i18n.mjs';
 import { Field, rich, sizeText } from './ui.jsx';
 import { keepMedia, mediaFile } from './look-store.js';
-import { encodePortraitMovie, movieGuess, openPortrait, pixels, placePictures } from './portrait-media.js';
+import { encodePortraitMovie, hudPicture, movieGuess, openPortrait, pixels, placePictures } from './portrait-media.js';
+import hudValve from '../../assets/dota-menu/dota_hud_portrait.xml?raw';
 import { track } from '../site-stats.js';
 import './portraits.css';
 
@@ -45,6 +46,24 @@ function GridCard({ card, height, className = '' }) {
 }
 const secondsText = (value) => t('{seconds} с', { seconds: value.toLocaleString(locale, { maximumFractionDigits: 1 }) });
 const movieKey = (entry) => `${entry.source.media || entry.source.name}|${entry.crop.x}|${entry.crop.y}|${entry.crop.zoom}|${entry.start}`;
+// The HUD portrait (2026-10-24): its square frame (the card's centre until moved), its movie's key.
+const hudCropOf = (entry) => entry.hudCrop || hudCropFrom(entry.crop);
+const hudKey = (entry) => { const crop = hudCropOf(entry); return `hud|${entry.source.media || entry.source.name}|${crop.x}|${crop.y}|${crop.zoom}|${entry.start}`; };
+// A video of the HUD is a movie; a still picture (and a GIF of one frame) a texture.
+const hudMovie = (entry) => entry.kind === 'video';
+const KOTL = 90;  // the hero of the match preview (HudCanvas: the HUD was captured with Keeper of the Light)
+
+const hudVideos = (list) => list.filter((entry) => entry.hud && hudMovie(entry)).length;
+// The hero the match preview shows in the HUD's portrait: Keeper of the Light when he has one (the preview's own
+// hero), else the hero being edited, else the first with one; `stand`: another hero's portrait standing in for him.
+function hudPreview(ready, live, active) {
+  const on = ready.filter((entry) => entry.hud && live[entry.hero]?.hud);
+  const entry = on.find((one) => one.hero === KOTL) || on.find((one) => one.hero === active) || on[0];
+  if (!entry) return null;
+  const item = live[entry.hero];
+  return { hero: entry.hero, name: heroOf(entry.hero)?.name || '', stand: entry.hero !== KOTL, video: hudMovie(entry) && !item.opened.mime?.startsWith('image/'),
+    url: item.url, width: item.opened.width, height: item.opened.height, crop: hudCropOf(entry), start: entry.start, picture: item.hud, kind: entry.kind, mime: item.opened.mime };
+}
 
 export function useHeroPortraits({ open = false } = {}) {
   const [entries, setEntries] = useState(() => readSaved().heroes);
@@ -77,18 +96,21 @@ export function useHeroPortraits({ open = false } = {}) {
     patchLive(hero, { busy: true });
     const opened = await openPortrait(file, entry.start);
     const url = URL.createObjectURL(file);
-    setLive((all) => { if (all[hero]?.url) URL.revokeObjectURL(all[hero].url); return { ...all, [hero]: { file, url, opened, pictures: placePictures(opened.still, entry.crop), missing: false, busy: false } }; });
+    setLive((all) => { if (all[hero]?.url) URL.revokeObjectURL(all[hero].url); return { ...all, [hero]: { file, url, opened, pictures: placePictures(opened.still, entry.crop), hud: hudPicture(opened.still, hudCropOf(entry)), missing: false, busy: false } }; });
     return opened;
   }
   // A file for a hero: opened (refused files say why), kept in the browser, framed in the middle.
   async function setFile(hero, file) {
     if (!file || !hero) return;
     setError('');
-    const fresh = { hero, kind: 'image', source: { name: file.name || 'file', size: file.size, type: file.type || '' }, crop: { ...DEFAULT_CROP }, start: 0 };
+    // Another file for a hero keeps «also in the HUD» (its frame starts again from the card's).
+    const was = latest.current.entries.find((item) => item.hero === hero);
+    const fresh = { hero, kind: 'image', source: { name: file.name || 'file', size: file.size, type: file.type || '' }, crop: { ...DEFAULT_CROP }, start: 0, ...(was?.hud ? { hud: true } : {}) };
     try {
       const opened = await load(hero, file, fresh);
       const media = await keepMedia(file);
       const entry = { ...fresh, kind: opened.kind, source: { ...fresh.source, ...(media ? { media } : {}) } };
+      if (entry.hud && entry.kind === 'video' && hudVideos(latest.current.entries.filter((item) => item.hero !== hero)) >= HUD_PORTRAIT.videos) delete entry.hud;
       setEntries((list) => list.some((item) => item.hero === hero) ? list.map((item) => (item.hero === hero ? entry : item)) : [...list, entry].slice(0, PORTRAIT_LIMITS.heroes));
       track('customize.portrait', { action: 'file', kind: opened.kind });
     } catch (problem) {
@@ -97,9 +119,29 @@ export function useHeroPortraits({ open = false } = {}) {
     }
   }
   function setCrop(hero, crop) {
-    const item = latest.current.live[hero];
+    const item = latest.current.live[hero], entry = latest.current.entries.find((one) => one.hero === hero);
     update(hero, { crop });
-    if (item?.opened) patchLive(hero, { pictures: placePictures(item.opened.still, crop) });
+    // The HUD's frame follows the card's until it is moved on its own.
+    if (item?.opened) patchLive(hero, { pictures: placePictures(item.opened.still, crop), ...(entry && !entry.hudCrop ? { hud: hudPicture(item.opened.still, hudCropFrom(crop)) } : {}) });
+  }
+  // «Также использовать свой портрет в игре (портрет в HUD)»: on, the HUD's frame starts at the card's centre.
+  function setHud(hero, on) {
+    const entry = latest.current.entries.find((one) => one.hero === hero);
+    if (!entry) return;
+    setError('');
+    if (on && hudMovie(entry) && hudVideos(latest.current.entries.filter((one) => one.hero !== hero)) >= HUD_PORTRAIT.videos)
+      return setError(t('Видео в HUD можно поставить {count} героям — у каждого свой плеер в матче. Выключи HUD у другого героя или дай этому картинку.', { count: HUD_PORTRAIT.videos }));
+    setEntries((list) => list.map((one) => {
+      if (one.hero !== hero) return one;
+      const { hud: _, ...rest } = one;
+      return on ? { ...rest, hud: true } : rest;
+    }));
+    track('customize.portrait', { action: on ? 'hud-on' : 'hud-off' });
+  }
+  function setHudCrop(hero, crop) {
+    const item = latest.current.live[hero];
+    update(hero, { hudCrop: crop });
+    if (item?.opened) patchLive(hero, { hud: hudPicture(item.opened.still, crop) });
   }
   // A video's start: its still frame (the cards) is taken again a moment after the slider stops.
   const startTimer = useRef(null);
@@ -109,7 +151,7 @@ export function useHeroPortraits({ open = false } = {}) {
     startTimer.current = setTimeout(async () => {
       const item = latest.current.live[hero], entry = latest.current.entries.find((one) => one.hero === hero);
       if (!item?.file || !entry) return;
-      try { const opened = await openPortrait(item.file, start); patchLive(hero, { opened, pictures: placePictures(opened.still, entry.crop) }); } catch { /* The old frame stays. */ }
+      try { const opened = await openPortrait(item.file, start); patchLive(hero, { opened, pictures: placePictures(opened.still, entry.crop), hud: hudPicture(opened.still, hudCropOf(entry)) }); } catch { /* The old frame stays. */ }
     }, 250);
   }
   function remove(hero) {
@@ -122,7 +164,7 @@ export function useHeroPortraits({ open = false } = {}) {
 
   const ready = entries.filter((entry) => live[entry.hero]?.opened && !live[entry.hero]?.missing);
   // The pictures' exact size (textures made a moment after a change), the movies' as encoded or guessed.
-  const pictureKey = ready.map((entry) => `${entry.hero}:${movieKey(entry)}`).join();
+  const pictureKey = ready.map((entry) => `${entry.hero}:${movieKey(entry)}:${entry.hud ? hudKey(entry) : ''}`).join();
   useEffect(() => {
     const timer = setTimeout(async () => {
       const out = {};
@@ -132,6 +174,8 @@ export function useHeroPortraits({ open = false } = {}) {
         let bytes = 0;
         for (const [kind, place] of Object.entries(PORTRAIT_PLACES))
           bytes += (await vtexResource({ path: portraitPaths(entry.hero)[kind][0], rgba: pixels(item.pictures[kind]), width: place.width, height: place.height, format: place.format, flags: place.flags })).length;
+        if (entry.hud && !hudMovie(entry) && item.hud)
+          bytes += (await vtexResource({ path: hudImagePath(entry.hero), rgba: pixels(item.hud), width: HUD_PORTRAIT.side, height: HUD_PORTRAIT.side, ...HUD_PORTRAIT.image })).length;
         out[entry.hero] = bytes;
       }
       setImageBytes(out);
@@ -139,24 +183,35 @@ export function useHeroPortraits({ open = false } = {}) {
     return () => clearTimeout(timer);
   }, [pictureKey]);
   const movieBytes = (entry) => movies.current.get(movieKey(entry))?.length ?? movieGuess(live[entry.hero].opened, entry.start);
-  const size = ready.length ? { bytes: ready.reduce((sum, entry) => sum + (imageBytes[entry.hero] || 60_000) + movieBytes(entry), 0), estimate: ready.some((entry) => !movies.current.has(movieKey(entry)) && entry.kind === 'video') } : null;
+  // The HUD's movie (a square of the same bitrate), and its layout and style (a few KB).
+  const hudBytes = (entry) => (!entry.hud ? 0 : hudMovie(entry) ? movies.current.get(hudKey(entry))?.length ?? movieGuess(live[entry.hero].opened, entry.start) : 0);
+  const hudOn = ready.some((entry) => entry.hud);
+  const size = ready.length ? { bytes: ready.reduce((sum, entry) => sum + (imageBytes[entry.hero] || 60_000) + movieBytes(entry) + hudBytes(entry), 0) + (hudOn ? 3_000 : 0),
+    estimate: ready.some((entry) => entry.kind === 'video' && (!movies.current.has(movieKey(entry)) || (entry.hud && !movies.current.has(hudKey(entry))))) } : null;
 
   // The pack: every hero with its picture; movies encoded now (once a visit for the same framing).
   async function files(onProgress = () => {}) {
     const list = latest.current.entries.filter((entry) => latest.current.live[entry.hero]?.opened && !latest.current.live[entry.hero]?.missing);
     if (!list.length) return null;
     const items = [];
-    for (const [index, entry] of list.entries()) {
-      const item = latest.current.live[entry.hero], key = movieKey(entry);
+    // Each hero is one step, or two with a HUD movie.
+    const steps = list.reduce((sum, entry) => sum + (entry.hud && hudMovie(entry) ? 2 : 1), 0);
+    let done = 0;
+    const encode = async (entry, item, key, hud) => {
       let movie = movies.current.get(key);
       if (!movie) {
-        movie = await encodePortraitMovie(item.file, item.opened, { crop: entry.crop, start: entry.start, onProgress: (share) => onProgress((index + share) / list.length) });
+        movie = await encodePortraitMovie(item.file, item.opened, { crop: hud ? hudCropOf(entry) : entry.crop, start: entry.start, hud, onProgress: (share) => onProgress((done + share) / steps) });
         movies.current.set(key, movie);
       }
-      items.push({ hero: entry.hero, card: pixels(item.pictures.card), wide: pixels(item.pictures.wide), icon: pixels(item.pictures.icon), movie });
-      onProgress((index + 1) / list.length);
+      onProgress(++done / steps);
+      return movie;
+    };
+    for (const entry of list) {
+      const item = latest.current.live[entry.hero], movie = await encode(entry, item, movieKey(entry), false);
+      const hud = !entry.hud ? null : hudMovie(entry) ? { movie: await encode(entry, item, hudKey(entry), true) } : { image: pixels(item.hud) };
+      items.push({ hero: entry.hero, card: pixels(item.pictures.card), wide: pixels(item.pictures.wide), icon: pixels(item.pictures.icon), movie, ...(hud ? { hud } : {}) });
     }
-    return heroPortraitsPack(items, { md5 });
+    return heroPortraitsPack(items, { md5, hudValve });
   }
 
   const names = ready.map((entry) => heroOf(entry.hero)?.name).filter(Boolean);
@@ -165,7 +220,8 @@ export function useHeroPortraits({ open = false } = {}) {
     cards: new Map(ready.map((entry) => [entry.hero, live[entry.hero].pictures.card])),
     hover: open && activeEntry && activeLive?.opened ? { hero: active, name: heroOf(active)?.name || '', kind: activeLive.opened.kind, mime: activeLive.opened.mime, url: activeLive.url,
       width: activeLive.opened.width, height: activeLive.opened.height, crop: activeEntry.crop, start: activeEntry.start, card: activeLive.pictures.card } : null,
-    key: ready.map((entry) => `${entry.hero}:${movieKey(entry)}:${live[entry.hero].url}`).join()
+    key: ready.map((entry) => `${entry.hero}:${movieKey(entry)}:${live[entry.hero].url}`).join(),
+    hud: hudPreview(ready, live, active)
   }), [live, entries, open, active]);
   // Dropping a file on the preview while the section is open gives it to the chosen hero.
   const drop = {
@@ -173,7 +229,8 @@ export function useHeroPortraits({ open = false } = {}) {
     onDrop: (event) => { const file = event.dataTransfer?.files?.[0]; if (active && file) { event.preventDefault(); event.stopPropagation(); setFile(active, file); } }
   };
   return {
-    entries, live, active, activeEntry, activeLive, error, ready, names, choose, setFile, setCrop, setStart, remove, reset, files, preview, drop,
+    entries, live, active, activeEntry, activeLive, error, ready, names, choose, setFile, setCrop, setStart, setHud, setHudCrop, remove, reset, files, preview, drop, hudOn,
+    hudNames: ready.filter((entry) => entry.hud).map((entry) => heroOf(entry.hero)?.name).filter(Boolean),
     state: ready.length ? 'changed' : 'default',
     summary: names.length ? (names.length <= 3 ? names.join(', ') : t('{list} и ещё {count}', { list: names.slice(0, 2).join(', '), count: names.length - 2 })) : '',
     size
@@ -199,37 +256,56 @@ function HeroFind({ used, onPick }) {
   </div>;
 }
 
-// The card to frame: drag moves the picture, the wheel and the slider zoom.
-function CardFrame({ entry, item, onCrop }) {
-  const box = useRef(null), drag = useRef(null), place = PORTRAIT_PLACES.card;
-  const canvas = item.pictures.card;
+// A frame to move: drag moves the picture, the wheel and the slider zoom. `canvas`: the place's picture
+// (`width` × `height`), shown at `scale`; `crop` and `onCrop` its frame; `children`: marks over it.
+function Frame({ crop, canvas, width, height, scale, source, onCrop, className = '', label, children }) {
+  const box = useRef(null), drag = useRef(null);
   useEffect(() => {
     const node = box.current;
     if (!node) return undefined;
     const wheel = (event) => {
       event.preventDefault();
-      const zoom = Math.min(PORTRAIT_LIMITS.zoom[1], Math.max(1, entry.crop.zoom * Math.exp(-event.deltaY / 600)));
-      onCrop({ ...entry.crop, zoom: Math.round(zoom * 1000) / 1000 });
+      const zoom = Math.min(PORTRAIT_LIMITS.zoom[1], Math.max(1, crop.zoom * Math.exp(-event.deltaY / 600)));
+      onCrop({ ...crop, zoom: Math.round(zoom * 1000) / 1000 });
     };
     node.addEventListener('wheel', wheel, { passive: false });
     return () => node.removeEventListener('wheel', wheel);
-  }, [entry.crop, onCrop]);
+  }, [crop, onCrop]);
   useEffect(() => {
     const node = box.current?.querySelector('canvas'), context = node?.getContext('2d');
     if (!context) return;
-    context.clearRect(0, 0, node.width, node.height); context.drawImage(canvas, 0, 0);
+    context.clearRect(0, 0, node.width, node.height); context.drawImage(canvas, 0, 0, node.width, node.height);
   }, [canvas]);
-  return <div className="hp-frame" ref={box} style={{ width: place.width * SCALE, height: place.height * SCALE }} title={t('Тяни, чтобы выбрать кадр; колесо — приблизить')}
-    onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); drag.current = { x: event.clientX, y: event.clientY, crop: entry.crop }; }}
+  return <div className={`hp-frame ${className}`} ref={box} style={{ width: width * scale, height: height * scale }} title={t('Тяни, чтобы выбрать кадр; колесо — приблизить')} aria-label={label}
+    onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); drag.current = { x: event.clientX, y: event.clientY, crop }; }}
     onPointerMove={(event) => {
       if (!drag.current) return;
-      const { x, y, crop } = drag.current;
-      onCrop(dragCrop(crop, item.opened.width, item.opened.height, place.width, place.height, (event.clientX - x) / SCALE, (event.clientY - y) / SCALE));
+      const { x, y, crop: from } = drag.current;
+      onCrop(dragCrop(from, source.width, source.height, width, height, (event.clientX - x) / scale, (event.clientY - y) / scale));
     }}
     onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}>
-    <canvas width={place.width} height={place.height}/>
-    <span className="hp-frame-grid" style={{ '--side': `${gridCardRect().x * SCALE}px` }} aria-hidden="true"/>
+    <canvas width={width} height={height}/>
+    {children}
   </div>;
+}
+// The card to frame, with what the grid shows of it between dashed lines.
+function CardFrame({ entry, item, onCrop }) {
+  const place = PORTRAIT_PLACES.card;
+  return <Frame crop={entry.crop} canvas={item.pictures.card} width={place.width} height={place.height} scale={SCALE} source={item.opened} onCrop={onCrop}>
+    <span className="hp-frame-grid" style={{ '--side': `${gridCardRect().x * SCALE}px` }} aria-hidden="true"/>
+  </Frame>;
+}
+// The HUD portrait to frame: the whole square of #portraitHUD at its 1080p size (175 px); what Dota cuts off
+// is dimmed, and Valve's darkening is drawn as the game draws it (#LowerOverlay at the bottom, the stats'
+// gradient on the right), so the frame is what the HUD shows.
+const HUD_SCALE = HUD_PORTRAIT.panel / HUD_PORTRAIT.side;
+function HudFrame({ entry, item, onCrop }) {
+  const { panel, view, fade } = HUD_PORTRAIT, pct = (value) => `${(value / panel) * 100}%`;
+  return <Frame crop={hudCropOf(entry)} canvas={item.hud} width={HUD_PORTRAIT.side} height={HUD_PORTRAIT.side} scale={HUD_SCALE} source={item.opened} onCrop={onCrop} className="hp-hud-frame" label={t('Кадр портрета в HUD')}>
+    <span className="hp-hud-fade" style={{ height: `${fade * 100}%` }} aria-hidden="true"/>
+    <span className="hp-hud-stats" style={{ left: pct(view.x), top: pct(view.y), width: pct(view.width), height: pct(view.height) }} aria-hidden="true"/>
+    <span className="hp-hud-window" style={{ left: pct(view.x), top: pct(view.y), width: pct(view.width), height: pct(view.height) }} aria-hidden="true"/>
+  </Frame>;
 }
 // The other places at their size in the game (1080p), drawn from the same frame.
 function Places({ item }) {
@@ -253,7 +329,7 @@ function Places({ item }) {
   </div>;
 }
 
-export function PortraitsFields({ pt }) {
+export function PortraitsFields({ pt, d2 = null, onMatch = null }) {
   const input = useRef(null), used = useMemo(() => new Set(pt.entries.map((entry) => entry.hero)), [pt.entries]);
   const { active, activeEntry: entry, activeLive: item } = pt, hero = heroOf(active);
   const pickFile = () => input.current?.click();
@@ -295,10 +371,34 @@ export function PortraitsFields({ pt }) {
       {item?.pictures && <p className="custom-hint">{entry.kind === 'video' ? t('Тяни карточку, чтобы выбрать кадр. В игре видео играет, когда наводишь на героя в сетке (до {seconds} с, без звука); на карточке и в панелях — кадр из начала.', { seconds: PORTRAIT_LIMITS.seconds })
         : t('Тяни карточку, чтобы выбрать кадр, колесо — приблизить. Видео или GIF оживят карточку при наведении.')}{' '}
         {t('Карточка в сетке Dota узкая: видна только середина между пунктирами, во всю высоту и чуть серее. При наведении Dota показывает карточку целиком — наведи на героя в превью.')}</p>}
+      {item?.pictures && item.hud && <HudFields pt={pt} entry={entry} item={item} hero={hero} d2={d2} onMatch={onMatch}/>}
     </Field>}
     <Field label={pt.entries.length ? t('Ещё герой') : t('Герой')}><HeroFind used={used} onPick={(id) => { pt.choose(id); track('customize.portrait', { action: 'hero' }); }}/></Field>
-    <p className="custom-hint">{t('Портрет меняется во всей Dota, а не в одной сетке: карточки в сетке и при выборе героя, анимация при наведении, верхняя панель, таблица счёта, значки в чате и ленте убийств. Остаются как в Dota: 3D-портрет внизу экрана и миникарта. Видишь только ты.')}</p>
+    <p className="custom-hint">{t('Портрет меняется во всей Dota, а не в одной сетке: карточки в сетке и при выборе героя, анимация при наведении, верхняя панель, таблица счёта, значки в чате и ленте убийств. 3D-портрет внизу экрана — по галочке у героя, миникарта остаётся как в Dota. Видишь только ты.')}</p>
   </>;
+}
+// «Также использовать свой портрет в игре (портрет в HUD)» and, when on, its own square frame.
+function HudFields({ pt, entry, item, hero, d2, onMatch }) {
+  const crop = hudCropOf(entry), onCrop = (next) => pt.setHudCrop(entry.hero, next);
+  const skin = d2?.plan?.picks?.find((mod) => D2PFX_HUD_PORTRAIT_MODS.includes(mod.id));
+  return <div className="hp-hud">
+    <label className="catalog-check"><input type="checkbox" checked={!!entry.hud} onChange={(event) => pt.setHud(entry.hero, event.target.checked)}/>{t('Также использовать свой портрет в игре (портрет в HUD)')}</label>
+    {entry.hud && <>
+      <div className="hp-editor">
+        <HudFrame entry={entry} item={item} onCrop={onCrop}/>
+        <div className="hp-side">
+          <label className="custom-slider"><span>{t('Приблизить')}</span>
+            <input type="range" min={1} max={4} step={0.01} value={Math.min(4, crop.zoom)} onChange={(event) => onCrop({ ...crop, zoom: Number(event.target.value) })} style={{ '--fill': `${((Math.min(4, crop.zoom) - 1) / 3) * 100}%` }}/>
+            <output>×{crop.zoom.toLocaleString(locale, { maximumFractionDigits: 1 })}</output></label>
+          {entry.hudCrop && <button type="button" className="catalog-link hp-hud-link" onClick={() => onCrop(hudCropFrom(entry.crop))}>{t('Как у карточки')}</button>}
+          {onMatch && <button type="button" className="catalog-link hp-hud-link" onClick={onMatch}>{t('Посмотреть в превью матча')}</button>}
+        </div>
+      </div>
+      <p className="custom-hint">{entry.kind === 'video' ? t('В HUD видео играет по кругу (до {seconds} с, без звука) вместо 3D-модели {hero}.', { seconds: PORTRAIT_LIMITS.seconds, hero: hero.name }) : t('В HUD картинка стоит вместо 3D-модели {hero}.', { hero: hero.name })}{' '}
+        {t('Квадрат — весь портрет; затемнённые края Dota обрезает, низ и правый край она затемняет сама, справа поверх лягут цифры урона, брони и скорости. Портрет виден, когда выбран этот герой — твой, союзника или врага.')}</p>
+      {skin && <p className="custom-hint hp-hud-note" role="note"><Icon name="alert" size={13}/><span>{rich(t('HUD-скин {skin} тоже приносит файл портрета HUD — копию файла Valve без изменений. В сборку пойдёт наш файл (с твоими портретами), вид скина от этого не меняется.'), { skin: <b>«{skin.label}»</b> })}</span></p>}
+    </>}
+  </div>;
 }
 function PictureThumb({ canvas }) {
   const ref = useRef(null);

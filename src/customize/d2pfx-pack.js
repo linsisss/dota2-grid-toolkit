@@ -31,10 +31,13 @@ export function loadMod(mod) {
 }
 
 // The pack of the chosen mods → Uint8Array (pak04_dir.vpk), or null with nothing chosen. `onProgress(share)`.
-export async function d2pfxPack(choice, onProgress = () => {}) {
+// `skip`: game paths another pack of ours must own (pak04 is read before pak05: «Fluttershy Hud»'s copy of
+// Valve's HUD portrait layout would hide the heroes' HUD portraits, scripts/hero-portraits.mjs).
+export async function d2pfxPack(choice, onProgress = () => {}, { skip = [] } = {}) {
   const { picks } = d2pfxPlan(choice, catalog);
   if (!picks.length) return null;
   let done = 0;
   const picked = await Promise.all(picks.map(async (mod) => { const files = await loadMod(mod); onProgress(++done / picks.length); return { mod, files }; }));
-  return buildVPK(d2pfxFiles(picked), { md5 });
+  const files = d2pfxFiles(picked).filter((file) => !skip.includes(file.path));
+  return files.length ? buildVPK(files, { md5 }) : null;
 }

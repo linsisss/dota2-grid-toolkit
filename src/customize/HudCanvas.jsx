@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { DotaCursorLayer, canHover, cursorOf, onHero } from './DotaCursor.jsx';
 import { t } from '../../scripts/i18n.mjs';
 import { track } from '../site-stats.js';
@@ -6,6 +6,8 @@ import { CHAT_DEFAULTS, CHAT_LIMITS } from '../../scripts/hud-style.mjs';
 import { LIN, SCREEN, atlasPlate, buildLower, chatPlates, commonFromAtlas, composeScreen, hudChatBox, hudLayers, linearToSrgb, lowerFromAtlas } from '../../scripts/hud-capture/compose.mjs';
 import { applyDelta, grow, hiddenDecor, reskinLower } from '../../scripts/hud-capture/reskin.mjs';
 import { partOnly, skinLayers, skinMoves, textMask } from './d2pfx-hud.js';
+import { PortraitPreview } from './portrait-preview.js';
+import HudPortraitLayer from './HudPortraitLayer.jsx';
 
 // The match HUD as Dota drew it (2026-10-17): layers matted from the owner's in-game capture, composed for
 // a hudSettings() value by scripts/hud-capture/compose.mjs — the same arithmetic the solver validated
@@ -141,6 +143,8 @@ export default function HudCanvas({ settings, chat = false, cursor = '', roles =
   const canvas = useRef(null), store = useRef({ lower: {}, top: {}, loading: new Set(), cache: new Map(), scratch: {}, out: null, image: null });
   const [ready, setReady] = useState(false), [error, setError] = useState(false), [loaded, setLoaded] = useState(0);
   const [draft, setDraft] = useState(null), sprite = useRef(null), dragging = !!draft;
+  // «Портреты героев»: the HUD portrait of a hero with «also in the HUD» (HudPortraitLayer.jsx); `frame` counts composes.
+  const portraits = useContext(PortraitPreview), hudPortrait = portraits?.hud || null, [frame, setFrame] = useState(0);
   useEffect(() => {
     let gone = false;
     (async () => {
@@ -222,6 +226,7 @@ export default function HudCanvas({ settings, chat = false, cursor = '', roles =
       const d = s.image.data, o = s.out;
       for (let p = 0, n = SCREEN.width * SCREEN.height; p < n; p++) { d[p * 4] = o[p * 3]; d[p * 4 + 1] = o[p * 3 + 1]; d[p * 4 + 2] = o[p * 3 + 2]; }
       ctx.putImageData(s.image, 0, 0);
+      setFrame((n) => n + 1);
       if (onFrame) {
         const small = Object.assign(document.createElement('canvas'), { width: 192, height: 108 });
         small.getContext('2d').drawImage(el, 0, 0, 192, 108);
@@ -245,6 +250,7 @@ export default function HudCanvas({ settings, chat = false, cursor = '', roles =
   };
   return <div data-hud-screen="" style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#0b0d12' }}>
     <canvas aria-hidden="true" ref={canvas} width={SCREEN.width} height={SCREEN.height} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}/>
+    {ready && hudPortrait && frame > 0 && <HudPortraitLayer hud={hudPortrait} lower={settings.lower} out={store.current.out} frame={frame}/>}
     {live ? ready && <DotaCursorLayer cursor={(id) => cursorOf(roles, id)} place={(x, y, w, h) => ({ gx: (x / w) * SCREEN.width, gy: (y / h) * SCREEN.height, k: w / SCREEN.width })} regionAt={regionAt}/>
       : cursor && <img src={cursor} alt="" style={{ position: 'absolute', left: pct(1180, SCREEN.width), top: pct(560, SCREEN.height), width: pct(32, SCREEN.width), pointerEvents: 'none' }}/>}
     <canvas aria-hidden="true" ref={sprite} width={SCREEN.width} height={SCREEN.height} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', display: dragging ? 'block' : 'none' }}/>

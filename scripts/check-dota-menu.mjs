@@ -25,7 +25,9 @@ const FILES = ['dashboard.xml', 'dashboard_page_home.xml', 'dashboard_page_hero_
   // Not replaced: the news column's cells, whose places the see-through column's masks follow (NEWS_COLUMN).
   'frontpage_contents.xml',
   // Not a layout: the interface builder's HUD hook (scripts/interface-modules.mjs), given back with our rules.
-  '../styles/custom_ui.css'];
+  '../styles/custom_ui.css',
+  // The HUD's 3D portrait (2026-10-24): replaced with the heroes' own portraits in it (scripts/hero-portraits.mjs hudPortraitLayout).
+  'hud/dota_hud_portrait.xml'];
 const local = (file) => file.split('/').pop();  // our copies lie flat in assets/dota-menu/
 const assets = new URL('../assets/dota-menu/', import.meta.url);
 const args = process.argv.slice(2), flag = (name) => args.includes(name), option = (name) => args[args.indexOf(name) + 1];

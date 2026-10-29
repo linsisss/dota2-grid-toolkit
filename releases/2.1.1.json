@@ -1,0 +1,37 @@
+{
+  "version": "2.1.1",
+  "date": "2026-10-29",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v2.1.1",
+  "sections": [
+    {
+      "title": "Оформление Dota",
+      "changes": [
+        { "text": "Фон в профиле: как в меню, темнее или без фона меню" },
+        { "text": "Свой портрет героя можно поставить и в HUD матча — вместо 3D-портрета внизу слева" }
+      ]
+    },
+    {
+      "title": "Редактор",
+      "changes": [
+        { "text": "Сетки из Dota с пустыми местами в категориях (-1) снова импортируются" }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Dota customization",
+        "changes": [
+          { "text": "Profile background: as in the menu, darker or without the menu background" },
+          { "text": "Your own hero portrait can also replace the 3D portrait in the match HUD, bottom left" }
+        ]
+      },
+      {
+        "title": "Editor",
+        "changes": [
+          { "text": "Grids from Dota with empty slots in categories (-1) import again" }
+        ]
+      }
+    ]
+  }
+}

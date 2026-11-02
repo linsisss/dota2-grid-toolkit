@@ -9,7 +9,7 @@
 // Admins stay the CATALOG_ADMIN_TELEGRAM_IDS list.
 import { fail } from './catalog-store.mjs';
 
-export const MODERATED = Object.freeze(['works', 'arts', 'backgrounds', 'guides']);
+export const MODERATED = Object.freeze(['works', 'arts', 'backgrounds', 'guides', 'widgets']);
 export const MODERATOR_ACTIONS = Object.freeze(['approve', 'reject']);
 
 export class Moderators {
@@ -30,6 +30,6 @@ export class Moderators {
 // What a moderator may ask of /api/catalog/admin/*: the session, the menu's counts, the four queues
 // and a decision in them (its action is checked by the route, MODERATOR_ACTIONS).
 export function moderatorAllows(method, path) {
-  if (method === 'GET') return /^\/admin\/(session|summary|works|arts|backgrounds|guides)$/.test(path);
-  return method === 'POST' && /^\/admin\/(works\/[0-9a-f-]{36}|arts\/[1-9]\d{0,12}|backgrounds\/[1-9]\d{0,12}|guides\/[1-9]\d{0,12})$/.test(path);
+  if (method === 'GET') return /^\/admin\/(session|summary|works|arts|backgrounds|guides|widgets)$/.test(path);
+  return method === 'POST' && /^\/admin\/(works\/[0-9a-f-]{36}|arts\/[1-9]\d{0,12}|backgrounds\/[1-9]\d{0,12}|guides\/[1-9]\d{0,12}|widgets\/[1-9]\d{0,12})$/.test(path);
 }

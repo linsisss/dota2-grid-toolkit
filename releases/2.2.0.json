@@ -1,0 +1,63 @@
+{
+  "version": "2.2.0",
+  "date": "2026-11-02",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v2.2.0",
+  "sections": [
+    {
+      "title": "Твоя Dota",
+      "changes": [
+        { "text": "«Твоя Dota» теперь конструктор: экран Dota во всё окно, снизу док с разделами, настройки — рядом с выбранным", "children": ["Прежняя страница открывается ссылкой «Прежняя страница»"] },
+        { "text": "Виджеты на главной: часы, таймер до даты, текст, кнопка-ярлык, картинка, видео или GIF, мини-профиль и последний матч", "children": ["Перетаскиваются, тянутся за углы, прилипают к колонкам Dota"] },
+        { "text": "Варианты готовых виджетов: часы цифрами или со стрелками, таймер ячейками или строкой, «Последний матч» в виде GridStudio или Dota" },
+        { "text": "Кнопка «Мой профиль» открывает твой профиль в Dota" },
+        { "text": "Свои виджеты в «Редакторе виджета» из блоков: картинка, видео, текст, кнопка, фигура, прогресс-бар, часы, таймер, аватар, ник, герой", "children": ["Анимации, подсказки при наведении, звуки Dota на кнопках"] },
+        { "text": "Четыре шаблона виджетов: «Стрим», «Мой профиль», «Отсчёт», «Быстрый доступ»" },
+        { "text": "«Мастерская виджетов»: делись своими виджетами и ставь себе чужие после проверки модератором" },
+        { "text": "Превью меню показывает выбранные с d2pfx верхнюю панель и кнопку «Играть»" }
+      ]
+    },
+    {
+      "title": "Оформление Dota",
+      "changes": [
+        { "text": "Тема меню GridStudio: всё меню Dota в одном цвете — 8 готовых или любой свой", "children": ["Логотип Dota и кнопка выхода тоже в цвет темы"] },
+        { "text": "Чат, список друзей с группой и колонку новостей можно перетащить мышью" },
+        { "text": "Вкладки «Герои», «Арсенал», «Просмотр»… можно расставить в своём порядке" },
+        { "text": "Карточки Dark Carnival и «Диковинки Квортеро» можно уменьшить или сделать маленькими значками" },
+        { "text": "Список друзей на главной можно закрыть по умолчанию" },
+        { "text": "d2pfx: 10 верхних панелей, 7 кнопок «Играть», 3 фона поиска игры и Crystal Interface", "children": ["Новые HUD-скины Gotick Full Black и Lain, пинги Question Marks и Tcoaal Heart"] },
+        { "text": "Карточки Dark Carnival и Квортеро снова скрываются по отдельности", "children": ["Уже установленное нужно собрать и поставить заново"] },
+        { "text": "С фоном меню от GridStudio больше не пропадают мелкие иконки Dota", "children": ["Уже установленное нужно собрать и поставить заново"] }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Your Dota",
+        "changes": [
+          { "text": "«Your Dota» is now a constructor: the Dota screen fills the window, a dock with sections below, settings next to what you picked", "children": ["The previous page opens with the «Previous page» link"] },
+          { "text": "Widgets on the home screen: clock, countdown, text, shortcut button, picture, video or GIF, mini-profile and last match", "children": ["Drag them, resize by the corners, they snap to Dota's columns"] },
+          { "text": "Ready widget variants: a digital or analogue clock, a countdown in cells or in one line, «Last match» in GridStudio's or Dota's look" },
+          { "text": "The «My profile» button opens your Dota profile" },
+          { "text": "Your own widgets in the «Widget editor» from blocks: picture, video, text, button, shape, progress bar, clock, countdown, avatar, nickname, hero", "children": ["Animations, hover tooltips, Dota sounds on buttons"] },
+          { "text": "Four widget templates: «Stream», «My profile», «Countdown», «Quick access»" },
+          { "text": "«Widget Workshop»: share your widgets and install others' after a moderator's check" },
+          { "text": "The menu preview shows the top bar and «Play» button chosen from d2pfx" }
+        ]
+      },
+      {
+        "title": "Dota customization",
+        "changes": [
+          { "text": "GridStudio menu theme: the whole Dota menu in one colour — 8 ready ones or your own", "children": ["The Dota logo and the quit button follow the theme too"] },
+          { "text": "Drag the chat, the friends list with the party and the news column with the mouse" },
+          { "text": "Put the «Heroes», «Armory», «Watch»… tabs in your own order" },
+          { "text": "The Dark Carnival and «Quartero's Curiosities» cards can be smaller or small icons" },
+          { "text": "The friends list on the home screen can stay closed by default" },
+          { "text": "d2pfx: 10 top bars, 7 «Play» buttons, 3 game search backgrounds and Crystal Interface", "children": ["New HUD skins Gotick Full Black and Lain, pings Question Marks and Tcoaal Heart"] },
+          { "text": "The Dark Carnival and Quartero cards hide separately again", "children": ["Rebuild and reinstall what you already installed"] },
+          { "text": "Small Dota icons no longer go missing with a GridStudio menu background", "children": ["Rebuild and reinstall what you already installed"] }
+        ]
+      }
+    ]
+  }
+}

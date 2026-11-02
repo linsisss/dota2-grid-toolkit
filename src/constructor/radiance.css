@@ -1,0 +1,6 @@
+/* Radiance, Dota's font, for a widget of one's own drawn outside the constructor (the admin panel's «Виджеты»,
+   src/catalog/WidgetModeration.jsx); the constructor declares the same faces in constructor.css. */
+@font-face { font-family:'KzRadiance'; font-weight:300; font-display:swap; src:url('../../assets/fonts/radiance-light.otf') format('opentype'); }
+@font-face { font-family:'KzRadiance'; font-weight:400; font-display:swap; src:url('../../assets/fonts/radiance-regular.otf') format('opentype'); }
+@font-face { font-family:'KzRadiance'; font-weight:600; font-display:swap; src:url('../../assets/fonts/radiance-semibold.otf') format('opentype'); }
+@font-face { font-family:'KzRadiance'; font-weight:700 900; font-display:swap; src:url('../../assets/fonts/radiance-bold.otf') format('opentype'); }

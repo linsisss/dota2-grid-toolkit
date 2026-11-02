@@ -10,7 +10,7 @@
 			<Panel class="MiniShowcaseContainer">
 				<DOTAMiniShowcase id="MiniShowcase" accountid="local" onactivate="DOTAShowShowcasePage( 0 )" />
 				<Button id="EditShowcaseButton" class="ButtonPrimary DarkGrey" onactivate="DOTAShowcaseStartEditing( MiniShowcase )">
-					<Image id="EditShowcaseLockedImage" src="s2r://panorama/images/events/aghanim/lock_icon_png.vtex_c" scaling="stretch-to-fit-y-preserve-aspect" onmouseout="UIHideTextTooltip();" onmouseover="UIShowTextTooltip( #DOTA_Showcase_Tooltip_EditLocked );" />
+					<Image id="EditShowcaseLockedImage" src="s2r://panorama/images/events/aghanim/lock_icon_png.vtex" scaling="stretch-to-fit-y-preserve-aspect" onmouseout="UIHideTextTooltip();" onmouseover="UIShowTextTooltip( #DOTA_Showcase_Tooltip_EditLocked );" />
 					<Label text="#DOTA_Showcase_EditMini" />
 				</Button>
 			</Panel>

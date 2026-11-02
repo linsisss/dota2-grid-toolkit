@@ -240,7 +240,9 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .dm-bar-mid { left:1488px; right:428px; height:61px; background-size:4px 61px; background-repeat:repeat-x; }
 .dm-bar-right { right:0; width:432px; height:61px; background-size:1920px 73px; background-position:-1488px 0; }
 /* The friends rail: one picture at 2× (scripts/make-menu-rail.mjs), cut at the party bar. */
-.dm-rail { position:absolute; left:32px; top:100px; bottom:91px; width:366px; overflow:hidden; background:#0a0806; }
+.dm-rail { position:absolute; left:32px; top:100px; bottom:91px; width:366px; overflow:hidden; background:#0a0806; transform-origin:50% 100%; transition:opacity 320ms ease, transform 420ms cubic-bezier(.22,.8,.24,1), clip-path 420ms cubic-bezier(.22,.8,.24,1); clip-path:inset(0 0 0 0); }
+/* Closed: it folds down into the party bar under it, as Dota hides it. */
+.dm-rail.is-closed { opacity:0; transform:translateY(48px); clip-path:inset(100% 0 0 0); }
 .dm-rail img { position:relative; display:block; width:366px; height:auto; }
 /* The see-through panels (DotaMenu.jsx glass): the bar's ground and what lies on it, and the friend search's black row. */
 .dm-bar-layer { position:absolute; inset:0; pointer-events:none; }
@@ -260,6 +262,8 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
    them: the button goes down first and the card comes back after it (the delays below). */
 .dm-season { top:600px; height:234px; transition:opacity 340ms var(--ease) 140ms, transform 440ms var(--ease) 140ms, top 440ms var(--ease); }
 .dm-season.is-top { top:100px; }
+.dm-news.is-icon { object-fit:cover; object-position:50% 50%; border-radius:14px; box-shadow:inset 0 0 0 1px #ffffff1f, 0 8px 24px #000a; }
+.dm-news.is-icon.is-carnival { object-position:50% 14%; }
 .dm-news.is-hidden { opacity:0; transform:translateX(24px) scale(.98); transition:opacity 220ms ease-in, transform 300ms ease-in; }
 /* The season event (DotaMenu `event`): the screen between the friends rail and the news column, its
    own picture blurred behind the edges, under the panels; the button and its «НАЗАД» state. The
@@ -296,6 +300,12 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .dm-event-toggle.is-off .dm-event-title:not(.is-back) { opacity:0; transform:translateX(-10px); }
 .dm-chat { position:absolute; left:50%; bottom:21px; width:688px; height:34px; transform:translateX(-50%); }
 .dm-play { position:absolute; right:58px; bottom:22px; width:330px; height:49px; }
+@font-face { font-family:'DMRadiance'; font-weight:600; font-display:swap; src:url('../../assets/fonts/radiance-semibold.otf') format('opentype'); }
+/* «Тема меню» in the preview (DotaMenu theme): the flat bar under Valve's tabs and icons, the pill «Играть», rounded cards. */
+.dm-theme-bar { position:absolute; left:0; right:0; top:0; height:64px; background:var(--th-surface); border-bottom:1px solid color-mix(in srgb,var(--th-outline) 40%,transparent); transition:background-color .3s ease; }
+.dm-theme-play { display:grid; place-items:center; border-radius:24px; background:var(--th-primary); color:var(--th-on-primary); font:600 26px/1 KzRadiance, DMRadiance, 'Trebuchet MS', system-ui, sans-serif; letter-spacing:.2em; text-indent:.2em;
+  box-shadow:0 6px 18px 0 color-mix(in srgb,var(--th-primary) 27%,transparent); transition:background-color .3s ease, color .3s ease; }
+.dm-layer.is-themed .dm-news { border-radius:16px; }
 
 .custom-fetching { position:absolute; inset:0; z-index:3; display:grid; place-content:center; justify-items:center; gap:12px; background:#0b0a10cc; animation:custom-enter 200ms var(--ease) both; }
 .custom-fetching b { font-weight:500; }
@@ -845,6 +855,21 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .d2-video-mark { position:absolute; left:6px; bottom:6px; display:grid; place-items:center; width:20px; height:20px; border-radius:50%; background:#000a; color:#fff; }
 .d2-dota .cur-pack-shot { background:repeating-linear-gradient(135deg,#2a2733 0 10px,#26232e 10px 20px); }
 .d2-dota-face { position:absolute; inset:0; display:grid; place-content:center; justify-items:center; gap:4px; color:var(--cat-muted); font-size:12px; }
+.d2-theme-thumb { position:absolute; inset:0; background:radial-gradient(90% 120% at 30% 40%,#2b2f3a,#12141b); }
+.d2-theme-thumb i { position:absolute; display:block; font-style:normal; }
+.d2-theme-bar { left:0; right:0; top:0; height:15%; background:var(--surface); border-bottom:1px solid color-mix(in srgb,var(--outline) 60%,transparent); }
+.d2-theme-rail { left:4%; top:22%; bottom:8%; width:20%; border-radius:4px; background:color-mix(in srgb,var(--surface) 88%,transparent); }
+.d2-theme-card { right:5%; top:22%; width:24%; height:44%; border-radius:6px; background:color-mix(in srgb,var(--container) 70%,#0000); box-shadow:inset 0 0 0 1px #ffffff14; }
+.d2-theme-play { right:5%; bottom:8%; width:24%; height:12%; border-radius:99px; background:var(--primary); color:var(--on-primary); font:700 7px/1 system-ui,sans-serif; letter-spacing:.12em; display:grid !important; place-items:center; box-shadow:0 2px 8px -2px var(--primary); }
+.d2-theme-colors { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 2px; }
+.d2-theme-color { position:relative; width:28px; height:28px; padding:0; border:0; border-radius:50%; background:var(--c); cursor:pointer; box-shadow:inset 0 0 0 1px #ffffff26; transition:transform .15s var(--ease), box-shadow .15s; }
+.d2-theme-color:hover { transform:scale(1.08); }
+.d2-theme-color.is-on { box-shadow:0 0 0 2px var(--cat-bg, #16131c), 0 0 0 4px var(--c); }
+.d2-theme-color:focus-visible { outline:none; box-shadow:0 0 0 2px var(--cat-bg, #16131c), 0 0 0 4px #c4b5ed; }
+.d2-theme-color.is-own { display:grid; place-items:center; color:#fff; background:conic-gradient(from 90deg,#ff5a5a,#ffb03a,#5bd36b,#2ec4b6,#3fa7ff,#8b6cff,#ff6fa3,#ff5a5a); }
+.d2-theme-color.is-own.is-on { background:var(--c); }
+.d2-theme-color.is-own svg { filter:drop-shadow(0 1px 1px #0008); pointer-events:none; }
+.d2-theme-color input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
 .d2-chosen { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; margin-bottom:10px; padding:10px; border:1px solid #c4b5ed55; border-radius:14px; background:radial-gradient(120% 140% at 0% 0%,#c4b5ed21,transparent 60%),#ffffff06; animation:custom-enter 240ms var(--ease) both; }
 .d2-chosen-media { position:relative; border-radius:10px; overflow:hidden; background:#1c1a22; aspect-ratio:16/9; }
 .d2-chosen-expand { position:absolute; top:8px; right:8px; display:grid; place-items:center; width:32px; height:32px; border:1px solid #ffffff2e; border-radius:9px; background:#15141acc; color:#efeaf5; backdrop-filter:blur(6px); cursor:zoom-in; transition:background 160ms, border-color 160ms; }
@@ -892,3 +917,16 @@ html:has(#catalog-root .custom-app), body:has(#catalog-root .custom-app) { overf
 .cz-look-notice .catalog-link { flex:none; font-size:13px; }
 .cz-look-notice .catalog-icon { flex:none; width:28px; height:28px; }
 .cz-holding { display:grid; place-items:center; min-height:60vh; }
+/* «Кнопки меню» (2026-11-02): the tabs' order dragged, the news cards' views. */
+.custom-tabs-order button[draggable] { cursor:grab; }
+.custom-tabs-order button.is-held { opacity:.45; }
+.custom-grip { display:inline-block; width:6px; height:12px; margin-right:6px; background:radial-gradient(circle, currentColor 1px, transparent 1.5px) 0 0 / 3px 4px; opacity:.55; }
+.custom-tabs-reset { border:0; background:none; color:var(--cat-accent); font:inherit; font-size:12.5px; cursor:pointer; }
+.custom-cards { gap:14px; }
+.custom-card-set { display:grid; gap:10px; }
+/* d2pfx's top bar and play button in the preview (d2pfx-menu-preview.js). */
+.dm-mod-bar { position:absolute; left:0; top:0; width:1920px; height:112px; background-size:1920px 164px; background-repeat:no-repeat; pointer-events:none; }
+.dm-mod-play { box-sizing:border-box; display:flex; align-items:center; justify-content:center; padding:4px 12px; }
+.dm-mod-play span { color:#fff; font-family:KzRadiance, DMRadiance, sans-serif; font-size:28px; font-weight:700; letter-spacing:3px; text-transform:uppercase; text-shadow:0 0 5px #000; }
+.dm-moved { position:absolute; inset:0; pointer-events:none; }
+.dm-moved > * { pointer-events:auto; }

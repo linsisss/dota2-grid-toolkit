@@ -1,4 +1,5 @@
-import { GLASS_KEYS, MENU_FRAME, MENU_FRAME_ZOOM, MENU_HIDE, MENU_SIZES } from './menu-background.mjs';
+import { GLASS_KEYS, MENU_FRAME, MENU_FRAME_ZOOM, MENU_HIDE, MENU_SIZES, PROFILE_BG_MODES, menuValve, valveChanged } from './menu-background.mjs';
+import { THEME_ACCENT } from './menu-theme.mjs';
 
 // A menu background kept in «Студия» (docs/customize.md «Фоны в студии»). The browser keeps the
 // built WebM with it (scripts/background-library.mjs), so it downloads again at once; an account
@@ -109,7 +110,14 @@ export function studioRecipe(input) {
   const news = input.news == null ? null : (typeof input.news === 'object' && typeof input.news.carnival === 'boolean' && typeof input.news.season === 'boolean' ? { carnival: input.news.carnival, season: input.news.season } : broken());
   return { aspect: input.aspect, fit: input.fit, blur: percent(input.blur), dim: percent(input.dim), frame: studioFrame(input.frame), clean: input.clean, ...(news ? { news } : {}), folder: input.folder,
     delivery: input.delivery, piece: studioPiece(input.piece), crossfade: input.crossfade, source: studioSource(input.source), hero: studioHero(input.hero), event: studioSwitch(input.event), profile: studioSwitch(input.profile), grid: studioGrid(input.grid),
-    loading: studioLoading(input.loading), hide: studioHide(input.hide), ...(studioGlass(input.glass) ? { glass: studioGlass(input.glass) } : {}) };
+    loading: studioLoading(input.loading), hide: studioHide(input.hide), ...(studioGlass(input.glass) ? { glass: studioGlass(input.glass) } : {}),
+    // The background under a profile (2026-10-29) and the friends list closed (2026-11-02), kept only when not as in Dota.
+    ...(input.profileBg == null || input.profileBg === 'menu' ? {} : PROFILE_BG_MODES.includes(input.profileBg) ? { profileBg: input.profileBg } : broken()),
+    ...(input.friendsClosed == null || input.friendsClosed === false ? {} : input.friendsClosed === true ? { friendsClosed: true } : broken()),
+    // Valve's panels set by hand (2026-11-02), kept only when changed.
+    ...(input.valve == null ? {} : typeof input.valve !== 'object' ? broken() : valveChanged(input.valve) ? { valve: menuValve(input.valve) } : {}),
+    // «Тема меню» (2026-11-01): its accent, kept only when on.
+    ...(input.theme == null ? {} : THEME_ACCENT.test(input.theme) ? { theme: input.theme.toLowerCase() } : broken()) };
 }
 
 // A workshop submission of the background: its gallery id and the status token.

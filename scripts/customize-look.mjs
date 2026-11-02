@@ -1,4 +1,6 @@
-import { GLASS_KEYS, MENU_FRAME, MENU_HIDE, MENU_SIZES, PROFILE_BG_MODES, glassChanged, menuGlass } from './menu-background.mjs';
+import { GLASS_KEYS, MENU_FRAME, MENU_HIDE, MENU_SIZES, PROFILE_BG_MODES, glassChanged, menuGlass, menuValve, valveChanged } from './menu-background.mjs';
+import { cleanWidgets } from './menu-widgets.mjs';
+import { THEME_ACCENT } from './menu-theme.mjs';
 import { STUDIO_CROSSFADES, STUDIO_FOLDERS, STUDIO_GRID_MODES, STUDIO_HERO_MODES, STUDIO_LOADING_MODES, studioFrame, studioPiece, studioSource } from './studio-background.mjs';
 import { CHAT_DEFAULTS, HUD_DEFAULTS, chatSettings, hudChanged, hudSettings } from './hud-style.mjs';
 import { TEXT_LIMITS } from './dota-texts.mjs';
@@ -17,9 +19,10 @@ import { portraitsState } from './hero-portraits.mjs';
 // Version 1:
 //   { format: 'gridstudio-dota', version: 1,
 //     menu: { aspect, folder, event, background: Bg | null,
-//             buttons: { hide: [MENU_HIDE key], news: { carnival, season }, profile, profileBg: menu|dim|hide,
+//             buttons: { hide: [MENU_HIDE key], news: { carnival, season }, profile, profileBg: menu|dim|hide, friendsClosed, valve,
 //                       glass: { bar, friends, news, header, showcase, party } (percents, MENU_GLASS; a key missing reads as 100) },
-//             grid: { mode: menu|dim|own, dim, own: Bg | null }, hero: { mode: menu|off|own, own }, loading: { mode: off|menu|own, own } },
+//             grid: { mode: menu|dim|own, dim, own: Bg | null }, hero: { mode: menu|off|own, own }, loading: { mode: off|menu|own, own },
+//             widgets: [widget] (scripts/menu-widgets.mjs cleanWidgets), theme: { accent: '#rrggbb' } | null },
 //     hud: hudSettings (with the chat), texts: { token: text },
 //     cursor: { mode: dota|d2pfx|own, pack: d2pfx pack | null, own: { id: Role }, packed: { id: Role | { gone } } },
 //     pictures: { key: data URL (PNG or WebP) }  — the cursor pictures the roles use,
@@ -33,6 +36,7 @@ import { portraitsState } from './hero-portraits.mjs';
 // reads as Dota's, so a later version may add sections without breaking this one.
 // Additions within version 1 (old documents read the same, older pages ignore what they do not know):
 //   2026-10-22 buttons.glass { bar, friends }; later that day its news, header, showcase and party.
+//   2026-11-01 menu.theme { accent } («Тема меню», scripts/menu-theme.mjs; shown in «Детали меню»).
 export const LOOK_FORMAT = 'gridstudio-dota';
 export const LOOK_VERSION = 1;
 export const LOOK_EXTENSION = '.gsdota';
@@ -43,7 +47,7 @@ export const LOOK_LIMITS = Object.freeze({
 });
 // The parts of the page (CustomizePage.jsx MODULES), in its order, with their names for «Студия».
 export const LOOK_PARTS = Object.freeze([
-  ['bg', 'Фон меню'], ['grid', 'Под сеткой героев'], ['hero', 'За героем'], ['loading', 'Экран загрузки'], ['buttons', 'Кнопки меню'], ['menuparts', 'Детали меню'],
+  ['bg', 'Фон меню'], ['grid', 'Под сеткой героев'], ['hero', 'За героем'], ['loading', 'Экран загрузки'], ['buttons', 'Кнопки меню'], ['widgets', 'Виджеты'], ['menuparts', 'Детали меню'],
   ['hud', 'Вид HUD'], ['hudskin', 'HUD-скин'], ['hudparts', 'Детали HUD'], ['chat', 'Чат'], ['cursor', 'Курсор'], ['click', 'Клик'], ['pings', 'Пинги'], ['deny', 'Денай'],
   ['font', 'Шрифт'], ['texts', 'Тексты'], ['portraits', 'Портреты героев'], ['voice', 'Иконка голоса']
 ].map((part) => Object.freeze(part)));
@@ -87,7 +91,10 @@ function lookButtons(input) {
   // The background under a profile (2026-10-29): PROFILE_BG_MODES, 'menu' as in Dota.
   const profileBg = value.profileBg ?? 'menu';
   if (!PROFILE_BG_MODES.includes(profileBg)) broken();
-  return { hide, news: { carnival: bool(news.carnival, true), season: bool(news.season, true) }, profile: bool(value.profile, false), profileBg, glass: menuGlass(glass) };
+  // The friends list closed on the home page (2026-11-02); open, as in Dota, for documents before it.
+  // Valve's panels set by hand (2026-11-02, menuValve): as in Dota for documents before it and for what it cannot read.
+  if (value.valve != null && typeof value.valve !== 'object') broken();
+  return { hide, news: { carnival: bool(news.carnival, true), season: bool(news.season, true) }, profile: bool(value.profile, false), profileBg, friendsClosed: bool(value.friendsClosed, false), valve: menuValve(value.valve), glass: menuGlass(glass) };
 }
 function lookMenu(input) {
   const value = input == null ? {} : object(input);
@@ -95,7 +102,11 @@ function lookMenu(input) {
   if (value.folder != null && !STUDIO_FOLDERS.includes(value.folder)) broken();
   const grid = value.grid == null ? {} : object(value.grid);
   return { aspect: value.aspect ?? '16:9', folder: value.folder ?? 'russian', event: bool(value.event, true), background: lookBackground(value.background), buttons: lookButtons(value.buttons),
-    grid: lookPage(grid, STUDIO_GRID_MODES, 'menu', { dim: percent(grid.dim, 55) }), hero: lookPage(value.hero, STUDIO_HERO_MODES, 'menu'), loading: lookPage(value.loading, STUDIO_LOADING_MODES, 'off') };
+    grid: lookPage(grid, STUDIO_GRID_MODES, 'menu', { dim: percent(grid.dim, 55) }), hero: lookPage(value.hero, STUDIO_HERO_MODES, 'menu'), loading: lookPage(value.loading, STUDIO_LOADING_MODES, 'off'),
+    // The main menu's widgets (2026-10-31, scripts/menu-widgets.mjs): its own check, a widget it cannot read goes.
+    widgets: value.widgets == null ? [] : Array.isArray(value.widgets) ? cleanWidgets(value.widgets) : broken(),
+    // «Тема меню» (2026-11-01): the accent of scripts/menu-theme.mjs, or none (Dota's colours).
+    theme: value.theme == null ? null : THEME_ACCENT.test(object(value.theme).accent) ? { accent: value.theme.accent.toLowerCase() } : broken() };
 }
 function lookTexts(input) {
   const value = input == null ? {} : object(input), entries = Object.entries(value);
@@ -188,6 +199,11 @@ export function lookMedia(look) {
   for (const bg of [menu.background, menu.grid.own, menu.hero.own, menu.loading.own]) if (bg?.source.kind === 'file' && bg.source.media) out[bg.source.media] = { name: bg.source.name, size: bg.source.size, kind: 'background' };
   for (const face of look.font.own?.faces || []) out[face.media] = { name: face.name, size: face.size, kind: 'font' };
   for (const entry of look.portraits?.heroes || []) if (entry.source.media) out[entry.source.media] = { name: entry.source.name, size: entry.source.size, kind: 'portrait' };
+  for (const widget of menu.widgets || []) {
+    // A widget's own file, or the blocks' of a widget of one's own.
+    const files = widget.type === 'custom' ? (widget.props.design?.blocks || []).filter((b) => b.type === 'image' || b.type === 'video').map((b) => [b.props.media, b.type]) : [[widget.props.media, widget.type]];
+    for (const [hash, type] of files) if (MEDIA_HASH.test(hash || '')) out[hash] ||= { name: type === 'video' ? 'widget-video' : 'widget-picture', size: 0, kind: 'widget' };
+  }
   return out;
 }
 
@@ -197,11 +213,13 @@ export function lookParts(look) {
   const cursorRoles = look.cursor.mode === 'own' ? Object.keys(look.cursor.own).length : look.cursor.mode === 'd2pfx' && look.cursor.pack ? 1 : 0;
   const changed = {
     bg: !!menu.background, grid: menu.grid.mode === 'dim' || has(menu.grid), hero: has(menu.hero), loading: has(menu.loading),
-    buttons: b.hide.length > 0 || !b.news.carnival || !b.news.season || b.profile || b.profileBg !== 'menu' || glassChanged(b.glass),
+    buttons: b.hide.length > 0 || !b.news.carnival || !b.news.season || b.profile || b.profileBg !== 'menu' || b.friendsClosed || valveChanged(b.valve) || glassChanged(b.glass), widgets: (menu.widgets || []).length > 0,
     hud: hudChanged({ ...look.hud, chat: CHAT_DEFAULTS }), chat: JSON.stringify(chatSettings(look.hud.chat)) !== JSON.stringify(CHAT_DEFAULTS), cursor: cursorRoles > 0,
     font: (!!look.font.own || !!look.font.selected) && Object.values(look.font.roles).some(Boolean), texts: Object.keys(look.texts).length > 0, portraits: (look.portraits?.heroes || []).length > 0,
     ...Object.fromEntries(Object.keys(D2PFX_SECTIONS).map((section) => [section, Object.keys(look.d2pfx.choice[section] || {}).length > 0]))
   };
+  // «Тема меню» is one of «Детали меню»'s choices.
+  if (menu.theme) changed.menuparts = true;
   return LOOK_PARTS.map(([id]) => id).filter((id) => changed[id]);
 }
 
@@ -225,8 +243,9 @@ export function lookFromRecipe(recipe, { built = {}, media = {} } = {}) {
   const news = recipe.news || { carnival: !recipe.clean, season: !recipe.clean };
   return lookDocument({ format: LOOK_FORMAT, version: LOOK_VERSION, menu: {
     aspect: recipe.aspect, folder: recipe.folder === 'custom' ? 'russian' : recipe.folder, event: recipe.event ?? true, background: bgOf(recipe, built.bg, media.bg),
-    buttons: { hide: recipe.hide || [], news, profile: recipe.profile ?? false, profileBg: recipe.profileBg ?? 'menu', ...(recipe.glass ? { glass: recipe.glass } : {}) },
-    grid: { ...page(recipe.grid, built.grid, media.grid), dim: recipe.grid?.dim ?? 55 }, hero: page(recipe.hero, built.hero, media.hero), loading: { ...page(recipe.loading || { mode: 'off' }, built.loading, media.loading), mode: recipe.loading?.mode || 'off' }
+    buttons: { hide: recipe.hide || [], news, profile: recipe.profile ?? false, profileBg: recipe.profileBg ?? 'menu', friendsClosed: !!recipe.friendsClosed, valve: menuValve(recipe.valve), ...(recipe.glass ? { glass: recipe.glass } : {}) },
+    grid: { ...page(recipe.grid, built.grid, media.grid), dim: recipe.grid?.dim ?? 55 }, hero: page(recipe.hero, built.hero, media.hero), loading: { ...page(recipe.loading || { mode: 'off' }, built.loading, media.loading), mode: recipe.loading?.mode || 'off' },
+    theme: recipe.theme ? { accent: recipe.theme } : null
   } });
 }
 

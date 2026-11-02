@@ -8,7 +8,9 @@ const NOUNS = {
   works: { inside: 'В вашей сетке', bad: 'она плохая', yours: 'Ваша сетка', other: 'другую', place: 'мастерскую', same: 'Такая работа' },
   arts: { inside: 'В вашем арте', bad: 'он плохой', yours: 'Ваш арт', other: 'другой', place: 'библиотеку' },
   backgrounds: { inside: 'В вашем фоне', bad: 'он плохой', yours: 'Ваш фон', other: 'другой', place: 'мастерскую', same: 'Такой фон' },
-  guides: { inside: 'В вашем гайде', bad: 'он плохой', yours: 'Ваш гайд', other: 'другой', place: 'гайды' }
+  guides: { inside: 'В вашем гайде', bad: 'он плохой', yours: 'Ваш гайд', other: 'другой', place: 'гайды' },
+  // «Мастерская виджетов» (server/menu-widgets.mjs, the admin panel's «Виджеты», 2026-10-31).
+  widgets: { inside: 'В вашем виджете', bad: 'он плохой', yours: 'Ваш виджет', other: 'другой', place: 'мастерскую', same: 'Такой виджет' }
 };
 export const TELEGRAM_REASON = 'Отклонено участником команды в Telegram.';
 // [{ code, name, text }]: `code` — one letter, for a Telegram button's data.
@@ -21,6 +23,8 @@ export function rejectReasons(kind, { original = '' } = {}) {
     ...(kind === 'works' ? [{ code: 'a', name: 'Это арт, а не сетка', text: 'Это арт, а не полноценная сетка. Отправьте его в «ASCII-арты» в редакторе: «Готовые арты» → «Предложить свой арт».' }] : []),
     // A still picture instead of a background (asked for on 2026-10-04).
     ...(kind === 'backgrounds' ? [{ code: 'p', name: 'Картинка', text: 'Картинки не пропускаем' }] : []),
+    // What the publish window tells the author a moderator checks (src/constructor/PublishWidget.jsx).
+    ...(kind === 'widgets' ? [{ code: 'l', name: 'Ссылки или реклама', text: 'В виджете реклама, чужие логотипы, ссылка не туда или надписи, похожие на кнопки Valve.' }] : []),
     { code: 'r', name: 'Нарушение правил', text: 'Нарушение правил' }
   ];
 }

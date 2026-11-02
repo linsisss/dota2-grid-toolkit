@@ -6,15 +6,17 @@ import { WorkReview, workEntry } from './Moderation.jsx';
 import { ArtReview, artEntry } from './ArtModeration.jsx';
 import { BackgroundReview, backgroundEntry } from './BackgroundModeration.jsx';
 import { GuideReview, guideEntry } from './GuideModeration.jsx';
+import { WidgetReview, widgetEntry } from './WidgetModeration.jsx';
 
 // «Входящие» (asked for on 2026-10-02 as part of a quicker admin panel): everything that waits for a
-// decision — new grids, arts, backgrounds and guides, their updates, and reports — in one list,
+// decision — new grids, arts, backgrounds, widgets and guides, their updates, and reports — in one list,
 // oldest first, each reviewed as in its own section. A decision moves to the next one.
-const SOURCES = [['works', 'pending'], ['works', 'reports'], ['arts', 'pending'], ['backgrounds', 'pending'], ['backgrounds', 'reports'], ['guides', 'pending'], ['guides', 'reports']];
+const SOURCES = [['works', 'pending'], ['works', 'reports'], ['arts', 'pending'], ['backgrounds', 'pending'], ['backgrounds', 'reports'], ['widgets', 'pending'], ['guides', 'pending'], ['guides', 'reports']];
 const KINDS = {
   works: { label: 'Сетка', icon: 'grid', entry: workEntry, Review: WorkReview },
   arts: { label: 'Арт', icon: 'art', entry: artEntry, Review: ArtReview },
   backgrounds: { label: 'Фон', icon: 'brush', entry: backgroundEntry, Review: BackgroundReview },
+  widgets: { label: 'Виджет', icon: 'groupPlus', entry: widgetEntry, Review: WidgetReview },
   guides: { label: 'Гайд', icon: 'guides', entry: guideEntry, Review: GuideReview }
 };
 const SHOWS = [['all', 'Всё'], ['pending', 'На проверке'], ['reports', 'Жалобы']];

@@ -48,7 +48,9 @@ async function download(url) {
 function unsafe(path, data) {
   if (!/\.(?:vcss_c|vxml_c)$/.test(path)) return '';
   const text = new TextDecoder('latin1').decode(data);
-  const url = (text.match(/[a-z][a-z0-9+.-]*:\/\/[^\s"'<>)]*/gi) || []).find((value) => !/^(?:s2r:\/\/(?:panorama|materials)\/|file:\/\/\{(?:images|resources)\}\/)/i.test(value));
+  // `file://{…}` is the game's own folder; newer compiled layouts (LaCo, 2026-10) keep their strings packed,
+  // so `{resources}` may come apart in the bytes («file://{re…») — still not the web.
+  const url = (text.match(/[a-z][a-z0-9+.-]*:\/\/[^\s"'<>)]*/gi) || []).find((value) => !/^(?:s2r:\/\/(?:panorama|materials)\/|file:\/\/\{)/i.test(value));
   if (url) return `address ${url}`;
   if (/AsyncWebRequest|XMLHttpRequest|WebSocket|<script(?!s\s*>)|javascript:/i.test(text)) return 'script';
   return '';
@@ -56,7 +58,9 @@ function unsafe(path, data) {
 
 const mods = {}, files = {}, slotsOf = new Map(), left = [];
 for (const [section, def] of Object.entries(D2PFX_SECTIONS)) {
-  const category = index.modsData[def.category], list = def.group ? category.groups.find((group) => group.id === def.group).mods : category;
+  // A category is a list of mods or, since d2pfx's late-October 2026 index, { groups: [{ id, name, mods }] }.
+  const category = index.modsData[def.category], list = def.group ? category.groups.find((group) => group.id === def.group).mods
+    : Array.isArray(category) ? category : category.groups.flatMap((group) => group.mods);
   for (const [slot, names] of Object.entries(def.slots)) {
     const wanted = names || list.map((mod) => mod.name);
     for (const want of wanted) {
@@ -71,7 +75,10 @@ for (const [section, def] of Object.entries(D2PFX_SECTIONS)) {
         if (entries.length !== 1) { left.push(`${want} — ${entries.length} VPKs in its ZIP`); continue; }
         vpk = entries[0].data; inner = entries[0].name;
       }
-      const game = readVPK(vpk).files.filter((file) => D2PFX_FILE.test(file.path));
+      const all = readVPK(vpk).files, game = all.filter((file) => D2PFX_FILE.test(file.path));
+      // A mod with scripts of its own (panorama/scripts/*.vjs_c) would come apart without them: left out whole.
+      const scripts = all.filter((file) => /\.vjs_c$/.test(file.path)).length;
+      if (scripts) { left.push(`${want} — ${scripts} scripts (.vjs_c)`); continue; }
       const problem = game.map((file) => (crc32(file.data) !== file.crc ? `${file.path}: CRC` : unsafe(file.path, file.data))).find(Boolean);
       if (!game.length || problem) { left.push(`${want} — ${problem || 'no game files'}`); continue; }
       const id = d2pfxSlug(name, style), video = (mod.links || []).find((link) => link.type === 'preview')?.url || '';

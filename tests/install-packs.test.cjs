@@ -103,3 +103,36 @@ test('a full pack store drops its oldest ready packs for a new one', async (t) =
   packs.start('font', sha(5), 50, 'ip-5');
   assert.throws(() => packs.start('font', sha(6), 200, 'ip-6'), /не получается сохранить/);
 });
+
+// «Тема меню» (2026-11-01): Valve's stylesheets recoloured go into the menu's pack and pass only with the theme's mark.
+test('install packs: the menu theme\'s stylesheets pass with their mark, with the news cards hidden in its own frontpage_contents', async () => {
+  const { packProblem } = await import('../server/install-packs.mjs');
+  const { menuBackgroundPack, MENU_VIDEO, NEWS_STYLE } = await import('../scripts/menu-background.mjs');
+  const { themeFiles } = await import('../scripts/menu-theme.mjs');
+  const { buildVPK, panoramaResource, readVPK, panoramaSource } = await import('../scripts/vpk.mjs');
+  const frontpage = read('assets/dota-menu/frontpage_contents.css');
+  const styles = { 'dashboard.css': '#TopBarBackground\n{\n\tbackground-color: #333333;\n}\n', 'frontpage_contents.css': frontpage.replace('}', '\tcolor: #1e3a5f;\n}'),
+    'battle_pass/x.css': '.Card\n{\n\tbackground-image: url("s2r://materials/portraits_card/x.vtex");\n\tcolor: #1e3a5f;\n}\n' };
+  const theme = themeFiles(styles, '#ff6fa3', { version: 'abcdef1234' });
+  // With the menu's video, alone (the one-page customization), with one news card hidden.
+  const whole = menuBackgroundPack({ video: webm(), dashboard: read('assets/dota-menu/dashboard.xml'), home: read('assets/dota-menu/dashboard_page_home.xml'), frontpage, news: { carnival: false, season: true }, theme, md5 });
+  const bytes = new Uint8Array(await new Blob([whole]).arrayBuffer());
+  assert.equal(packProblem('bg', bytes), '');
+  const files = Object.fromEntries(readVPK(bytes).files.map((file) => [file.path, file.data]));
+  assert.match(panoramaSource(files['panorama/styles/dashboard.vcss_c']), /^\/\* GridStudio theme #ff6fa3 abcdef1234 \*\//);
+  const news = panoramaSource(files[NEWS_STYLE]);
+  assert.match(news, /^\/\* GridStudio theme/, 'the hidden card\'s rule goes after the themed sheet');
+  assert.match(news, /news cards hidden/);
+  assert.doesNotMatch(news, /#1e3a5f/);
+  const alone = menuBackgroundPack({ video: null, dashboard: read('assets/dota-menu/dashboard.xml'), theme, md5 });
+  assert.ok(alone, 'a theme alone makes a pack');
+  assert.deepEqual(readVPK(new Uint8Array(await new Blob([alone]).arrayBuffer())).files.map((file) => file.path).sort(), Object.keys(theme).sort());
+  // A Valve stylesheet without the mark is not ours; one at a path of no Valve stylesheet of the theme neither.
+  const layout = { path: 'panorama/layout/dashboard.vxml_c', data: panoramaResource('panorama/layout/dashboard.vxml_c', read('assets/dota-menu/dashboard.xml')) };
+  const vpk = (...more) => new Uint8Array(buildVPK([layout, { path: MENU_VIDEO, data: webm() }, ...more], { md5 }));
+  const style = (path, text) => ({ path, data: panoramaResource(path, text) });
+  assert.equal(packProblem('bg', vpk(style('panorama/styles/play.vcss_c', '/* GridStudio theme #ff6fa3 abcdef1234 */\n.PlayButton\n{\n\tcolor: #ffffff;\n}\n'))), '');
+  assert.notEqual(packProblem('bg', vpk(style('panorama/styles/play.vcss_c', '.PlayButton\n{\n\tcolor: #ffffff;\n}\n'))), '', 'no mark');
+  assert.notEqual(packProblem('bg', vpk(style('panorama/styles/custom_ui.vcss_c', '/* GridStudio theme #ff6fa3 abcdef1234 */\n.Hud {}\n'))), '', 'the HUD hook is not the theme\'s');
+  assert.notEqual(packProblem('bg', vpk(style('panorama/styles/play.vcss_c', '/* GridStudio theme #ff6fa3 abcdef1234 */\n.PlayButton\n{\n\tbackground-image: url("https://evil.example/x.png");\n}\n'))), '', 'an address');
+});

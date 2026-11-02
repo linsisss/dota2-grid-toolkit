@@ -83,7 +83,7 @@ DOTAPopupManager {
     opacity: 0.3;
     vertical-align: top;
     horizontal-align: right;
-    background-image: url("s2r://panorama/images/custom_gameinfo_icon_psd.vtex_c");
+    background-image: url("s2r://panorama/images/custom_gameinfo_icon_psd.vtex");
     background-repeat: no-repeat;
     background-size: 100% 100%;
 }
@@ -104,13 +104,13 @@ DOTAPopupManager {
     horizontal-align: right;
     vertical-align: bottom;
     opacity: 0.3;
-    background-image: url("s2r://panorama/images/custom_gameinfo_open_psd.vtex_c");
+    background-image: url("s2r://panorama/images/custom_gameinfo_open_psd.vtex");
     background-repeat: no-repeat;
     background-size: 100% 100%;
 }
 
 .gameinfo_visible #GameInfoOpenClose {
-    background-image: url("s2r://panorama/images/custom_gameinfo_close_psd.vtex_c");
+    background-image: url("s2r://panorama/images/custom_gameinfo_close_psd.vtex");
     background-size: 100% 100%;
 }
 

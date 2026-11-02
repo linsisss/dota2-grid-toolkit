@@ -1,4 +1,5 @@
 import { buildVPK, panoramaResource } from './vpk.mjs';
+import { LASTMATCH_RULES, LASTMATCH_STYLE, WIDGET_SCRIPT, WIDGET_STYLE, widgetMediaFile, widgetScriptFile, widgetsHomePage } from './menu-widgets.mjs';
 
 // A Dota 2 main-menu background pack: pakNN_dir.vpk for a game/dota_<language>/ folder.
 // The dashboard's background manager loads whatever layout its override-background names (Valve
@@ -349,19 +350,205 @@ export function menuDashboard(dashboard) {
 }
 // The news column's two cards, one by one (asked for on 2026-10-08, after Dota's update of 2026-10-07
 // put Valve's own «Диковинки Квортеро» cell under the Dark Carnival card). Both hidden: the column goes
-// as before (cleanHomePage). One hidden: the home page keeps the column and takes a style of ours that
-// collapses that card's cell (the column's flow moves the other one up); the cells come from Valve's
-// banner layouts (banners/front_page_dark_carnival.xml, front_page_seasonal_reward_line.xml) inside the
-// home page, so the style reaches them from it.
+// as before (cleanHomePage). One hidden: Valve's own stylesheet of the column, frontpage_contents.css, comes
+// back as Valve's text plus our rules (newsCardsText): the cards are declared in frontpage_contents.xml, so
+// only a style of that layout reaches them (from the home page it did not: tested 2026-10-31, the owner's
+// screenshots — this way the Dark Carnival card goes and the other stays). Its layout itself is not copied:
+// it changes with every event, and a stale copy would ask Dota for layouts that are gone. With the top card
+// hidden the other one moves up into its place. NEWS_CELLS: the cells' places in frontpage_contents.xml.
+// The see-through news column's style on the home page (MENU_GLASS.news, 2026-10-22; HOME_STYLE_TEXT).
 export const HOME_STYLE = 'panorama/styles/gridstudio_home.vcss_c';
-export const NEWS_CELLS = Object.freeze({ carnival: 'FrontPageDarkCarnivalCell', season: 'FrontPageSeasonalRewardLineCell' });
+export const NEWS_CELLS = Object.freeze({ carnival: '.TopCell', season: '#QuarteroCell' });
+export const NEWS_STYLE = 'panorama/styles/frontpage_contents.vcss_c';
+// Valve's frontpage_contents.css (assets/dota-menu, watched by check-dota-menu.mjs) with the hidden cards and, since
+// 2026-11-02, the cards' sizes and their small icons (`cards`: menuValve's, see below). A card made smaller shrinks
+// towards the column's top right corner; the one under it moves up to stay 16 px below it (12 under an icon).
+export function newsCardsText(valve, hidden, cards = MENU_VALVE.cards) {
+  if (!valve.includes('.TopCell') || !valve.includes('.BottomCell')) throw new Error('В frontpage_contents.css не найдены места карточек.');
+  const rule = (selector, lines) => `${selector}\n{\n${lines.map((one) => `\t${one}`).join('\n')}\n}\n`;
+  const rules = hidden.map((cell) => rule(NEWS_CELLS[cell], ['visibility: collapse;']));
+  const shown = (cell) => !hidden.includes(cell), c = cards.carnival, q = cards.season;
+  if (shown('carnival') && c.icon) rules.push(rule(`#${NEWS_ICONS.carnival}`, ['y: 0px;', ...iconBox(c.size)]));
+  else if (shown('carnival') && c.scale < 100) rules.push(rule(NEWS_CELLS.carnival, shrink(c.scale, NEWS_CARD.carnival)));
+  const above = !shown('carnival') ? 0 : c.icon ? c.size + 12 : Math.round(NEWS_CARD.carnival * c.scale / 100) + 16;
+  if (shown('season')) {
+    const y = [above ? `y: ${above}px;` : 'y: firstRow;'];
+    if (q.icon) rules.push(rule(`#${NEWS_ICONS.season}`, [...y, ...iconBox(q.size)]), rule(`#${NEWS_ICONS.season} DOTAEventStatus`, ['horizontal-align: center;', 'vertical-align: center;', `ui-scale: ${Math.round(q.size / 1.3)}%;`]));
+    else if (q.scale < 100 || above !== NEWS_ROW) rules.push(rule(NEWS_CELLS.season, [...y, ...(q.scale < 100 ? shrink(q.scale, NEWS_CARD.season) : [])]));
+  }
+  if ((shown('carnival') && c.icon) || (shown('season') && q.icon)) rules.push(NEWS_ICON_RULES);
+  const sized = [['carnival', c], ['season', q]].some(([cell, card]) => shown(cell) && cardChanged(card));
+  return `${valve.trimEnd()}\n\n/* GridStudio: ${sized ? 'the news cards on the home page, hidden, smaller or small icons' : 'news cards hidden on the home page'}. */\n${rules.join('\n')}`;
+}
+// The cards' heights in Valve's column (frontpage_shared.css: a tall cell 484, the Quartero cell 234 under it at thirdRow 500),
+// 330 wide at the left of Valve's column (#FrontpageContents 388 wide at the screen's right edge).
+const NEWS_CARD = { carnival: 484, season: 234 }, NEWS_ROW = 500, NEWS_WIDTH = 330;
+// A card made smaller: Panorama scales about the panel's middle whatever its transform-origin (test 8, 2026-11-02: the cards
+// shrank towards their centres), so a shift puts its top right corner back where it was.
+const shrink = (scale, height) => { const lost = 1 - scale / 100;
+  return [`pre-transform-scale2d: ${(scale / 100).toFixed(2)};`, `transform: translateX( ${Math.round(NEWS_WIDTH * lost / 2)}px ) translateY( ${-Math.round(height * lost / 2)}px );`]; };
+// The small icons: our own buttons in our copy of frontpage_contents.xml (newsIconsLayout), with the cards' own calls and
+// pictures — Dark Carnival's emblem; Quartero's art under its level shield (Valve's DOTAEventStatus control).
+export const NEWS_LAYOUT = 'panorama/layout/frontpage_contents.vxml_c';
+export const NEWS_ICONS = Object.freeze({ carnival: 'GSCarnivalIcon', season: 'GSSeasonIcon' });
+// At the cards' right edge (test 8: `horizontal-align: right` put them at the screen's edge, past Valve's 58px margin).
+const iconBox = (size) => [`x: ${NEWS_WIDTH - size}px;`, `width: ${size}px;`, `height: ${size}px;`];
+const NEWS_ICON_RULES = `.GSNewsIcon
+{
+	border-radius: 14px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( #181d23f2 ), to( #0c0f12f5 ) );
+	border: 1px solid #ffffff1f;
+	border-top: 1px solid #ffffff33;
+	box-shadow: #000000aa 0px 8px 24px 0px;
+	transition-property: brightness, pre-transform-scale2d;
+	transition-duration: 0.12s;
+}
+
+.GSNewsIcon:hover
+{
+	brightness: 1.25;
+}
+
+.GSNewsIcon:active
+{
+	pre-transform-scale2d: 0.96;
+}
+
+#GSCarnivalIcon .GSNewsIconArt
+{
+	width: 86%;
+	height: 86%;
+	horizontal-align: center;
+	vertical-align: center;
+}
+
+#GSSeasonIcon .GSNewsIconArt
+{
+	width: 100%;
+	height: 100%;
+	opacity: 0.7;
+}
+`;
+// Valve's frontpage_contents.xml with the cards that are icons swapped for our buttons. `banners`: Valve's two cards'
+// layouts (assets/dota-menu front_page_dark_carnival.xml, front_page_seasonal_reward_line.xml), for their calls and pictures.
+export function newsIconsLayout(contents, banners, icons) {
+  const take = (text, pattern, what) => { const found = pattern.exec(text || '')?.[1]; if (!found) throw new Error(`В карточке новостей не найдено: ${what}.`); return found; };
+  const picture = (src) => src.replace(/_c$/, '');
+  let out = contents;
+  const swap = (pattern, markup, what) => { const next = out.replace(pattern, markup); if (next === out) throw new Error(`В frontpage_contents.xml не найдена ${what}.`); out = next; };
+  if (icons.carnival) {
+    const call = take(banners.carnival, /<DOTAFrontpageCellDarkCarnival\b[^>]*\bonactivate="([^"]+)"/, 'вызов Dark Carnival'), art = picture(take(banners.carnival, /<Image class="DarkCarnivalLogo en" src="([^"]+)"/, 'эмблема Dark Carnival'));
+    swap(/<DOTAFrontpageCellDarkCarnival\b[^>]*\/>/, `<Button id="${NEWS_ICONS.carnival}" class="GSNewsIcon" onactivate="${call}"><Image class="GSNewsIconArt" src="${art}" scaling="stretch-to-fit-preserve-aspect" hittest="false" /></Button>`, 'карточка Dark Carnival');
+  }
+  if (icons.season) {
+    const call = take(banners.season, /<CustomLayoutPanel class="FrontPageSeasonalRewardLineCell" onactivate="([^"]+)"/, 'вызов Квортеро');
+    const art = picture(take(banners.season, /<Image class="BackgroundImage" src="([^"]+)"/, 'картинка Квортеро')), event = take(banners.season, /<DOTAFrontpageCellSeasonalRewards eventID="([A-Z0-9_]+)"/, 'событие Квортеро');
+    swap(/<CustomLayoutPanel class="FrontpageCell BottomCell" id="QuarteroCell"[^>]*\/>/, `<Button id="${NEWS_ICONS.season}" class="GSNewsIcon" onactivate="${call}"><Image class="GSNewsIconArt" src="${art}" scaling="stretch-to-cover-preserve-aspect" hittest="false" /><DOTAEventStatus class="Quartero" eventID="${event}" hittest="false" /></Button>`, 'карточка Квортеро');
+  }
+  return out;
+}
+
+// ——— Valve's own panels set by hand (2026-11-02, the owner: «настроить и дефолтные Valve вещи: передвинуть чат, руками
+// выбрать размеры блоков квортеро, карнавала, драгать ГЕРОИ, АРСЕНАЛ, ПРОСМОТР между собой»; a user's idea: the cards
+// as small icons). `chat`: the chat's shift from its place in 1080p pixels (MENU_LAYOUT_STYLE, by its margins: Valve
+// moves it by `transform` when the play panel opens, and that stays); `tabs`: the order of the top bar's tabs (our
+// copy of dashboard.xml, the tabs' own markup moved); `cards`: each news card's size in percent, or a small square icon
+// of `size` pixels.
+export const MENU_TABS = Object.freeze(['heroes', 'collection', 'watch', 'learn', 'mods']);
+const TAB_IDS = { heroes: 'TopBarHeroes', collection: 'TopBarCollection', watch: 'TopBarWatch', learn: 'TopBarLearn', mods: 'TopBarMods' };
+// Since the same day (the owner: «почему перетаскивать можно только чат?») the friends rail with the party bar and the news
+// column move too: `friends`, `news`, each a shift in 1080p pixels. «Играть» does not: Valve's DOTAPlay is the button and the
+// search window it opens in one, moved together the window went under the top bar and its dimmed ground stayed (test 10).
+export const VALVE_LIMITS = Object.freeze({ chatX: [-640, 640], chatY: [-900, 16], moveX: [-1500, 1500], moveY: [-900, 900], scale: [40, 100], icon: [56, 160] });
+export const VALVE_MOVES = Object.freeze(['friends', 'news']);
+export const MENU_VALVE = Object.freeze({ chat: Object.freeze({ x: 0, y: 0 }), friends: Object.freeze({ x: 0, y: 0 }), news: Object.freeze({ x: 0, y: 0 }), tabs: MENU_TABS,
+  cards: Object.freeze({ carnival: Object.freeze({ icon: false, scale: 100, size: 96 }), season: Object.freeze({ icon: false, scale: 100, size: 96 }) }) });
+const within = (value, [low, high], fallback) => (Number.isFinite(Number(value)) ? Math.min(high, Math.max(low, Math.round(Number(value)))) : fallback);
+// A kept value back to its fields (anything missing or wrong as in Dota).
+export function menuValve(input) {
+  const value = input && typeof input === 'object' ? input : {}, chat = value.chat && typeof value.chat === 'object' ? value.chat : {};
+  const tabs = Array.isArray(value.tabs) && value.tabs.length === MENU_TABS.length && MENU_TABS.every((tab) => value.tabs.includes(tab)) ? [...value.tabs] : [...MENU_TABS];
+  const card = (input) => { const one = input && typeof input === 'object' ? input : {}; return { icon: one.icon === true, scale: within(one.scale, VALVE_LIMITS.scale, 100), size: within(one.size, VALVE_LIMITS.icon, 96) }; };
+  const move = (input) => { const one = input && typeof input === 'object' ? input : {}; return { x: within(one.x, VALVE_LIMITS.moveX, 0), y: within(one.y, VALVE_LIMITS.moveY, 0) }; };
+  return { chat: { x: within(chat.x, VALVE_LIMITS.chatX, 0), y: within(chat.y, VALVE_LIMITS.chatY, 0) }, friends: move(value.friends), news: move(value.news),
+    tabs, cards: { carnival: card(value.cards?.carnival), season: card(value.cards?.season) } };
+}
+const cardChanged = (card) => card.icon || card.scale < 100;
+const moved = (one) => !!(one.x || one.y);
+export const valveChanged = (input) => { const v = menuValve(input); return moved(v.chat) || VALVE_MOVES.some((part) => moved(v[part])) || v.tabs.join() !== MENU_TABS.join() || cardChanged(v.cards.carnival) || cardChanged(v.cards.season); };
+export const MENU_LAYOUT_STYLE = 'panorama/styles/gridstudio_menu_layout.vcss_c';
+// The dashboard's panels moved (dashboard.css): the chat; the friends rail, the party bar under it and the mini-profile's edit
+// frame by their margins (Valve's own place: 32px from the left, 90 / 21 / 90 from the bottom).
+export function layoutText(set) {
+  const out = [];
+  if (moved(set.chat)) out.push(chatLayoutText(set.chat));
+  const f = set.friends;
+  if (moved(f)) out.push(`/* GridStudio: the friends rail and the party bar moved. */
+#FriendMenuContainer
+{
+	margin-left: ${32 + f.x}px;
+	margin-bottom: ${90 - f.y}px;
+}
+
+#SocialControls
+{
+	margin-left: ${32 + f.x}px;
+	margin-bottom: ${21 - f.y}px;
+}
+
+#MiniShowcaseEditContainer
+{
+	margin-left: ${414 + f.x}px;
+	margin-bottom: ${90 - f.y}px;
+}
+`);
+  return out.join('\n');
+}
+// The chat by its margins: Valve centres it (margin-right 28px, more on 16:10) and keeps it 130px up, moved down 109px on
+// the main menu; the shift stays relative to the middle, so on 16:10 and 21:9 it keeps its place by the centre.
+export function chatLayoutText({ x, y }) {
+  const left = x > 0 ? 2 * x : 0, right = x < 0 ? 28 - 2 * x : 28;
+  return `/* GridStudio: the chat of the main menu moved. */
+DOTADashboard.NoEmbedChatInPage #Chat,
+.AspectRatio16x10 #Chat,
+.AspectRatio16x10.NoEmbedChatInPage #Chat,
+.AspectRatio4x3.NoEmbedChatInPage #Chat
+{
+	margin-left: ${left}px;
+	margin-right: ${right}px;
+	margin-bottom: ${130 - y}px;
+}
+`;
+}
+// The top bar's tabs in `order`: their markup taken out of #TopBarMainNav and put back after the Dota logo's.
+export function orderTabs(dashboard, order) {
+  let out = dashboard;
+  const blocks = order.map((tab) => {
+    const pattern = new RegExp(`\\n[ \\t]*<RadioButton id="${TAB_IDS[tab]}"[\\s\\S]*?<\\/RadioButton>`), found = pattern.exec(out)?.[0];
+    if (!found) throw new Error(`В dashboard.xml нет вкладки ${TAB_IDS[tab]}.`);
+    out = out.replace(found, '');
+    return found;
+  });
+  const home = /(<RadioButton id="TopBarHome"[\s\S]*?<\/RadioButton>)/;
+  if (!home.test(out)) throw new Error('В dashboard.xml нет логотипа Dota в верхней панели.');
+  return out.replace(home, `$1${blocks.join('')}`);
+}
 // The same style carries the see-through news column (MENU_GLASS.news, 2026-10-22): `news` is its percent.
-const HOME_STYLE_TEXT = (hidden, news = 100) => [hidden.length && `/* GridStudio: news cards hidden on the home page. */\n${hidden.map((cell) => `.${NEWS_CELLS[cell]}\n{\n\tvisibility: collapse;\n}\n`).join('\n')}`,
-  news < 100 && GLASS_NEWS_TEXT(news)].filter(Boolean).join('\n');
+const HOME_STYLE_TEXT = (news) => GLASS_NEWS_TEXT(news);
+// The news column moved (menuValve news): #FrontpageContents stands at the page's right (dashboard_page_home.css), so by its margins.
+const newsMoveText = ({ x, y }) => `/* GridStudio: the news column moved. */\n#FrontpageContents\n{\n\tmargin-right: ${-x}px;\n\tmargin-top: ${y}px;\n}\n`;
 export function newsHomePage(home) {
   const styled = home.replace(/(\n[ \t]*)<\/styles>/, `$1\t<include src="s2r://${HOME_STYLE}" />$1</styles>`);
   if (styled === home) throw new Error('В dashboard_page_home.xml не найден блок <styles>.');
   return styled;
+}
+// The friends list closed on the home page (2026-11-02, the owner: «скрыть список друзей … форсить by-default»): Valve's
+// home page opens it each time it is shown (onnavigatedto DOTASetFriendsMenuVisible( true )); ours closes it instead.
+// The friends button and a click on the party still open it, as in Dota.
+export function friendsClosedPage(home) {
+  const closed = home.replace('onnavigatedto="DOTASetFriendsMenuVisible( true )"', 'onnavigatedto="DOTASetFriendsMenuVisible( false )"');
+  if (closed === home) throw new Error('В dashboard_page_home.xml не найдено, где Dota открывает список друзей.');
+  return closed;
 }
 export function cleanHomePage(home) {
   const cleaned = home.replace(/\n?[ \t]*<Panel id="TodayPages"[\s\S]*?\n[ \t]*<\/Panel>(?=\n[ \t]*<\/DOTAHomePage>)/, '');
@@ -816,9 +1003,12 @@ export function miniProfilePage(page) {
 
 // Every file menuBackgroundPack may write: the server takes a pack for the PowerShell command only with
 // these (server/install-packs.mjs), so nobody can hand out anything else under gridstudio.me.
-export const MENU_PACK_PATHS = Object.freeze(['panorama/layout/dashboard.vxml_c', 'panorama/layout/dashboard_page_home.vxml_c', HOME_STYLE, MENU_LAYOUT, MENU_STYLE, MENU_UI_STYLE,
+export const MENU_PACK_PATHS = Object.freeze(['panorama/layout/dashboard.vxml_c', 'panorama/layout/dashboard_page_home.vxml_c', HOME_STYLE, NEWS_STYLE, MENU_LAYOUT, MENU_STYLE, MENU_UI_STYLE,
   MENU_VIDEO, HERO_PAGE, HERO_STYLE, HERO_VIDEO, GRID_PAGE, GRID_STYLE, GRID_VIDEO, PROFILE_PAGE, PROFILE_STYLE, ...Object.values(PROFILE_ICONS),
-  LOADING_PAGE, LOADING_STYLE, LOADING_VIDEO, MENU_HIDE_STYLE, GLASS_STYLE, FRIENDS_PAGE, FRIENDS_STYLE, MINI_PROFILE_PAGE, MINI_PROFILE_STYLE]);
+  LOADING_PAGE, LOADING_STYLE, LOADING_VIDEO, MENU_HIDE_STYLE, GLASS_STYLE, FRIENDS_PAGE, FRIENDS_STYLE, MINI_PROFILE_PAGE, MINI_PROFILE_STYLE,
+  WIDGET_STYLE, WIDGET_SCRIPT, MENU_LAYOUT_STYLE, NEWS_LAYOUT, LASTMATCH_STYLE]);
+// …and the widgets' pictures and videos, by name (scripts/menu-widgets.mjs widgetMediaPath).
+export { widgetMediaFile };
 export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDEO, LOADING_VIDEO]);
 
 // video: WebM bytes (VP8/VP9, no Opus audio); dashboard/home/hero.page: Valve's current layouts as
@@ -829,8 +1019,8 @@ export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDE
 // `bg` the background under the profile (PROFILE_BG_MODES, default 'menu'), or null for Valve's profile.
 // grid: null keeps the «Герои» page as it is; { page, dim } darkens the menu's background there,
 // { page, video } shows a video of its own.
-// news: { carnival, season } — which news cards stay on the home page (needs `home`); without it, a given
-// `home` hides the whole column, as before 2026-10-08.
+// news: { carnival, season } — which news cards stay on the home page (needs `home`, and `frontpage`, Valve's
+// frontpage_contents.css, for one card alone); without it, a given `home` hides the whole column, as before 2026-10-08.
 // loading: null keeps Valve's loading screen; { page } plays the menu video there, { page, video } its own.
 // hide: keys of MENU_HIDE, top bar buttons to hide.
 // glass: { bar, friends, news, header, showcase, party } — how much of each panel stays, in percent (MENU_GLASS,
@@ -839,7 +1029,11 @@ export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDE
 // video: null (the one-page customization, 2026-10-17) keeps Valve's own menu background: the pack then
 // carries only the other parts (hidden buttons and news cards, profiles, a page's own video, the darker
 // grid page); the dashboard is written only to hide buttons, and nothing may play the menu's video.
-export function menuBackgroundPack({ video, dashboard, home = null, news = null, hero = null, event = null, profile = null, grid = null, loading = null, hide = [], glass = null, friends = null, miniProfile = null, md5 }) {
+// widgets (2026-10-31): { made, media } — made: widgetsPanorama's { panels, style, script } (scripts/menu-widgets.mjs),
+// media: [{ path, data }] the images' textures and the videos (needs `home`: the widgets live in our copy of it).
+// theme (2026-11-01): «Тема меню», scripts/menu-theme.mjs themeFiles' { [path]: text } — Valve's stylesheets recoloured;
+// its frontpage_contents.css (fresher than `frontpage`) carries the hidden news cards too.
+export function menuBackgroundPack({ video, dashboard, home = null, frontpage = null, widgets = null, theme = null, news = null, hero = null, event = null, profile = null, grid = null, loading = null, hide = [], glass = null, friends = null, miniProfile = null, friendsClosed = false, valve = null, contents = null, banners = null, lastmatch = null, md5 }) {
   const hidden = home ? (news ? Object.keys(NEWS_CELLS).filter((cell) => news[cell] === false) : Object.keys(NEWS_CELLS)) : [];
   const clean = hidden.length === Object.keys(NEWS_CELLS).length;
   const off = Object.keys(MENU_HIDE).filter((key) => hide.includes(key));
@@ -848,19 +1042,47 @@ export function menuBackgroundPack({ video, dashboard, home = null, news = null,
   if (see.friends < 100 && !friends) throw new Error('Для прозрачной панели друзей нужен friend_menu.xml.');
   if ((see.header < 100 || see.showcase < 100) && !miniProfile) throw new Error('Для прозрачного мини-профиля нужен mini_showcase.xml.');
   if (see.news < 100 && !home) throw new Error('Для прозрачных новостей нужен dashboard_page_home.xml.');
-  const styles = [off.length && MENU_HIDE_STYLE, glassText.dashboard && GLASS_STYLE].filter(Boolean);
+  const themed = theme || {}, newsStyle = themed[NEWS_STYLE] || frontpage;
+  if (hidden.length && !clean && !newsStyle) throw new Error('Чтобы скрыть одну карточку новостей, нужен frontpage_contents.css.');
+  if (widgets?.made && !home) throw new Error('Для виджетов нужен dashboard_page_home.xml.');
+  if (friendsClosed && !home) throw new Error('Чтобы закрыть список друзей, нужен dashboard_page_home.xml.');
+  // Valve's panels set by hand (menuValve): the chat's place, the tabs' order, the cards' sizes and icons.
+  const set = menuValve(valve), chatMoved = moved(set.chat) || moved(set.friends), tabsMoved = set.tabs.join() !== MENU_TABS.join();
+  const newsMoved = !!home && !clean && moved(set.news);
+  const cards = { carnival: { ...set.cards.carnival, icon: set.cards.carnival.icon && !hidden.includes('carnival') }, season: { ...set.cards.season, icon: set.cards.season.icon && !hidden.includes('season') } };
+  const cardsMoved = home && !clean && ((!hidden.includes('carnival') && cardChanged(cards.carnival)) || (!hidden.includes('season') && cardChanged(cards.season)));
+  if ((cards.carnival.icon || cards.season.icon) && (!contents || !banners)) throw new Error('Для карточек-значков нужны frontpage_contents.xml и карточки Valve.');
+  const styles = [off.length && MENU_HIDE_STYLE, glassText.dashboard && GLASS_STYLE, chatMoved && MENU_LAYOUT_STYLE].filter(Boolean);
   // The news column fades only where it is (both cards hidden: no column).
   const newsGlass = clean ? 100 : see.news;
-  const season = video ? menuEvent(dashboard, event) : null, menu = video ? menuDashboard(season ? eventDashboard(dashboard, season) : dashboard) : dashboard, board = styles.length ? styleDashboard(menu, styles) : menu;
+  const season = video ? menuEvent(dashboard, event) : null, menu = video ? menuDashboard(season ? eventDashboard(dashboard, season) : dashboard) : dashboard;
+  const styled = styles.length ? styleDashboard(menu, styles) : menu, board = tabsMoved ? orderTabs(styled, set.tabs) : styled;
   const files = video ? [
     panoramaFile('panorama/layout/dashboard.vxml_c', board, true),
     panoramaFile(MENU_LAYOUT, LAYOUT(season)),
     panoramaFile(MENU_STYLE, STYLE(season)),
     { path: MENU_VIDEO, data: video }
-  ] : styles.length ? [panoramaFile('panorama/layout/dashboard.vxml_c', board, true)] : [];
+  ] : styles.length || tabsMoved ? [panoramaFile('panorama/layout/dashboard.vxml_c', board, true)] : [];
   if (season) files.splice(3, 0, panoramaFile(MENU_UI_STYLE, MENU_UI(season, clean)));
-  if (clean) files.splice(1, 0, panoramaFile('panorama/layout/dashboard_page_home.vxml_c', cleanHomePage(home), true));
-  else if (hidden.length || newsGlass < 100) files.splice(1, 0, panoramaFile('panorama/layout/dashboard_page_home.vxml_c', newsHomePage(home), true), panoramaFile(HOME_STYLE, HOME_STYLE_TEXT(hidden, newsGlass)));
+  // Our copy of the home page: without the news column, or with the see-through column's style, and the widgets.
+  const own = clean ? cleanHomePage(home) : newsGlass < 100 || newsMoved ? newsHomePage(home) : null, made = widgets?.made || null;
+  const page = friendsClosed ? friendsClosedPage(own || home) : own;
+  if (page || made) files.splice(1, 0, panoramaFile('panorama/layout/dashboard_page_home.vxml_c', made ? widgetsHomePage(page || home, made) : page, true),
+    ...(!clean && (newsGlass < 100 || newsMoved) ? [panoramaFile(HOME_STYLE, [newsGlass < 100 && HOME_STYLE_TEXT(newsGlass), newsMoved && newsMoveText(set.news)].filter(Boolean).join('\n'))] : []));
+  const newsRules = !clean && (hidden.length > 0 || cardsMoved);
+  if (newsRules && !newsStyle) throw new Error('Для карточек новостей нужен frontpage_contents.css.');
+  if (newsRules) files.push(panoramaFile(NEWS_STYLE, newsCardsText(newsStyle, hidden, cards), true));
+  if (cards.carnival.icon || cards.season.icon) files.push(panoramaFile(NEWS_LAYOUT, newsIconsLayout(contents, banners, { carnival: cards.carnival.icon, season: cards.season.icon }), true));
+  // The last match in GridStudio's look (menu-widgets.mjs LASTMATCH_RULES), after Valve's stylesheet or the theme's recolour of it.
+  const lastMatchRules = !!widgets?.made?.lastMatch;
+  if (lastMatchRules && !(themed[LASTMATCH_STYLE] || lastmatch)) throw new Error('Для «Последнего матча» нужен frontpage_lastmatch.css.');
+  if (lastMatchRules) files.push(panoramaFile(LASTMATCH_STYLE, `${(themed[LASTMATCH_STYLE] || lastmatch).trimEnd()}\n\n${LASTMATCH_RULES}`, true));
+  for (const [path, text] of Object.entries(themed)) if ((path !== NEWS_STYLE || !newsRules) && (path !== LASTMATCH_STYLE || !lastMatchRules)) files.push(panoramaFile(path, text, true));
+  if (made) {
+    files.push(panoramaFile(WIDGET_STYLE, made.style));
+    if (made.script) files.push({ path: WIDGET_SCRIPT, data: widgetScriptFile(made.script) });
+    for (const file of widgets.media || []) if (widgetMediaFile(file.path)) files.push({ path: file.path, data: file.data });
+  }
   if (hero) {
     files.push(panoramaFile(HERO_PAGE, heroPage(hero.page, hero.video ? HERO_VIDEO : null), true), panoramaFile(HERO_STYLE, heroStyleText(!!hero.video)));
     if (hero.video) files.push({ path: HERO_VIDEO, data: hero.video });
@@ -878,6 +1100,7 @@ export function menuBackgroundPack({ video, dashboard, home = null, news = null,
   }
   if (off.length) files.push(panoramaFile(MENU_HIDE_STYLE, MENU_HIDE_TEXT(off)));
   if (glassText.dashboard) files.push(panoramaFile(GLASS_STYLE, glassText.dashboard));
+  if (chatMoved) files.push(panoramaFile(MENU_LAYOUT_STYLE, layoutText(set)));
   if (glassText.friends) files.push(panoramaFile(FRIENDS_PAGE, friendsPage(friends), true), panoramaFile(FRIENDS_STYLE, glassText.friends));
   if (glassText.miniProfile) files.push(panoramaFile(MINI_PROFILE_PAGE, miniProfilePage(miniProfile), true), panoramaFile(MINI_PROFILE_STYLE, glassText.miniProfile));
   if (!files.length) return null;

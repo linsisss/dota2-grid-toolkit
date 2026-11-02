@@ -86,9 +86,9 @@ function paintMovie(context, source, width, height, crop, hud = false) {
   if (hud) { context.fillStyle = '#000'; context.fillRect(0, 0, side, side); }
   context.drawImage(source, r.x, r.y, r.w, r.h, 0, 0, side, side);
 }
-async function encoder(canvas) {
+async function encoder(canvas, bitrate = PORTRAIT_MOVIE.bitrate) {
   if (typeof VideoEncoder === 'undefined') throw new PortraitError(t('Этот браузер не умеет собирать видео. Открой страницу в Chrome, Edge, Яндекс Браузере или Firefox.'));
-  const bitrate = PORTRAIT_MOVIE.bitrate, size = { width: canvas.width, height: canvas.height, bitrate };
+  const size = { width: canvas.width, height: canvas.height, bitrate };
   for (const codec of ['vp8', 'vp9']) {
     if (await canEncodeVideo(codec, { ...size, hardwareAcceleration: 'prefer-software' })) return { codec, bitrate, hardwareAcceleration: 'prefer-software', keyFrameInterval: 2 };
     if (await canEncodeVideo(codec, size)) return { codec, bitrate, keyFrameInterval: 2 };
@@ -97,54 +97,62 @@ async function encoder(canvas) {
 }
 // The movie of a hero: file + its opened source (openPortrait), crop, start → Uint8Array (WebM). `hud`: the HUD
 // portrait's movie (its square frame, scripts/hero-portraits.mjs HUD_PORTRAIT) instead of the hover card's.
-export async function encodePortraitMovie(file, opened, { crop, start = 0, hud = false, onProgress = () => {}, signal } = {}) {
-  const side = hud ? HUD_PORTRAIT.side : PORTRAIT_MOVIE.side, canvas = new OffscreenCanvas(side, side), context = canvas.getContext('2d');
+export function encodePortraitMovie(file, opened, { crop, start = 0, hud = false, onProgress = () => {}, signal } = {}) {
+  const side = hud ? HUD_PORTRAIT.side : PORTRAIT_MOVIE.side;
+  return encodeMovie(file, opened, { width: side, height: side, start, onProgress, signal, paint: (context, source, width, height) => paintMovie(context, source, width, height, crop, hud) });
+}
+// Any movie of the same make (2026-10-31, the main menu's video widgets too: src/customize/widget-pack.js):
+// `paint(context, source, width, height)` draws one frame of the file onto the width × height canvas; up to
+// `seconds` from `start`, `fps`, `bitrate`; a still picture is a still movie of PORTRAIT_MOVIE.stillSeconds at 1 fps.
+export async function encodeMovie(file, opened, { width, height, paint, start = 0, seconds = PORTRAIT_LIMITS.seconds, fps = PORTRAIT_MOVIE.fps, bitrate = PORTRAIT_MOVIE.bitrate, onProgress = () => {}, signal } = {}) {
+  const canvas = new OffscreenCanvas(width, height), context = canvas.getContext('2d');
   context.imageSmoothingQuality = 'high';
-  const options = await encoder(canvas), output = new Output({ format: new WebMOutputFormat(), target: new BufferTarget() });
+  const options = await encoder(canvas, bitrate), output = new Output({ format: new WebMOutputFormat(), target: new BufferTarget() });
   const { source, add } = dotaCanvasSource(canvas, options);
   const still = opened.kind === 'image';
-  output.addVideoTrack(source, { frameRate: still ? 1 : PORTRAIT_MOVIE.fps });
+  output.addVideoTrack(source, { frameRate: still ? 1 : fps });
   await output.start();
   const stop = () => { if (signal?.aborted) throw new DOMException('Отменено', 'AbortError'); };
+  const draw = (image, w, h) => paint(context, image, w, h);
   try {
     if (still) {
-      paintMovie(context, opened.still, opened.width, opened.height, crop, hud);
+      draw(opened.still, opened.width, opened.height);
       for (let second = 0; second < PORTRAIT_MOVIE.stillSeconds; second++) { stop(); await add(second, 1); }
-    } else if (opened.mime === 'image/gif' || opened.mime === 'image/webp') await gifFrames(file, opened, crop, context, add, stop, onProgress, hud);
-    else await videoFrames(file, opened, crop, start, context, add, stop, onProgress, hud);
+    } else if (opened.mime === 'image/gif' || opened.mime === 'image/webp') await gifFrames(file, opened, draw, add, stop, onProgress, seconds);
+    else await videoFrames(file, opened, draw, start, add, stop, onProgress, seconds, fps);
     await output.finalize();
   } catch (error) { await output.cancel().catch(() => {}); throw error; }
   onProgress(1);
   return new Uint8Array(output.target.buffer);
 }
-async function gifFrames(file, opened, crop, context, add, stop, onProgress, hud) {
+async function gifFrames(file, opened, draw, add, stop, onProgress, seconds) {
   const decoder = new ImageDecoder({ data: await file.arrayBuffer(), type: opened.mime });
   try {
     await decoder.tracks.ready;
     let time = 0;
-    for (let index = 0; index < decoder.tracks.selectedTrack.frameCount && time < PORTRAIT_LIMITS.seconds; index++) {
+    for (let index = 0; index < decoder.tracks.selectedTrack.frameCount && time < seconds; index++) {
       stop();
-      const { image } = await decoder.decode({ frameIndex: index }), seconds = Math.min(frameSeconds(image), PORTRAIT_LIMITS.seconds - time);
-      paintMovie(context, image, image.displayWidth, image.displayHeight, crop, hud); image.close();
-      await add(time, seconds); time += seconds; onProgress(time / PORTRAIT_LIMITS.seconds);
+      const { image } = await decoder.decode({ frameIndex: index }), length = Math.min(frameSeconds(image), seconds - time);
+      draw(image, image.displayWidth, image.displayHeight); image.close();
+      await add(time, length); time += length; onProgress(time / seconds);
     }
   } finally { decoder.close(); }
 }
-async function videoFrames(file, opened, crop, start, context, add, stop, onProgress, hud) {
+async function videoFrames(file, opened, draw, start, add, stop, onProgress, seconds, fps) {
   const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
   try {
     const track = await input.getPrimaryVideoTrack(), first = await track.getFirstTimestamp();
-    const from = Math.max(0, Math.min(start, opened.duration - 0.1)), to = Math.min(opened.duration, from + PORTRAIT_LIMITS.seconds);
+    const from = Math.max(0, Math.min(start, opened.duration - 0.1)), to = Math.min(opened.duration, from + seconds);
     // The source frame nearest to each output time (scripts/video-resample.mjs: rounded timestamps made repeats).
-    const nudge = sampleNudge((await track.computePacketStats(120).catch(() => null))?.averagePacketRate, PORTRAIT_MOVIE.fps);
-    const frames = Math.max(1, Math.round((to - from) * PORTRAIT_MOVIE.fps)), times = sampleTimes({ first, from, frames, fps: PORTRAIT_MOVIE.fps, nudge });
+    const nudge = sampleNudge((await track.computePacketStats(120).catch(() => null))?.averagePacketRate, fps);
+    const frames = Math.max(1, Math.round((to - from) * fps)), times = sampleTimes({ first, from, frames, fps, nudge });
     const samples = new VideoSampleSink(track).samplesAtTimestamps(times);
     try {
       for (let k = 0; k < frames; k++) {
         stop();
         const { value: sample } = await samples.next();
-        if (sample) { paintMovie(context, sample.toCanvasImageSource(), sample.displayWidth, sample.displayHeight, crop, hud); sample.close(); }
-        await add(k / PORTRAIT_MOVIE.fps, 1 / PORTRAIT_MOVIE.fps);
+        if (sample) { draw(sample.toCanvasImageSource(), sample.displayWidth, sample.displayHeight); sample.close(); }
+        await add(k / fps, 1 / fps);
         onProgress((k + 1) / frames);
       }
     } finally { await samples.return?.(); }

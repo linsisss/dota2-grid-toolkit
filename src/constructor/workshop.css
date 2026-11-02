@@ -1,0 +1,134 @@
+/* «Мастерская виджетов» in the constructor (2026-10-31): the shelf's cards (WorkshopShelf.jsx), the editor's
+   «Опубликовать» window (PublishWidget.jsx) and the states a sent widget goes through. The constructor's own
+   look (constructor.css): glass, the lavender accent for what one does; the states take Dota's gold while a
+   moderator has not looked yet, green once in the workshop, a muted rose when turned down. */
+.kz-app, .catalog-dialog { --wk-wait:#e8c77a; --wk-wait-ink:#f1d7a8; --wk-ok:#8fd36a; --wk-ok-ink:#b9e3a3; --wk-no:#f07878; --wk-no-ink:#ffb1b1; --wk-like:#ff8fb8; }
+
+/* ——— A state: a pill with its dot ——— */
+.kz-wk-state { display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 9px; border-radius:999px; background:#15131bd9; color:var(--kz-text, #d3cce0); font-size:11.5px; font-weight:500; white-space:nowrap; box-shadow:inset 0 0 0 1px #ffffff1f; backdrop-filter:blur(6px); }
+.kz-wk-state::before { content:''; flex:none; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.kz-wk-state.is-pending { color:var(--wk-wait-ink); box-shadow:inset 0 0 0 1px #e8c77a59; }
+.kz-wk-state.is-pending::before { background:var(--wk-wait); box-shadow:0 0 8px var(--wk-wait); }
+.kz-wk-state.is-approved { color:var(--wk-ok-ink); box-shadow:inset 0 0 0 1px #8fd36a4d; }
+.kz-wk-state.is-approved::before { background:var(--wk-ok); }
+.kz-wk-state.is-rejected { color:var(--wk-no-ink); box-shadow:inset 0 0 0 1px #f0787859; }
+.kz-wk-state.is-rejected::before { background:var(--wk-no); }
+.kz-wk-state.is-hidden { color:#b4adbf; }
+.kz-wk-state.is-mine { color:var(--cat-accent); box-shadow:inset 0 0 0 1px #c4b5ed55; }
+.kz-tile-pv > .kz-wk-state, .kz-wk-pv > .kz-wk-state { position:absolute; left:6px; top:6px; z-index:1; }
+.kz-wk-state.is-small { height:19px; padding:0 7px; font-size:10.5px; }
+
+/* ——— The shelf's head: «Свои и готовые» / «Мастерская», the order ——— */
+.kz-shelf-tabs { flex:none; display:inline-flex; gap:2px; padding:3px; border:1px solid #ffffff14; border-radius:11px; background:#15121bcc; }
+.kz .kz-shelf-tabs button { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 11px; border:0; border-radius:8px; background:none; color:var(--kz-muted); font-size:12.5px; font-weight:500; white-space:nowrap; transition:color 150ms ease, background 200ms ease; }
+.kz .kz-shelf-tabs button:hover { color:var(--kz-ink); }
+.kz .kz-shelf-tabs button[aria-selected=true] { color:var(--kz-ink); background:#c4b5ed1f; box-shadow:inset 0 0 0 1px #c4b5ed45; }
+.kz-shelf-tabs button[aria-selected=true] svg { color:var(--cat-accent); }
+.kz-wk-head { display:flex; align-items:center; gap:12px; }
+.kz-wk-head > span { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.kz-wk-sort { flex:none; display:inline-flex; gap:2px; }
+.kz .kz-wk-sort button { height:26px; padding:0 9px; border:0; border-radius:7px; background:none; color:var(--kz-muted); font-size:12.5px; font-weight:500; }
+.kz .kz-wk-sort button:hover { color:var(--kz-ink); }
+.kz .kz-wk-sort button[aria-checked=true] { color:var(--kz-ink); background:#ffffff12; }
+
+/* ——— A card ——— */
+/* The row snaps to its cards: a label first in it snaps too, so it is never scrolled past. */
+.kz-wk-card { position:relative; flex:none; display:grid; align-content:start; gap:6px; width:226px; padding:5px 5px 7px; border:1px solid #ffffff10; border-radius:12px; background:#ffffff05; color:var(--kz-ink); transition:border-color 200ms ease, background 200ms ease; }
+.kz-wk-card:hover, .kz-wk-card:focus-within { border-color:#c4b5ed40; }
+.kz-wk-card.is-mine { border-color:#c4b5ed3d; }
+.kz-wk-card.is-pending { border-style:dashed; border-color:#e8c77a66; }
+.kz-wk-card.is-rejected { border-style:dashed; border-color:#f0787866; }
+.kz-wk-card.is-hidden { border-style:dashed; border-color:#ffffff2e; }
+.kz-wk-card.is-empty { min-height:206px; pointer-events:none; }
+.kz-wk-card.is-empty .kz-wk-pv { animation:kz-wait 1.2s ease-in-out infinite alternate; }
+/* The picture is the widget itself, live, on the dusk of the menu; it is also what one drags onto the screen. */
+.kz-wk-pv { position:relative; display:block; aspect-ratio:16/9.6; overflow:clip; border-radius:8px; background:linear-gradient(#0a0c12a6,#0a0c12d9), radial-gradient(120% 90% at 70% 10%,#5a3a52,#141018 70%); box-shadow:inset 0 0 0 1px #ffffff0d; cursor:grab; touch-action:none; user-select:none; }
+.kz-wk-card:is(.is-pending, .is-rejected, .is-hidden) .kz-wk-pv { cursor:default; }
+.kz-wk-card.is-hidden .kz-wk-pv .kz-mini, .kz-wk-card.is-rejected .kz-wk-pv .kz-mini { opacity:.55; }
+.kz-wk-size { position:absolute; right:6px; top:6px; padding:1px 7px; border-radius:7px; background:#0f0e13cc; color:var(--kz-subtle); font-size:10.5px; font-variant-numeric:tabular-nums; }
+.kz-wk-line { display:flex; align-items:center; gap:6px; min-height:24px; padding:0 0 0 3px; }
+.kz-wk-line > b { flex:1; min-width:0; overflow:hidden; font-size:12.5px; font-weight:500; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+.kz .kz-wk-like { flex:none; display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 6px; border:0; border-radius:7px; background:none; color:var(--kz-muted); font-size:12px; font-variant-numeric:tabular-nums; transition:color 150ms ease, background 150ms ease; }
+.kz .kz-wk-like:not(:disabled):hover { background:#ffffff0d; color:var(--kz-ink); }
+.kz .kz-wk-like[aria-pressed=true] { color:var(--wk-like); }
+.kz-wk-like[aria-pressed=true] path { fill:currentColor; }
+.kz-wk-like svg { transition:transform 300ms var(--kz-spring); }
+.kz-wk-like[aria-pressed=true] svg { transform:scale(1.12); }
+.kz .kz-wk-like:disabled { opacity:.6; }
+.kz-wk-by { display:flex; align-items:center; gap:6px; min-width:0; padding:0 3px; color:var(--kz-text); font-size:11.5px; }
+.kz-wk-by > span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.kz-wk-by > small { flex:none; display:inline-flex; align-items:center; gap:3px; color:var(--kz-subtle); font-size:11px; font-variant-numeric:tabular-nums; }
+.kz-wk-ava { flex:none; display:grid; place-items:center; width:18px; height:18px; border-radius:6px; object-fit:cover; background:linear-gradient(135deg,#8e5cf0,#ff7ac8); color:#fff; font-size:10px; font-style:normal; font-weight:700; }
+.kz-wk-why { display:-webkit-box; margin:0; padding:0 3px; overflow:hidden; color:var(--kz-muted); font-size:11.5px; line-height:1.35; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.kz-wk-why.is-reason { color:var(--wk-no-ink); }
+.kz-wk-acts { display:flex; gap:4px; }
+.kz .kz-wk-add, .kz .kz-wk-ghost { display:inline-flex; align-items:center; justify-content:center; gap:5px; height:30px; padding:0 10px; border:0; border-radius:9px; font-size:12.5px; font-weight:500; white-space:nowrap; transition:background 150ms ease, color 150ms ease; }
+.kz .kz-wk-add { flex:1; background:#c4b5ed24; color:var(--kz-ink); box-shadow:inset 0 0 0 1px #c4b5ed45; font-weight:600; }
+.kz .kz-wk-add:hover { background:#c4b5ed3a; }
+.kz-wk-add svg { color:var(--cat-accent); }
+.kz .kz-wk-ghost { background:#ffffff08; color:var(--kz-text); }
+.kz .kz-wk-ghost:hover { background:#ffffff12; color:var(--kz-ink); }
+.kz .kz-wk-ghost.is-danger { color:var(--wk-no-ink); }
+.kz .kz-wk-ghost.is-danger:hover { background:#f078781f; }
+.kz-wk-ghost.is-wide { flex:1; }
+.kz-wk-meta { padding:0 3px; color:var(--kz-subtle); font-size:11px; font-variant-numeric:tabular-nums; }
+.kz-wk-more { width:132px; }
+.kz-wk-more svg { transition:transform 200ms ease; }
+.kz-wk-more:disabled svg { animation:kz-wk-spin 1s linear infinite; }
+@keyframes kz-wk-spin { to { transform:rotate(360deg); } }
+.kz-wk-empty { max-width:420px; line-height:1.5; }
+.kz-wk-empty b { display:block; margin-bottom:4px; color:var(--kz-ink); font-size:14px; font-weight:600; }
+.kz-wk-error { display:flex; align-items:center; gap:8px; color:var(--wk-no-ink); }
+
+/* ——— «Опубликовать в мастерскую» ——— */
+.kz-pub { display:grid; gap:14px; padding:16px 22px 22px; }
+.kz-pub-grid { display:grid; grid-template-columns:150px minmax(0,1fr); gap:18px; }
+.kz-pub-pv { position:relative; height:226px; overflow:clip; border-radius:12px; background:linear-gradient(#0a0c12a6,#0a0c12d9), radial-gradient(120% 90% at 70% 10%,#5a3a52,#141018 70%); box-shadow:inset 0 0 0 1px #ffffff14; }
+.kz-pub-pv .kz-mini { bottom:20px; }
+.kz-pub-pv > small { position:absolute; left:0; right:0; bottom:6px; color:#8d859c; font-size:11px; font-variant-numeric:tabular-nums; text-align:center; }
+.kz-pub-fields { display:grid; align-content:start; gap:12px; min-width:0; }
+.kz-pub-field { display:grid; gap:2px; font-size:13px; font-weight:500; }
+.kz-pub-field small { color:var(--cat-muted); font-size:11.5px; font-weight:400; }
+.catalog-dialog .kz-pub-field input { margin-top:4px; padding:10px 12px; border-radius:9px; }
+.kz-pub-author { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px; background:#ffffff07; }
+.kz-pub-author .account-avatar { width:28px; height:28px; }
+.kz-pub-author > span { display:grid; min-width:0; }
+.kz-pub-author b { overflow:hidden; font-size:13px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.kz-pub-author small { color:var(--cat-muted); font-size:11.5px; }
+.kz-pub-checks { display:grid; gap:7px; margin:0; padding:0; list-style:none; font-size:12.5px; }
+.kz-pub-checks li { display:flex; gap:8px; }
+.kz-pub-checks li > svg { flex:none; margin-top:2px; color:var(--wk-ok); }
+.kz-pub-checks li.is-look > svg { color:var(--wk-wait); }
+.kz-pub-checks li.is-bad { color:var(--wk-no-ink); }
+.kz-pub-checks li.is-bad > svg { color:var(--wk-no); }
+.kz-pub-checks small { display:block; color:#8d859c; font-size:11.5px; overflow-wrap:anywhere; }
+.kz-pub-note { display:flex; gap:12px; padding:12px 14px; border-radius:12px; background:#c4b5ed0d; box-shadow:inset 0 0 0 1px #c4b5ed2b; font-size:13px; line-height:1.5; }
+.kz-pub-note > svg { flex:none; margin-top:1px; color:var(--cat-accent); }
+.kz-pub-note ul { margin:4px 0 6px; padding-left:18px; color:var(--cat-muted); }
+.kz-pub-small { margin:0; color:var(--cat-muted); font-size:12.5px; line-height:1.45; }
+.kz-pub-foot { justify-content:flex-end; gap:10px; }
+.kz-pub-done + .kz-pub-foot { padding:16px 22px 22px; }
+.kz-pub-progress b { font-size:13.5px; }
+.kz-pub-done { display:grid; justify-items:center; gap:10px; padding:22px 22px 0; text-align:center; }
+.kz-pub-done h3 { margin:2px 0 0; font-size:19px; font-weight:650; letter-spacing:-.01em; }
+.kz-pub-done p { max-width:420px; margin:0; color:var(--cat-muted); line-height:1.5; }
+.kz-pub-done .kz-pub-reason { color:var(--wk-no-ink); }
+.kz-pub-mark { display:grid; place-items:center; width:56px; height:56px; border-radius:16px; color:var(--cat-accent); background:radial-gradient(circle at 30% 25%,#c4b5ed38,#c4b5ed10 70%); box-shadow:inset 0 0 0 1px #c4b5ed3d; }
+.kz-pub-mark.is-pending { color:var(--wk-wait); background:radial-gradient(circle at 30% 25%,#e8c77a33,#e8c77a0d 70%); box-shadow:inset 0 0 0 1px #e8c77a47; }
+.kz-pub-mark.is-approved { color:var(--wk-ok); background:radial-gradient(circle at 30% 25%,#8fd36a2e,#8fd36a0a 70%); box-shadow:inset 0 0 0 1px #8fd36a40; }
+.kz-pub-mark.is-rejected { color:var(--wk-no); background:radial-gradient(circle at 30% 25%,#f078782e,#f078780a 70%); box-shadow:inset 0 0 0 1px #f0787840; }
+.kz-pub-mark.is-hidden { color:#b4adbf; background:#ffffff0a; box-shadow:inset 0 0 0 1px #ffffff1f; }
+.kz-pub-done .kz-wk-state { backdrop-filter:none; }
+
+/* ——— The editor's button: what became of the design sent as it is ——— */
+.kz .kz-ed-pub.is-pending { color:var(--wk-wait-ink); }
+.kz-ed-pub.is-pending svg { color:var(--wk-wait); }
+.kz .kz-ed-pub.is-approved { color:var(--wk-ok-ink); }
+.kz-ed-pub.is-approved svg { color:var(--wk-ok); }
+.kz .kz-ed-pub.is-rejected { color:var(--wk-no-ink); }
+.kz .kz-ed-pub.is-hidden { color:var(--kz-muted); }
+
+@media (max-width:1599px) { .kz-ed-pub:not([class*=' is-']) .kz-label { display:none; } }
+@media (max-width:900px) { .kz-pub-grid { grid-template-columns:1fr; } .kz-pub-pv { height:200px; } }
+@media (prefers-reduced-motion:reduce) { .kz-wk-more:disabled svg { animation:none; } }
+.kz-pub > .catalog-notice { max-width:none; margin:0; }

@@ -4,7 +4,10 @@ import { join } from 'node:path';
 import { inflateRawSync } from 'node:zlib';
 import { fail } from './catalog-store.mjs';
 import { panoramaSource, readVPK } from '../scripts/vpk.mjs';
-import { MENU_LAYOUT, MENU_PACK_PATHS, MENU_PACK_VIDEOS, MENU_VIDEO } from '../scripts/menu-background.mjs';
+import { MENU_LAYOUT, MENU_PACK_PATHS, MENU_PACK_VIDEOS, MENU_VIDEO, widgetMediaFile } from '../scripts/menu-background.mjs';
+import { WIDGET_SCRIPT, widgetLink, widgetScriptData, widgetScriptText } from '../scripts/menu-widgets.mjs';
+import { THEME_MARK, themeStyleRel } from '../scripts/menu-theme.mjs';
+import { readVtex } from '../scripts/dota-vtex.mjs';
 import { HUD_STYLE } from '../scripts/hud-style.mjs';
 import { ABILITIES_PATH, TEXTS_PATH } from '../scripts/dota-texts.mjs';
 import { CURSOR_IDS as CURSOR_ID_LIST, CURSOR_SIZES } from '../scripts/dota-cursor.mjs';
@@ -20,7 +23,8 @@ import { portraitsPackProblem } from '../scripts/hero-portraits.mjs';
 // checks its SHA-256 and size (scripts/installer.mjs). A pack is named by its SHA-256 (the same pack is
 // kept once) and kept for a week. The server takes only what the site's own builders make, so nobody
 // can hand out anything else under gridstudio.me: a background is a VPK of MENU_PACK_PATHS (WebM videos
-// and Panorama files without outside addresses, network calls or handlers but the site's own), a font
+// and Panorama files without outside addresses, network calls or handlers but the site's own) and the menu
+// theme's Valve stylesheets (only with the theme's mark, the same checks), a font
 // a ZIP of fonts/<Dota's font>.otf, OFL.txt and the read-me.
 // `storage`: 15 GB since 2026-10-07 (5 GB filled up and every new pack was refused for a day); when a
 // new pack does not fit, the oldest ready ones make room (evict).
@@ -40,12 +44,16 @@ const DAY = 86_400_000;
 const URLS = ['https://stratz.com/players/', 'https://www.dotabuff.com/players/', 'http://www.w3.org/2000/svg', 'http://www.w3.org/1999/xlink'];
 // The Stratz and Dotabuff buttons on the profile (menu-background.mjs profilePage), the only handler that builds an address.
 const PROFILE_HANDLER = /^\$\.DispatchEvent\( 'ExternalBrowserGoToURL', '(?:https:\/\/stratz\.com\/players\/|https:\/\/www\.dotabuff\.com\/players\/)' \+ \$\.Localize\( '\{s:account_id\}', \$\.GetContextPanel\(\) \) \);$/;
+// A widget's shortcut to a web page (scripts/menu-widgets.mjs): one https address of the allowed sites, nothing built.
+const WIDGET_LINK_HANDLER = /^\$\.DispatchEvent\( 'ExternalBrowserGoToURL', '([^'\s]+)' \);$/;
+const widgetHandler = (value) => { const url = WIDGET_LINK_HANDLER.exec(value)?.[1]; return !!url && widgetLink(url) === url; };
 export function panoramaProblem(text) {
+  const links = new Set(Array.from(text.matchAll(/\son[a-z]+\s*=\s*"([^"]*)"/gi), (m) => m[1]).filter(widgetHandler).map((value) => WIDGET_LINK_HANDLER.exec(value)[1]));
   for (const url of text.match(/[a-z][a-z0-9+.-]*:\/\/[^\s"'<>)]*/gi) || [])
-    if (!/^s2r:\/\/panorama\//i.test(url) && !url.startsWith('file://{resources}/') && !URLS.some((allowed) => url.startsWith(allowed))) return `адрес ${url.slice(0, 60)}`;
+    if (!/^s2r:\/\/(?:panorama|materials)\//i.test(url) && !url.startsWith('file://{resources}/') && !URLS.some((allowed) => url.startsWith(allowed)) && !links.has(url)) return `адрес ${url.slice(0, 60)}`;
   if (/AsyncWebRequest|XMLHttpRequest|WebSocket|fromCharCode|\batob\s*\(|\beval\s*\(|\bFunction\s*\(|javascript:|<script(?!s\s*>)/i.test(text)) return 'скрипт';
   for (const value of Array.from(text.matchAll(/\son[a-z]+\s*=\s*(?:"([^"]*)"|'([^']*)')/gi), (m) => m[1] ?? m[2]))
-    if (/[+`\\]|url/i.test(value) && !PROFILE_HANDLER.test(value)) return 'обработчик';
+    if (/[+`\\]|url/i.test(value) && !PROFILE_HANDLER.test(value) && !widgetHandler(value)) return 'обработчик';
   for (const [, src] of text.matchAll(/<include\s+src\s*=\s*["']([^"']*)["']/gi)) if (!/^(?:s2r:\/\/panorama\/|file:\/\/\{resources\}\/)/.test(src)) return 'подключение';
   return '';
 }
@@ -59,10 +67,20 @@ function backgroundProblem(bytes, { whole = true } = {}) {
   const has = (path) => files.some((file) => file.path === path);
   if (whole ? !has(MENU_PACK_PATHS[0]) || !has(MENU_PACK_VIDEOS[0]) : !files.length || (has(MENU_LAYOUT) && !has(MENU_VIDEO))) return 'Это не фон GridStudio.';
   for (const file of files) {
-    if (!MENU_PACK_PATHS.includes(file.path)) return 'В фоне есть лишний файл.';
+    // The widgets' pictures and videos (scripts/menu-widgets.mjs): a texture Source 2 Viewer would read, a WebM.
+    if (widgetMediaFile(file.path)) {
+      if (file.path.endsWith('.webm') ? !EBML.every((byte, i) => file.data[i] === byte) : (() => { try { readVtex(file.data); return false; } catch { return true; } })()) return 'Файл виджета повреждён.';
+      continue;
+    }
+    // «Тема меню» (scripts/menu-theme.mjs themeFiles): Valve's own stylesheets recoloured, each with the theme's mark.
+    const themed = !MENU_PACK_PATHS.includes(file.path) && themeStyleRel(file.path);
+    if (!themed && !MENU_PACK_PATHS.includes(file.path)) return 'В фоне есть лишний файл.';
     if (MENU_PACK_VIDEOS.includes(file.path)) { if (!EBML.every((byte, i) => file.data[i] === byte)) return 'Видео фона повреждено.'; continue; }
+    // The widgets' script: exactly the site's own code with data of the allowed shape, in exactly the file the site makes.
+    if (file.path === WIDGET_SCRIPT) { const script = widgetScriptText(file.data); if (!script || !widgetScriptData(script)) return 'В файле меню недопустимое: скрипт.'; continue; }
     let text;
     try { text = panoramaSource(file.data); } catch { return 'Файл меню повреждён.'; }
+    if (themed && !THEME_MARK.test(text)) return 'В фоне есть лишний файл.';
     const problem = panoramaProblem(text);
     if (problem) return `В файле меню недопустимое: ${problem}.`;
   }

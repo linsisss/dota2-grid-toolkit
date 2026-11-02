@@ -152,7 +152,7 @@ test('the preview’s pictures: the bar split into ground and the rest, the rail
 // The second round (2026-10-22): the news column, the mini-profile's header and picture, the party bar.
 test('the news column, the mini-profile and the party bar: exact rules, each in its layout’s scope', async () => {
   const [{ readVPK, panoramaSource }, m] = await modules;
-  const pack = (glass, options = {}) => unpack(readVPK(m.menuBackgroundPack({ video: null, dashboard, home, news: { carnival: true, season: true }, friends, miniProfile, glass, md5, ...options })));
+  const pack = (glass, options = {}) => unpack(readVPK(m.menuBackgroundPack({ video: null, dashboard, home, frontpage: read('frontpage_contents.css'), news: { carnival: true, season: true }, friends, miniProfile, glass, md5, ...options })));
   const text = (files, path) => panoramaSource(files[path].data);
   const files = pack({ news: 40, header: 40, showcase: 40, party: 40 });
   assert.deepEqual(Object.keys(files).sort(), ['panorama/layout/dashboard.vxml_c', 'panorama/layout/dashboard_page_home.vxml_c', m.HOME_STYLE, m.GLASS_STYLE, m.MINI_PROFILE_PAGE, m.MINI_PROFILE_STYLE].sort());
@@ -222,11 +222,12 @@ test('the news column, the mini-profile and the party bar: exact rules, each in 
   assert.doesNotMatch(text(pack({ showcase: 10 }), m.MINI_PROFILE_STYLE), /\.Header/);
   assert.deepEqual(Object.keys(pack({ party: 0 })).sort(), ['panorama/layout/dashboard.vxml_c', m.GLASS_STYLE].sort());
   assert.deepEqual(Object.keys(pack({ news: 99 })).sort(), ['panorama/layout/dashboard_page_home.vxml_c', m.HOME_STYLE].sort());
-  // With the top bar too: one style for both; with a hidden card: one home style for both.
+  // With the top bar too: one style for both; with a hidden card: the column fades, the card goes in the column's own style.
   const both = pack({ bar: 50, party: 50 });
   assert.match(text(both, m.GLASS_STYLE), /^\/\* GridStudio: the top bar's ground at 50 percent[\s\S]*\n\/\* GridStudio: the party bar's ground at 50 percent/);
   const card = pack({ news: 30 }, { news: { carnival: false, season: true } });
-  assert.match(text(card, m.HOME_STYLE), /^\/\* GridStudio: news cards hidden on the home page\. \*\/\n\.FrontPageDarkCarnivalCell\n\{\n\tvisibility: collapse;\n\}\n\n\/\* GridStudio: the news column at 30 percent/);
+  assert.match(text(card, m.HOME_STYLE), /^\/\* GridStudio: the news column at 30 percent/);
+  assert.match(text(card, m.NEWS_STYLE), /\/\* GridStudio: news cards hidden on the home page\. \*\/\n\.TopCell\n\{\n\tvisibility: collapse;/);
   // Both cards hidden: no column, nothing to fade.
   const none = pack({ news: 30 }, { news: { carnival: false, season: false } });
   assert.equal(none[m.HOME_STYLE], undefined);

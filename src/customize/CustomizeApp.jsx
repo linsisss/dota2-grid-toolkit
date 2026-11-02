@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Brand, Icon } from '../catalog/Common.jsx';
 import { CATALOG_PATH, GUIDES_PATH, STUDIO_PATH } from '../catalog/api.js';
@@ -14,6 +14,24 @@ import { lookMedia } from '../../scripts/customize-look.mjs';
 import { applyLook, keepPrevious, lookFiles, namedMedia, readLink, storedLook, writeLink } from './look-state.js';
 import { pruneMedia } from './look-store.js';
 import { freshenLookItem, openLookItem } from '../studio-looks.js';
+
+// The constructor (src/constructor/, the owner's variant B, 2026-10-31): on a computer with a window at least
+// 1100 px wide, the default since 2026-11-02 (the owner: «переключить на деве уже можешь»; ?app=b before);
+// ?app=a, a phone or a narrow window gets the page. Loaded only when it is shown.
+const ConstructorPage = lazy(() => import('../constructor/ConstructorPage.jsx'));
+const WANTS_CONSTRUCTOR = new URLSearchParams(location.search).get('app') !== 'a';
+const COARSE = '(pointer: coarse)', WIDE = '(min-width: 1100px)';
+const constructorFits = () => WANTS_CONSTRUCTOR && typeof matchMedia === 'function' && !matchMedia(COARSE).matches && matchMedia(WIDE).matches;
+function useConstructor() {
+  const [on, setOn] = useState(constructorFits);
+  useEffect(() => {
+    if (!WANTS_CONSTRUCTOR || typeof matchMedia !== 'function') return undefined;
+    const lists = [matchMedia(COARSE), matchMedia(WIDE)], change = () => setOn(constructorFits());
+    for (const list of lists) list.addEventListener('change', change);
+    return () => { for (const list of lists) list.removeEventListener('change', change); };
+  }, []);
+  return on;
+}
 
 // /background: «Твоя Dota», one page for everything about Dota but grids and guides (CustomizePage.jsx,
 // 2026-10-17). It was three tools on one entry — the menu background, ?tab=font the font, ?tab=interface the
@@ -38,7 +56,7 @@ export { rich, Segmented, Field, CopyField, InstallWindow } from './ui.jsx';
 export default function CustomizeApp() {
   useAppMotion();
   // RU / EN redraws the page in place (its files and settings stay).
-  const lang = useLanguage();
+  const lang = useLanguage(), constructor = useConstructor();
   const [preset, setPreset] = useState(() => LINKED ? { id: LINKED } : null);
   // A document in place of the page's state (look-state.js applyLook): the page is taken away, the sections'
   // keys are written, and it is mounted again (`generation`), so each section reads them its usual way.
@@ -71,12 +89,18 @@ export default function CustomizeApp() {
       setGeneration((value) => value + 1); setHold(false);
     })();
   }, [auth?.loading]);
-  useEffect(() => { document.title = t('Оформление Dota: фон, интерфейс и шрифт — GridStudio'); }, [lang]);
+  useEffect(() => { document.title = constructor ? t('Конструктор меню Dota — GridStudio') : t('Оформление Dota: фон, интерфейс и шрифт — GridStudio'); }, [lang, constructor]);
   useEffect(() => {
     if (!LINKED) return;
     const url = new URL(location.href); url.searchParams.delete('background'); history.replaceState(history.state, '', url);
   }, []);
   if (GALLERY) return null;
+  if (constructor) return <div className="catalog-page custom-app cz-app kz-app">
+    {hold ? <main className="kz-holding"><p className="custom-hint" role="status">{t('Открываем оформление…')}</p></main>
+      : <Suspense fallback={<main className="kz-holding"><p className="custom-hint" role="status">{t('Открываем конструктор…')}</p></main>}>
+        <ConstructorPage key={generation} preset={preset} studioItem={generation ? null : ITEM} onRemove={() => setPreset(null)} replace={replace} notice={notice} onNotice={setNotice} openError={openError}/>
+      </Suspense>}
+  </div>;
   return <div className="catalog-page custom-app cz-app">
     <header className="custom-top">
       <Brand/>

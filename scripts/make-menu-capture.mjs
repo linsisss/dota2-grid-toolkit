@@ -20,7 +20,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildVPK, panoramaResource, panoramaSource, readVPK } from './vpk.mjs';
 import { buildZip } from './zip.mjs';
-import { menuBackgroundPack, menuDashboard } from './menu-background.mjs';
+import { NEWS_STYLE, menuBackgroundPack, menuDashboard } from './menu-background.mjs';
 import * as P from './menu-capture/plan.mjs';
 
 const SOURCE = 'https://raw.githubusercontent.com/spirit-bear-productions/dota_vpk_updates/main/';
@@ -78,10 +78,11 @@ const capture = { M1: P.m1CaptureStyle(), V1: P.v1CaptureStyle() };
 const background = { M1: P.backgroundStyle('M1', P.M1_STATES), V1: P.backgroundStyle('V1', P.V1_STATES) };
 const layout = P.backgroundLayout();
 // V1: production's pack for the hide set (no video: it carries only dashboard.xml with the hide style
-// included, the home page with the news style, and the two styles), read back.
-const production = readVPK(menuBackgroundPack({ video: null, dashboard: valve.dashboard, home: valve.home, news: { ...P.V1_NEWS }, hide: [...P.V1_HIDE], md5 }));
+// included, the hide style and, since 2026-10-31, the news column's own stylesheet with the hidden card), read back.
+const frontpage = normalize(readFileSync(repoCopy('../styles/frontpage_contents.css'), 'utf8'));
+const production = readVPK(menuBackgroundPack({ video: null, dashboard: valve.dashboard, home: valve.home, frontpage, news: { ...P.V1_NEWS }, hide: [...P.V1_HIDE], md5 }));
 const prod = Object.fromEntries(production.files.map((f) => [f.path, panoramaSource(f.data)]));
-for (const path of [P.DASHBOARD, P.HOME, P.HOME_STYLE, P.MENU_HIDE_STYLE]) if (!prod[path]) throw new Error(`Продакшн-пак без ${path}`);
+for (const path of [P.DASHBOARD, NEWS_STYLE, P.MENU_HIDE_STYLE]) if (!prod[path]) throw new Error(`Продакшн-пак без ${path}`);
 const files = {
   M1: [
     { path: P.DASHBOARD, text: P.withCaptureStyle(menuDashboard(valve.dashboard), 'dashboard.xml'), valve: true },
@@ -91,7 +92,7 @@ const files = {
   ],
   V1: [
     { path: P.DASHBOARD, text: P.withCaptureStyle(menuDashboard(prod[P.DASHBOARD]), 'dashboard.xml (production)'), valve: true },
-    { path: P.HOME, text: prod[P.HOME], valve: true }, { path: P.HOME_STYLE, text: prod[P.HOME_STYLE] }, { path: P.MENU_HIDE_STYLE, text: prod[P.MENU_HIDE_STYLE] },
+    { path: NEWS_STYLE, text: prod[NEWS_STYLE] }, { path: P.MENU_HIDE_STYLE, text: prod[P.MENU_HIDE_STYLE] },
     { path: P.MENU_LAYOUT, text: layout }, { path: P.MENU_STYLE, text: background.V1.text }, { path: P.CAPTURE_STYLE, text: capture.V1.text }
   ]
 };

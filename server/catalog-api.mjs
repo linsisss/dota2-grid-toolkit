@@ -14,8 +14,11 @@ import { CatalogArts } from './catalog-arts.mjs';
 import { ART_CATEGORIES, ART_LIMITS, artSubmission } from '../scripts/art-document.mjs';
 import { CatalogBackgrounds } from './catalog-backgrounds.mjs';
 import { DOTA_TEXTS_LANGUAGES, DotaTexts } from './dota-texts.mjs';
+import { DotaStyles } from './dota-styles.mjs';
 import { StudioBackgrounds } from './studio-backgrounds.mjs';
 import { StudioLooks } from './studio-looks.mjs';
+import { MenuWidgets } from './menu-widgets.mjs';
+import { WIDGET_SHARE } from '../scripts/menu-widgets.mjs';
 import { pickSafeGrid, renderSpaceThumbnail } from './catalog-preview.mjs';
 import { pageMeta, tabOf } from '../scripts/og-pages.mjs';
 import { STAT_ROBOT, SiteStats } from './site-stats.mjs';
@@ -95,6 +98,8 @@ export function catalogConfig(env = process.env) {
     // «Гайды»' uploads (server/guides.mjs), next to the database unless set.
     guides: env.CATALOG_GUIDES || join(dirname(env.CATALOG_DB || '.catalog-data/catalog.sqlite'), 'guides'),
     packs: env.CATALOG_PACKS || join(dirname(env.CATALOG_DB || '.catalog-data/catalog.sqlite'), 'install-packs'),
+    // «Мастерская виджетов»' pictures and videos (server/menu-widgets.mjs), next to the database unless set.
+    widgetMedia: env.CATALOG_WIDGET_MEDIA || join(dirname(env.CATALOG_DB || '.catalog-data/catalog.sqlite'), 'widget-media'),
     // The built site (its pages get link previews for shared works): the release's dist unless set.
     site: env.CATALOG_SITE || fileURLToPath(new URL('../dist/', import.meta.url)) };
 }
@@ -137,7 +142,7 @@ const BACKGROUND_FILE = /^\/backgrounds\/([1-9]\d{0,12})\/(poster\.jpg|video\.we
 // The landing's picture sizes (server/editor-showcase.mjs SHOWCASE_WIDTHS), kept here so the API
 // module does not load the canvas renderer until a picture is asked for.
 const LANDING_WIDTHS = [1440, 2160, 2880];
-export function createCatalogAPI(config, { dotaTexts = null, store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null, heroMeta = new HeroMeta({ token: config.stratzToken }), dotadle = new Dotadle({ secret: config.salt, store }), metrika = new Metrika({ token: config.metrikaToken || '' }) } = {}) {
+export function createCatalogAPI(config, { dotaTexts = null, dotaStyles = null, store = new CatalogStore(config.database, config.salt), steamProfiles = new SteamProfiles({ apiKey: config.steamApiKey }), backgrounds = null, heroMeta = new HeroMeta({ token: config.stratzToken }), dotadle = new Dotadle({ secret: config.salt, store }), metrika = new Metrika({ token: config.metrikaToken || '' }) } = {}) {
   const accounts = new Accounts(store), boards = new MinigameBoards(store), arts = new CatalogArts(store), stats = new SiteStats(store), analytics = new Analytics(store, stats, { timers: !config.development || config.analyticsTimers === true }), moderators = new Moderators(store), spot = new SiteSpot(store), packs = new InstallPacks(store, { dir: config.packs || join(tmpdir(), 'gridstudio-install-packs') });
   // Shared menu backgrounds keep files next to the database (config.media).
   let galleries = backgrounds;
@@ -145,6 +150,9 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
   // Dota's texts for the interface builder's «Тексты» (server/dota-texts.mjs), beside the backgrounds.
   const texts = { ...(dotaTexts ? { russian: dotaTexts } : {}) }, textsDir = () => join(dirname(config.media || mkdtempSync(join(tmpdir(), 'gridstudio-texts-'))), 'dota-texts');
   const dotaText = (language = 'russian') => (texts[language] ||= new DotaTexts({ dir: textsDir(), language }));
+  // Valve's menu stylesheets for «Тема меню» (server/dota-styles.mjs), beside the texts.
+  let styles = dotaStyles;
+  const dotaStyle = () => (styles ||= new DotaStyles({ dir: join(dirname(textsDir()), 'dota-styles') }));
   store.unlimited = config.unlimited || new Set();
   // «Гайды» (server/guides.mjs): uploads next to the database (config.guides); unused ones are swept hourly.
   let guideStore = null;
@@ -157,6 +165,8 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
   // «Оформление» items of «Студия» (server/studio-looks.mjs, 2026-10-22).
   let lookStore = null;
   const looks = () => (lookStore ||= new StudioLooks(store));
+  let widgetStore = null;
+  const widgets = () => (widgetStore ||= new MenuWidgets(store, { dir: config.widgetMedia || join(tmpdir(), 'gridstudio-widget-media') }));
   // Landing pictures (the grid opened in the editor) by work revision, up to 24 grids (~0.4 MB each
   // for all sizes); the renderer loads on first use.
   const landingImages = new Map();
@@ -231,7 +241,7 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
       const [value, proof] = browser.split('.');
       // A background's or the banner's file sets no cookie: it needs none, and a response that sets one is
       // kept by no shared cache.
-      const media = method === 'GET' && (BACKGROUND_FILE.test(path) || path.startsWith('/spot/'));
+      const media = method === 'GET' && (BACKGROUND_FILE.test(path) || path.startsWith('/spot/') || path.startsWith('/widget-media/'));
       if (media && !(value && proof)) browser = secret();
       else if (!value || !proof || value.length !== 43 || !equal(proof, signature(value))) {
         browser = secret(); response.setHeader('Set-Cookie', cookie('gs_catalog_browser', `${browser}.${signature(browser)}`, 365 * 86400));
@@ -569,6 +579,18 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
         response.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', ETag: copy.tag, 'Cache-Control': 'public, max-age=600' });
         return response.end(copy.body);
       }
+      // Valve's menu stylesheets for «Тема меню», fresh (server/dota-styles.mjs), gzipped once per version.
+      if (path === '/dota-styles' && method === 'GET') {
+        const source = dotaStyle();
+        if (!source.current()) await source.refresh().catch(() => {});
+        else source.refresh().catch(() => {});
+        const copy = source.current();
+        if (!copy) fail(503, 'Стили Dota пока не загрузились. Попробуй через минуту.');
+        if (String(request.headers['if-none-match'] || '').replace(/^W\//, '') === copy.tag) { response.writeHead(304, { ETag: copy.tag }); return response.end(); }
+        const gzip = /\bgzip\b/.test(String(request.headers['accept-encoding'] || ''));
+        response.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', ETag: copy.tag, 'Cache-Control': 'public, max-age=600', Vary: 'Accept-Encoding', ...(gzip ? { 'Content-Encoding': 'gzip' } : {}) });
+        return response.end(gzip ? copy.gzip : copy.body);
+      }
       if (path === '/config' && method === 'GET') return send(200, { captcha: captcha.kind, ...(captcha.endpoint ? { captchaEndpoint: captcha.endpoint } : {}), development: config.development, paused: store.paused(), tags: CATALOG_TAGS, limits: CATALOG_LIMITS,
         artCategories: ART_CATEGORIES, artLimits: ART_LIMITS, backgroundTags: BACKGROUND_TAGS, backgroundLimits: BACKGROUND_LIMITS, moderationUrl: config.moderationUrl });
       // The workshop's «Реклама» page: the site's numbers for advertisers (server/site-stats.mjs audience).
@@ -600,6 +622,19 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
         await captcha.verify(body.captcha, identity, 'art');
         return send(201, arts.submit(body, identity, user?.id));
       }
+      // «Мастерская виджетов» (server/menu-widgets.mjs): the gallery for everyone, sharing for signed-in authors.
+      const widgetMediaPath = /^\/widget-media\/([a-f0-9]{64})$/.exec(path);
+      if (widgetMediaPath && method === 'HEAD') { widgets().media(widgetMediaPath[1]); response.writeHead(200); return response.end(); }
+      if (widgetMediaPath && method === 'GET') { const file = widgets().media(widgetMediaPath[1]); response.setHeader('X-Content-Type-Options', 'nosniff'); return sendFile(request, response, file, file.type, 'public, max-age=31536000, immutable'); }
+      if (widgetMediaPath && method === 'PUT') return send(201, widgets().putMedia(requireUser(), widgetMediaPath[1], await readBytes(request, WIDGET_SHARE.mediaBytes.video)));
+      if (path === '/widgets' && method === 'GET') return send(200, widgets().gallery({ sort: url.searchParams.get('sort') === 'new' ? 'new' : 'popular', page: Math.max(0, Math.min(500, Number(url.searchParams.get('page')) || 0)) | 0,
+        search: String(url.searchParams.get('q') || '').trim().slice(0, 60) }, user));
+      if (path === '/widgets' && method === 'POST') return send(201, widgets().submit(requireUser(), await readJSON(request, 400_000)));
+      const widgetPath = /^\/widgets\/([1-9]\d{0,12})(?:\/(like|use))?$/.exec(path);
+      if (widgetPath && !widgetPath[2] && method === 'GET') return send(200, widgets().one(Number(widgetPath[1]), user));
+      if (widgetPath && !widgetPath[2] && method === 'DELETE') return send(200, widgets().remove(Number(widgetPath[1]), requireUser()));
+      if (widgetPath?.[2] === 'like' && method === 'POST') { const body = await readJSON(request); return send(200, widgets().like(Number(widgetPath[1]), requireUser(), body.liked !== false)); }
+      if (widgetPath?.[2] === 'use' && method === 'POST') return send(200, widgets().use(Number(widgetPath[1]), identity));
       // Shared menu backgrounds (the workshop's «Фоны», docs/customize.md).
       if (path === '/backgrounds' && method === 'GET') {
         const tag = url.searchParams.get('tag') || '', aspect = url.searchParams.get('aspect') || '', query = (url.searchParams.get('q') || '').trim().slice(0, 80);
@@ -872,7 +907,8 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
             arts: { pending: count("SELECT count(*) n FROM arts WHERE status='pending'"), reports: 0 },
             backgrounds: table('backgrounds') ? { pending: count("SELECT count(*) n FROM backgrounds WHERE status='pending'"),
               reports: count("SELECT count(*) n FROM backgrounds b WHERE b.status='approved' AND EXISTS(SELECT 1 FROM background_reports p WHERE p.background=b.id AND p.resolved=0)") } : { pending: 0, reports: 0 },
-            guides: (({ pending, reports }) => ({ pending, reports }))(guides().counts()) } });
+            guides: (({ pending, reports }) => ({ pending, reports }))(guides().counts()),
+            widgets: { pending: table('menu_widgets') ? count("SELECT count(*) n FROM menu_widgets WHERE status='pending'") : 0, reports: 0 } } });
         }
         // A creator's badges (scripts/profile-badges.mjs): give or take back one; recorded in «Журнал».
         const badgeMatch = /^\/admin\/profiles\/([A-Za-z0-9_-]{12})\/badges$/.exec(path);
@@ -924,11 +960,15 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
         if (path.startsWith('/admin/guides') && await guideAdminRoutes({ request, url, path, method, send, guides, readJSON, actor, search, limit })) return;
         if (path === '/admin/works' && method === 'GET') return send(200, { ...store.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search),
           artsPending: store.get("SELECT count(*) n FROM arts WHERE status='pending'").n,
+          widgetsPending: store.get("SELECT count(*) n FROM sqlite_master WHERE name='menu_widgets'").n ? store.get("SELECT count(*) n FROM menu_widgets WHERE status='pending'").n : 0,
           guidesPending: (({ pending, reports }) => pending + reports)(guides().counts()),
           backgroundsPending: (store.get("SELECT count(*) n FROM sqlite_master WHERE name='backgrounds'").n ? store.get("SELECT count(*) n FROM backgrounds WHERE status='pending'").n : 0)
             // Open reports on published backgrounds need a look too.
             + (store.get("SELECT count(*) n FROM sqlite_master WHERE name='background_reports'").n ? store.get("SELECT count(DISTINCT p.background) n FROM background_reports p JOIN backgrounds b ON b.id=p.background WHERE p.resolved=0 AND b.status='approved'").n : 0) });
         if (path === '/admin/settings' && method === 'PATCH') { const body = await readJSON(request); if (typeof body.paused !== 'boolean') fail(400, 'Неверная настройка.'); store.setPaused(body.paused, actor); return send(200, { paused: store.paused() }); }
+        if (path === '/admin/widgets' && method === 'GET') return send(200, widgets().moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search));
+        const widgetReview = /^\/admin\/widgets\/([1-9]\d{0,12})$/.exec(path);
+        if (widgetReview && method === 'POST') { const body = await readJSON(request); limit(body.action); body.reason = catalogText(body.reason ?? '', 500, 'Причина'); return send(200, widgets().moderate(Number(widgetReview[1]), body, { actor })); }
         if (path === '/admin/arts' && method === 'GET') return send(200, arts.moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search));
         if (path === '/admin/backgrounds' && method === 'GET') return send(200, gallery().moderation(url.searchParams.get('filter'), Math.max(0, Math.min(1000, Number(url.searchParams.get('page')) || 0)) | 0, search));
         const backgroundReview = /^\/admin\/backgrounds\/([1-9]\d{0,12})$/.exec(path);
@@ -986,11 +1026,11 @@ export function createCatalogAPI(config, { dotaTexts = null, store = new Catalog
       minigames: boards.placements(account) };
   }
   const server = createServer(handler); server.requestTimeout = 15000; server.headersTimeout = 10000;
-  return { server, dotaText, store, accounts, handler, gallery, analytics };
+  return { server, dotaText, dotaStyle, store, accounts, handler, gallery, analytics };
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const config = catalogConfig();
-  const { server, store, gallery, dotaText } = createCatalogAPI(config);
+  const { server, store, gallery, dotaText, dotaStyle } = createCatalogAPI(config);
   const port = Number(process.env.CATALOG_PORT || 4174);
   server.listen(port, '127.0.0.1', () => console.log(`Catalog API: http://127.0.0.1:${port} (${config.development ? 'local testing; ALTCHA enabled' : 'production'})`));
   // Backgrounds sent before fingerprints get theirs in the background (server/similarity.mjs).
@@ -1000,5 +1040,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   // Dota's texts for «Тексты»: the first copy soon after the start, then every six hours (server/dota-texts.mjs).
   const texts = () => { for (const language of DOTA_TEXTS_LANGUAGES) dotaText(language).refresh().then((changed) => changed && console.log(`Тексты Dota (${language}) обновлены`), (problem) => console.error(`Тексты Dota: ${problem.message}`)); };
   setTimeout(texts, 20_000).unref(); setInterval(texts, 3_600_000).unref();
+  // Valve's menu stylesheets for «Тема меню» the same way (server/dota-styles.mjs).
+  const styles = () => dotaStyle().refresh().then((changed) => changed && console.log('Стили Dota обновлены'), (problem) => console.error(`Стили Dota: ${problem.message}`));
+  setTimeout(styles, 40_000).unref(); setInterval(styles, 3_600_000).unref();
   for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => server.close(() => { store.close(); process.exit(0); }));
 }

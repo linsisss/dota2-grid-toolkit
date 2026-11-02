@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, Modal, Notice } from '../catalog/Common.jsx';
-import { GRID_DIM, MENU_FRAME, MENU_FRAME_ZOOM, MENU_GLASS, MENU_LIMITS, MENU_SIZES, fitPiece, framePlacement, mediaKind, menuBitrate, menuFrame, menuLook, pieceLength, menuGlass, glassChanged } from '../../scripts/menu-background.mjs';
+import { GRID_DIM, MENU_FRAME, MENU_FRAME_ZOOM, MENU_GLASS, MENU_LIMITS, MENU_SIZES, fitPiece, framePlacement, mediaKind, menuBitrate, menuFrame, menuLook, pieceLength, menuGlass, glassChanged, menuValve, valveChanged, MENU_VALVE } from '../../scripts/menu-background.mjs';
 import menuMeta from '../../assets/dota-menu/meta.json';
 import { SEASON_EVENT, folderOf, packBackground } from './background-pack.js';
 import { getBackground } from '../../scripts/background-library.mjs';
@@ -22,6 +22,10 @@ import { backgroundMedia, useBackgrounds } from '../catalog/BackgroundGallery.js
 import profilePreview from '../../assets/dota-menu/ui/profile-preview.webp';
 import { CATALOG_PATH, STUDIO_PATH, countDownload } from '../catalog/api.js';
 import { lang, locale, t } from '../../scripts/i18n.mjs';
+import { useWidgets } from './widget-store.js';
+import { widgetFiles } from './widget-pack.js';
+import { THEME_BYTES, menuTheme } from './menu-theme-pack.js';
+import { widgetMediaJobs, widgetMediaPath, widgetsPanorama } from '../../scripts/menu-widgets.mjs';
 import { track } from '../site-stats.js';
 
 // The main-menu background, made entirely in the browser: the file becomes a WebM
@@ -249,7 +253,9 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
   const [file, setFile] = useState(null), [kind, setKind] = useState(null), [source, setSource] = useState(''), [aspect, setAspect] = useState('16:9'), [fit, setFit] = useState('cover');
   const [blur, setBlur] = useState(0), [dim, setDim] = useState(0), [frame, setFrame] = useState(MENU_FRAME), [framing, setFraming] = useState(null);
   // The Stratz and Dotabuff buttons are off until asked for: on the one page anything on is a change from Dota.
-  const [carnival, setCarnival] = useState(true), [seasonCard, setSeasonCard] = useState(true), clean = !carnival && !seasonCard, [seasonButton, setSeasonButton] = useState(true), [profileLinks, setProfileLinks] = useState(false), [profileBg, setProfileBg] = useState('menu'), [folder, setFolder] = useState(lang === 'en' ? 'english' : 'russian');
+  const [carnival, setCarnival] = useState(true), [seasonCard, setSeasonCard] = useState(true), clean = !carnival && !seasonCard, [seasonButton, setSeasonButton] = useState(true), [profileLinks, setProfileLinks] = useState(false), [profileBg, setProfileBg] = useState('menu'), [friendsClosed, setFriendsClosed] = useState(false), [valve, setValveRaw] = useState(() => menuValve(MENU_VALVE)), [folder, setFolder] = useState(lang === 'en' ? 'english' : 'russian');
+  // Valve's panels set by hand (menu-background.mjs menuValve): the chat's place, the tabs' order, the news cards' sizes and icons.
+  const setValve = (next) => setValveRaw((value) => menuValve(typeof next === 'function' ? next(value) : next));
   const [duration, setDuration] = useState(0), [piece, setPiece] = useState({ start: 0, end: 0 }), [crossfade, setCrossfade] = useState(0);
   const [mediaRatio, setMediaRatio] = useState(0), [progress, setProgress] = useState(null), [result, setResult] = useState(null), [error, setErrorText] = useState(''), [failed, setFailed] = useState(false), [sources, setSources] = useState(false), [share, setShare] = useState(false), [dragging, setDragging] = useState(false), [fetching, setFetching] = useState(null);
   const input = useRef(null), running = useRef(null), playhead = useRef(null), seek = useRef(null);
@@ -272,13 +278,16 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
   const [loadingMode, setLoadingMode] = useState('off'), [hide, setHide] = useState([]);
   // The see-through panels (MENU_GLASS, 2026-10-22): { bar, friends, news, header, showcase, party }, percents.
   const [glass, setGlass] = useState(MENU_GLASS);
+  // «Тема меню» (2026-11-01, scripts/menu-theme.mjs): its accent '#rrggbb', '' for Dota's colours. Chosen in «Детали меню»
+  // (D2pfxSections.jsx), next to d2pfx's whole-menu restyles; it goes into this pack.
+  const [theme, setTheme] = useState('');
   const studioId = useRef(null), pending = useRef(null), saving = useRef(null);
   useEffect(() => { setPick(preset); }, [preset]);
   useEffect(() => () => source && URL.revokeObjectURL(source), [source]);
   useEffect(() => () => { if (result) for (const url of [result.url, result.heroUrl, result.gridUrl, result.loadingUrl]) if (url) URL.revokeObjectURL(url); }, [result]);
   // Changing anything that is baked into the videos or the pack makes the result stale.
-  useEffect(() => { setResult(null); }, [file, aspect, fit, blur, dim, carnival, seasonCard, seasonButton, profileLinks, profileBg, piece.start, piece.end, crossfade, frame,
-    heroMode, ...heroOwn.stale, gridMode, gridDim, ...gridOwn.stale, loadingMode, ...loadingOwn.stale, hide.join(), ...Object.values(glass)]);
+  useEffect(() => { setResult(null); }, [file, aspect, fit, blur, dim, carnival, seasonCard, seasonButton, profileLinks, profileBg, friendsClosed, valve, piece.start, piece.end, crossfade, frame,
+    heroMode, ...heroOwn.stale, gridMode, gridDim, ...gridOwn.stale, loadingMode, ...loadingOwn.stale, hide.join(), ...Object.values(glass), theme]);
   useEffect(() => () => running.current?.abort(), []);
   // A background from the studio: settings now, the source next (see `pending`).
   useEffect(() => {
@@ -289,7 +298,7 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
       if (stopped) return;
       if (!record) return setError(t('Этого фона нет в студии: возможно, его удалили.'));
       const recipe = record.recipe;
-      setAspect(recipe.aspect); setFit(recipe.fit); setBlur(recipe.blur); setDim(recipe.dim); setCarnival(recipe.news?.carnival ?? !recipe.clean); setSeasonCard(recipe.news?.season ?? !recipe.clean); setSeasonButton(recipe.event ?? true); setProfileLinks(recipe.profile ?? true); setProfileBg(recipe.profileBg ?? 'menu'); setFolder(folderOf(recipe.folder).client); setFrame(menuFrame(recipe.frame));
+      setAspect(recipe.aspect); setFit(recipe.fit); setBlur(recipe.blur); setDim(recipe.dim); setCarnival(recipe.news?.carnival ?? !recipe.clean); setSeasonCard(recipe.news?.season ?? !recipe.clean); setSeasonButton(recipe.event ?? true); setProfileLinks(recipe.profile ?? true); setProfileBg(recipe.profileBg ?? 'menu'); setFriendsClosed(!!recipe.friendsClosed); setValveRaw(menuValve(recipe.valve)); setFolder(folderOf(recipe.folder).client); setFrame(menuFrame(recipe.frame));
       pending.current = recipe; studioId.current = record.id; setStudio({ id: record.id, name: record.name, saved: false });
       const hero = recipe.hero || { mode: 'menu' }, grid = recipe.grid || { mode: 'menu' }, loading = recipe.loading || { mode: 'off' };
       // The user's own files, when this browser still keeps them (look-store.js, 2026-10-22): no need to choose them again.
@@ -302,7 +311,7 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
       if (grid.mode === 'own') gridOwn.restore(grid, gridFile);
       setLoadingMode(loading.mode);
       if (loading.mode === 'own') loadingOwn.restore(loading, loadingFile);
-      setHide(recipe.hide || []); setGlass(menuGlass(recipe.glass));
+      setHide(recipe.hide || []); setGlass(menuGlass(recipe.glass)); setTheme(recipe.theme || '');
       if (recipe.source.kind === 'workshop') setPick({ id: recipe.source.id }); else if (menuFile) choose(menuFile, recipe.source); else setWanted(recipe.source);
     })();
     return () => { stopped = true; };
@@ -321,7 +330,7 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
       if (stopped) return;
       const kept = (part) => (part?.source.kind === 'file' && files[part.source.media]) || null;
       setFolder(saved.folder); setSeasonButton(saved.event);
-      setHide(saved.buttons.hide); setCarnival(saved.buttons.news.carnival); setSeasonCard(saved.buttons.news.season); setProfileLinks(saved.buttons.profile); setProfileBg(saved.buttons.profileBg); setGlass(menuGlass(saved.buttons.glass));
+      setHide(saved.buttons.hide); setCarnival(saved.buttons.news.carnival); setSeasonCard(saved.buttons.news.season); setProfileLinks(saved.buttons.profile); setProfileBg(saved.buttons.profileBg); setFriendsClosed(!!saved.buttons.friendsClosed); setValveRaw(menuValve(saved.buttons.valve)); setGlass(menuGlass(saved.buttons.glass)); setTheme(saved.theme?.accent || '');
       setGridMode(saved.grid.mode); setGridDim(saved.grid.dim); setHeroMode(saved.hero.mode); setLoadingMode(saved.loading.mode);
       // The files are read before anything is written back, so a quick save never misses one.
       const waits = [];
@@ -393,19 +402,21 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
     grid: ownOn(gridMode, gridOwn) || gridMode === 'dim' ? 'changed' : file ? 'follow' : 'default',
     hero: ownOn(heroMode, heroOwn) ? 'changed' : heroMode !== 'off' && file ? 'follow' : 'default',
     loading: ownOn(loadingMode, loadingOwn) ? 'changed' : loadingMode !== 'off' && file ? 'follow' : 'default',
-    buttons: hide.length || !carnival || !seasonCard || profileLinks || profileBg !== 'menu' || glassChanged(glass) ? 'changed' : 'default'
+    buttons: hide.length || !carnival || !seasonCard || profileLinks || profileBg !== 'menu' || friendsClosed || valveChanged(valve) || glassChanged(glass) ? 'changed' : 'default'
   };
   // The settings the pack is made of (packBackground), for the videos that are there.
   const ownHero = ownOn(heroMode, heroOwn), ownGrid = ownOn(gridMode, gridOwn), ownLoading = ownOn(loadingMode, loadingOwn);
-  const packSettings = () => ({ news: { carnival, season: seasonCard }, event: seasonButton, profile: profileLinks, profileBg, hide, glass,
+  const packSettings = () => ({ news: { carnival, season: seasonCard }, event: seasonButton, profile: profileLinks, profileBg, friendsClosed, valve, hide, glass,
     hero: ownHero ? { mode: 'own', ...heroOwn.recipe } : { mode: heroMode !== 'off' && file ? 'menu' : 'off' },
     grid: ownGrid ? { mode: 'own', ...gridOwn.recipe } : gridMode === 'dim' ? { mode: 'dim', dim: gridDim } : { mode: 'menu' },
     loading: ownLoading ? { mode: 'own', ...loadingOwn.recipe } : { mode: loadingMode !== 'off' && file ? 'menu' : 'off' } });
-  const included = Object.values(states).some((state) => state !== 'default');
+  // The main menu's widgets (widget-store.js, the constructor's): they go into this pack too (scripts/menu-widgets.mjs).
+  const [widgets] = useWidgets(), shownWidgets = widgets.filter((widget) => !widget.hidden), widgetsKey = JSON.stringify(shownWidgets);
+  const included = Object.values(states).some((state) => state !== 'default') || shownWidgets.length > 0 || !!theme;
   // Sizes before anything is encoded: the pack made with stand-in videos (it is only Panorama text, made
   // in a moment) plus each video — its real size once built, the encoder's aim until then (`estimate`).
-  const sizeKey = JSON.stringify([states, hide, glass, carnival, seasonCard, profileLinks, profileBg, seasonButton, gridDim, file && videoGuess({ kind, duration, piece, crossfade }),
-    ownHero && videoGuess(heroOwn), ownGrid && videoGuess(gridOwn), ownLoading && videoGuess(loadingOwn), result && [result.blob?.size, result.video, result.heroVideo, result.gridVideo, result.loadingVideo]]);
+  const sizeKey = JSON.stringify([states, hide, glass, carnival, seasonCard, profileLinks, profileBg, friendsClosed, valve, seasonButton, gridDim, file && videoGuess({ kind, duration, piece, crossfade }),
+    ownHero && videoGuess(heroOwn), ownGrid && videoGuess(gridOwn), ownLoading && videoGuess(loadingOwn), result && [result.blob?.size, result.video, result.heroVideo, result.gridVideo, result.loadingVideo], widgetsKey, theme]);
   const sizes = useMemo(() => {
     const videos = { bg: file ? { bytes: result?.video ?? videoGuess({ kind, duration, piece, crossfade }), estimate: !result } : null,
       hero: ownHero ? { bytes: result?.heroVideo ?? videoGuess(heroOwn), estimate: !result } : null,
@@ -414,7 +425,7 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
     const dry = (settings) => { try { return packBackground(file ? PLACEHOLDER : null, settings, ownHero ? PLACEHOLDER : null, ownGrid ? PLACEHOLDER : null, ownLoading ? PLACEHOLDER : null)?.size ?? 0; } catch { return 0; } };
     const all = included ? dry(packSettings()) : 0;
     // What the buttons and the darker grid page add: the pack without them, the difference.
-    const without = { buttons: { news: { carnival: true, season: true }, profile: false, profileBg: 'menu', hide: [], glass: MENU_GLASS }, grid: { grid: { mode: 'menu' } } };
+    const without = { buttons: { news: { carnival: true, season: true }, profile: false, profileBg: 'menu', friendsClosed: false, valve: menuValve(MENU_VALVE), hide: [], glass: MENU_GLASS }, grid: { grid: { mode: 'menu' } } };
     const extra = Object.fromEntries(Object.entries(without).map(([id, patch]) => [id, (id === 'grid' ? gridMode === 'dim' : states[id] === 'changed') ? Math.max(1, all - dry({ ...packSettings(), ...patch })) : 0]));
     const plain = all - extra.buttons - extra.grid;
     const placeholders = Object.values(videos).filter(Boolean).length * PLACEHOLDER.length;
@@ -425,8 +436,19 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
     const rest = Math.max(0, plain - placeholders), home = parts.bg ? 'bg' : parts.buttons ? 'buttons' : ['grid', 'hero', 'loading'].find((id) => parts[id] || states[id] === 'changed');
     if (home && parts[home]) parts[home].bytes += rest;
     else if (home) parts[home] = { bytes: rest, estimate: false };
-    const bytes = result ? result.blob?.size ?? 0 : all ? all - placeholders + Object.values(videos).reduce((sum, video) => sum + (video?.bytes || 0), 0) : 0;
-    return { pak02: bytes ? { bytes, estimate: !result && Object.values(videos).some(Boolean) } : null, parts };
+    // The widgets: their files' text and a guess of their pictures (a PNG of the box) and videos (the encoder's aim).
+    const widgetBytes = (() => {
+      if (!shownWidgets.length) return 0;
+      const jobs = widgetMediaJobs(shownWidgets), made = widgetsPanorama(shownWidgets, { media: Object.fromEntries(jobs.map((job) => [job.key, widgetMediaPath(job.kind, job.hash)])) });
+      return (made ? made.panels.length + made.style.length + (made.script?.length || 0) + 2500 : 0)
+        + jobs.reduce((sum, job) => sum + (job.kind === 'image' ? Math.round(Math.min(1024 * 1024, job.w * job.h) * 1.2) : 1_500_000), 0);
+    })();
+    if (widgetBytes) parts.widgets = { bytes: widgetBytes, estimate: !result };
+    // «Тема меню»: Valve's stylesheets it gives back, about THEME_BYTES (shown in «Детали меню»).
+    const themeBytes = theme ? THEME_BYTES : 0;
+    if (themeBytes) parts.theme = { bytes: themeBytes, estimate: true };
+    const bytes = result ? result.blob?.size ?? 0 : all || widgetBytes || themeBytes ? Math.max(0, all - placeholders) + Object.values(videos).reduce((sum, video) => sum + (video?.bytes || 0), 0) + widgetBytes + themeBytes : 0;
+    return { pak02: bytes ? { bytes, estimate: !result && (Object.values(videos).some(Boolean) || widgetBytes > 0 || themeBytes > 0) } : null, parts };
   }, [sizeKey]);
   // The kept state of the menu's modules (scripts/customize-look.mjs `menu`): written to gridstudio.menu a
   // moment after a change, and taken by an «Оформление» (look-state.js). The user's files are kept by hash;
@@ -435,11 +457,12 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
     const settings = { fit, blur, dim, frame, piece: duration ? piece : pending.current?.piece ?? null, crossfade: duration ? crossfade : pending.current?.crossfade ?? 0 };
     const background = file ? { ...settings, source: origin?.kind === 'workshop' ? origin : { ...(origin || { kind: 'file', name: file.name, size: file.size, type: kind?.type, label: kind?.label }), media: await keepMedia(file) } }
       : wanted ? { ...settings, source: wanted } : pick?.id ? { ...settings, source: { kind: 'workshop', id: pick.id, title: pick.title || '' } } : null;
-    return { aspect, folder, event: seasonButton, background, buttons: { hide, news: { carnival, season: seasonCard }, profile: profileLinks, profileBg, glass },
-      grid: { mode: gridMode, dim: gridDim, own: await gridOwn.snapshot() }, hero: { mode: heroMode, own: await heroOwn.snapshot() }, loading: { mode: loadingMode, own: await loadingOwn.snapshot() } };
+    return { aspect, folder, event: seasonButton, background, buttons: { hide, news: { carnival, season: seasonCard }, profile: profileLinks, profileBg, friendsClosed, valve, glass },
+      grid: { mode: gridMode, dim: gridDim, own: await gridOwn.snapshot() }, hero: { mode: heroMode, own: await heroOwn.snapshot() }, loading: { mode: loadingMode, own: await loadingOwn.snapshot() },
+      theme: theme ? { accent: theme } : null };
   }
   const key = JSON.stringify([aspect, folder, seasonButton, file && [file.name, file.size, file.lastModified], origin, wanted, pick?.id, fit, blur, dim, frame, duration ? piece : null, crossfade,
-    hide, glass, carnival, seasonCard, profileLinks, profileBg, gridMode, gridDim, heroMode, loadingMode, gridOwn.key, heroOwn.key, loadingOwn.key]);
+    hide, glass, carnival, seasonCard, profileLinks, profileBg, friendsClosed, valve, gridMode, gridDim, heroMode, loadingMode, gridOwn.key, heroOwn.key, loadingOwn.key, theme]);
   useEffect(() => {
     if (!restored) return undefined;
     let gone = false;
@@ -448,12 +471,24 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
   }, [restored, key]);
   // The pack for the one file: the videos encoded (each in turn, `progress` 0…1 over all of them), the
   // studio copy saved; the result stays until a setting changes. null when nothing here differs from Dota.
-  async function prepare({ delivery = 'file' } = {}) {
+  // themeOf: (accent) → Promise<{ files, key }> of «Тема меню» (menu-theme-pack.js menuTheme; the page passes one that
+  // knows the d2pfx mods chosen): asked for at once, waited for only when the pack is made, after the videos.
+  async function prepare({ delivery = 'file', themeOf = menuTheme } = {}) {
     if (!included) return null;
-    if (result) return result;
+    const themeLoad = theme ? themeOf(theme) : Promise.resolve(null);
+    themeLoad.catch(() => {});
+    const keyOf = (themed) => JSON.stringify([widgetsKey, themed?.key || '']);
+    if (result && result.packKey === keyOf(await themeLoad.catch(() => null))) return result;
     const controller = new AbortController(); running.current = controller;
     setError(''); setProgress(0);
     try {
+      // Only the widgets or the theme changed since the videos were made: the pack again with the same videos.
+      if (result) {
+        const pack = await widgetFiles(shownWidgets, { signal: controller.signal, onProgress: (value) => setProgress(Math.min(0.99, value)) }), themed = await themeLoad;
+        const made = { ...result, packKey: keyOf(themed), blob: packBackground(result.videos.bg, { ...packSettings(), widgets: pack, themed: themed?.files || null }, result.videos.hero, result.videos.grid, result.videos.loading) };
+        setResult(made);
+        return made;
+      }
       const count = !!file + ownHero + ownGrid + ownLoading; let done = 0;
       const { encodeMenuVideo } = count ? await import('./menu-video.js') : {};
       const encode = async (media, options) => {
@@ -465,16 +500,17 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
       const loadingEncoded = ownLoading ? await encode(loadingOwn.file, loadingOwn.encoding) : null;
       const gridEncoded = ownGrid ? await encode(gridOwn.file, gridOwn.encoding) : null;
       const settings = packSettings();
-      const blob = packBackground(encoded?.video ?? null, settings, heroEncoded?.video, gridEncoded?.video, loadingEncoded?.video);
+      const widgetPack = await widgetFiles(shownWidgets, { signal: controller.signal }), themed = await themeLoad;
+      const blob = packBackground(encoded?.video ?? null, { ...settings, widgets: widgetPack, themed: themed?.files || null }, heroEncoded?.video, gridEncoded?.video, loadingEncoded?.video);
       // Kept in the studio (a menu background only): this browser gets the WebMs, a signed-in account the recipe.
       if (encoded) {
-        const recipe = { aspect, fit, blur, dim, frame, clean, news: settings.news, event: seasonButton, profile: profileLinks, profileBg, folder, delivery, piece: duration ? piece : null, crossfade: duration ? crossfade : 0, source: origin, hero: settings.hero, grid: settings.grid, loading: settings.loading, hide, glass };
+        const recipe = { aspect, fit, blur, dim, frame, clean, news: settings.news, event: seasonButton, profile: profileLinks, profileBg, ...(friendsClosed ? { friendsClosed } : {}), ...(valveChanged(valve) ? { valve } : {}), folder, delivery, piece: duration ? piece : null, crossfade: duration ? crossfade : 0, source: origin, hero: settings.hero, grid: settings.grid, loading: settings.loading, hide, glass, ...(theme ? { theme } : {}) };
         saving.current = saveBuiltBackground({ id: studioId.current, recipe, video: encoded.video, heroVideo: heroEncoded?.video, gridVideo: gridEncoded?.video, loadingVideo: loadingEncoded?.video, codec: encoded.codec, seconds: encoded.seconds });
         saving.current.then((record) => { studioId.current = record.id; setStudio({ id: record.id, name: record.name, saved: true, account: record.account }); })
           .catch(() => setStudio((current) => ({ ...current, failed: true })));
       }
       const url = (video) => video ? URL.createObjectURL(new Blob([video], { type: 'video/webm' })) : null;
-      const made = { blob, webm: encoded?.video ?? null, aspect, url: url(encoded?.video), seconds: encoded?.seconds ?? 0, trimmed: encoded?.trimmed ?? false, codec: encoded?.codec ?? '', video: encoded?.video.length ?? null,
+      const made = { blob, packKey: keyOf(themed), videos: { bg: encoded?.video ?? null, hero: heroEncoded?.video ?? null, grid: gridEncoded?.video ?? null, loading: loadingEncoded?.video ?? null }, webm: encoded?.video ?? null, aspect, url: url(encoded?.video), seconds: encoded?.seconds ?? 0, trimmed: encoded?.trimmed ?? false, codec: encoded?.codec ?? '', video: encoded?.video.length ?? null,
         heroVideo: heroEncoded?.video.length ?? null, gridVideo: gridEncoded?.video.length ?? null, loadingVideo: loadingEncoded?.video.length ?? null,
         heroUrl: url(heroEncoded?.video), gridUrl: url(gridEncoded?.video), loadingUrl: url(loadingEncoded?.video) };
       setResult(made);
@@ -503,7 +539,7 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
     if (id === 'grid') { setGridMode('menu'); setGridDim(55); gridOwn.remove(); }
     if (id === 'hero') { setHeroMode('menu'); heroOwn.remove(); }
     if (id === 'loading') { setLoadingMode('off'); loadingOwn.remove(); }
-    if (id === 'buttons') { setHide([]); setCarnival(true); setSeasonCard(true); setProfileLinks(false); setProfileBg('menu'); setGlass(MENU_GLASS); }
+    if (id === 'buttons') { setHide([]); setCarnival(true); setSeasonCard(true); setProfileLinks(false); setProfileBg('menu'); setFriendsClosed(false); setValveRaw(menuValve(MENU_VALVE)); setGlass(MENU_GLASS); }
   }
   // A line for each module: what it is now (the page's rows and its list of what goes into the file).
   const ownLine = (own) => own.origin?.kind === 'workshop' ? t('«{title}» из мастерской', { title: own.origin.title }) : own.file ? own.file.name : '';
@@ -513,7 +549,7 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
     grid: ownGrid ? t('Свой фон: {name}', { name: ownLine(gridOwn) }) : gridMode === 'dim' ? (file ? t('Фон меню, темнее на {percent}%', { percent: gridDim }) : t('Фон Dota темнее на {percent}%', { percent: gridDim })) : file ? t('Тот же фон, что в меню') : '',
     hero: ownHero ? t('Свой фон: {name}', { name: ownLine(heroOwn) }) : states.hero === 'follow' ? t('Тот же фон, что в меню') : '',
     loading: ownLoading ? t('Свой фон: {name}', { name: ownLine(loadingOwn) }) : states.loading === 'follow' ? t('Тот же фон, что в меню') : '',
-    buttons: [hide.length && t('скрыто кнопок: {count}', { count: hide.length }), (!carnival || !seasonCard) && t('скрыто карточек: {count}', { count: !carnival + !seasonCard }), profileLinks && t('Stratz и Dotabuff в профилях'), profileBg !== 'menu' && (profileBg === 'dim' ? t('профиль темнее') : t('без фона в профиле')),
+    buttons: [hide.length && t('скрыто кнопок: {count}', { count: hide.length }), (!carnival || !seasonCard) && t('скрыто карточек: {count}', { count: !carnival + !seasonCard }), profileLinks && t('Stratz и Dotabuff в профилях'), profileBg !== 'menu' && (profileBg === 'dim' ? t('профиль темнее') : t('без фона в профиле')), friendsClosed && t('друзья закрыты'), valveChanged(valve) && t('панели Valve настроены'),
       ...glassLines(glass)].filter(Boolean).join(', ')
   };
   if (summary.buttons) summary.buttons = summary.buttons[0].toUpperCase() + summary.buttons.slice(1);
@@ -570,9 +606,9 @@ export function useMenuBackground({ preset = null, studioItem = null, page = 'me
   };
   return {
     page, file, kind, source, aspect, setAspect, fit, setFit, blur, setBlur, dim, setDim, frame, setFrame, framing, carnival, setCarnival, seasonCard, setSeasonCard, seasonButton, setSeasonButton,
-    profileLinks, setProfileLinks, profileBg, setProfileBg, folder, setFolder, target, duration, piece, setPiece, crossfade, setCrossfade, mediaRatio, setMediaRatio, progress, result, error, failed, setError,
+    profileLinks, setProfileLinks, profileBg, setProfileBg, friendsClosed, setFriendsClosed, valve, setValve, folder, setFolder, target, duration, piece, setPiece, crossfade, setCrossfade, mediaRatio, setMediaRatio, progress, result, error, failed, setError,
     sources, setSources, share, setShare, dragging, fetching, input, playhead, seek, origin, studio, wanted, note, auth, heroMode, setHeroMode, gridMode, setGridMode, gridDim, setGridDim,
-    picking, setPicking, browsing, setBrowsing, heroOwn, gridOwn, loadingOwn, preview, loadingMode, setLoadingMode, hide, setHide, glass, setGlass, saving, setPick,
+    picking, setPicking, browsing, setBrowsing, heroOwn, gridOwn, loadingOwn, preview, loadingMode, setLoadingMode, hide, setHide, glass, setGlass, theme, setTheme, saving, setPick,
     states, summary, sizes, included, choose, remove, reset, prepare, delivered, publish, cancel: () => running.current?.abort(), view, second, ownShown, video, shown, look, snapshot, key, restored,
     mediaFrame, ownFramed, ownLook, screenRatio, frameTarget, frameDown, frameMove, frameUp, drop, onMeta, keep, still: !!kind?.still
   };
@@ -585,7 +621,8 @@ const placed = (place) => ({ left: `${place.x * 100}%`, top: `${place.y * 100}%`
   ...(place.rotate || place.flipX || place.flipY ? { transform: `rotate(${place.rotate}deg) scale(${place.flipX ? -1 : 1}, ${place.flipY ? -1 : 1})` } : {}) });
 
 // ——— The preview of a menu scene: the background as the video will have it, under a copy of the page.
-export function MenuScreen({ bg, page }) {
+// mods: d2pfx's top bar and play button drawn over the menu (d2pfx-menu-preview.js useMenuModsLook).
+export function MenuScreen({ bg, page, mods = null }) {
   const { result, shown, video, source, duration, piece, crossfade, seek, playhead, look, second, ownShown, fetching } = bg;
   const own = second?.own;
   const mediaStyle = { ...placed(result ? WHOLE : bg.mediaFrame), '--blur': result ? 0 : look.sigma / 1080 };
@@ -621,7 +658,7 @@ export function MenuScreen({ bg, page }) {
     {page === 'hero' ? <DotaHeroPage interactive={heroOff || Boolean(bg.heroMode === 'own' ? ownShown : shown)}/>
       : page === 'grid' ? <DotaGridPage grid={bg.preview.grid} name={bg.preview.name}/>
       : page === 'loading' ? <DotaLoadingPage/>
-      : <DotaMenu news={{ carnival: bg.carnival, season: bg.seasonCard }} event={SEASON_EVENT && bg.file ? bg.seasonButton : null} hide={bg.hide} glass={bg.glass}/>}
+      : <DotaMenu news={{ carnival: bg.carnival, season: bg.seasonCard }} event={SEASON_EVENT && bg.file ? bg.seasonButton : null} hide={bg.hide} glass={bg.glass} theme={bg.theme} friendsClosed={bg.friendsClosed} valve={bg.valve} mods={mods}/>}
     {loadingNow && <div className="custom-fetching" role="status"><b>{loadingNow.title ? t('Загружаем «{title}»', { title: loadingNow.title }) : t('Загружаем фон…')}</b><span><i style={{ width: `${Math.round(loadingNow.progress * 100)}%` }}/></span></div>}
   </div>;
 }
@@ -648,7 +685,7 @@ export function MenuUnder({ bg, page }) {
 
 // A small live copy of a menu scene for the page's scene switcher: the background the page will have (a
 // still frame) under the page's own pictures; the hero page without its 3D hero.
-export function MenuThumb({ bg, page }) {
+export function MenuThumb({ bg, page, mods = null }) {
   const second = bg.view(page), own = second?.own;
   const off = (page === 'hero' && (bg.heroMode === 'off' || (bg.heroMode === 'menu' && !bg.file))) || (page === 'loading' && (bg.loadingMode === 'off' || (bg.loadingMode === 'menu' && !bg.file)));
   const ownMedia = second?.mode === 'own' && own.file ? { url: second.built || own.source, video: !!second.built || own.video } : null;
@@ -657,7 +694,7 @@ export function MenuThumb({ bg, page }) {
     {media ? media.video ? <video src={media.url} muted playsInline preload="metadata"/> : <img src={media.url} alt=""/> : <i className={`cz-thumb-empty is-${page}`}/>}
     {page === 'grid' && bg.gridMode === 'dim' && <i className="cz-thumb-veil" style={{ opacity: (bg.gridDim / 100) * GRID_DIM.max }}/>}
     {page === 'hero' ? <DotaHeroPage interactive={false} model={false}/> : page === 'grid' ? <DotaGridPage grid={null}/> : page === 'loading' ? <DotaLoadingPage/>
-      : <DotaMenu news={{ carnival: bg.carnival, season: bg.seasonCard }} hide={bg.hide} glass={bg.glass}/>}
+      : <DotaMenu news={{ carnival: bg.carnival, season: bg.seasonCard }} hide={bg.hide} glass={bg.glass} theme={bg.theme} friendsClosed={bg.friendsClosed} valve={bg.valve} mods={mods}/>}
   </span>;
 }
 
@@ -726,31 +763,96 @@ export function LoadingFields({ bg }) {
     <p className="custom-hint">{t('Ещё не проверено в игре — если что-то не так, напиши в чат.')}</p>
   </>;
 }
-export function ButtonsFields({ bg }) {
+// Valve's panels, each its own settings when clicked in the constructor (2026-11-02, the owner: «при тыке на панель
+// открывались настройки именно этой панели, а не всех»): `part` 'topbar', 'friends', 'news' or 'chat'; none — all of them
+// (the section «Кнопки меню»). New the same day: the tabs' order, the chat's place, the news cards' sizes and icons (menuValve).
+const PART_GLASS = { topbar: ['bar'], friends: ['friends', 'header', 'showcase', 'party'], news: ['news'], chat: [] };
+const TAB_TITLES = () => ({ heroes: t('Герои'), collection: t('Арсенал'), watch: t('Просмотр'), learn: t('База знаний'), mods: t('Игротека') });
+function Range({ label, value, min, max, unit = '', onChange }) {
+  return <label className="custom-slider"><span>{label}</span>
+    <input type="range" min={min} max={max} step="1" value={value} onChange={(event) => onChange(Number(event.target.value))} style={{ '--fill': `${((value - min) / (max - min)) * 100}%` }}/>
+    <output>{value}{unit}</output></label>;
+}
+// The top bar's tabs in their order: dragged into place, or moved with the arrow keys.
+function TabOrder({ bg }) {
+  const order = bg.valve.tabs, [held, setHeld] = useState(null), titles = TAB_TITLES();
+  const move = (tab, to) => bg.setValve((value) => { const rest = value.tabs.filter((one) => one !== tab); rest.splice(Math.max(0, Math.min(rest.length, to)), 0, tab); return { ...value, tabs: rest }; });
+  return <Field label={t('Порядок вкладок')} aside={t('перетащи')} hint={order.join() === MENU_VALVE.tabs.join() ? t('Как в Dota. Перетащи вкладку или нажми на неё и двигай стрелками.') : t('В Dota вкладки встанут в этом порядке. Ещё не проверено в игре.')}>
+    <div className="catalog-tags custom-tabs-order" role="listbox" aria-label={t('Порядок вкладок')}>{order.map((tab, index) =>
+      <button key={tab} type="button" draggable className={held === tab ? 'is-held' : ''} aria-label={t('{name}: место {place}', { name: titles[tab], place: index + 1 })}
+        onDragStart={(event) => { setHeld(tab); event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', tab); }} onDragEnd={() => setHeld(null)}
+        onDragOver={(event) => { event.preventDefault(); if (held && held !== tab) move(held, index); }} onDrop={(event) => event.preventDefault()}
+        onKeyDown={(event) => { const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]; if (step) { event.preventDefault(); move(tab, index + step); } }}>
+        <i className="custom-grip" aria-hidden="true"/>{titles[tab]}</button>)}
+      {order.join() !== MENU_VALVE.tabs.join() && <button type="button" className="custom-tabs-reset" onClick={() => bg.setValve((value) => ({ ...value, tabs: [...MENU_VALVE.tabs] }))}>{t('Как в Dota')}</button>}</div>
+  </Field>;
+}
+// A news card: shown or not, a card of its size or a small square icon.
+function NewsCard({ bg, id }) {
+  const on = id === 'carnival' ? bg.carnival : bg.seasonCard, setOn = id === 'carnival' ? bg.setCarnival : bg.setSeasonCard, card = bg.valve.cards[id];
+  const set = (patch) => bg.setValve((value) => ({ ...value, cards: { ...value.cards, [id]: { ...value.cards[id], ...patch } } }));
+  return <div className="custom-card-set">
+    <label className="custom-toggle"><input type="checkbox" role="switch" checked={on} onChange={(event) => setOn(event.target.checked)}/><span>
+      <b>{id === 'carnival' ? t('Карточка Dark Carnival на главной') : t('Карточка «Диковинки Квортеро» на главной')}</b><small>{t('Выключи, чтобы она не закрывала фон')}</small></span></label>
+    {on && <>
+      <Segmented label={t('Вид карточки')} value={card.icon ? 'icon' : 'card'} onChange={(view) => set({ icon: view === 'icon' })} options={[['card', t('Карточка')], ['icon', t('Маленький значок')]]}/>
+      {card.icon ? <Range label={t('Сторона значка')} value={card.size} min={56} max={160} unit=" px" onChange={(size) => set({ size })}/>
+        : <Range label={t('Размер карточки')} value={card.scale} min={40} max={100} unit="%" onChange={(scale) => set({ scale })}/>}
+      {(card.icon || card.scale < 100) && <p className="custom-hint">{card.icon ? (id === 'carnival' ? t('Квадратик с эмблемой Dark Carnival: нажатие открывает событие, как и карточка.') : t('Квадратик со щитом уровня Квортеро: нажатие открывает награды, как и карточка.')) : t('Карточка уменьшится к правому верхнему углу, следующая подтянется под неё.')} {t('Ещё не проверено в игре.')}</p>}
+    </>}
+  </div>;
+}
+// A panel's place (the chat, the friends rail with the party bar, the news column): its shift from Dota's own, in
+// 1080p pixels; on the constructor's screen it is dragged.
+const PLACE_TITLES = () => ({ chat: t('Место чата'), friends: t('Место друзей и группы'), news: t('Место новостей') });
+const PLACE_HINTS = () => ({
+  chat: t('Тяни чат прямо на экране. Сдвиг считается от центра, так что на 16:10 и 21:9 чат останется на своём месте относительно середины.'),
+  friends: t('Тяни панель на экране: список друзей, мини-профиль и группа внизу двигаются вместе.'),
+  news: t('Тяни колонку новостей на экране, обе карточки двигаются вместе.') });
+function PanelPlace({ bg, part }) {
+  const { x, y } = bg.valve[part], set = (patch) => bg.setValve((value) => ({ ...value, [part]: { ...value[part], ...patch } }));
+  const wide = part === 'chat' ? [-640, 640] : [-1500, 1500], high = part === 'chat' ? [-16, 900] : [-900, 900];
+  return <Field label={PLACE_TITLES()[part]} aside={x || y ? `${x > 0 ? '+' : ''}${x}, ${y > 0 ? '+' : ''}${y} px` : t('как в Dota')} hint={PLACE_HINTS()[part]}>
+    <div className="custom-effects">
+      <Range label={t('Вбок')} value={x} min={wide[0]} max={wide[1]} unit=" px" onChange={(value) => set({ x: value })}/>
+      <Range label={t('Вверх')} value={-y} min={high[0]} max={high[1]} unit=" px" onChange={(value) => set({ y: -value })}/>
+    </div>
+    {(x || y) ? <button type="button" className="catalog-link" onClick={() => set({ x: 0, y: 0 })}>{t('Вернуть на место')}</button> : null}
+  </Field>;
+}
+export function ButtonsFields({ bg, part = null }) {
+  const all = !part, glassKeys = part ? PART_GLASS[part] : null;
   return <>
-    <Field label={t('Кнопки сверху')} aside={t('нажми, чтобы скрыть')}>
+    {(all || part === 'topbar') && <>
+      <Field label={t('Кнопки сверху')} aside={t('нажми, чтобы скрыть')}>
       <div className="catalog-tags custom-hide" role="group" aria-label={t('Какие кнопки верхней панели скрыть')}>{HIDE_OPTIONS().map(([key, label]) =>
         <button key={key} type="button" aria-pressed={bg.hide.includes(key)} onClick={() => bg.setHide((value) => value.includes(key) ? value.filter((x) => x !== key) : [...value, key])}>{bg.hide.includes(key) && <Icon name="eyeOff" size={14}/>}{label}</button>)}</div>
       {bg.hide.length > 0 && <p className="custom-hint">{t('Скрытые кнопки пропадут из верхней панели Dota, остальные сдвинутся. «Играть», настройки и выход не скрываются. Ещё не проверено в игре.')}</p>}
     </Field>
-    {/* The see-through panels (MENU_GLASS): how much of each stays; 100 % is Dota's own. In the order they lie on the
-        screen: the top bar, the friends rail and the mini-profile at its top, the party bar under it, the news on the right. */}
+      <TabOrder bg={bg}/>
+    </>}
+    {['chat', 'friends', 'news'].filter((one) => all ? one === 'chat' : part === one).map((one) => <PanelPlace key={one} bg={bg} part={one}/>)}
+    {(all || glassKeys.length > 0) && <>
     <Field label={t('Фон панелей')} aside={t('100% — как в Dota')} hint={glassChanged(bg.glass)
       ? t('Сквозь панели виден фон меню. Текст, иконки, аватарки и медаль остаются как были, а мини-профиль и новости — картинки, они бледнеют целиком. Шапку, мини-профиль, пати и новости ещё не проверили в игре.') : t('Меньше — и сквозь панель виден фон меню.')}>
       <div className="custom-effects">
-        {GLASS_SLIDERS().map(([key, label]) => <Slider key={key} label={label} value={bg.glass[key]} zero="0%" onChange={(percent) => bg.setGlass((value) => ({ ...value, [key]: percent }))}/>)}
+        {GLASS_SLIDERS().filter(([key]) => !glassKeys || glassKeys.includes(key)).map(([key, label]) => <Slider key={key} label={label} value={bg.glass[key]} zero="0%" onChange={(percent) => bg.setGlass((value) => ({ ...value, [key]: percent }))}/>)}
       </div>
     </Field>
-    <div className="custom-switches">
-      {/* The news column's two cards, each its own switch (2026-10-08): Dark Carnival and Valve's own «Диковинки Квортеро». */}
-      <label className="custom-toggle"><input type="checkbox" role="switch" checked={bg.carnival} onChange={(event) => bg.setCarnival(event.target.checked)}/><span><b>{t('Карточка Dark Carnival на главной')}</b><small>{t('Выключи, чтобы она не закрывала фон')}</small></span></label>
-      <label className="custom-toggle"><input type="checkbox" role="switch" checked={bg.seasonCard} onChange={(event) => bg.setSeasonCard(event.target.checked)}/><span><b>{t('Карточка «Диковинки Квортеро» на главной')}</b><small>{t('Выключи, чтобы она не закрывала фон')}</small></span></label>
+    </>}
+    {(all || part === 'news') && <div className="custom-switches custom-cards"><NewsCard bg={bg} id="carnival"/><NewsCard bg={bg} id="season"/></div>}
+    {(all || part === 'friends') && <div className="custom-switches">
+      <label className="custom-toggle"><input type="checkbox" role="switch" checked={bg.friendsClosed} onChange={(event) => bg.setFriendsClosed(event.target.checked)}/><span><b>{t('Список друзей на главной закрыт')}</b><small>{t('Dota открывает его на главной каждый раз. Открыть можно кнопкой друзей или кликом по группе внизу')}</small></span></label>
+    </div>}
+    {all && <>
+      <div className="custom-switches">
       <Peek src={profilePreview} width={480} height={144} caption={t('Так кнопки встанут в профиле любого пользователя Dota, под статусом: открывают его страницу на Stratz и Dotabuff.')}>
         <label className="custom-toggle"><input type="checkbox" role="switch" checked={bg.profileLinks} onChange={(event) => bg.setProfileLinks(event.target.checked)}/><span><b>{t('Кнопки Stratz и Dotabuff в профилях')}</b><small>{t('Наведи, чтобы увидеть, как это выглядит')}</small></span></label>
       </Peek>
-    </div>
-    <Field label={t('Фон в профиле')} hint={PROFILE_BG_HINTS()[bg.profileBg]}><Segmented label={t('Фон в профиле')} value={bg.profileBg} onChange={bg.setProfileBg} options={PROFILE_BG_OPTIONS()}/></Field>
-    {bg.profileBg !== 'menu' && <p className="custom-hint">{t('Ещё не проверено в игре — если что-то не так, напиши в чат.')}</p>}
+      </div>
+      <Field label={t('Фон в профиле')} hint={PROFILE_BG_HINTS()[bg.profileBg]}><Segmented label={t('Фон в профиле')} value={bg.profileBg} onChange={bg.setProfileBg} options={PROFILE_BG_OPTIONS()}/></Field>
+      {bg.profileBg !== 'menu' && <p className="custom-hint">{t('Ещё не проверено в игре — если что-то не так, напиши в чат.')}</p>}
+    </>}
   </>;
 }
 

@@ -32,7 +32,7 @@ export async function catalogAPI(path, { method = 'GET', body, raw, token, signa
   let value;
   // Not JSON: nginx itself answered (body over its limit, API restarting).
   try { value = await response.json(); } catch { throw Object.assign(new Error(t(response.status === 413 ? TOO_LARGE : 'Мастерская сейчас недоступна. Редактор и скачивание файла продолжают работать.')), { status: response.status }); }
-  if (!response.ok) throw Object.assign(new Error(value.error ? translateMessage(value.error) : t('Не удалось выполнить запрос.')), { status: response.status, duplicateId: value.duplicateId });
+  if (!response.ok) throw Object.assign(new Error(value.error ? translateMessage(value.error) : t('Не удалось выполнить запрос.')), { status: response.status, duplicateId: value.duplicateId, code: value.code });
   return value;
 }
 const OWNERS_KEY = 'gridstudio.catalog.ownership.v1';

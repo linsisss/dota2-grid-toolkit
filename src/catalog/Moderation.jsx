@@ -16,6 +16,8 @@ const AdminSpot = lazy(() => import('./AdminSpot.jsx'));
 import './admin.css';
 // Guides bring their reader and styles: loaded with their section and «Входящие».
 const GuideModeration = lazy(() => import('./GuideModeration.jsx'));
+// «Виджеты» draw each widget with the constructor's drawing: loaded with their section and «Входящие».
+const WidgetModeration = lazy(() => import('./WidgetModeration.jsx'));
 const AdminInbox = lazy(() => import('./AdminInbox.jsx'));
 
 // The admin panel (redone on 2026-10-02 to be quicker to use): a menu of sections with what waits in
@@ -34,14 +36,14 @@ export default function Moderation() {
   return <StaffRole.Provider value={auth.admin ? 'admin' : 'moderator'}><AdminPanel auth={auth}/></StaffRole.Provider>;
 }
 
-const VIEWS = [['inbox', 'Входящие', 'bell'], ['works', 'Сетки', 'grid'], ['arts', 'Готовые арты', 'art'], ['backgrounds', 'Фоны', 'brush'], ['guides', 'Гайды', 'guides'], ['stats', 'Аналитика', 'gauge'], ['users', 'Пользователи', 'user'], ['spot', 'Реклама', 'news'], ['journal', 'Журнал', 'history']];
-const MODERATOR_VIEWS = ['works', 'arts', 'backgrounds', 'guides'];
+const VIEWS = [['inbox', 'Входящие', 'bell'], ['works', 'Сетки', 'grid'], ['arts', 'Готовые арты', 'art'], ['backgrounds', 'Фоны', 'brush'], ['widgets', 'Виджеты', 'groupPlus'], ['guides', 'Гайды', 'guides'], ['stats', 'Аналитика', 'gauge'], ['users', 'Пользователи', 'user'], ['spot', 'Реклама', 'news'], ['journal', 'Журнал', 'history']];
+const MODERATOR_VIEWS = ['works', 'arts', 'backgrounds', 'widgets', 'guides'];
 
 function AdminPanel({ auth }) {
   const { config } = useCatalogConfig();
   const moderator = !auth.admin, views = moderator ? VIEWS.filter(([id]) => MODERATOR_VIEWS.includes(id)) : VIEWS;
   const [view, setView] = useState(() => { const value = new URLSearchParams(location.search).get('moderate'); return views.some(([id]) => id === value) ? value : views[0][0]; });
-  const [summary, setSummary] = useState(null), [tick, setTick] = useState(0), [busy, setBusy] = useState(false);
+  const [summary, setSummary] = useState(null), [tick, setTick] = useState(0), [busy, setBusy] = useState(false), [widgetsWaiting, setWidgetsWaiting] = useState(0);
   // The panel fills the window under the site's header, like an app: the lists scroll inside it and a
   // review fits on one screen (src/catalog/admin.css).
   const box = useRef(null), [offset, setOffset] = useState(150);
@@ -52,12 +54,19 @@ function AdminPanel({ auth }) {
   }, []);
   const denied = error => { if (error.status === 401 || error.status === 403) auth.refresh().catch(() => {}); };
   useEffect(() => { catalogAPI('/admin/summary').then(setSummary, denied); }, [tick]);
+  // The widgets waiting (server/menu-widgets.mjs): the summary's count when it has one, else their own list's.
+  const widgetCount = summary?.counts?.widgets?.pending ?? summary?.widgetsPending;
+  useEffect(() => {
+    if (!summary || widgetCount !== undefined) return;
+    catalogAPI('/admin/widgets?filter=pending').then((data) => setWidgetsWaiting(data.counts?.pending || 0), () => {});
+  }, [summary]);
   const changed = () => setTick(x => x + 1);
   const show = value => { const url = new URL(location.href); url.searchParams.set('moderate', value === 'inbox' ? '' : value); for (const key of ['filter', 'tab', 'days', 'from', 'to', 'device', 'source', 'compare']) url.searchParams.delete(key); history.replaceState(history.state, '', url); setView(value); };
   // A moderator's counts are what waits for their decision; reports are the admins'.
   const c = summary?.counts, waiting = c ? (moderator ? { works: c.works.pending, arts: c.arts.pending, backgrounds: c.backgrounds.pending, guides: c.guides.pending }
     : { works: c.works.pending + c.works.reports, arts: c.arts.pending, backgrounds: c.backgrounds.pending + c.backgrounds.reports, guides: c.guides.pending + c.guides.reports }) : {};
-  waiting.inbox = c ? waiting.works + waiting.arts + waiting.backgrounds + waiting.guides : 0;
+  if (c) waiting.widgets = widgetCount ?? widgetsWaiting;
+  waiting.inbox = c ? waiting.works + waiting.arts + waiting.backgrounds + waiting.guides + waiting.widgets : 0;
   async function pause() {
     setBusy(true);
     try { setSummary({ ...summary, ...(await catalogAPI('/admin/settings', { method: 'PATCH', body: { paused: !summary.paused } })) }); } catch (error) { denied(error); } finally { setBusy(false); }
@@ -65,7 +74,7 @@ function AdminPanel({ auth }) {
   return <div className="admin" ref={box} style={{ '--admin-offset': `${offset}px` }}>
     {/* «Аналитика» has a head of its own (2026-10-19 redesign): the intake switch belongs to moderation. */}
     <header className="admin-top">{view === 'stats' ? <div><h1>Аналитика</h1><p>Посещаемость, источники, инструменты и воронки GridStudio</p></div>
-      : <div><h1>Модерация</h1><p>{moderator ? 'Одобряй или отклоняй сетки, арты, фоны и гайды на проверке. ' : ''}Проверяй именно ту версию, которая будет опубликована. Решения отражаются и на карточках в Telegram.</p></div>}
+      : <div><h1>Модерация</h1><p>{moderator ? 'Одобряй или отклоняй сетки, арты, фоны, виджеты и гайды на проверке. ' : ''}Проверяй именно ту версию, которая будет опубликована. Решения отражаются и на карточках в Telegram.</p></div>}
       {!moderator && view !== 'stats' && <div className="admin-top-actions">
         <button type="button" className={`admin-pause${summary?.paused ? ' is-paused' : ''}`} role="switch" aria-checked={summary ? !summary.paused : undefined} disabled={busy || !summary} onClick={pause}
           title={summary?.paused ? 'Новые заявки не принимаются. Нажми, чтобы открыть приём.' : 'Нажми, чтобы временно не принимать новые заявки.'}><i/>{summary?.paused ? 'Приём приостановлен' : 'Приём открыт'}</button>
@@ -84,6 +93,7 @@ function AdminPanel({ auth }) {
           : view === 'works' ? <WorkModeration denied={denied} onChanged={changed}/>
           : view === 'arts' ? <ArtModeration denied={denied} onChanged={changed}/>
           : view === 'backgrounds' ? <BackgroundModeration denied={denied} onChanged={changed}/>
+          : view === 'widgets' ? <Suspense fallback={<p role="status">Загружаем виджеты…</p>}><WidgetModeration denied={denied} onChanged={changed}/></Suspense>
           : view === 'guides' ? <Suspense fallback={<p role="status">Загружаем гайды…</p>}><GuideModeration denied={denied} onChanged={changed}/></Suspense>
           : view === 'stats' ? <Suspense fallback={<p role="status">Загружаем аналитику…</p>}><AdminAnalytics denied={denied}/></Suspense>
           : view === 'users' ? <Suspense fallback={<p role="status">Загружаем пользователей…</p>}><AdminUsers denied={denied}/></Suspense>

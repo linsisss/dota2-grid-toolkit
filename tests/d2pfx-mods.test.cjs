@@ -17,11 +17,12 @@ test('the list: every section and slot of the owner\'s list, pinned to one commi
   assert.equal(server.commit, catalog.commit, 'the page and the server know the same files');
   assert.deepEqual([...D2PFX_PRIORITY].sort(), Object.keys(D2PFX_SECTIONS).sort());
   const mods = Object.values(catalog.mods), of = (section) => mods.filter((mod) => mod.section === section);
-  assert.equal(of('hudskin').length, 20, 'all HUD skins');
+  assert.equal(of('hudskin').length, 22, 'all HUD skins');
   assert.equal(of('click').length, 6);
-  assert.equal(of('pings').length, 5, 'all pings');
+  assert.equal(of('pings').length, 4, 'all pings');
   assert.equal(of('deny').length, 15, '11 denies (4Erep left out), four of them in two styles');
-  assert.equal(of('hudparts').length + of('menuparts').length, 21, 'all parts');
+  assert.equal(of('hudparts').length + of('menuparts').length, 42, 'all parts of the list (Material You left out: scripts of its own)');
+  assert.equal(catalog.mods['material-you-interface-0-1'], undefined);
   assert.deepEqual(of('voice').map((mod) => mod.name), ['Rage Voice Icon']);
   for (const mod of mods) {
     assert.ok(Object.keys(D2PFX_SECTIONS[mod.section].slots).includes(mod.slot), mod.id);
@@ -30,7 +31,8 @@ test('the list: every section and slot of the owner\'s list, pinned to one commi
     assert.ok(mod.credits.length && mod.credits.every((credit) => credit.name || credit.url), `${mod.id}: credited`);
     assert.ok(mod.bytes > 0 && mod.count > 0 && mod.shared.every((i) => catalog.shared[i]), mod.id);
   }
-  assert.deepEqual(catalog.mods['razor-deny-i'].credits, [{ kind: 'author', name: 'h6rd / Dota2PornFx', url: 'https://github.com/h6rd/Dota2PornFxWeb', owner: true }], 'no listed author: h6rd / Dota2PornFx');
+  assert.deepEqual(catalog.mods['blue-web-hud'].credits[0], { kind: 'author', name: 'h6rd / Dota2PornFx', url: 'https://github.com/h6rd/Dota2PornFxWeb', owner: true }, 'no listed author (only a sender): h6rd / Dota2PornFx');
+  assert.equal(catalog.mods['blue-web-hud'].credits[1].kind, 'sender');
   assert.deepEqual(catalog.mods['total-black-hud'].credits.map((credit) => credit.kind), ['modded', 'author']);
   for (const [file, hashes] of Object.entries(server.files)) assert.ok(D2PFX_FILE.test(file) && hashes.every((hash) => /^[0-9a-f]{64}$/.test(hash)), file);
   const { MENU_PACK_PATHS } = await import('../scripts/menu-background.mjs');
@@ -47,8 +49,11 @@ test('two choices with the same files: the higher section keeps them, both are t
   assert.deepEqual(conflicts.map((c) => [c.winner.id, c.loser.id, c.paths]), [['rage-voice-icon', 'blue-web-hud', ['panorama/images/hud/voiceicon_regular_png.vtex_c']]]);
   const black = d2pfxPlan({ hudskin: { skin: 'black-hud' }, hudparts: { minimapSize: 'larger-minimap', timer: 'larger-timer' } }, catalog).conflicts;
   assert.deepEqual(black.map((c) => [c.winner.id, c.loser.id]).sort(), [['larger-minimap', 'black-hud'], ['larger-timer', 'black-hud']]);
-  const menu = d2pfxPlan({ menuparts: { playbg: 'grey-search-bar', playbutton: 'pink-play-button' } }, catalog).conflicts;
-  assert.deepEqual(menu.map((c) => [c.winner.id, c.loser.id, c.paths]), [['pink-play-button', 'grey-search-bar', ['panorama/styles/play.vcss_c']]]);
+  const menu = d2pfxPlan({ menuparts: { playbg: 'grey-search-bar', playbutton: 'play-black' } }, catalog).conflicts;
+  assert.deepEqual(menu.map((c) => [c.winner.id, c.loser.id, c.paths]), [['play-black', 'grey-search-bar', ['panorama/styles/play.vcss_c']]]);
+  // A whole-menu restyle comes last in its section: a chosen part keeps the files they share.
+  const theme = d2pfxPlan({ menuparts: { theme: 'crystal-interface', playbutton: 'play-black' } }, catalog).conflicts;
+  assert.deepEqual(theme.map((c) => [c.winner.id, c.loser.id, c.paths]), [['play-black', 'crystal-interface', ['panorama/styles/play.vcss_c']]]);
   // The files: the first to bring a path keeps it; a read-me stays out.
   const merged = d2pfxFiles([{ files: [{ path: 'panorama/styles/play.vcss_c', data: new Uint8Array([1]) }] },
     { files: [{ path: 'panorama/styles/play.vcss_c', data: new Uint8Array([2]) }, { path: 'README.txt', data: new Uint8Array([3]) }, { path: 'panorama/styles/dotastyles.vcss_c', data: new Uint8Array([4]) }] }]);

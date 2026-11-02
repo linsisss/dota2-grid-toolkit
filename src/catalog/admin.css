@@ -359,3 +359,21 @@
 .admin-spot-actions { display: flex; gap: 10px; }
 .admin-spot-done { display: flex; align-items: center; gap: 6px; margin: 0; color: #9fdcb4; font-size: 13px; }
 @media (max-width: 1100px) { .admin-spot-layout { grid-template-columns: 1fr; } }
+
+/* «Виджеты» (WidgetModeration.jsx, 2026-10-31): the widget live on the dusk of Dota's menu, as large as the stage
+   allows; its buttons' destinations and files above it. */
+.admin-widget-thumb { position: relative; display: block; overflow: clip; background: radial-gradient(120% 90% at 70% 10%, #5a3a52, #141018 70%); }
+.admin-widget-thumb > span { position: absolute; }
+.admin-widget-stage { position: absolute; inset: 0; display: grid; place-items: center; overflow: clip; border-radius: 14px;
+  background: radial-gradient(#ffffff0a 1px, transparent 1.2px) 0 0 / 24px 24px, linear-gradient(#0a0c12a6, #0a0c12d9), radial-gradient(120% 90% at 70% 10%, #5a3a52, #141018 70%); box-shadow: inset 0 0 0 1px #ffffff12; }
+.admin-widget-frame { position: relative; box-shadow: 0 0 0 1px #c4b5ed33, 0 30px 80px -30px #000; }
+.admin-widget-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 24px; max-height: 22vh; overflow: auto; padding: 12px 16px;
+  border: 1px solid #c4b5ed33; border-radius: 14px; background: #c4b5ed0a; color: var(--ad-ink); font-size: 13.5px; }
+.admin-widget-facts strong { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; color: var(--ad-accent); }
+.admin-widget-facts ul { display: grid; gap: 4px; margin: 0; padding-left: 20px; }
+.admin-widget-facts p { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; }
+.admin-widget-facts a { color: var(--ad-accent); overflow-wrap: anywhere; }
+.admin-widget-facts a svg { margin-left: 3px; vertical-align: -2px; }
+.admin-widget-facts em { color: #f6dcb0; font-style: normal; }
+.admin-widget-by .creator-name { display: inline-flex; vertical-align: middle; }
+.admin-kind.is-widgets { background: #c4b5ed1a; color: var(--ad-accent); }

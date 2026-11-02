@@ -1,23 +1,19 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Icon, Notice } from '../catalog/Common.jsx';
 import { lang, t } from '../../scripts/i18n.mjs';
 import { pcCode } from '../../scripts/pc-link.mjs';
-import { packOf, track } from '../site-stats.js';
+import { track } from '../site-stats.js';
 import { openCommunity } from '../Community.jsx';
 import { CUSTOMIZE_DIRS } from '../../scripts/customize-pack.mjs';
 import { CopyField, InstallWindow, Segmented, rich, sizeText } from './ui.jsx';
-import { ButtonsFields, BackgroundFields, DotaLanguage, GridFields, HeroFields, LoadingFields, MenuScreen, MenuThumb, MenuUnder, MenuVersion, MenuWindows, useMenuBackground } from './MenuBackground.jsx';
-import { ChatFields, CursorFields, HudFields, MatchScreen, MatchUnder, TextsFields, useInterface } from './InterfaceBuilder.jsx';
-import { FontFields, FontScreen, fontCaption, useFont } from './FontPicker.jsx';
-import { customizeRemoveCommand, customizeZip, deliverCustomize, CUSTOMIZE_FILE } from './customize-pack.js';
-import { D2PFX_MODULES, D2pfxFields, useD2pfx } from './D2pfxSections.jsx';
-import { creditLine } from './d2pfx-ui.jsx';
+import { DotaLanguage, MenuScreen, MenuThumb, MenuUnder, MenuVersion, MenuWindows } from './MenuBackground.jsx';
+import { MatchScreen, MatchUnder } from './InterfaceBuilder.jsx';
+import { FontScreen, fontCaption } from './FontPicker.jsx';
+import { customizeRemoveCommand, CUSTOMIZE_FILE } from './customize-pack.js';
 import { BY_HAND, SYSTEM, SYSTEM_NAMES } from '../system.js';
-import { PortraitsFields, useHeroPortraits } from './HeroPortraits.jsx';
-import { HUD_PORTRAIT } from '../../scripts/hero-portraits.mjs';
 import { PortraitPreview } from './portrait-preview.js';
-import { LookBar, LookNotice, isLookFile, useLooks } from './LookBar.jsx';
-import { readPrevious } from './look-state.js';
+import { LookBar, LookNotice } from './LookBar.jsx';
+import { GROUPS, MODULES, SCENES, STATE_LABELS, startSection, useCustomize } from './useCustomize.js';
 import matchThumb from '../../assets/customize/match-thumb.webp';
 
 // «Твоя Dota» (/background, 2026-10-17; the owner's «A · Сцена» of three mockups): everything about Dota
@@ -26,44 +22,13 @@ import matchThumb from '../../assets/customize/match-thumb.webp';
 // scene of the game (a switcher with live thumbnails above it); the sections sit in an accordion at the
 // right, grouped by where they are seen, and opening one shows its scene. The foot of the panel says what
 // goes into the file, with each part's size, and makes it: the file, or a PowerShell command that installs
-// it. Each module keeps its state in its own hook (MenuBackground.jsx, InterfaceBuilder.jsx, FontPicker.jsx).
-const SCENES = () => [['menu', t('Главное меню'), 'image'], ['grid', t('Сетка героев'), 'grid'], ['hero', t('За героем'), 'user'], ['loading', t('Загрузка'), 'film'], ['match', t('Матч'), 'sliders']];
-const GROUPS = () => [['menu', t('Главное меню')], ['match', t('Матч')], ['all', t('Везде')]];
-export const MODULES = () => [
-  { id: 'bg', group: 'menu', icon: 'image', scene: 'menu', title: t('Фон меню'), text: t('Картинка, GIF или видео в главном меню') },
-  { id: 'grid', group: 'menu', icon: 'grid', scene: 'grid', title: t('Под сеткой героев'), text: t('Фон страницы «Герои», чтобы сетка читалась') },
-  { id: 'hero', group: 'menu', icon: 'user', scene: 'hero', title: t('За героем'), text: t('«Герои» → «Снаряжение», за моделью') },
-  { id: 'loading', group: 'menu', icon: 'film', scene: 'loading', title: t('Экран загрузки'), text: t('Пока грузится матч') },
-  { id: 'buttons', group: 'menu', icon: 'layers', scene: 'menu', title: t('Кнопки меню'), text: t('Лишние кнопки, карточки на главной, прозрачные панели') },
-  { id: 'menuparts', group: 'menu', icon: 'template', scene: 'menu', title: t('Детали меню'), d2pfx: true, text: t('Верхняя панель, поиск игры, кнопка «Играть» — с d2pfx') },
-  { id: 'hud', group: 'match', icon: 'sliders', scene: 'match', title: t('Вид HUD'), text: t('Подложки, украшения, размер панелей') },
-  { id: 'hudskin', group: 'match', icon: 'brush', scene: 'match', title: t('HUD-скин'), d2pfx: true, text: t('Готовые скины HUD с d2pfx') },
-  { id: 'hudparts', group: 'match', icon: 'gauge', scene: 'match', title: t('Детали HUD'), d2pfx: true, text: t('Миникарта, таймер, счёт и магазин — с d2pfx') },
-  { id: 'chat', group: 'match', icon: 'chat', scene: 'match', title: t('Чат'), text: t('Место и ширина чата в матче') },
-  { id: 'cursor', group: 'match', icon: 'cursor', scene: 'match', title: t('Курсор'), text: t('Свой курсор в меню и в матче') },
-  { id: 'click', group: 'match', icon: 'mouse', scene: 'match', title: t('Клик'), d2pfx: true, text: t('Цвет стрелок приказа «идти» — с d2pfx') },
-  { id: 'pings', group: 'match', icon: 'flag', scene: 'match', title: t('Пинги'), d2pfx: true, text: t('Значок сигнала на карте — с d2pfx') },
-  { id: 'deny', group: 'match', icon: 'swords', scene: 'match', title: t('Денай'), d2pfx: true, text: t('Знак над добитым своим крипом — с d2pfx') },
-  { id: 'font', group: 'all', icon: 'font', scene: 'font', title: t('Шрифт'), text: t('Любой шрифт с кириллицей в чате и меню') },
-  { id: 'texts', group: 'all', icon: 'languages', scene: 'menu', title: t('Тексты'), text: t('Свои названия героев, вкладок и кнопок') },
-  { id: 'portraits', group: 'all', icon: 'idCard', scene: 'grid', title: t('Портреты героев'), text: t('Своя картинка или видео вместо портрета героя') },
-  { id: 'voice', group: 'all', icon: 'volume', scene: 'match', title: t('Иконка голоса'), d2pfx: true, text: t('Значок говорящего в голосовом чате — с d2pfx') }
-];
-const STATE_LABELS = () => ({ changed: t('Своё'), follow: t('Как в меню'), default: t('Как в Dota') });
-const ASPECT_ORDER = ['16:9', '16:10', '21:9', '4:3'];
-// Old addresses open their section (CustomizeApp.jsx reads them): ?tab=font, ?tab=interface (the HUD),
-// ?page=grid|hero|loading, ?part=<module>; a workshop or «Студия» background opens «Фон меню».
-export function startSection(query) {
-  const ids = MODULES().map((module) => module.id), part = query.get('part'), page = query.get('page'), tab = query.get('tab');
-  if (ids.includes(part)) return part;
-  if (tab === 'font') return 'font';
-  if (tab === 'interface') return 'hud';
-  if (['grid', 'hero', 'loading'].includes(page)) return page;
-  return 'bg';
-}
+// it. Each module keeps its state in its own hook (MenuBackground.jsx, InterfaceBuilder.jsx, FontPicker.jsx);
+// the page's state and the build are shared with the constructor (useCustomize.js, src/constructor/).
+export { MODULES, startSection };
+export const ASPECT_ORDER = ['16:9', '16:10', '21:9', '4:3'];
 const PHONE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 
-function StateChip({ state }) {
+export function StateChip({ state }) {
   return <span className={`cz-state is-${state}`}>{STATE_LABELS()[state]}</span>;
 }
 
@@ -88,7 +53,7 @@ function Scenes({ scene, onScene, thumb, dots }) {
 }
 
 // «Что внутри»: each part with its size and a bar of its share (C · «Сборка»), then the files as they lie in the archive.
-function Receipt({ rows, files, total, onOpen }) {
+export function Receipt({ rows, files, total, onOpen }) {
   const biggest = Math.max(1, ...rows.map((row) => row.bytes || 0));
   return <div className="cz-receipt">
     <ul className="cz-receipt-list">{rows.map((row) => <li key={row.id} className={`is-${row.state}`}>
@@ -101,107 +66,16 @@ function Receipt({ rows, files, total, onOpen }) {
 }
 
 export default function CustomizePage({ preset, studioItem, onRemove, replace, notice = null, onNotice = () => {}, openError = '' }) {
-  const query = useMemo(() => new URLSearchParams(location.search), []);
-  const MODS = MODULES(), find = (id) => MODS.find((module) => module.id === id);
-  const [open, setOpen] = useState(() => startSection(query)), [scene, setScene] = useState(() => find(startSection(query)).scene);
-  const [delivery, setDelivery] = useState(BY_HAND ? 'file' : 'command'), [inside, setInside] = useState(false), [install, setInstall] = useState(false), [handed, setHanded] = useState(null);
-  const [busy, setBusy] = useState(null), [error, setError] = useState(''), [made, setMade] = useState(null), [hudThumb, setHudThumb] = useState(null);
-  const menuPage = ['menu', 'grid', 'hero', 'loading'].includes(scene) ? scene : 'menu';
-  const bg = useMenuBackground({ preset, studioItem, page: menuPage, onRemove });
-  const ui = useInterface({ open });
-  const font = useFont();
-  const d2 = useD2pfx();
-  const pt = useHeroPortraits({ open: open === 'portraits' });
-  // «Оформление»: «Сохранить в Студию», the settings file both ways (LookBar.jsx).
-  const looks = useLooks({ bg, ui, font, d2, pt, replace, suggested: notice?.from === 'file' ? notice.name : '' });
-  const undoLook = async () => {
-    const previous = await readPrevious();
-    if (!previous?.look) return onNotice(null);
-    const before = await looks.snapshot().catch(() => null);
-    replace(previous.look, { link: previous.link, from: 'previous', before, beforeLink: looks.link });
-  };
-  // A .gsdota dropped anywhere on the page opens; other files go where they always went (the preview).
-  const dropLook = (event) => {
-    const file = event.dataTransfer?.files?.[0];
-    if (!isLookFile(file)) return;
-    event.preventDefault(); event.stopPropagation(); bg.drop.onDragLeave();
-    looks.importFile(file);
-  };
-  // The address names the open section (a reload or a shared link opens it); «Студия»'s ?item stays.
-  useEffect(() => {
-    const url = new URL(location.href);
-    for (const key of ['tab', 'page', 'part']) url.searchParams.delete(key);
-    if (open && open !== 'bg') url.searchParams.set('part', open);
-    if (url.href !== location.href) history.replaceState(history.state, '', url);
-  }, [open]);
+  const page = useCustomize({ preset, studioItem, onRemove, replace, notice, onNotice });
+  const { MODS, find, open, setOpen, scene, setScene, menuPage, chooseScene, bg, ui, font, d2, pt, looks, undoLook, dropLook, states, summary, changed, partSize, rows, files, total, estimate,
+    titles, follow, dots, touch, fields, reset, unseen, encoding, delivery, setDelivery, install, setInstall, handed, setHanded, busy, error, made, hudThumb, setHudThumb, download } = page;
+  const [inside, setInside] = useState(false);
   // An old link to a section lower in the panel (?tab=font, ?page=loading…): it is scrolled to.
   useEffect(() => {
     if (open === 'bg' || !open) return undefined;
     const timer = setTimeout(() => document.querySelector(`.cz-mod[data-id="${open}"]`)?.scrollIntoView({ block: 'nearest' }), 450);
     return () => clearTimeout(timer);
   }, []);
-  const states = { ...bg.states, ...ui.states, ...d2.states, font: font.state, portraits: pt.state };
-  const summary = { ...bg.summary, ...ui.summary, ...d2.summary, font: font.summary, portraits: pt.summary };
-  const changed = MODS.filter((module) => states[module.id] === 'changed');
-  // Each part's size: the menu's from its pack (videos as the encoder aims until built), the match's and
-  // the font's made a moment after a change.
-  const partSize = (id) => bg.sizes.parts[id] || ui.sizes.parts?.[id] || d2.sizes.parts[id] || (id === 'font' ? font.size : id === 'portraits' ? pt.size : null);
-  const rows = MODS.filter((module) => states[module.id] !== 'default').map((module) => {
-    const size = partSize(module.id);
-    return { id: module.id, icon: module.icon, title: module.title, line: summary[module.id] || module.text, state: states[module.id],
-      bytes: states[module.id] === 'changed' ? size?.bytes || 0 : 0, estimate: !!size?.estimate,
-      note: states[module.id] === 'follow' ? t('тот же файл') : module.id === 'chat' ? t('в HUD') : t('считаем…') };
-  });
-  const files = [
-    bg.sizes.pak02 && { path: 'dota_russian/pak02_dir.vpk', icon: 'archive', what: t('меню, фоны, кнопки'), ...bg.sizes.pak02 },
-    ui.sizes.pak03 && { path: 'dota_russian/pak03_dir.vpk', icon: 'archive', what: t('HUD, чат, тексты'), ...ui.sizes.pak03 },
-    pt.size && { path: 'dota_russian/pak05_dir.vpk', icon: 'archive', what: `${t('портреты героев: {list}', { list: pt.names.join(', ') })}${pt.hudNames.length ? ` · ${t('в HUD: {list}', { list: pt.hudNames.join(', ') })}` : ''}`, ...pt.size },
-    d2.sizes.pak && { path: 'dota_russian/pak04_dir.vpk', icon: 'archive', what: t('моды d2pfx: {list}', { list: d2.plan.picks.map((mod) => `«${mod.label}» (${creditLine(mod.credits)})`).join(', ') }), ...d2.sizes.pak },
-    ui.sizes.cursors && { path: 'dota_russian/resource/cursor/', icon: 'cursor', what: `${t('курсор, файлов: {count}', { count: ui.sizes.cursors.count })}${ui.cursors.fromPack ? ` · ${t('пак «{name}» с d2pfx, автор: {author}', { name: ui.cursors.pack.name, author: ui.cursors.creditLine })}` : ''}`, ...ui.sizes.cursors },
-    font.size && { path: 'dota/panorama/fonts/', icon: 'font', what: t('шрифт, файлов: {count}', { count: font.size.count }), bytes: font.size.bytes }
-  ].filter(Boolean);
-  const total = files.reduce((sum, file) => sum + file.bytes, 0), estimate = files.some((file) => file.estimate);
-  const titles = MODS.filter((module) => states[module.id] !== 'default').map((module) => module.title);
-  const follow = MODS.filter((module) => states[module.id] === 'follow').length;
-  const dots = Object.fromEntries(SCENES().map(([id]) => [id, MODS.some((module) => module.scene === id && states[module.id] === 'changed') || (id === 'menu' && states.texts === 'changed')]));
-  // «customize.change»: a section that becomes «Своё» after the user did something on the page; what comes
-  // back by itself (saved settings, cursor pictures from IndexedDB, a studio recipe) is not a change.
-  const seen = useRef(states), touched = useRef(false);
-  const stateKey = MODS.map((module) => states[module.id]).join();
-  useEffect(() => {
-    for (const module of MODS) if (touched.current && states[module.id] === 'changed' && seen.current[module.id] !== 'changed') track('customize.change', { section: module.id, part: module.id });
-    seen.current = states;
-  }, [stateKey]);
-  const touch = () => { touched.current = true; };
-
-  // The one file: the menu's videos encoded (once), every part made, zipped; then saved, or sent to the
-  // site for the command. The statistics: its start, then its parts, size and pack, or why it failed.
-  async function download() {
-    setError(''); setBusy({ label: t('Собираем…') });
-    const parts = MODS.filter((module) => states[module.id] !== 'default').map((module) => module.id);
-    track('customize.build-start', { delivery, parts });
-    try {
-      const menu = await bg.prepare({ delivery });
-      setBusy({ label: t('Собираем…') });
-      const [match, fonts, mods, portraits] = await Promise.all([ui.files(), font.files(),
-        d2.files((share) => setBusy({ label: t('Скачиваем моды с Dota2PornFX… {percent}%', { percent: Math.round(share * 100) }), progress: share }), { skip: pt.hudOn ? [HUD_PORTRAIT.layout] : [] }),
-        pt.files((share) => setBusy({ label: t('Собираем портреты героев… {percent}%', { percent: Math.round(share * 100) }), progress: share }))]);
-      setBusy({ label: t('Собираем…') });
-      const zip = await customizeZip({ menu: menu?.blob ?? null, match, d2pfx: mods, portraits, portraitNames: pt.names, portraitHud: pt.hudNames, fonts, titles, credits: ui.cursors.credits, modCredits: d2.credits });
-      if (!zip) return;
-      const given = await deliverCustomize(zip.blob, { delivery, onProgress: (share) => setBusy({ label: t('Отправляем на GridStudio… {percent}%', { percent: Math.round(share * 100) }), progress: share }) });
-      bg.delivered({ delivery });
-      const mb = Math.round(zip.blob.size / 1e6);
-      track('customize.build-done', { delivery, parts, mb, pack: packOf(given?.command) || '' });
-      if (delivery === 'file') track('customize.download', { mb });
-      setHanded(given); setMade({ size: zip.blob.size, entries: zip.entries }); setInstall(true);
-    } catch (problem) {
-      // A cancel is not a failure.
-      if (!problem?.aborted) track('customize.build-fail', { delivery, reason: String(problem?.message || 'error').slice(0, 80) });
-      if (!problem?.aborted && !problem?.shown) setError(problem?.message || t('Не получилось собрать файл.'));
-      if (problem?.shown) setError(problem.message);
-    } finally { setBusy(null); }
-  }
   const openSection = (id) => {
     const next = open === id ? '' : id;
     setOpen(next);
@@ -211,16 +85,7 @@ export default function CustomizePage({ preset, studioItem, onRemove, replace, n
       setTimeout(() => document.querySelector(`.cz-mod[data-id="${next}"]`)?.scrollIntoView({ behavior: 'smooth', block: matchMedia('(max-width: 900px)').matches ? 'start' : 'nearest' }), 380);
     }
   };
-  const chooseScene = (id) => { track('customize.scene', { scene: id }); setScene(id); if (open === 'font') setOpen(''); };
-  const fields = { bg: <BackgroundFields bg={bg}/>, grid: <GridFields bg={bg}/>, hero: <HeroFields bg={bg}/>, loading: <LoadingFields bg={bg}/>, buttons: <ButtonsFields bg={bg}/>,
-    hud: <HudFields ui={ui}/>, chat: <ChatFields ui={ui}/>, cursor: <CursorFields cur={ui.cursors}/>, font: <FontFields font={font}/>, texts: <TextsFields ui={ui}/>, portraits: <PortraitsFields pt={pt} d2={d2} onMatch={() => chooseScene('match')}/>,
-    ...Object.fromEntries(D2PFX_MODULES.map((id) => [id, <D2pfxFields d2={d2} section={id}/>])) };
-  const reset = (id) => (id === 'portraits' ? pt.reset() : id === 'font' ? font.reset() : ['hud', 'chat', 'cursor', 'texts'].includes(id) ? ui.reset(id) : D2PFX_MODULES.includes(id) ? d2.reset(id) : bg.reset(id));
   const thumb = (id) => id === 'match' ? <span className="cz-thumb-screen"><img src={hudThumb || matchThumb} alt=""/></span> : <MenuThumb bg={bg} page={id}/>;
-  // The d2pfx mods the shown scene does not draw (the click plays in the match: DotaCursor.jsx; a HUD skin
-  // and HUD parts the emulator can draw are in it: HudCanvas).
-  const unseen = d2.plan.picks.filter((mod) => (scene === 'menu' ? mod.section === 'menuparts' : scene === 'match' ? !['menuparts', 'click'].includes(mod.section) && !d2.hudMods.includes(mod.id) : false));
-  const encoding = bg.progress !== null;
   const footLine = changed.length ? <><b>{changed.map((module) => module.title).join(', ')}</b>{follow ? ` · ${t('ещё {count} с фоном меню', { count: follow })}` : ''}. {t('Остальное — как в Dota.')}</>
     : follow ? t('Пока всё как в Dota.') : t('Пока всё как в Dota. Открой любой раздел справа.');
   const sizeLine = changed.length ? `${t('изменений: {count}', { count: changed.length })} · ${sizeText(total, estimate)}` : t('пока ничего не изменено');
@@ -236,7 +101,7 @@ export default function CustomizePage({ preset, studioItem, onRemove, replace, n
         </div>
       </div>
       <PortraitPreview.Provider value={pt.preview}><div className="custom-stage-area cz-area">
-        {scene === 'match' ? <MatchScreen ui={ui} chat={open === 'chat'} onFrame={setHudThumb} mods={d2.hudMods}/> : scene === 'font' ? <FontScreen font={font}/> : <MenuScreen bg={bg} page={menuPage}/>}
+        {scene === 'match' ? <MatchScreen ui={ui} chat={open === 'chat'} onFrame={setHudThumb} mods={d2.hudMods}/> : scene === 'font' ? <FontScreen font={font}/> : <MenuScreen bg={bg} page={menuPage} mods={d2.menuLook}/>}
       </div></PortraitPreview.Provider>
       <div className="cz-under">{scene === 'match' ? <MatchUnder ui={ui} chat={open === 'chat'}/> : scene === 'font' ? <p className="custom-caption">{fontCaption()}</p> : <MenuUnder bg={bg} page={menuPage}/>}
         {unseen.length > 0 && open !== 'chat' && <p className="custom-caption d2-under"><Icon name="help" size={13}/>{t('Моды d2pfx ({list}) в этом превью не рисуются — их картинки и видео в разделах справа.', { list: unseen.map((mod) => mod.label).join(', ') })}</p>}</div>
@@ -297,7 +162,7 @@ export default function CustomizePage({ preset, studioItem, onRemove, replace, n
 }
 
 // How to install the one file: the command (it was just made for this file), or by hand.
-function Install({ delivery, handed, made, bg, onClose }) {
+export function Install({ delivery, handed, made, bg, onClose }) {
   const [way, setWay] = useState(BY_HAND ? 'file' : delivery);
   const fonts = made ? made.entries.some((entry) => entry.name.startsWith(CUSTOMIZE_DIRS.fonts)) : true;
   return <InstallWindow title={t('Как установить')} onClose={onClose}>

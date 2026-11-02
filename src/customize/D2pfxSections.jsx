@@ -4,10 +4,12 @@ import { Icon } from '../catalog/Common.jsx';
 import { lang, t } from '../../scripts/i18n.mjs';
 import { D2PFX_SECTIONS, D2PFX_SECTION_IDS, cleanChoice, d2pfxPlan } from '../../scripts/d2pfx-mods.mjs';
 import { catalog, d2pfxPack } from './d2pfx-pack.js';
+import { useMenuModsLook } from './d2pfx-menu-preview.js';
 import { D2pfxAbout, D2pfxNote, FixNote, PackCredits, creditLine, creditLines } from './d2pfx-ui.jsx';
 import { Field, rich, sizeText } from './ui.jsx';
 import { skinRender, skinThumb } from './d2pfx-hud.js';
 import { track } from '../site-stats.js';
+import { THEME_ACCENT, themeRoles } from '../../scripts/menu-theme.mjs';
 
 // The d2pfx sections of «Твоя Dota» (2026-10-17, the owner's list): «HUD-скин», «Детали HUD», «Клик»,
 // «Пинги», «Денай» in the match, «Детали меню» in the menu, «Иконка голоса» everywhere. Each is a gallery
@@ -19,7 +21,7 @@ const ClickThumb = lazy(() => import('./D2pfxClick.jsx').then((module) => ({ def
 export const D2PFX_MODULES = D2PFX_SECTION_IDS;
 const SLOT_TITLES = () => ({ skin: t('Скин'), click: t('Цвет клика'), ping: t('Пинг'), deny: t('Денай'), voice: t('Иконка'),
   minimap: t('Миникарта: цвет'), minimapSize: t('Миникарта: размер'), timer: t('Таймер'), scoreboard: t('Таблица счёта и магазин'),
-  topbar: t('Верхняя панель'), playbutton: t('Кнопка «Играть»'), playbg: t('Фон панели поиска игры'), modes: t('Карточки режимов') });
+  topbar: t('Верхняя панель'), playbutton: t('Кнопка «Играть»'), playbg: t('Фон панели поиска игры'), modes: t('Карточки режимов'), theme: t('Всё меню целиком') });
 export const SECTION_TITLES = () => ({ hudskin: t('HUD-скин'), hudparts: t('Детали HUD'), click: t('Клик'), pings: t('Пинги'), deny: t('Денай'), menuparts: t('Детали меню'), voice: t('Иконка голоса') });
 const NOTES = () => ({
   hudskin: t('HUD-скины взяты с {site}. Все работы принадлежат их авторам — автор указан у каждого скина.'),
@@ -97,7 +99,9 @@ export function useD2pfx() {
   // The minimap's colour last: over «Larger Minimap»'s bigger box when that is chosen too.
   const colourLast = (mod) => (/-minimap$/.test(mod.id) && mod.id !== 'larger-minimap' ? 1 : 0);
   const hudMods = [...picksOf('hudskin'), ...picksOf('hudparts').sort((a, b) => colourLast(a) - colourLast(b))].map((mod) => mod.id).filter((id) => skinRender(id) !== 'none');
-  return { choice, set, reset, plan, states, summary, sizes, credits, files, conflictsOf, picksOf, clickKey, hudMods, key: JSON.stringify(choice) };
+  // What the menu preview draws of the chosen top bar and play button (d2pfx-menu-preview.js, 2026-11-02).
+  const menuLook = useMenuModsLook(choice);
+  return { choice, set, reset, plan, states, summary, sizes, credits, files, conflictsOf, picksOf, clickKey, hudMods, menuLook, key: JSON.stringify(choice) };
 }
 
 // One mod in a gallery: d2pfx's picture, the name, the credit.
@@ -170,7 +174,44 @@ function Chosen({ mod, d2, section }) {
   </div>;
 }
 
-export function D2pfxFields({ d2, section }) {
+// «Тема меню» (2026-11-01; the owner on d2pfx's «Material You Interface»: «возьмем но доработаем»): ours, in the
+// «Всё меню целиком» slot next to d2pfx's restyles, one or the other. Valve's current stylesheets recoloured for one
+// accent when the file is built (scripts/menu-theme.mjs, menu-theme-pack.js); its state lives with the menu's pack.
+// Accents: Material You's tonal seeds that read well on Dota's dark menu.
+export const THEME_ACCENTS = ['#8b6cff', '#ff6fa3', '#3fa7ff', '#2ec4b6', '#5bd36b', '#ffb03a', '#ff5a5a', '#8e9bb0'];
+// A small picture of what changes: the flat bar, a news card, the pill «Играть», in the accent's roles.
+function ThemeThumb({ accent }) {
+  const r = themeRoles(accent);
+  return <span className="d2-theme-thumb" style={{ '--surface': r.surface, '--outline': r.outline, '--primary': r.primary, '--on-primary': r.onPrimary, '--container': r.primaryContainer }}>
+    <i className="d2-theme-bar"/><i className="d2-theme-rail"/><i className="d2-theme-card"/><i className="d2-theme-play">{t('ИГРАТЬ')}</i></span>;
+}
+function ThemeCard({ accent, chosen, onChoose }) {
+  return <li className={`cur-pack${chosen ? ' is-chosen' : ''}`}>
+    <button type="button" aria-pressed={chosen} onClick={onChoose}>
+      <span className="cur-pack-shot"><ThemeThumb accent={accent}/>{chosen && <span className="cur-pack-check"><Icon name="check" size={14}/></span>}</span>
+      <b>{t('Тема GridStudio')}</b></button>
+    <span className="cur-credits is-compact">{t('свой цвет, свежие стили Dota')}</span>
+  </li>;
+}
+function ThemeChosen({ theme, d2 }) {
+  const parts = ['topbar', 'playbutton', 'playbg', 'modes'].map((slot) => d2.choice.menuparts?.[slot]).filter(Boolean).map((id) => catalog.mods[id]?.label).filter(Boolean);
+  return <div className="d2-chosen d2-theme">
+    <div className="d2-chosen-text">
+      <b>{t('Тема GridStudio')}</b>
+      <small>{t('Всё меню Dota в одном цвете: плоская верхняя панель, кнопка «Играть» — пилюля, скруглённые карточки, кнопки и поля, цвета окон и настроек. Собирается из стилей Dota того дня, когда скачан файл. По мотивам «Material You Interface» с d2pfx (автор — Swin-РукаBlood).')}</small>
+      <div className="d2-theme-colors" role="radiogroup" aria-label={t('Цвет темы')}>
+        {THEME_ACCENTS.map((color) => <button key={color} type="button" role="radio" aria-checked={theme.accent === color} aria-label={color} title={color}
+          className={`d2-theme-color${theme.accent === color ? ' is-on' : ''}`} style={{ '--c': color }} onClick={() => theme.set(color)}/>)}
+        <label className={`d2-theme-color is-own${THEME_ACCENTS.includes(theme.accent) ? '' : ' is-on'}`} title={t('Свой цвет')} style={{ '--c': theme.accent }}>
+          <Icon name="brush" size={13}/><input type="color" value={theme.accent} aria-label={t('Свой цвет')} onChange={(event) => THEME_ACCENT.test(event.target.value) && theme.set(event.target.value.toLowerCase())}/></label>
+      </div>
+      {parts.length > 0 && <small className="d2-warn">{t('Детали d2pfx ({list}) остаются как есть: тема их не перекрашивает.', { list: parts.map(quote).join(', ') })}</small>}
+      <small className="d2-warn">{t('После крупного обновления Dota собери файл заново: тема берёт стили той Dota, что была при сборке.')}</small>
+    </div>
+  </div>;
+}
+
+export function D2pfxFields({ d2, section, theme = null }) {
   const [about, setAbout] = useState(false), def = D2PFX_SECTIONS[section], slots = Object.keys(def.slots), many = slots.length > 1;
   return <>
     <D2pfxNote text={NOTES()[section]} href={`https://h6rd.github.io/Dota2PornFxWeb/?category=${def.category}`} onMore={() => setAbout(true)}/>
@@ -179,13 +220,18 @@ export function D2pfxFields({ d2, section }) {
     <p className="custom-hint">{HINTS()[section]}</p>
     {slots.map((slot) => {
       const id = d2.choice[section]?.[slot], mod = id && catalog.mods[id], list = slotMods(section, slot);
+      // «Всё меню целиком»: our theme or one of d2pfx's restyles, not both.
+      const own = slot === 'theme' && theme, themed = own && !!theme.accent;
+      const pick = (next) => { if (own) theme.set(''); d2.set(section, slot, next); };
       const gallery = <>
         {mod && <Chosen mod={mod} d2={d2} section={section}/>}
+        {themed && <ThemeChosen theme={theme} d2={d2}/>}
         <ul className={`cur-packs d2-gallery${section === 'voice' ? ' is-small' : ''}`} aria-label={`${SECTION_TITLES()[section]}: ${SLOT_TITLES()[slot]}`}>
-          <DotaCard section={section} chosen={!id} onChoose={() => d2.set(section, slot, null)}/>
-          {list.map((item) => <ModCard key={item.id} mod={item} chosen={item.id === id} onChoose={() => { if (item.id !== id) track('customize.mod', { section, mod: item.id }); d2.set(section, slot, item.id === id ? null : item.id); }}/>)}
+          <DotaCard section={section} chosen={!id && !themed} onChoose={() => pick(null)}/>
+          {own && <ThemeCard accent={theme.accent || THEME_ACCENTS[0]} chosen={themed} onChoose={() => { if (!themed) track('customize.mod', { section, mod: 'gridstudio-theme' }); d2.set(section, slot, null); theme.set(theme.accent || THEME_ACCENTS[0]); }}/>}
+          {list.map((item) => <ModCard key={item.id} mod={item} chosen={item.id === id} onChoose={() => { if (item.id !== id) track('customize.mod', { section, mod: item.id }); pick(item.id === id ? null : item.id); }}/>)}
         </ul></>;
-      return many ? <Field key={slot} label={SLOT_TITLES()[slot]} aside={mod ? mod.label : t('как в Dota')}>{gallery}</Field> : <div key={slot} className="custom-field">{gallery}</div>;
+      return many ? <Field key={slot} label={SLOT_TITLES()[slot]} aside={mod ? mod.label : themed ? t('Тема GridStudio') : t('как в Dota')}>{gallery}</Field> : <div key={slot} className="custom-field">{gallery}</div>;
     })}
     {about && <D2pfxAbout onClose={() => setAbout(false)}/>}
   </>;

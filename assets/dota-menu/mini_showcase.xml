@@ -26,7 +26,7 @@
 				<DOTAShowcaseContents id="ShowcaseContents" />
 				<Panel id="ReportControls">
 					<Button id="ReportButton" class="ButtonPrimary DarkGrey" onactivate="DOTAReportMiniShowcase()" onmouseover="UIShowTextTooltip( &apos;#DOTA_Showcase_Tooltip_Report_MiniProfile&apos; )" onmouseout="UIHideTextTooltip()">
-						<Image src="s2r://panorama/images/control_icons/24px/flag.vsvg_c" />
+						<Image src="s2r://panorama/images/control_icons/24px/flag.vsvg" />
 					</Button>
 				</Panel>
 				<Label id="PendingApprovalLabel" text="#DOTA_Showcase_PendingApproval" onmouseover="UIShowTextTooltip( #DOTA_Showcase_PendingApproval_Tooltip )" onmouseout="UIHideTextTooltip()" />

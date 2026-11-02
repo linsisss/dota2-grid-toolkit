@@ -18,6 +18,9 @@ import eventLogo from '../../assets/dota-menu/ui/event-logo.webp';
 import eventTitle from '../../assets/dota-menu/ui/event-title.webp';
 import eventBackTitle from '../../assets/dota-menu/ui/event-back-title.webp';
 import eventScreen from '../../assets/dota-menu/ui/event-screen.webp';
+import { themeRoles } from '../../scripts/menu-theme.mjs';
+import { MENU_VALVE } from '../../scripts/menu-background.mjs';
+import { t } from '../../scripts/i18n.mjs';
 
 // Dota 2's main menu over the chosen background, laid out in 1080p pixels like Panorama does it:
 // the layer is scaled by min(width / 1920, height / 1080), so on a wide screen the panels move to
@@ -46,11 +49,16 @@ import eventScreen from '../../assets/dota-menu/ui/event-screen.webp';
 // ground and its picture (profile-head.webp, profile-showcase.webp from make-menu-rail.mjs) under the owner's
 // avatar, name and medal, which stay; the party bar's ground and its slots and button (party-ground.webp,
 // party-glass.webp from make-menu-glass.mjs); the news column fades whole (#RightColumn in the pack).
-const BAR_LEFT = [['', 0, 550], ['collection', 550, 715], ['watch', 715, 879], ['learn', 879, 1046], ['mods', 1046, 1210], ['', 1210, 1490]];
+// theme: «Тема меню»'s accent (scripts/menu-theme.mjs, 2026-11-01), or '': what it changes most, drawn from its roles —
+// the flat top bar under the same tabs and icons, the pill «Играть», the rounded news cards. The recolour of
+// everything else is the game's (the preview keeps Valve's colours there).
+// The tabs (ГЕРОИ 385–550 … ИГРОТЕКА) can also stand in another order (menu-background.mjs menuValve tabs, 2026-11-02).
+const BAR_LEFT = [['', 0, 385], ['heroes', 385, 550], ['collection', 550, 715], ['watch', 715, 879], ['learn', 879, 1046], ['mods', 1046, 1210], ['', 1210, 1490]];
+const TABS_DEFAULT = BAR_LEFT.filter(([key]) => key).map(([key]) => key).join();
 const BAR_RIGHT = [['', 1851, 1920], ['plus', 1778, 1851], ['armory', 1704, 1778], ['', 1629, 1704], ['shards', 1488, 1629]];
 const RAIL_GROUND = [10, 8, 6, 0xf9 / 255];
-function BarPieces({ hide, image, ground }) {
-  if (!hide.length) return <>
+function BarPieces({ hide, image, ground, tabs }) {
+  if (!hide.length && tabs.join() === TABS_DEFAULT) return <>
     <div className="dm-bar-left" style={{ backgroundImage: `url(${image})` }}/>
     {ground && <div className="dm-bar-mid" style={{ backgroundImage: `url(${barMid})` }}/>}
     <div className="dm-bar-right" style={{ backgroundImage: `url(${image})` }}/>
@@ -59,18 +67,28 @@ function BarPieces({ hide, image, ground }) {
   let left = 0, right = 0;
   return <>
     {ground && <div className="dm-bar-mid is-whole" style={{ backgroundImage: `url(${barMid})` }}/>}
-    {BAR_LEFT.filter(([key]) => !hide.includes(key)).map(([, x0, x1]) => { const at = left; left += x1 - x0; return piece(x0, x1, 'left', at, 73); })}
+    {[BAR_LEFT[0], ...tabs.map((tab) => BAR_LEFT.find(([key]) => key === tab)), BAR_LEFT[BAR_LEFT.length - 1]].filter(([key]) => !hide.includes(key)).map(([, x0, x1]) => { const at = left; left += x1 - x0; return piece(x0, x1, 'left', at, 73); })}
     {BAR_RIGHT.filter(([key]) => !hide.includes(key)).map(([, x0, x1]) => { const at = right; right += x1 - x0; return piece(x0, x1, 'right', at, 61); })}
   </>;
 }
-function TopBar({ hide, ground }) {
+// modBar: a d2pfx top bar's own ground (its texture, as Valve lays #TopBarBackground: 1920 × 164, 112 high).
+function TopBar({ hide, ground, flat, tabs, modBar = null }) {
   return <>
-    <div className="dm-bar-layer" style={{ opacity: ground }}><BarPieces hide={hide} image={barGround} ground/></div>
-    <div className="dm-bar-layer"><BarPieces hide={hide} image={barGlass}/></div>
+    {modBar ? <div className="dm-mod-bar" style={{ opacity: ground, backgroundImage: `url(${modBar})` }}/>
+      : flat ? <div className="dm-theme-bar" style={{ opacity: ground }}/> : <div className="dm-bar-layer" style={{ opacity: ground }}><BarPieces hide={hide} image={barGround} ground tabs={tabs}/></div>}
+    <div className="dm-bar-layer"><BarPieces hide={hide} image={barGlass} tabs={tabs}/></div>
   </>;
 }
 
-export default function DotaMenu({ news = { carnival: true, season: true }, event = null, hide = [], glass = null }) {
+// friendsClosed: the friends list closed on the home page (menu-background.mjs friendsClosedPage): its rail goes.
+// valve: Valve's panels set by hand (menu-background.mjs menuValve): the tabs' order, the chat's shift, the cards' sizes and icons.
+// mods: d2pfx's chosen top bar ground and play button (d2pfx-menu-preview.js), drawn over Valve's and the theme's.
+export default function DotaMenu({ news = { carnival: true, season: true }, event = null, hide = [], glass = null, theme = '', friendsClosed = false, valve = MENU_VALVE, mods = null }) {
+  const cards = valve.cards, carnival = cards.carnival, quartero = cards.season;
+  const moveOf = (part) => { const { x, y } = valve[part] || { x: 0, y: 0 }; return x || y ? `translate(${x}px, ${y}px)` : undefined; };
+  const above = !news.carnival ? 0 : carnival.icon ? carnival.size + 12 : Math.round(484 * carnival.scale / 100) + 16;
+  const cardStyle = (card, top) => (card.icon ? { top, width: card.size, height: card.size } : { top, transform: card.scale < 100 ? `scale(${card.scale / 100})` : undefined });
+  const roles = theme ? themeRoles(theme) : null;
   const see = (key) => (glass?.[key] ?? 100) / 100, bar = see('bar'), friends = see('friends');
   const clean = !news.carnival;
   // The envelope moves right by the right-hand buttons hidden after it.
@@ -99,30 +117,35 @@ export default function DotaMenu({ news = { carnival: true, season: true }, even
     document.addEventListener('pointerdown', away); document.addEventListener('keydown', escape);
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', escape); };
   }, [open]);
-  return <div className="dota-menu" ref={frame} aria-hidden="true"><div className={`dm-layer${season ? ' is-event' : ''}`} ref={layer}>
+  const themeVars = roles && { '--th-surface': roles.surface, '--th-outline': roles.outline, '--th-primary': roles.primary, '--th-on-primary': roles.onPrimary };
+  return <div className="dota-menu" ref={frame} aria-hidden="true"><div className={`dm-layer${season ? ' is-event' : ''}${roles ? ' is-themed' : ''}`} ref={layer} style={themeVars || undefined}>
     {/* The screen comes in once its picture is there, so a slow load does not pop it in halfway. */}
     {warm && <div className={`dm-event${loaded ? ' is-loaded' : ''}`} style={{ '--event': `url(${eventScreen})` }}><img src={eventScreen} alt="" onLoad={() => setLoaded(true)}/></div>}
-    <TopBar hide={hide} ground={bar}/>
-    <div className="dm-rail" style={{ backgroundColor: `rgba(${RAIL_GROUND.slice(0, 3).join(', ')}, ${+(RAIL_GROUND[3] * friends).toFixed(3)})` }}>
+    <TopBar hide={hide} ground={bar} flat={!!roles} tabs={valve.tabs} modBar={mods?.bar}/>
+    <div className="dm-moved" style={{ transform: moveOf('friends') }}>
+    <div className={`dm-rail${friendsClosed ? ' is-closed' : ''}`} style={{ backgroundColor: `rgba(${RAIL_GROUND.slice(0, 3).join(', ')}, ${+(RAIL_GROUND[3] * friends).toFixed(3)})` }}>
       <i className="dm-rail-head" style={{ opacity: friends }}/>
       <img className="dm-profile-head" src={profileHead} alt="" style={{ opacity: see('header') }}/>
       <img className="dm-profile-showcase" src={profileShowcase} alt="" style={{ opacity: see('showcase') }}/>
       <img src={rail} alt=""/></div>
     <div className="dm-party"><img src={partyGround} alt="" style={{ opacity: see('party') }}/><img className="dm-party-glass" src={partyGlass} alt=""/><img className="dm-party-me" src={avatar} alt=""/></div>
+    </div>
     {/* Stays mounted, so hiding and showing the news both animate. Under the event card, since Dota's
         update of 2026-10-07, Valve's own «Диковинки Квортеро» cell (scripts/make-menu-season.mjs). */}
     {/* Valve's cards cast a soft shadow; with the column see-through the pack masks it out of the gap and the free right
         edge (GLASS_NEWS_TEXT), so the preview drops it there too. */}
-    <div className={`dm-news-column${see('news') < 1 ? ' is-glass' : ''}`} style={{ opacity: see('news') }}>
-      <img className={`dm-news${news.carnival ? '' : ' is-hidden'}`} src={newsCell} alt=""/>
-      <img className={`dm-news dm-season${news.season ? '' : ' is-hidden'}${news.carnival ? '' : ' is-top'}`} src={seasonCell} alt=""/>
+    <div className={`dm-news-column${see('news') < 1 ? ' is-glass' : ''}`} style={{ opacity: see('news'), transform: moveOf('news') }}>
+      {/* A card made a small icon (2026-11-02): its picture cut to a square — the emblem of Dark Carnival, Quartero's level shield. */}
+      <img className={`dm-news${news.carnival ? '' : ' is-hidden'}${carnival.icon ? ' is-icon is-carnival' : ''}`} src={newsCell} alt="" style={news.carnival ? cardStyle(carnival, 100) : undefined}/>
+      <img className={`dm-news dm-season${news.season ? '' : ' is-hidden'}${news.carnival ? '' : ' is-top'}${quartero.icon ? ' is-icon' : ''}`} src={seasonCell} alt="" style={news.season ? cardStyle(quartero, 100 + above) : undefined}/>
     </div>
     {/* Under the event card, or at the column's top when the news are hidden (MENU_UI in menu-background.mjs). */}
     {event !== null && <button type="button" tabIndex={-1} className={`dm-event-toggle${clean ? ' is-top' : ''}${event ? '' : ' is-off'}`} onPointerEnter={() => setWarm(true)}
       onPointerDown={(e) => e.stopPropagation()} onClick={() => { setWarm(true); setSeason((value) => !value); }}>
       <img className="dm-event-logo" src={eventLogo} alt=""/><img className="dm-event-title" src={eventTitle} alt=""/><img className="dm-event-title is-back" src={eventBackTitle} alt=""/></button>}
-    <img className="dm-chat" src={chat} alt=""/>
-    <img className="dm-play" src={play} alt=""/>
+    <img className="dm-chat" src={chat} alt="" style={valve.chat.x || valve.chat.y ? { transform: `translateX(calc(-50% + ${valve.chat.x}px)) translateY(${valve.chat.y}px)` } : undefined}/>
+    {mods?.play ? <div className="dm-play dm-mod-play" style={mods.play.style}><span style={mods.play.label}>{t('ИГРАТЬ')}</span></div>
+      : roles ? <div className="dm-play dm-theme-play">{t('ИГРАТЬ')}</div> : <img className="dm-play" src={play} alt=""/>}
     <button ref={mail} type="button" tabIndex={-1} className={`dm-mail${open ? ' is-open' : ''}`} style={shift ? { right: 218 - shift } : undefined} onClick={() => setOpen((value) => !value)}><img src={mailOn} alt=""/></button>
     <img className={`dm-notice${open ? ' is-open' : ''}`} src={notice} alt="" style={shift ? { right: 84 - shift } : undefined}/>
   </div></div>;

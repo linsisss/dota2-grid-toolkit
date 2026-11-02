@@ -37,9 +37,16 @@ export const D2PFX_SECTIONS = Object.freeze({
   deny: { category: 'creep-deny', group: 'deny', slots: { deny: ['Tidehunter Deny', 'Spectre Deny|I', 'Spectre Deny|II', 'Drow Ranger Deny|I', 'Drow Ranger Deny|II',
     'Queen of Pain Deny|I', 'Queen of Pain Deny|II', 'Razor Deny|I', 'Razor Deny|II', 'Deny Fall 2021', 'Deny Spring', 'Deny Fall 2022', 'Fuck Deny', 'Soul Deny', 'Huh Deny'] } },
   hudparts: { category: 'parts', slots: { minimap: ['Grey Minimap', 'Purple Minimap'], minimapSize: ['Larger Minimap'], timer: ['Larger Timer'], scoreboard: ['Bluelock Scoreboard And Shop'] } },
-  menuparts: { category: 'parts', slots: { topbar: ['Black Top Bar', 'Windows Xp Top Bar', 'Noir Rose Top Bar'], playbutton: ['Pink Play Button', 'Grey Play Button'],
-    playbg: ['Grey Search Bar', 'Kaneki Search Bar', 'Scolopendra Search Bar', 'Sematary Search Bar', 'Hypergamy Search Bar', 'Gotic', 'Tcoaal Search Bar', 'Rose Overcast Search Bar'],
-    modes: ['Kaneki Mach', 'Kaneki Mach V1.2', 'Rose Lycoris Mode Cards'] } },
+  // 2026-10-31 (the owner: «добавь новые элементы … Top Bar, Search bar, Play Button, а так же Material You
+  // interface и Crystal interface»): d2pfx's newer top bars, search bars and play buttons, and its two whole
+  // menu restyles in a slot of their own, last, so a chosen part keeps a file it shares with them.
+  menuparts: { category: 'parts', slots: { topbar: ['Black Top Bar', 'Windows Xp Top Bar', 'Noir Rose Top Bar', 'Top Bar Pink', 'Red Top Bar', 'Light Blue Top Bar',
+    'Orange Top Bar', 'White Top Bar', 'Black Top Bar 2', 'Green Top Bar', 'Purple Top Bar', 'Blue Top Bar', 'Yellow Top Bar'],
+    playbutton: ['Pink Play Button', 'Grey Play Button', 'Play Pinkv2', 'Play Black', 'Play White', 'Play Red', 'Purple Play Button', 'Cursed Play Button', 'Sky Play Button'],
+    playbg: ['Grey Search Bar', 'Kaneki Search Bar', 'Scolopendra Search Bar', 'Sematary Search Bar', 'Hypergamy Search Bar', 'Gotic', 'Tcoaal Search Bar', 'Rose Overcast Search Bar',
+      'Cupsize Search Bar', 'Anime Search Bar', 'Xvii Search Bar'],
+    modes: ['Kaneki Mach', 'Kaneki Mach V1.2', 'Rose Lycoris Mode Cards'],
+    theme: ['Material You Interface 0.1', 'Crystal Interface'] } },
   voice: { category: 'other', slots: { voice: ['Rage Voice Icon'] } }
 });
 export const D2PFX_SECTION_IDS = Object.freeze(Object.keys(D2PFX_SECTIONS));

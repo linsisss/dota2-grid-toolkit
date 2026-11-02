@@ -271,7 +271,11 @@ export default function Workspaces({ registry, onOpen }) {
       finally { setRebuilding(null); }
     }
     let given;
-    try { given = await downloadPack(packBackground(await bytes(item.video), item.recipe, await bytes(item.heroVideo), await bytes(item.gridVideo), await bytes(item.loadingVideo)), { ...item.recipe, onProgress: setSending }); }
+    // «Тема меню» of the recipe (2026-11-01): made again from Dota's current styles.
+    try {
+      const themed = item.recipe.theme ? (await import('./customize/menu-theme-pack.js').then(({ menuTheme }) => menuTheme(item.recipe.theme))).files : null;
+      given = await downloadPack(packBackground(await bytes(item.video), { ...item.recipe, themed }, await bytes(item.heroVideo), await bytes(item.gridVideo), await bytes(item.loadingVideo)), { ...item.recipe, onProgress: setSending });
+    }
     finally { setSending(null); }
     // A «Студия» background built again: a file saved, or a command made (its pack id links the installer's report).
     if (given?.command) track('customize.build-done', { delivery: 'command', parts: ['bg'], pack: packOf(given.command) });

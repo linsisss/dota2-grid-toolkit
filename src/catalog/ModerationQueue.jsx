@@ -21,7 +21,8 @@ const NOUNS = {
   works: { many: 'сеток', loading: 'Загружаем сетки…' },
   arts: { many: 'артов', loading: 'Загружаем арты…' },
   backgrounds: { many: 'фонов', loading: 'Загружаем фоны…' },
-  guides: { many: 'гайдов', loading: 'Загружаем гайды…' }
+  guides: { many: 'гайдов', loading: 'Загружаем гайды…' },
+  widgets: { many: 'виджетов', loading: 'Загружаем виджеты…' }
 };
 
 // The rejection's quick reasons (scripts/reject-reasons.mjs, the same as on the Telegram card): [name, text].
@@ -84,13 +85,14 @@ export function QueueList({ items, selected, onSelect, entry, label, keyOf = (it
 }
 
 // Tabs, search, then the list beside `children`, the review of the selected one.
-// A moderator (server/moderators.mjs) has only the first tab, «На проверке».
-export function Queue({ queue, tabs: all, label, entry, children }) {
+// A moderator (server/moderators.mjs) has only the first tab, «На проверке». `search`: false where the
+// server's list has no search (the widgets).
+export function Queue({ queue, tabs: all, label, entry, search = true, children }) {
   const { kind, data, query, page, setPage } = queue, noun = NOUNS[kind], tabs = useStaffRole() === 'moderator' ? all.slice(0, 1) : all;
   return <>
     <div className="catalog-toolbar admin-toolbar"><div className="catalog-tabs is-small">{tabs.map(([value, name]) => <button key={value} aria-pressed={queue.filter === value} onClick={() => queue.showFilter(value)}>
       {name}{data?.counts?.[value] ? <span className="catalog-count">{data.counts[value]}</span> : null}</button>)}</div>
-      <label className="catalog-search"><Icon name="search"/><input aria-label={`Поиск ${noun.many} в админке`} placeholder="Название или автор" value={queue.search} maxLength={80} onChange={e => queue.setSearch(e.target.value)}/></label></div>
+      {search && <label className="catalog-search"><Icon name="search"/><input aria-label={`Поиск ${noun.many} в админке`} placeholder="Название или автор" value={queue.search} maxLength={80} onChange={e => queue.setSearch(e.target.value)}/></label>}</div>
     {queue.error && <Notice error>{queue.error}</Notice>}
     {!data ? <p role="status">{noun.loading}</p> : !data.items.length ? <section className="catalog-empty admin-empty"><Icon name="check"/>{query ? <><h2>Ничего не нашлось</h2><p>В этой подборке нет {noun.many} с «{query}» в названии или авторе.</p></> : <><h2>Здесь всё разобрано</h2><p>В этой подборке пусто.</p></>}{page > 0 && <button className="catalog-button" onClick={() => setPage(x => x - 1)}>Предыдущая страница</button>}</section> :
       <div className="catalog-moderation"><aside className="catalog-queue-side">

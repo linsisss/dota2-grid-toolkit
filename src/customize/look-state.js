@@ -7,6 +7,9 @@
 import { LOOK_FORMAT, LOOK_LIMITS, LOOK_VERSION, emptyLook, lookDocument, lookMedia } from '../../scripts/customize-look.mjs';
 import { pictureBlobs, putPictureBlob } from './cursor-store.js';
 import { mediaFile, putMediaBlob, readState, writeState } from './look-store.js';
+import { WIDGETS_KEY, getWidgets, reloadWidgets } from './widget-store.js';
+import { getDesigns } from './widget-designs.js';
+import { designMedia, widgetMedia } from '../../scripts/menu-widgets.mjs';
 
 export const KEYS = Object.freeze({ menu: 'gridstudio.menu', interface: 'gridstudio.interface', cursor: 'gridstudio.cursor', font: 'gridstudio.font', d2pfx: 'gridstudio.d2pfx', portraits: 'gridstudio.portraits', link: 'gridstudio.look' });
 const read = (key) => { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } };
@@ -27,6 +30,8 @@ export function namedMedia() {
   const named = Object.keys(lookMedia(look));
   for (const face of font?.own?.faces || []) if (face?.media) named.push(face.media);
   for (const entry of read(KEYS.portraits)?.heroes || []) if (entry?.source?.media) named.push(entry.source.media);
+  // The widgets' files and the user's own widgets' (widget-designs.js): kept while something names them.
+  named.push(...widgetMedia(getWidgets()), ...getDesigns().flatMap((item) => designMedia(item.design)));
   return named;
 }
 
@@ -76,7 +81,11 @@ export async function applyLook(input, { files = {} } = {}) {
   }
   const fix = (bg) => (bg?.source.kind === 'file' && bg.source.media && remap[bg.source.media] ? { ...bg, source: { ...bg.source, media: remap[bg.source.media] } } : bg);
   const menu = { ...look.menu, background: fix(look.menu.background), grid: { ...look.menu.grid, own: fix(look.menu.grid.own) }, hero: { ...look.menu.hero, own: fix(look.menu.hero.own) }, loading: { ...look.menu.loading, own: fix(look.menu.loading.own) } };
-  writeMenuState(menu);
+  // The widgets keep their own key (widget-store.js), not gridstudio.menu.
+  const { widgets = [], ...menuState } = menu;
+  writeMenuState(menuState);
+  write(WIDGETS_KEY, widgets.length ? widgets.map((widget) => (widget.props.media && remap[widget.props.media] ? { ...widget, props: { ...widget.props, media: remap[widget.props.media] } } : widget)) : null);
+  reloadWidgets();
   write(KEYS.interface, { hud: look.hud, texts: look.texts });
   for (const [key, url] of Object.entries(look.pictures)) {
     try { await putPictureBlob(key, await (await fetch(url)).blob()); } catch { /* That cursor comes back without its picture. */ }
@@ -107,7 +116,8 @@ export async function lookFiles(look) {
 // A section that does not read is left as in Dota rather than losing the rest.
 export async function storedLook() {
   const menu = readMenuState(), inter = read(KEYS.interface) || {}, cursor = read(KEYS.cursor) || {}, font = read(KEYS.font) || {}, d2pfx = read(KEYS.d2pfx) || {}, portraits = read(KEYS.portraits);
-  const parts = { ...(menu ? { menu } : {}), hud: inter.hud, texts: inter.texts, cursor, font, d2pfx: { choice: d2pfx.choice }, ...(portraits ? { portraits } : {}) };
+  const widgets = getWidgets();
+  const parts = { ...(menu || widgets.length ? { menu: { ...(menu || {}), widgets } } : {}), hud: inter.hud, texts: inter.texts, cursor, font, d2pfx: { choice: d2pfx.choice }, ...(portraits ? { portraits } : {}) };
   const base = { format: LOOK_FORMAT, version: LOOK_VERSION };
   let look;
   try { look = lookDocument({ ...base, ...parts }); }

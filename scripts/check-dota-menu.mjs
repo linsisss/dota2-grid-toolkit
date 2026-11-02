@@ -22,8 +22,13 @@ const FILES = ['dashboard.xml', 'dashboard_page_home.xml', 'dashboard_page_hero_
   // The friends rail (2026-10-22): replaced for its see-through ground (menu-background.mjs friendsPage), and
   // the mini-profile at its top (miniProfilePage), for its header row's ground and its picture.
   'friend_menu.xml', 'showcase/mini_showcase.xml',
-  // Not replaced: the news column's cells, whose places the see-through column's masks follow (NEWS_COLUMN).
-  'frontpage_contents.xml',
+  // The news column's cells, whose places the see-through column's masks follow (NEWS_COLUMN); replaced (2026-11-02) when a
+  // card is a small icon: the icons take the cards' own calls and pictures from the two banners (menu-background.mjs newsIcons).
+  'frontpage_contents.xml', 'banners/front_page_dark_carnival.xml', 'banners/front_page_seasonal_reward_line.xml',
+  // Replaced (2026-10-31): the news column's own stylesheet, given back with our rules to hide a card (newsCardsText).
+  '../styles/frontpage_contents.css',
+  // Replaced (2026-11-02): the last match panel's stylesheet, given back with GridStudio's card (menu-widgets.mjs LASTMATCH_RULES).
+  '../styles/frontpage_lastmatch.css',
   // Not a layout: the interface builder's HUD hook (scripts/interface-modules.mjs), given back with our rules.
   '../styles/custom_ui.css',
   // The HUD's 3D portrait (2026-10-24): replaced with the heroes' own portraits in it (scripts/hero-portraits.mjs hudPortraitLayout).
@@ -31,9 +36,10 @@ const FILES = ['dashboard.xml', 'dashboard_page_home.xml', 'dashboard_page_hero_
 const local = (file) => file.split('/').pop();  // our copies lie flat in assets/dota-menu/
 const assets = new URL('../assets/dota-menu/', import.meta.url);
 const args = process.argv.slice(2), flag = (name) => args.includes(name), option = (name) => args[args.indexOf(name) + 1];
-// Our copies drop Source 2 Viewer's first comment line (<!-- --> in layouts, /* */ in styles); the override is ours to set. Source 2 Viewer
-// 12 (2026-10-07) writes the compiled resources' references without «_c» (`dotastyles.vcss`): ours,
-// like the compiled files, keep «_c», so both read the same.
+// Our copies drop Source 2 Viewer's first comment line (<!-- --> in layouts, /* */ in styles); the override is ours to set. Valve's
+// compiled texts name pictures without «_c» (`….vtex`, `….vsvg`, as the compiler writes them): with «_c» the game
+// finds no picture (2026-10-31: the theme test lost every icon), so our copies keep Valve's form; stylesheets
+// load either way. Both sides get «_c» here, so the form alone is no change.
 const normalize = (text) => text.replace(/^(?:<!--[^\n]*-->|\/\*[^\n]*\*\/)\r?\n/, '').replace(/\r\n/g, '\n')
   .replace(/(s2r:\/\/[^"')\s]+\.(?:vcss|vxml|vjs|vtex|vsvg|vpcf|vmdl|vsnd|vmat))(?!_c)/g, '$1_c').trim();
 const withoutOverride = (text) => text.replace(/(<DOTADashboardBackgroundManager\b[^>]*\boverride-background=")[^"]*"/, '$1"');

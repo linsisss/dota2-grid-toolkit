@@ -11,13 +11,13 @@ const webm = (size = 2000) => { const bytes = new Uint8Array(size); bytes.set([0
 // «Твоя Dota» (src/customize/CustomizePage.jsx, 2026-10-17): one page, one file (scripts/customize-pack.mjs).
 
 test('the menu pack without a menu background: only the parts that differ from Dota', async () => {
-  const { menuBackgroundPack, MENU_VIDEO, MENU_LAYOUT, MENU_HIDE_STYLE, GRID_PAGE, HERO_PAGE, HERO_VIDEO } = await import('../scripts/menu-background.mjs');
+  const { menuBackgroundPack, MENU_VIDEO, MENU_LAYOUT, MENU_HIDE_STYLE, GRID_PAGE, HERO_PAGE, HERO_VIDEO, NEWS_STYLE } = await import('../scripts/menu-background.mjs');
   const { readVPK } = await import('../scripts/vpk.mjs');
   const dashboard = read('assets/dota-menu/dashboard.xml'), home = read('assets/dota-menu/dashboard_page_home.xml');
   assert.equal(menuBackgroundPack({ video: null, dashboard, md5 }), null, 'nothing changed — no pack');
   const paths = (pack) => readVPK(pack).files.map((file) => file.path);
-  const buttons = paths(menuBackgroundPack({ video: null, dashboard, home, news: { carnival: false, season: true }, hide: ['watch'], md5 }));
-  assert.ok(buttons.includes('panorama/layout/dashboard.vxml_c') && buttons.includes(MENU_HIDE_STYLE) && buttons.includes('panorama/layout/dashboard_page_home.vxml_c'));
+  const buttons = paths(menuBackgroundPack({ video: null, dashboard, home, frontpage: read('assets/dota-menu/frontpage_contents.css'), news: { carnival: false, season: true }, hide: ['watch'], md5 }));
+  assert.ok(buttons.includes('panorama/layout/dashboard.vxml_c') && buttons.includes(MENU_HIDE_STYLE) && buttons.includes(NEWS_STYLE));
   assert.ok(!buttons.includes(MENU_VIDEO) && !buttons.includes(MENU_LAYOUT), 'Valve’s menu background stays');
   const darker = paths(menuBackgroundPack({ video: null, dashboard, grid: { page: read('assets/dota-menu/dashboard_page_heroes.xml'), dim: 0.5 }, md5 }));
   assert.deepEqual(darker.filter((p) => p.endsWith('.vxml_c')), [GRID_PAGE], 'the darker grid page alone does not touch the dashboard');

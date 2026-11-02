@@ -39,6 +39,12 @@ export const ANALYTICS_EVENTS = Object.freeze({
   'customize.download': { area: 'customize', props: { mb: int(0, 1000) } },
   'customize.command-copy': { area: 'customize', props: { pack: id(80) } },
   'customize.install-help': { area: 'customize', props: {}, once: true },
+  // The constructor (/customize?app=b, src/constructor/): a widget added, removed or given a file; a shelf of
+  // the dock opened; the build window opened.
+  'customize.widget': { area: 'customize', props: { action: oneOf('add', 'delete', 'media'), type: id() }, key: 'type' },
+  'customize.shelf': { area: 'customize', props: { shelf: id() }, key: 'shelf' },
+  'customize.valve': { area: 'customize', props: { part: oneOf('chat', 'friends', 'news', 'tabs', 'cards') }, key: 'part' },
+  'customize.build-open': { area: 'customize', props: {}, once: true },
 
   // «Прислать на ПК» from a phone (src/SendToPC.jsx, the customization's phone bar).
   'pc.send': { area: 'site', props: { from: id() }, key: 'from' },

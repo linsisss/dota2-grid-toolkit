@@ -252,6 +252,28 @@ const messages = {
   'Укажи название оформления.': 'Give the customization a name.',
   'В студии уже 100 оформлений. Удали ненужные.': 'Studio already has 100 customizations. Delete the ones you don’t need.',
   'Оформления этого аккаунта заняли 50 МБ. Удали ненужные или скачай их файлами.': 'This account’s customizations take 50 MB. Delete some or download them as files.',
+
+  // server/menu-widgets.mjs: «Мастерская виджетов» (2026-10-31).
+  'Неверный адрес файла.': 'Invalid file address.',
+  'Файл повреждён при отправке. Попробуй ещё раз.': 'The file got damaged on the way. Try again.',
+  'Нужна картинка (PNG, JPEG, WebP, GIF) или видео (MP4, WebM).': 'It has to be a picture (PNG, JPEG, WebP, GIF) or a video (MP4, WebM).',
+  'Файлы виджетов этого аккаунта заняли 300 МБ.': 'This account’s widget files take 300 MB.',
+  'Файла нет.': 'No such file.',
+  'В виджете нет ни одного блока.': 'The widget has no blocks.',
+  'Приём временно приостановлен. Мастерская доступна.': 'Submissions are paused for now. The Workshop still works.',
+  'Не все картинки и видео виджета дошли до GridStudio. Попробуй ещё раз.': 'Not all of the widget’s images and videos reached GridStudio. Try again.',
+  'Такой виджет уже есть в мастерской.': 'This widget is already in the Workshop.',
+  'Такой виджет уже ждёт проверки.': 'This widget is already waiting for review.',
+  'Очередь проверки виджетов заполнена. Попробуй позже.': 'The widget review queue is full. Try again later.',
+  'Виджет не найден.': 'Widget not found.',
+  'Свой виджет лайкнуть нельзя.': 'You can’t like your own widget.',
+  // The moderators' quick reasons for widgets (scripts/reject-reasons.mjs), shown to authors.
+  'В вашем виджете недостаточно деталей для публикации. Это не значит, что он плохой, просто мы не можем пропускать каждую заявку в мастерскую.': 'Your widget doesn’t have enough detail to be published. It doesn’t mean your widget is bad, we just can’t let every submission into the Workshop.',
+  'Ваш виджет слишком низкого качества. Попробуйте найти качество лучше, либо загрузите другой.': 'Your widget is too low in quality. Try to find a better quality one, or upload another one.',
+  'Такой виджет уже есть в мастерской': 'This widget is already in the Workshop',
+  'В виджете реклама, чужие логотипы, ссылка не туда или надписи, похожие на кнопки Valve.': 'The widget has ads, other people’s logos, a link that leads elsewhere, or text that looks like Valve’s buttons.',
+  // «Тема меню» (2026-11-01, server/dota-styles.mjs).
+  'Стили Dota пока не загрузились. Попробуй через минуту.': 'Dota’s styles haven’t loaded yet. Try again in a minute.',
 };
 export default messages;
 
@@ -275,6 +297,10 @@ const own = [
   [/^Ник можно менять раз в неделю\. Следующая смена — (.+)\.$/, (whole, at) => `You can change your nickname once a week. Next change: ${day(at)}.`],
   [/^Файл больше ([\d.]+) МБ\.$/, 'The file is larger than $1 MB.'],
   [/^Видео больше ([\d.]+) МБ\.$/, 'The video is larger than $1 MB.'],
+  [/^Картинка больше ([\d.]+) МБ\.$/, 'The picture is larger than $1 MB.'],
+  [/^Картинки и видео одного виджета — до (\d+) МБ\.$/, 'A widget’s pictures and videos can take up to $1 MB.'],
+  [/^За 24 часа можно отправить (\d+) виджетов\.$/, 'You can send $1 widgets per 24 hours.'],
+  [/^За 24 часа можно отправить (\d+) файлов для виджетов\.$/, 'You can send $1 widget files per 24 hours.'],
   [/^Размер видео (\d+)×(\d+), а для (\S+) нужен (\d+)×(\d+)\.$/, 'The video is $1×$2, but $3 needs $4×$5.'],
   [/^Длина видео ([\d.]+) с, можно до (\d+) с\.$/, 'The video is $1 s long; the limit is $2 s.'],
   [/^Лимит аккаунта — (\d+) отправок за 24 часа, включая обновления сеток\.$/, 'The account limit is $1 submissions per 24 hours, grid updates included.'],

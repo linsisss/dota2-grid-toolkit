@@ -11,6 +11,7 @@ import { getLook } from './look-store.js';
 import { cursorPictures, lookFiles, readLink, readMenuState, writeLink } from './look-state.js';
 import { lookPoster } from './look-poster.js';
 import { fileSize } from './MenuBackground.jsx';
+import { getWidgets, useWidgets } from './widget-store.js';
 
 // «Оформление» on /background (2026-10-22, the users: «А в оформление доты нельзя файлик закинуть? Чтобы
 // типа донастроить, как с сетками», the owner: «полноценно сохранить кастомизацию в Студии»): the page's
@@ -43,7 +44,7 @@ export function useLooks({ bg, ui, font, d2, pt = null, replace, suggested = '' 
   // The page's state now. Before the menu's files are back, what was kept for it.
   async function snapshot({ pictures = true } = {}) {
     const { images, ...cursor } = ui.cursors.snapshot();
-    const menu = bg.restored ? await bg.snapshot() : readMenuState();
+    const menu = { ...((bg.restored ? await bg.snapshot() : readMenuState()) || {}), widgets: getWidgets() };
     return lookDocument({ format: LOOK_FORMAT, version: LOOK_VERSION, ...(menu ? { menu } : {}), hud: ui.hud, texts: ui.edits, cursor,
       pictures: pictures ? await cursorPictures(cursor, images) : {}, font: font.snapshot(), d2pfx: { choice: d2.choice }, portraits: { heroes: pt?.entries || [] } });
   }
@@ -65,7 +66,8 @@ export function useLooks({ bg, ui, font, d2, pt = null, replace, suggested = '' 
   }
   // Kept in the linked item as it changes (like a grid file), a moment after the last change; a state that
   // reads the same as the item (the page coming back, a workshop video downloaded again) is not written.
-  const key = JSON.stringify([bg.key, ui.hud, ui.edits, ui.cursors.key, font.key, d2.key, pt?.entries]), seen = useRef(key), stored = useRef(null);
+  const [widgets] = useWidgets();
+  const key = JSON.stringify([bg.key, ui.hud, ui.edits, ui.cursors.key, font.key, d2.key, pt?.entries, widgets]), seen = useRef(key), stored = useRef(null);
   const ready = bg.restored && ui.cursors.ready;
   useEffect(() => { if (link) getLook(link.id).then((record) => { if (record) stored.current = JSON.stringify(record.look); else if (!user) setLink(null); }).catch(() => {}); }, [link?.id]);
   useEffect(() => {

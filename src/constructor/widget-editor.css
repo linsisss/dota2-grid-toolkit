@@ -1,0 +1,157 @@
+/* «Редактор виджета» (src/constructor/WidgetEditor.jsx, DesignBoard.jsx, BlockView.jsx, 2026-10-31): the blocks
+   of a widget of one's own as Dota draws them, and the editor around them in the constructor's variant-B look
+   (glass panels over the stage, constructor.css). The blocks are drawn in the design's own pixels and scaled
+   with their box, wherever they are: the editor's canvas, a placed widget on the menu, the shelf's cards. */
+
+/* ——— Blocks (BlockView.jsx) ——— */
+.kz-d { position:relative; overflow:clip; transform-origin:0 0; color:#fff; font-family:var(--kz-wfont, KzRadiance, sans-serif); line-height:1.15; }
+.kz-b { position:absolute; }
+.kz-bh, .kz-ba { position:absolute; inset:0; }
+.kz-bh { transition:filter 120ms linear, transform 120ms linear; }
+.kz-d.is-live .kz-b:hover > .kz-bh.has-hover, .kz-d.is-hover .kz-bh.has-hover { filter:brightness(1.25); transform:scale(1.03); }
+.kz-d.is-press .kz-bh.has-hover { filter:brightness(1.25); transform:scale(.97); }
+.kz-ba.is-appear { animation:kz-anim-appear 400ms ease-out both; }
+.kz-ba.is-pulse { animation:kz-anim-pulse 1600ms ease-in-out infinite; }
+.kz-ba.is-slide { animation:kz-anim-slide 500ms ease-out both; }
+@keyframes kz-anim-appear { from { opacity:0; } }
+@keyframes kz-anim-pulse { 50% { transform:scale(1.04); filter:brightness(1.2); } }
+@keyframes kz-anim-slide { from { opacity:0; transform:translateX(-24px); } }
+/* A text longer than its box spills out of it (as a Panorama label); the widget's own box clips it. */
+.kz-bk-text { position:absolute; inset:0; display:flex; align-items:center; overflow:visible; overflow-wrap:anywhere; }
+.kz-bk-text > span { min-width:0; }
+.kz-bk-text.is-center { justify-content:center; text-align:center; }
+.kz-bk-text.is-right { justify-content:flex-end; text-align:right; }
+.kz-bk-button { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:0 .5em; overflow:hidden; font-weight:700; white-space:nowrap; }
+.kz-bk-button.is-upper { text-transform:uppercase; letter-spacing:2px; }
+.kz-bk-button.is-left { justify-content:flex-start; padding:0 .9em; } .kz-bk-button.is-right { justify-content:flex-end; padding:0 .9em; }
+.kz-bk-fill, .kz-bk-track { position:absolute; inset:0; box-sizing:border-box; }
+.kz-bk-track { overflow:hidden; }
+.kz-bk-track > i { display:block; height:100%; }
+.kz-bk-media { position:absolute; inset:0; display:block; width:100%; height:100%; }
+.kz-bk-avatar { position:absolute; inset:0; display:grid; place-items:center; overflow:hidden; box-sizing:border-box; background:linear-gradient(160deg,#3b4a63,#1b2230); color:#c8d3e6; }
+.kz-bk-hero { position:absolute; inset:0; overflow:hidden; }
+.kz-bk-hero > img { display:block; width:100%; height:100%; object-fit:cover; object-position:50% 20%; }
+.kz-bk-tag { position:absolute; left:6px; bottom:6px; padding:2px 7px; border-radius:999px; background:#0b0d14cc; color:#e9eef6; font-size:11px; font-weight:600; white-space:nowrap; }
+.kz-bk-empty { position:absolute; inset:0; display:grid; place-content:center; justify-items:center; gap:6px; padding:6px; border:1.5px dashed #ffffff47; background:#0b0d1480; color:#c8cfdb;
+  font:500 13px/1.3 'SF Pro Display', -apple-system, 'Segoe UI', sans-serif; text-align:center; }
+
+/* ——— The editor: panels over the stage ——— */
+.kz-ed { --ed-left:264px; --ed-right:320px; }
+.kz-de-stage { position:absolute; inset:0; overflow:hidden; background:radial-gradient(70% 60% at 50% 45%, #1d1b24 0%, #0e0d12 75%); }
+.kz-de-stage::before { content:''; position:absolute; inset:0; background:radial-gradient(#ffffff0a 1px, transparent 1.2px) 0 0/24px 24px; pointer-events:none; }
+.kz-de-menu { position:relative; flex:none; margin:auto; border-radius:6px; box-shadow:0 0 0 1px #ffffff1a, 0 50px 120px -30px #000; }
+.kz-de-backdrop { overflow:clip; border-radius:6px; pointer-events:none; }
+.kz-de-backdrop > * { pointer-events:none; }
+.kz-de-area { position:absolute; inset:0; display:flex; padding:120px calc(var(--ed-right) + 48px) 92px calc(var(--ed-left) + 48px); overflow:auto; scrollbar-width:thin; scrollbar-color:#3a3445 transparent; }
+/* The canvas: a checkerboard where the widget is see-through; over the menu, a frame only. */
+.kz-de-canvas { position:relative; flex:none; margin:auto; background:repeating-conic-gradient(#26232e 0% 25%, #1c1a22 0% 50%) 0 0/16px 16px; box-shadow:0 0 0 1px #c4b5ed55, 0 30px 80px -20px #000; transition:box-shadow 200ms ease; }
+.kz-de-stage.is-menu .kz-de-canvas { background:none; box-shadow:0 0 0 1px #ffffffa6, 0 0 0 3px #0000004d; }
+.kz-de-canvas.is-drop { box-shadow:0 0 0 2px var(--cat-accent), 0 0 0 8px #c4b5ed26, 0 30px 80px -20px #000; }
+.kz-de-layer { position:absolute; left:0; top:0; transform-origin:0 0; }
+.kz-b.is-edit { cursor:move; touch-action:none; user-select:none; }
+.kz-b.is-off, .kz-b.is-locked { pointer-events:none; }
+.kz-b.is-ghost { opacity:.72; pointer-events:none; }
+.kz-b.is-drop::after { content:''; position:absolute; inset:0; box-shadow:inset 0 0 0 3px var(--cat-accent); background:#c4b5ed24; }
+.kz-de-overlay .kz-guide span { pointer-events:none; }
+.kz-de-margins { position:absolute; border:1px dashed #ff7ac866; pointer-events:none; }
+.kz-de-droptag { position:absolute; left:50%; top:-40px; padding:5px 12px; border-radius:10px; background:#1f1b27f2; color:var(--kz-ink); font-size:12.5px; white-space:nowrap; transform:translateX(-50%); box-shadow:0 10px 30px #000a, 0 0 0 1px #c4b5ed66; }
+.kz-de-empty { position:absolute; left:50%; top:50%; display:grid; justify-items:center; gap:7px; width:min(300px, 92%); padding:18px 16px 14px; border:1px solid var(--kz-line); border-radius:14px; background:#1c1a22eb;
+  backdrop-filter:blur(12px); box-shadow:var(--kz-float); color:var(--kz-muted); font-size:12.5px; line-height:1.45; text-align:center; transform:translate(-50%, -50%); pointer-events:auto; }
+.kz-de-empty > svg { color:var(--cat-accent); }
+.kz-de-empty b { color:var(--kz-ink); font-size:14px; font-weight:600; }
+.kz-de-empty .kz-ghostbtn { margin-top:4px; height:32px; color:var(--cat-accent); box-shadow:inset 0 0 0 1px #c4b5ed45; }
+/* Sides as well as corners: thin blocks (a progress bar) are resized by them. */
+.kz-ed .kz-handle[data-h=n], .kz-ed .kz-handle[data-h=s] { width:18px; height:8px; margin:-4px 0 0 -9px; left:50%; cursor:ns-resize; }
+.kz-ed .kz-handle[data-h=e], .kz-ed .kz-handle[data-h=w] { width:8px; height:18px; margin:-9px 0 0 -4px; top:50%; cursor:ew-resize; }
+.kz-ed .kz-handle[data-h=n] { top:0; } .kz-ed .kz-handle[data-h=s] { top:100%; }
+.kz-ed .kz-handle[data-h=e] { left:100%; } .kz-ed .kz-handle[data-h=w] { left:0; }
+
+/* The top bar: back and the name, the states, the actions. */
+.kz-ed-title { justify-self:start; gap:4px; min-width:0; padding:4px 10px 4px 4px; }
+.kz-ed-back { color:var(--kz-muted); }
+.kz-app input.kz-ed-name { flex:0 1 auto; width:210px; min-width:0; height:32px; margin:0; padding:0 8px; border:1px solid transparent; border-radius:8px; background:none; color:var(--kz-ink); font:inherit; font-size:14.5px; font-weight:600; outline:none; transition:border-color 150ms ease, background 150ms ease; }
+.kz-app input.kz-ed-name:hover { border-color:#ffffff17; }
+.kz-app input.kz-ed-name:focus { border-color:#c4b5ed99; background:var(--cat-field); }
+.kz-ed-chip { flex:none; height:22px; padding:0 9px; border-radius:999px; background:#ffffff0d; color:var(--kz-muted); font-size:11.5px; line-height:22px; white-space:nowrap; }
+.kz-ed-chip.is-changed { background:#e8c77a1a; color:#ecd9a6; }
+.kz-ed-chip.is-saved { background:#8fd36a14; color:#a8dc8e; }
+
+/* The stage's own bars: alone or on the menu, the state shown, the zoom. */
+.kz-ed-ctx { position:fixed; z-index:14; left:calc(var(--ed-left) + 32px); top:70px; display:flex; align-items:center; gap:12px; }
+.kz-ed-seg { gap:2px; padding:3px; border-radius:12px; }
+.kz-ed-seg .kz-ghostbtn { height:30px; padding:0 12px; font-size:12.5px; }
+.kz-ed-seg .kz-ghostbtn[aria-checked=true] { color:var(--kz-ink); background:#c4b5ed1f; box-shadow:inset 0 0 0 1px #c4b5ed45; }
+.kz-ed-size { color:var(--kz-muted); font-size:12.5px; white-space:nowrap; text-shadow:0 1px 8px #000; }
+.kz-ed-badge { position:fixed; z-index:14; right:calc(var(--ed-right) + 32px); top:72px; display:flex; align-items:center; gap:8px; padding:6px 12px; border-radius:11px; background:#3a301ccc;
+  color:#f1d7a8; font-size:12.5px; box-shadow:inset 0 0 0 1px #e8c77a55; backdrop-filter:blur(10px); animation:kz-pop 160ms var(--ease); }
+.kz-ed-badge > svg { color:var(--kz-zone); }
+.kz-ed-zoom { position:fixed; z-index:16; bottom:16px; left:calc((100vw + var(--ed-left) - var(--ed-right)) / 2); transform:translateX(-50%); }
+
+/* The left panel: blocks to drag in, the layers. */
+.kz-ed-left, .kz-ed-insp { position:fixed; z-index:15; top:68px; bottom:16px; display:flex; flex-direction:column; border-radius:16px; overflow:hidden; }
+.kz-ed-left { left:16px; width:var(--ed-left); }
+.kz-ed-h { display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:12px 14px 8px; }
+.kz-ed-h h2 { display:flex; align-items:center; gap:7px; margin:0; font-size:13.5px; font-weight:600; }
+.kz-ed-h > span { color:var(--kz-subtle); font-size:11.5px; white-space:nowrap; }
+.kz-ed-h.is-layers { border-top:1px solid var(--kz-soft); }
+.kz-ed-count { min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:#ffffff12; color:var(--kz-muted); font-size:10.5px; font-weight:600; line-height:18px; text-align:center; }
+.kz-ed-palette { flex:0 1 auto; max-height:56%; overflow:auto; padding:0 10px 12px; scrollbar-width:thin; scrollbar-color:#3a3445 transparent; }
+.kz-ed-group { display:block; margin:4px 4px 6px; color:var(--kz-subtle); font-size:11.5px; font-weight:500; }
+.kz-ed-pal { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px; }
+.kz .kz-ed-blk { display:flex; align-items:center; gap:8px; min-height:42px; padding:6px 8px; border:1px solid #ffffff10; border-radius:11px; background:#ffffff05; color:var(--kz-text); font-size:12.5px; line-height:1.2; text-align:left;
+  cursor:grab; touch-action:none; user-select:none; transition:border-color 200ms ease, background 200ms ease, color 200ms ease; }
+.kz-ed-blk:hover { border-color:#c4b5ed59; background:#c4b5ed0d; color:var(--kz-ink); }
+.kz-ed-ic { display:grid; place-items:center; flex:none; width:26px; height:26px; border-radius:8px; background:#c4b5ed14; color:var(--cat-accent); }
+.kz-ed-ic.is-clock, .kz-ed-ic.is-timer, .kz-ed-ic.is-progress { background:#e8c77a14; color:var(--kz-zone); }
+.kz-ed-ic.is-avatar, .kz-ed-ic.is-nickname, .kz-ed-ic.is-hero { background:#7cc4f214; color:#7cc4f2; }
+.kz-ed-only { margin-top:4px; }
+.kz-layer-list.kz-ed-layers { flex:1 1 0; grid-template-columns:minmax(0, 1fr); align-content:start; min-height:0; max-height:none; padding-bottom:10px; }
+.kz-app input.kz-layer-rename { flex:1; min-width:0; height:26px; margin:0; padding:0 6px; border:1px solid #c4b5ed99; border-radius:7px; background:var(--cat-field); color:var(--kz-ink); font:inherit; font-size:12.5px; outline:none; }
+
+/* The right panel: the block's settings or the design's. */
+.kz-ed-insp { right:16px; width:var(--ed-right); }
+.kz-ed-insp .kz-insp-body { flex:1; }
+.kz-ed-insp .kz-insp-body > .kz-sec:first-child { border-top:0; }
+.kz-sec.is-focus { background:radial-gradient(120% 100% at 0% 0%, #e8c77a1a, transparent 70%); box-shadow:inset 3px 0 0 var(--kz-zone); }
+.kz .kz-replay { display:inline-flex; align-items:center; gap:5px; padding:0; color:var(--cat-accent); font-size:12.5px; }
+.kz-color-row { display:grid; grid-template-columns:96px minmax(0,1fr); gap:12px; align-items:end; margin-top:8px; }
+.kz-app input.kz-input.kz-hex { min-height:32px; padding:5px 8px; font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+.kz-presets { display:grid; gap:4px; }
+.kz .kz-presets button { display:flex; align-items:center; gap:10px; min-height:36px; padding:4px 10px 4px 8px; border:1px solid #ffffff10; border-radius:10px; background:#ffffff05; color:var(--kz-text); font-size:13px; text-align:left; transition:border-color 150ms ease, background 150ms ease; }
+.kz-presets button:hover { border-color:#ffffff26; color:var(--kz-ink); }
+.kz-presets button[aria-checked=true] { border-color:#c4b5ed80; background:#c4b5ed14; color:var(--kz-ink); }
+.kz-presets small { margin-left:auto; color:var(--kz-subtle); font-size:11.5px; font-variant-numeric:tabular-nums; }
+.kz-preset-box { display:grid; place-items:center; flex:none; width:28px; height:20px; }
+.kz-preset-ic { display:block; border:1.5px solid currentColor; border-radius:2px; opacity:.6; }
+.kz-presets button[aria-checked=true] .kz-preset-ic { color:var(--cat-accent); opacity:1; }
+.kz-preset-ic.is-own { width:18px; height:14px; border-style:dashed; }
+.kz-facts { display:grid; gap:7px; margin:0; padding:0; list-style:none; color:var(--kz-text); font-size:12.5px; }
+.kz-facts li { display:flex; align-items:center; gap:8px; }
+.kz-facts svg { flex:none; color:var(--kz-subtle); }
+
+/* A placed widget of one's own in the constructor's inspector. */
+.kz-design-card { display:grid; gap:3px; padding:12px; border-radius:12px; background:radial-gradient(120% 140% at 0% 0%, #c4b5ed1c, transparent 60%), #ffffff06; box-shadow:inset 0 0 0 1px #c4b5ed33; }
+.kz-design-card b { font-size:14px; font-weight:600; overflow-wrap:anywhere; }
+.kz-design-card small { color:var(--kz-subtle); font-size:12px; }
+.kz-design-card .catalog-button { justify-self:start; min-height:34px; margin-top:8px; padding:0 14px; gap:7px; font-size:13px; }
+
+/* The shelf: «Создать свой виджет», «Мои виджеты». */
+.kz-create > svg { width:22px; height:22px; }
+.kz-design-tile .kz-tile-acts { position:absolute; top:10px; right:10px; z-index:1; display:flex; gap:4px; opacity:0; transition:opacity 150ms ease; }
+.kz-design-tile:hover .kz-tile-acts, .kz-design-tile:focus-within .kz-tile-acts { opacity:1; }
+.kz .kz-tile-acts button { display:grid; place-items:center; width:26px; height:26px; padding:0; border:0; border-radius:8px; background:#1c1a22eb; color:var(--kz-text); box-shadow:0 0 0 1px #ffffff1f; }
+.kz-tile-acts button:hover { background:#2c2935; color:var(--kz-ink); }
+.kz-tile-acts button.is-danger:hover { color:#ff9aa4; }
+.kz-toast.is-warn > svg { color:var(--kz-zone); }
+
+@media (max-width:1439px) { .kz-ed { --ed-left:244px; --ed-right:300px; } .kz-ed-chip { display:none; } }
+@media (max-width:1279px) { .kz-ed-back span { display:none; } .kz-app input.kz-ed-name { width:150px; } .kz-ed-size { display:none; } .kz-ed-states button { padding:0 10px; } }
+@media (max-width:1199px) { .kz-ed-actions .kz-ghostbtn .kz-label { display:none; } .kz-ed-zoom .kz-ghostbtn:last-child { font-size:0; gap:0; } }
+.kz-hero-pick { display:flex; align-items:center; gap:8px; }
+.kz-hero-pick > img { flex:none; width:36px; height:36px; border-radius:8px; object-fit:cover; object-position:50% 20%; }
+.kz-hero-pick > select { flex:1; min-width:0; }
+.kz-ed-tpl-h { margin-top:4px; color:var(--kz-muted); font-size:11.5px; }
+.kz-ed-tpls { display:grid; grid-template-columns:1fr 1fr; gap:6px; width:100%; }
+.kz-de-empty .kz-ed-tpl { display:grid; justify-items:start; gap:1px; height:auto; min-height:0; margin:0; padding:7px 9px; color:var(--kz-ink); border:1px solid var(--kz-line); border-radius:9px; text-align:left; }
+.kz-ed-tpl b { font-size:12.5px; font-weight:600; }
+.kz-ed-tpl small { color:var(--kz-muted); font-size:11px; line-height:1.25; }

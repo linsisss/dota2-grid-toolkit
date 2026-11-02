@@ -42,7 +42,7 @@ test('the document: every section kept as it is, the rest as in Dota; broken one
   // Nothing but the header: everything as in Dota.
   const empty = look.emptyLook();
   assert.deepEqual(look.lookParts(empty), []);
-  assert.deepEqual(empty.menu.buttons, { hide: [], news: { carnival: true, season: true }, profile: false, profileBg: 'menu', glass: { bar: 100, friends: 100, news: 100, header: 100, showcase: 100, party: 100 } });
+  assert.deepEqual(empty.menu.buttons, { hide: [], news: { carnival: true, season: true }, profile: false, profileBg: 'menu', friendsClosed: false, valve: { chat: { x: 0, y: 0 }, friends: { x: 0, y: 0 }, news: { x: 0, y: 0 }, tabs: ['heroes', 'collection', 'watch', 'learn', 'mods'], cards: { carnival: { icon: false, scale: 100, size: 96 }, season: { icon: false, scale: 100, size: 96 } } }, glass: { bar: 100, friends: 100, news: 100, header: 100, showcase: 100, party: 100 } });
   // Unknown fields go; pictures no cursor uses go.
   const extra = look.lookDocument({ ...full(), secret: 1, pictures: { pabc123: PNG, pzzzzz9: PNG }, menu: { ...full().menu, path: 'C:/x' } });
   assert.equal(extra.secret, undefined); assert.equal(extra.menu.path, undefined); assert.deepEqual(Object.keys(extra.pictures), ['pabc123']);
@@ -101,7 +101,7 @@ test('a «Студия» background as an «Оформление»: its menu, it
   const made = look.lookFromRecipe(recipe, { built: { bg: { media: HASH('e'), size: 5_000_000 } } });
   assert.deepEqual(made.menu.background, { source: { kind: 'file', name: 'Лес.webm', size: 5_000_000, type: 'video', label: 'WEBM', media: HASH('e') }, fit: 'cover', blur: 0, dim: 0, frame: { zoom: 1, x: 0.5, y: 0.5 }, piece: null, crossfade: 0 });
   assert.deepEqual([made.menu.aspect, made.menu.event, made.menu.hero.mode, made.menu.loading.mode], ['16:10', false, 'off', 'menu']);
-  assert.deepEqual(made.menu.buttons, { hide: ['plus'], news: { carnival: false, season: true }, profile: true, profileBg: 'menu', glass: { bar: 100, friends: 100, news: 100, header: 100, showcase: 100, party: 100 } });
+  assert.deepEqual(made.menu.buttons, { hide: ['plus'], news: { carnival: false, season: true }, profile: true, profileBg: 'menu', friendsClosed: false, valve: { chat: { x: 0, y: 0 }, friends: { x: 0, y: 0 }, news: { x: 0, y: 0 }, tabs: ['heroes', 'collection', 'watch', 'learn', 'mods'], cards: { carnival: { icon: false, scale: 100, size: 96 }, season: { icon: false, scale: 100, size: 96 } } }, glass: { bar: 100, friends: 100, news: 100, header: 100, showcase: 100, party: 100 } });
   assert.deepEqual(made.menu.grid.own.source, { kind: 'workshop', id: 3, title: 'Лес' }, 'a workshop background stays a reference');
   assert.equal(made.menu.grid.own.dim, 30);
   // Not built here (another device): the recipe as it is, the file asked for.
@@ -231,4 +231,20 @@ test('no room in the browser: the page keeps the settings and names the file, no
   assert.deepEqual(state.readMenuState(), applied.menu, 'the settings are written even without IndexedDB');
   assert.equal(await state.keepPrevious(doc, null), false, 'no backup place: said so, not thrown');
   assert.equal(await lookStore.pruneMedia([]), 0);
+});
+
+// «Тема меню» (2026-11-01): menu.theme { accent } in the document, the recipe's `theme`; it counts as «Детали меню».
+test('the menu theme: kept in the document and a «Студия» recipe, an accent of another shape refused', async () => {
+  const look = await import('../scripts/customize-look.mjs');
+  const { studioRecipe } = await import('../scripts/studio-background.mjs');
+  const doc = look.lookDocument({ ...full(), menu: { ...full().menu, theme: { accent: '#FF6FA3' } } });
+  assert.deepEqual(doc.menu.theme, { accent: '#ff6fa3' });
+  assert.ok(look.lookParts(doc).includes('menuparts'));
+  assert.equal(look.lookDocument(full()).menu.theme, null, 'none: Dota\'s colours');
+  for (const theme of [{ accent: 'pink' }, { accent: '#ff6fa' }, '#ff6fa3', []]) assert.throws(() => look.lookDocument({ ...full(), menu: { ...full().menu, theme } }), /не читается/, JSON.stringify(theme));
+  const base = { aspect: '16:9', fit: 'cover', blur: 0, dim: 0, frame: null, clean: false, folder: 'russian', delivery: 'file', piece: null, crossfade: 0, source: { kind: 'workshop', id: 3, title: 'Лес' } };
+  assert.equal(studioRecipe({ ...base, theme: '#8B6CFF' }).theme, '#8b6cff');
+  assert.equal(studioRecipe(base).theme, undefined);
+  assert.throws(() => studioRecipe({ ...base, theme: 'url(x)' }));
+  assert.deepEqual(look.lookFromRecipe(studioRecipe({ ...base, theme: '#8b6cff' })).menu.theme, { accent: '#8b6cff' });
 });

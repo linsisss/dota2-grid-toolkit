@@ -32,7 +32,10 @@ const FILES = ['dashboard.xml', 'dashboard_page_home.xml', 'dashboard_page_hero_
   // Not a layout: the interface builder's HUD hook (scripts/interface-modules.mjs), given back with our rules.
   '../styles/custom_ui.css',
   // The HUD's 3D portrait (2026-10-24): replaced with the heroes' own portraits in it (scripts/hero-portraits.mjs hudPortraitLayout).
-  'hud/dota_hud_portrait.xml'];
+  'hud/dota_hud_portrait.xml',
+  // Not a layout: the pick screen's script (2026-11-02), given back with «Мета героев» after it (scripts/meta-widget.mjs pregameScript):
+  // the game calls its functions, so a new one of Valve's must reach the packs.
+  '../scripts/hud/dota_hud_pregame.js'];
 const local = (file) => file.split('/').pop();  // our copies lie flat in assets/dota-menu/
 const assets = new URL('../assets/dota-menu/', import.meta.url);
 const args = process.argv.slice(2), flag = (name) => args.includes(name), option = (name) => args[args.indexOf(name) + 1];

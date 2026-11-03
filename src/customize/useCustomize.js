@@ -2,6 +2,7 @@ import { createElement as h, useEffect, useMemo, useRef, useState } from 'react'
 import { t } from '../../scripts/i18n.mjs';
 import { packOf, track } from '../site-stats.js';
 import { ButtonsFields, BackgroundFields, GridFields, HeroFields, LoadingFields, useMenuBackground } from './MenuBackground.jsx';
+import { MetaFields } from './MetaFields.jsx';
 import { ChatFields, CursorFields, HudFields, TextsFields, useInterface } from './InterfaceBuilder.jsx';
 import { FontFields, useFont } from './FontPicker.jsx';
 import { customizeZip, deliverCustomize } from './customize-pack.js';
@@ -29,6 +30,7 @@ export const MODULES = () => [
   { id: 'hero', group: 'menu', icon: 'user', scene: 'hero', title: t('За героем'), text: t('«Герои» → «Снаряжение», за моделью') },
   { id: 'loading', group: 'menu', icon: 'film', scene: 'loading', title: t('Экран загрузки'), text: t('Пока грузится матч') },
   { id: 'buttons', group: 'menu', icon: 'layers', scene: 'menu', title: t('Кнопки меню'), text: t('Лишние кнопки, карточки на главной, прозрачные панели') },
+  { id: 'meta', group: 'menu', icon: 'trophy', scene: 'grid', title: t('Мета героев'), text: t('Топ героев и сборки в «Героях» и на выборе героя') },
   { id: 'menuparts', group: 'menu', icon: 'template', scene: 'menu', title: t('Детали меню'), d2pfx: true, text: t('Верхняя панель, поиск игры, кнопка «Играть» — с d2pfx') },
   { id: 'hud', group: 'match', icon: 'sliders', scene: 'match', title: t('Вид HUD'), text: t('Подложки, украшения, размер панелей') },
   { id: 'hudskin', group: 'match', icon: 'brush', scene: 'match', title: t('HUD-скин'), d2pfx: true, text: t('Готовые скины HUD с d2pfx') },
@@ -166,6 +168,7 @@ export function useCustomize({ preset, studioItem, onRemove, replace, notice = n
   }
   const chooseScene = (id) => { track('customize.scene', { scene: id }); setScene(id); if (open === 'font') setOpen(''); };
   const fields = { bg: h(BackgroundFields, { bg }), grid: h(GridFields, { bg }), hero: h(HeroFields, { bg }), loading: h(LoadingFields, { bg }), buttons: h(ButtonsFields, { bg }),
+    meta: h(MetaFields, { bg }),
     hud: h(HudFields, { ui }), chat: h(ChatFields, { ui }), cursor: h(CursorFields, { cur: ui.cursors }), font: h(FontFields, { font }), texts: h(TextsFields, { ui }), portraits: h(PortraitsFields, { pt, d2, onMatch: () => chooseScene('match') }),
     ...Object.fromEntries(D2PFX_MODULES.map((id) => [id, h(D2pfxFields, { d2, section: id, ...(id === 'menuparts' ? { theme: { accent: bg.theme, set: bg.setTheme } } : {}) })])) };
   const reset = (id) => { if (id === 'menuparts') bg.setTheme(''); return id === 'portraits' ? pt.reset() : id === 'font' ? font.reset() : ['hud', 'chat', 'cursor', 'texts'].includes(id) ? ui.reset(id) : D2PFX_MODULES.includes(id) ? d2.reset(id) : bg.reset(id); };

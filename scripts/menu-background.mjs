@@ -1,5 +1,6 @@
 import { buildVPK, panoramaResource } from './vpk.mjs';
 import { LASTMATCH_RULES, LASTMATCH_STYLE, WIDGET_SCRIPT, WIDGET_STYLE, widgetMediaFile, widgetScriptFile, widgetsHomePage } from './menu-widgets.mjs';
+import { META_SCRIPT, PREGAME_SCRIPT, metaWidgetFiles } from './meta-widget.mjs';
 
 // A Dota 2 main-menu background pack: pakNN_dir.vpk for a game/dota_<language>/ folder.
 // The dashboard's background manager loads whatever layout its override-background names (Valve
@@ -1006,7 +1007,7 @@ export function miniProfilePage(page) {
 export const MENU_PACK_PATHS = Object.freeze(['panorama/layout/dashboard.vxml_c', 'panorama/layout/dashboard_page_home.vxml_c', HOME_STYLE, NEWS_STYLE, MENU_LAYOUT, MENU_STYLE, MENU_UI_STYLE,
   MENU_VIDEO, HERO_PAGE, HERO_STYLE, HERO_VIDEO, GRID_PAGE, GRID_STYLE, GRID_VIDEO, PROFILE_PAGE, PROFILE_STYLE, ...Object.values(PROFILE_ICONS),
   LOADING_PAGE, LOADING_STYLE, LOADING_VIDEO, MENU_HIDE_STYLE, GLASS_STYLE, FRIENDS_PAGE, FRIENDS_STYLE, MINI_PROFILE_PAGE, MINI_PROFILE_STYLE,
-  WIDGET_STYLE, WIDGET_SCRIPT, MENU_LAYOUT_STYLE, NEWS_LAYOUT, LASTMATCH_STYLE]);
+  WIDGET_STYLE, WIDGET_SCRIPT, MENU_LAYOUT_STYLE, NEWS_LAYOUT, LASTMATCH_STYLE, META_SCRIPT, PREGAME_SCRIPT]);
 // …and the widgets' pictures and videos, by name (scripts/menu-widgets.mjs widgetMediaPath).
 export { widgetMediaFile };
 export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDEO, LOADING_VIDEO]);
@@ -1026,6 +1027,8 @@ export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDE
 // glass: { bar, friends, news, header, showcase, party } — how much of each panel stays, in percent (MENU_GLASS,
 // 100 as in Dota); a see-through rail needs `friends`, Valve's friend_menu.xml, the mini-profile `miniProfile`,
 // Valve's showcase/mini_showcase.xml, the news column `home` (with no column at all, nothing to fade).
+// meta (2026-11-02, «Мета героев», scripts/meta-widget.mjs): metaSettings + { origin, page: Valve's «Герои» page,
+// pregame: Valve's pick screen script, logo: STRATZ's logo (SVG) }, or null.
 // video: null (the one-page customization, 2026-10-17) keeps Valve's own menu background: the pack then
 // carries only the other parts (hidden buttons and news cards, profiles, a page's own video, the darker
 // grid page); the dashboard is written only to hide buttons, and nothing may play the menu's video.
@@ -1033,7 +1036,7 @@ export const MENU_PACK_VIDEOS = Object.freeze([MENU_VIDEO, HERO_VIDEO, GRID_VIDE
 // media: [{ path, data }] the images' textures and the videos (needs `home`: the widgets live in our copy of it).
 // theme (2026-11-01): «Тема меню», scripts/menu-theme.mjs themeFiles' { [path]: text } — Valve's stylesheets recoloured;
 // its frontpage_contents.css (fresher than `frontpage`) carries the hidden news cards too.
-export function menuBackgroundPack({ video, dashboard, home = null, frontpage = null, widgets = null, theme = null, news = null, hero = null, event = null, profile = null, grid = null, loading = null, hide = [], glass = null, friends = null, miniProfile = null, friendsClosed = false, valve = null, contents = null, banners = null, lastmatch = null, md5 }) {
+export function menuBackgroundPack({ video, dashboard, home = null, frontpage = null, widgets = null, theme = null, news = null, hero = null, event = null, profile = null, grid = null, loading = null, hide = [], glass = null, friends = null, miniProfile = null, friendsClosed = false, valve = null, contents = null, banners = null, lastmatch = null, meta = null, md5 }) {
   const hidden = home ? (news ? Object.keys(NEWS_CELLS).filter((cell) => news[cell] === false) : Object.keys(NEWS_CELLS)) : [];
   const clean = hidden.length === Object.keys(NEWS_CELLS).length;
   const off = Object.keys(MENU_HIDE).filter((key) => hide.includes(key));
@@ -1087,10 +1090,14 @@ export function menuBackgroundPack({ video, dashboard, home = null, frontpage = 
     files.push(panoramaFile(HERO_PAGE, heroPage(hero.page, hero.video ? HERO_VIDEO : null), true), panoramaFile(HERO_STYLE, heroStyleText(!!hero.video)));
     if (hero.video) files.push({ path: HERO_VIDEO, data: hero.video });
   }
+  // «Мета героев» (scripts/meta-widget.mjs): our script on the «Герои» page (the grid's background stays) and in the pick screen's.
+  const metaFiles = meta ? metaWidgetFiles(meta, { page: grid ? gridPage(grid.page, !!grid.video) : meta.page, pregame: meta.pregame, logo: meta.logo }) : [];
+  const metaPage = metaFiles.find((file) => file.path === GRID_PAGE);
   if (grid) {
-    files.push(panoramaFile(GRID_PAGE, gridPage(grid.page, !!grid.video), true), panoramaFile(GRID_STYLE, GRID_STYLE_TEXT(grid.video ? null : grid.dim ?? GRID_DIM.default)));
+    files.push(panoramaFile(GRID_PAGE, metaPage ? metaPage.text : gridPage(grid.page, !!grid.video), true), panoramaFile(GRID_STYLE, GRID_STYLE_TEXT(grid.video ? null : grid.dim ?? GRID_DIM.default)));
     if (grid.video) files.push({ path: GRID_VIDEO, data: grid.video });
   }
+  for (const file of metaFiles) if (file.path !== GRID_PAGE) files.push(file.text ? panoramaFile(file.path, file.text) : file); else if (!grid) files.push(panoramaFile(GRID_PAGE, file.text, true));
   const links = profile?.links !== false, profileBg = profile?.bg ?? 'menu';
   if (profile && (links || profileBg !== 'menu')) files.push(panoramaFile(PROFILE_PAGE, profilePage(profile.page, { links, bg: profileBg }), true), panoramaFile(PROFILE_STYLE, profileStyleText(links, profileBg)),
     ...(links ? Object.entries(PROFILE_ICONS).map(([name, path]) => panoramaFile(path, profile.icons[name])) : []));
@@ -1104,5 +1111,6 @@ export function menuBackgroundPack({ video, dashboard, home = null, frontpage = 
   if (glassText.friends) files.push(panoramaFile(FRIENDS_PAGE, friendsPage(friends), true), panoramaFile(FRIENDS_STYLE, glassText.friends));
   if (glassText.miniProfile) files.push(panoramaFile(MINI_PROFILE_PAGE, miniProfilePage(miniProfile), true), panoramaFile(MINI_PROFILE_STYLE, glassText.miniProfile));
   if (!files.length) return null;
-  return buildVPK(files, { version: 2, md5 });
+  // One file a path (STRATZ's logo is both the profile's button and the meta's).
+  return buildVPK(files.filter((file, i) => files.findIndex((other) => other.path === file.path) === i), { version: 2, md5 });
 }

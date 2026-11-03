@@ -32,6 +32,8 @@ import { badgeOf } from '../scripts/profile-badges.mjs';
 import { BACKGROUND_TAGS, BACKGROUND_LIMITS, backgroundMeta, unpackBackgroundUpload } from '../scripts/background-document.mjs';
 import { MENU_SIZES } from '../scripts/menu-background.mjs';
 import { HeroMeta } from './hero-meta.mjs';
+import { MetaWidget } from './meta-widget.mjs';
+import { metaPrefs, metaPrefsText } from '../scripts/meta-widget.mjs';
 import { GRID_INSTALL_BYTES, GridInstalls } from './grid-installs.mjs';
 import { withGridNote } from '../scripts/grid-note.mjs';
 import { CatalogGuides } from './guides.mjs';
@@ -152,6 +154,8 @@ export function createCatalogAPI(config, { dotaTexts = null, dotaStyles = null, 
   const dotaText = (language = 'russian') => (texts[language] ||= new DotaTexts({ dir: textsDir(), language }));
   // Valve's menu stylesheets for «Тема меню» (server/dota-styles.mjs), beside the texts.
   let styles = dotaStyles;
+  // «Мета героев» in Dota: the meta above and the heroes' builds (server/meta-widget.mjs).
+  const metaWidget = new MetaWidget({ heroMeta, token: config.stratzToken || '' });
   const dotaStyle = () => (styles ||= new DotaStyles({ dir: join(dirname(textsDir()), 'dota-styles') }));
   store.unlimited = config.unlimited || new Set();
   // «Гайды» (server/guides.mjs): uploads next to the database (config.guides); unused ones are swept hourly.
@@ -477,6 +481,41 @@ export function createCatalogAPI(config, { dotaTexts = null, dotaStyles = null, 
         const meta = await heroMeta.get(url.searchParams.get('bracket') || '');
         response.setHeader('Cache-Control', 'public, max-age=3600');
         return send(200, meta);
+      }
+      // «Мета героев» in Dota (server/meta-widget.mjs): the widget's web panel asks here and reads the answer off the
+      // address it is sent on to (/w/ok?…&d=), since Panorama's scripts cannot read a web page. An error goes the same
+      // way, as e=<status>. /w/ok itself is an empty page, the same for everyone.
+      const widgetAsk = /^\/w\/(meta|build)$/.exec(path);
+      if (widgetAsk && method === 'GET') {
+        // t: the widget's own number of the question, given back so it knows its answer.
+        const kind = widgetAsk[1], bracket = url.searchParams.get('b') || 'all', answer = new URLSearchParams({ k: kind, b: bracket, t: (url.searchParams.get('t') || '').replace(/\D/g, '').slice(0, 9) });
+        try {
+          store.rate(`meta-widget:${ipHash}`, 240, 3_600_000);
+          if (kind === 'meta') answer.set('d', await metaWidget.meta(bracket, Number(url.searchParams.get('n')) || 0));
+          else {
+            const hero = Number(url.searchParams.get('h')), position = Number(url.searchParams.get('p'));
+            answer.set('h', String(hero)); answer.set('p', String(position));
+            answer.set('d', await metaWidget.build(Number.isSafeInteger(hero) ? hero : 0, Number.isSafeInteger(position) ? position : 0, bracket, url.searchParams.get('l') || 'ru', url.searchParams.get('v') === '2' ? 2 : 1));
+          }
+        } catch (error) { answer.set('e', String(error instanceof CatalogError ? error.status : 500)); }
+        response.writeHead(302, { Location: `${config.origin}/api/catalog/w/ok?${answer}` });
+        return response.end();
+      }
+      // The widget's own settings, changed in Dota (scripts/meta-widget.mjs metaPrefs): kept in a cookie of this site in
+      // Steam's browser, given back the same way as the data. Nothing is stored here.
+      if (path === '/w/prefs' && method === 'GET') {
+        const cookie = /(?:^|;\s*)gs_meta=([a-z0-9.]{1,40})/.exec(request.headers.cookie || '')?.[1] || '';
+        const set = url.searchParams.get('set'), given = set === null ? metaPrefs(cookie) : metaPrefs(set);
+        const answer = new URLSearchParams({ k: 'prefs', t: (url.searchParams.get('t') || '').replace(/\D/g, '').slice(0, 9), d: given ? metaPrefsText(given) : '' });
+        const headers = { Location: `${config.origin}/api/catalog/w/ok?${answer}` };
+        if (set !== null) headers['Set-Cookie'] = given ? `gs_meta=${metaPrefsText(given)}; Path=/api/catalog/w/; Max-Age=63072000; Secure; HttpOnly; SameSite=Lax`
+          : 'gs_meta=; Path=/api/catalog/w/; Max-Age=0; Secure; HttpOnly; SameSite=Lax';
+        response.writeHead(302, headers);
+        return response.end();
+      }
+      if (path === '/w/ok' && method === 'GET') {
+        response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=86400' });
+        return response.end('<!doctype html><meta charset="utf-8"><title>GridStudio</title><body style="background:#000"></body>');
       }
       // Pages for search engines, robots.txt and sitemap.xml (server/seo-pages.mjs; nginx sends /backgrounds,
       // /grids, /robots.txt and /sitemap.xml here). Kept ten minutes: the lists change slowly.

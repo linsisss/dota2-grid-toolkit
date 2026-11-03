@@ -1,6 +1,7 @@
 import { GLASS_KEYS, MENU_FRAME, MENU_HIDE, MENU_SIZES, PROFILE_BG_MODES, glassChanged, menuGlass, menuValve, valveChanged } from './menu-background.mjs';
 import { cleanWidgets } from './menu-widgets.mjs';
 import { THEME_ACCENT } from './menu-theme.mjs';
+import { metaSettings } from './meta-widget.mjs';
 import { STUDIO_CROSSFADES, STUDIO_FOLDERS, STUDIO_GRID_MODES, STUDIO_HERO_MODES, STUDIO_LOADING_MODES, studioFrame, studioPiece, studioSource } from './studio-background.mjs';
 import { CHAT_DEFAULTS, HUD_DEFAULTS, chatSettings, hudChanged, hudSettings } from './hud-style.mjs';
 import { TEXT_LIMITS } from './dota-texts.mjs';
@@ -22,7 +23,8 @@ import { portraitsState } from './hero-portraits.mjs';
 //             buttons: { hide: [MENU_HIDE key], news: { carnival, season }, profile, profileBg: menu|dim|hide, friendsClosed, valve,
 //                       glass: { bar, friends, news, header, showcase, party } (percents, MENU_GLASS; a key missing reads as 100) },
 //             grid: { mode: menu|dim|own, dim, own: Bg | null }, hero: { mode: menu|off|own, own }, loading: { mode: off|menu|own, own },
-//             widgets: [widget] (scripts/menu-widgets.mjs cleanWidgets), theme: { accent: '#rrggbb' } | null },
+//             widgets: [widget] (scripts/menu-widgets.mjs cleanWidgets), theme: { accent: '#rrggbb' } | null,
+//             meta: { heroes, pick, bracket } | null },
 //     hud: hudSettings (with the chat), texts: { token: text },
 //     cursor: { mode: dota|d2pfx|own, pack: d2pfx pack | null, own: { id: Role }, packed: { id: Role | { gone } } },
 //     pictures: { key: data URL (PNG or WebP) }  — the cursor pictures the roles use,
@@ -37,6 +39,7 @@ import { portraitsState } from './hero-portraits.mjs';
 // Additions within version 1 (old documents read the same, older pages ignore what they do not know):
 //   2026-10-22 buttons.glass { bar, friends }; later that day its news, header, showcase and party.
 //   2026-11-01 menu.theme { accent } («Тема меню», scripts/menu-theme.mjs; shown in «Детали меню»).
+//   2026-11-03 menu.meta { heroes, pick, bracket } («Мета героев», scripts/meta-widget.mjs metaSettings).
 export const LOOK_FORMAT = 'gridstudio-dota';
 export const LOOK_VERSION = 1;
 export const LOOK_EXTENSION = '.gsdota';
@@ -47,7 +50,7 @@ export const LOOK_LIMITS = Object.freeze({
 });
 // The parts of the page (CustomizePage.jsx MODULES), in its order, with their names for «Студия».
 export const LOOK_PARTS = Object.freeze([
-  ['bg', 'Фон меню'], ['grid', 'Под сеткой героев'], ['hero', 'За героем'], ['loading', 'Экран загрузки'], ['buttons', 'Кнопки меню'], ['widgets', 'Виджеты'], ['menuparts', 'Детали меню'],
+  ['bg', 'Фон меню'], ['grid', 'Под сеткой героев'], ['hero', 'За героем'], ['loading', 'Экран загрузки'], ['buttons', 'Кнопки меню'], ['widgets', 'Виджеты'], ['meta', 'Мета героев'], ['menuparts', 'Детали меню'],
   ['hud', 'Вид HUD'], ['hudskin', 'HUD-скин'], ['hudparts', 'Детали HUD'], ['chat', 'Чат'], ['cursor', 'Курсор'], ['click', 'Клик'], ['pings', 'Пинги'], ['deny', 'Денай'],
   ['font', 'Шрифт'], ['texts', 'Тексты'], ['portraits', 'Портреты героев'], ['voice', 'Иконка голоса']
 ].map((part) => Object.freeze(part)));
@@ -106,7 +109,9 @@ function lookMenu(input) {
     // The main menu's widgets (2026-10-31, scripts/menu-widgets.mjs): its own check, a widget it cannot read goes.
     widgets: value.widgets == null ? [] : Array.isArray(value.widgets) ? cleanWidgets(value.widgets) : broken(),
     // «Тема меню» (2026-11-01): the accent of scripts/menu-theme.mjs, or none (Dota's colours).
-    theme: value.theme == null ? null : THEME_ACCENT.test(object(value.theme).accent) ? { accent: value.theme.accent.toLowerCase() } : broken() };
+    theme: value.theme == null ? null : THEME_ACCENT.test(object(value.theme).accent) ? { accent: value.theme.accent.toLowerCase() } : broken(),
+    // «Мета героев» (2026-11-03): where it shows and the ranks, or none.
+    meta: value.meta == null ? null : metaSettings(object(value.meta)) };
 }
 function lookTexts(input) {
   const value = input == null ? {} : object(input), entries = Object.entries(value);
@@ -220,6 +225,7 @@ export function lookParts(look) {
   };
   // «Тема меню» is one of «Детали меню»'s choices.
   if (menu.theme) changed.menuparts = true;
+  if (menu.meta) changed.meta = true;
   return LOOK_PARTS.map(([id]) => id).filter((id) => changed[id]);
 }
 
@@ -245,7 +251,7 @@ export function lookFromRecipe(recipe, { built = {}, media = {} } = {}) {
     aspect: recipe.aspect, folder: recipe.folder === 'custom' ? 'russian' : recipe.folder, event: recipe.event ?? true, background: bgOf(recipe, built.bg, media.bg),
     buttons: { hide: recipe.hide || [], news, profile: recipe.profile ?? false, profileBg: recipe.profileBg ?? 'menu', friendsClosed: !!recipe.friendsClosed, valve: menuValve(recipe.valve), ...(recipe.glass ? { glass: recipe.glass } : {}) },
     grid: { ...page(recipe.grid, built.grid, media.grid), dim: recipe.grid?.dim ?? 55 }, hero: page(recipe.hero, built.hero, media.hero), loading: { ...page(recipe.loading || { mode: 'off' }, built.loading, media.loading), mode: recipe.loading?.mode || 'off' },
-    theme: recipe.theme ? { accent: recipe.theme } : null
+    theme: recipe.theme ? { accent: recipe.theme } : null, meta: metaSettings(recipe.meta)
   } });
 }
 

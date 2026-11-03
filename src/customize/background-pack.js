@@ -17,6 +17,7 @@ import heroesPage from '../../assets/dota-menu/dashboard_page_heroes.xml?raw';
 import loadingPage from '../../assets/dota-menu/loading_screen_background_image.xml?raw';
 import friendMenu from '../../assets/dota-menu/friend_menu.xml?raw';
 import miniShowcase from '../../assets/dota-menu/mini_showcase.xml?raw';
+import pregame from '../../assets/dota-menu/dota_hud_pregame.js?raw';
 import stratz from '../../assets/dota-menu/icons/stratz.svg?raw';
 import dotabuff from '../../assets/dota-menu/icons/dotabuff.svg?raw';
 
@@ -47,6 +48,7 @@ export function saveFile(blob, name) {
 // widgets (2026-10-31): the main menu's widgets as widget-pack.js made them ({ made, media }), or null.
 // themed (2026-11-01): «Тема меню»'s stylesheets as menu-theme-pack.js made them ({ [path]: text }), or null.
 // recipe.friendsClosed (2026-11-02): the friends list closed on the home page (Dota opens it there).
+// recipe.meta (2026-11-03): «Мета героев» ({ heroes, pick, bracket }, scripts/meta-widget.mjs), asking the site the page is on.
 // recipe.valve (2026-11-02): Valve's panels set by hand — the chat's place, the tabs' order, the news cards' sizes and icons (menuValve).
 // recipe.grid: the «Герои» page under the hero grid (1.6.4): the menu's background (default), darker
 // (dim, a percent of GRID_DIM.max), or `gridVideo` (mode 'own'; without it, as in the menu).
@@ -61,10 +63,11 @@ const gridOption = (grid, gridVideo) => grid?.mode === 'dim' ? { page: heroesPag
 const loadingOption = (loading, loadingVideo) => loading?.mode === 'menu' || loading?.mode === 'own' ? { page: loadingPage, video: loading.mode === 'own' ? loadingVideo : null } : null;
 // `video` null: no menu background of ours (the one-page customization); the pack is then null when
 // nothing else in it differs from Dota.
-export const packBackground = (video, { clean, news = null, hero = { mode: 'menu' }, event = true, profile = true, profileBg = 'menu', friendsClosed = false, valve = null, widgets = null, themed = null, grid = { mode: 'menu' }, loading = { mode: 'off' }, hide = [], glass = null }, heroVideo = null, gridVideo = null, loadingVideo = null) => blobOf(menuBackgroundPack({ video, dashboard, home, frontpage, widgets, theme: themed, glass, friends: friendMenu, miniProfile: miniShowcase,
+export const packBackground = (video, { clean, news = null, hero = { mode: 'menu' }, event = true, profile = true, profileBg = 'menu', friendsClosed = false, valve = null, meta = null, widgets = null, themed = null, grid = { mode: 'menu' }, loading = { mode: 'off' }, hide = [], glass = null }, heroVideo = null, gridVideo = null, loadingVideo = null) => blobOf(menuBackgroundPack({ video, dashboard, home, frontpage, widgets, theme: themed, glass, friends: friendMenu, miniProfile: miniShowcase,
   news: clean ? { carnival: false, season: false } : { carnival: news?.carnival !== false, season: news?.season !== false },
   hero: hero?.mode === 'off' ? null : { page: heroPage, video: hero?.mode === 'own' ? heroVideo : null }, event: event ? season : null,
-  profile: profile || profileBg !== 'menu' ? { page: showcase, icons: { stratz, dotabuff }, links: !!profile, bg: profileBg } : null, grid: gridOption(grid, gridVideo), loading: loadingOption(loading, loadingVideo), hide, friendsClosed: !!friendsClosed, valve, contents, banners: { carnival: carnivalBanner, season: seasonBanner }, lastmatch, md5 }));
+  profile: profile || profileBg !== 'menu' ? { page: showcase, icons: { stratz, dotabuff }, links: !!profile, bg: profileBg } : null, grid: gridOption(grid, gridVideo), loading: loadingOption(loading, loadingVideo), hide, friendsClosed: !!friendsClosed, valve, contents, banners: { carnival: carnivalBanner, season: seasonBanner }, lastmatch,
+  meta: meta ? { ...meta, origin: location.origin, page: heroesPage, pregame, logo: stratz } : null, md5 }));
 const blobOf = (bytes) => bytes && new Blob([bytes], { type: 'application/octet-stream' });
 // «Командой PowerShell» (and the .bat installer's 'installer' of before): the pack goes to the site and
 // the command downloads exactly it (src/install-pack.js, scripts/installer.mjs backgroundScript) →

@@ -192,6 +192,9 @@ export function Shelf({ shelf, onShelf, query, onQuery, page, open, onModule, on
     {designs.length > 0 && <><span className="kz-sub">{t('Мои виджеты')}</span>{designs.map((item) => <DesignCard key={item.id} item={item} {...mine.actions}/>)}</>}
     <span className="kz-sub">{t('Готовые')}</span>
     {READY_TYPES.map((type) => <WidgetCard key={type} type={type} onPick={onPick}/>)}
+    {/* «Мета героев» lives on the «Герои» page and the pick screen, not on the home page: a section, not a widget to place. */}
+    <span className="kz-sub">{t('В «Героях» и на выборе героя')}</span>
+    <ModuleCard page={page} id="meta" active={open === 'meta'} onModule={onModule}/>
   </>;
   else if (shelf === 'mine') content = <Mine page={page}/>;
   else if (CATEGORY_MODULES[shelf]) content = <>{CATEGORY_MODULES[shelf].map((id) => <ModuleCard key={id} page={page} id={id} active={open === id} onModule={onModule}/>)}

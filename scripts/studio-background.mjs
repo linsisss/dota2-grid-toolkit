@@ -1,5 +1,6 @@
 import { GLASS_KEYS, MENU_FRAME, MENU_FRAME_ZOOM, MENU_HIDE, MENU_SIZES, PROFILE_BG_MODES, menuValve, valveChanged } from './menu-background.mjs';
 import { THEME_ACCENT } from './menu-theme.mjs';
+import { metaSettings } from './meta-widget.mjs';
 
 // A menu background kept in «Студия» (docs/customize.md «Фоны в студии»). The browser keeps the
 // built WebM with it (scripts/background-library.mjs), so it downloads again at once; an account
@@ -117,7 +118,9 @@ export function studioRecipe(input) {
     // Valve's panels set by hand (2026-11-02), kept only when changed.
     ...(input.valve == null ? {} : typeof input.valve !== 'object' ? broken() : valveChanged(input.valve) ? { valve: menuValve(input.valve) } : {}),
     // «Тема меню» (2026-11-01): its accent, kept only when on.
-    ...(input.theme == null ? {} : THEME_ACCENT.test(input.theme) ? { theme: input.theme.toLowerCase() } : broken()) };
+    ...(input.theme == null ? {} : THEME_ACCENT.test(input.theme) ? { theme: input.theme.toLowerCase() } : broken()),
+    // «Мета героев» (2026-11-03, scripts/meta-widget.mjs): where it shows and the ranks, kept only when on.
+    ...(input.meta == null ? {} : typeof input.meta !== 'object' ? broken() : metaSettings(input.meta) ? { meta: metaSettings(input.meta) } : {}) };
 }
 
 // A workshop submission of the background: its gallery id and the status token.

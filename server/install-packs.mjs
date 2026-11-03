@@ -6,6 +6,7 @@ import { fail } from './catalog-store.mjs';
 import { panoramaSource, readVPK } from '../scripts/vpk.mjs';
 import { MENU_LAYOUT, MENU_PACK_PATHS, MENU_PACK_VIDEOS, MENU_VIDEO, widgetMediaFile } from '../scripts/menu-background.mjs';
 import { WIDGET_SCRIPT, widgetLink, widgetScriptData, widgetScriptText } from '../scripts/menu-widgets.mjs';
+import { META_SCRIPT, PREGAME_SCRIPT, metaScriptOptions } from '../scripts/meta-widget.mjs';
 import { THEME_MARK, themeStyleRel } from '../scripts/menu-theme.mjs';
 import { readVtex } from '../scripts/dota-vtex.mjs';
 import { HUD_STYLE } from '../scripts/hud-style.mjs';
@@ -38,6 +39,8 @@ const EXT = { bg: 'vpk', font: 'zip', all: 'zip' };
 // Valve's HUD portrait layout our pak05 may replace (scripts/hero-portraits.mjs hudPortraitFiles): the server
 // rebuilds the layout and the style for the heroes in a pack and takes only exactly those.
 const HUD_VALVE = readFileSync(new URL('../assets/dota-menu/dota_hud_portrait.xml', import.meta.url), 'utf8');
+// Valve's pick screen script, which «Мета героев» rides on (scripts/meta-widget.mjs pregameScript).
+const PREGAME_VALVE = readFileSync(new URL('../assets/dota-menu/dota_hud_pregame.js', import.meta.url), 'utf8');
 const DAY = 86_400_000;
 
 // ——— What a pack may hold.
@@ -78,6 +81,8 @@ function backgroundProblem(bytes, { whole = true } = {}) {
     if (MENU_PACK_VIDEOS.includes(file.path)) { if (!EBML.every((byte, i) => file.data[i] === byte)) return 'Видео фона повреждено.'; continue; }
     // The widgets' script: exactly the site's own code with data of the allowed shape, in exactly the file the site makes.
     if (file.path === WIDGET_SCRIPT) { const script = widgetScriptText(file.data); if (!script || !widgetScriptData(script)) return 'В файле меню недопустимое: скрипт.'; continue; }
+    // «Мета героев»: the same — exactly the site's script for one of its own addresses (and Valve's pick screen script before it).
+    if (file.path === META_SCRIPT || file.path === PREGAME_SCRIPT) { if (!metaScriptOptions(file.path, file.data, PREGAME_VALVE)) return 'В файле меню недопустимое: скрипт.'; continue; }
     let text;
     try { text = panoramaSource(file.data); } catch { return 'Файл меню повреждён.'; }
     if (themed && !THEME_MARK.test(text)) return 'В фоне есть лишний файл.';

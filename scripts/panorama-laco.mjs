@@ -517,7 +517,10 @@ export function writeResource(version, blocks) {
 const COMPILERS = {
   layout: { compiled: 'vxml', source: 'xml', resourceVersion: 3, identifier: 'CompilePanorama', versions: { 'Panorama Layout Compiler Version': 16 } },
   style: { compiled: 'vcss', source: 'css', resourceVersion: 3, identifier: 'CompilePanorama', versions: { 'Panorama Style Compiler Version': 11 } },
-  script: { compiled: 'vjs', source: 'js', resourceVersion: 4, identifier: 'CompileJavaScript', versions: { 'JavaScript Compiler Version': 4 } }
+  script: { compiled: 'vjs', source: 'js', resourceVersion: 4, identifier: 'CompileJavaScript', versions: { 'JavaScript Compiler Version': 4 } },
+  // Valve's TypeScript pages (.vts_c, 2026-11-02 for the pick screen's script): the same JavaScript in DATA; the edit
+  // info names the TypeScript source. The game reads only DATA (d2pfx's TikTok Overlay rewrites just that block).
+  typescript: { compiled: 'vts', source: 'ts', resourceVersion: 4, identifier: 'CompileTypeScript', versions: { 'JavaScript Compiler Version': 4 } }
 };
 const byName = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 export function editInfo2({ path, kind, sourceCRC, searchPath = 'dota_addons/gridstudio', references = [] }) {
@@ -849,8 +852,9 @@ export function newStyle(path, cssText, { searchPath, sourceCRC } = {}) {
 // ---------------------------------------------------------------------------------------------
 // Scripts: resource version 4, where DATA is the source text alone (no CRC, no image table).
 export function newScript(path, jsText, { searchPath } = {}) {
-  if (!path.endsWith('.vjs_c')) throw new Error(`Не скрипт Panorama: ${path}`);
+  const kind = path.endsWith('.vjs_c') ? 'script' : path.endsWith('.vts_c') ? 'typescript' : null;
+  if (!kind) throw new Error(`Не скрипт Panorama: ${path}`);
   const body = text(jsText);
-  const red2 = editInfo2({ path, kind: 'script', sourceCRC: crc32(body), searchPath });
-  return writeResource(COMPILERS.script.resourceVersion, [['RED2', kv3Encode(red2)], ['DATA', body]]);
+  const red2 = editInfo2({ path, kind, sourceCRC: crc32(body), searchPath });
+  return writeResource(COMPILERS[kind].resourceVersion, [['RED2', kv3Encode(red2)], ['DATA', body]]);
 }

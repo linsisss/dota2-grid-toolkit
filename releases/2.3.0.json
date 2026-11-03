@@ -1,0 +1,27 @@
+{
+  "version": "2.3.0",
+  "date": "2026-11-03",
+  "githubUrl": "https://github.com/linsisss/dota2-grid-toolkit/releases/tag/v2.3.0",
+  "sections": [
+    {
+      "title": "Твоя Dota",
+      "changes": [
+        { "text": "«Мета героев»: вкладка «МЕТА» в «Героях» и на выборе героя — герои каждой позиции с винрейтом и пикрейтом за неделю (STRATZ)", "children": ["Включается в «Виджетах» конструктора, ранги на выбор"] },
+        { "text": "По клику на героя — предметы как на STRATZ, порядок прокачки скиллов, таланты и его страница на STRATZ" },
+        { "text": "В самом виджете — русский или английский, цвет акцента и место вкладки (её можно перетащить); запоминается на компьютере" }
+      ]
+    }
+  ],
+  "en": {
+    "sections": [
+      {
+        "title": "Your Dota",
+        "changes": [
+          { "text": "«Hero meta»: a «META» tab on «Heroes» and at the hero pick — each position's heroes with their win and pick rates over the week (STRATZ)", "children": ["Turned on in the constructor's «Widgets», ranks to choose"] },
+          { "text": "A click on a hero shows the items as STRATZ does, the skill order, the talents and the hero's STRATZ page" },
+          { "text": "In the widget itself — Russian or English, the accent colour and the tab's place (it can be dragged); kept on the computer" }
+        ]
+      }
+    ]
+  }
+}
